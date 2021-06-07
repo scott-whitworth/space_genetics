@@ -1,10 +1,10 @@
 # Space Genetics
-Based on previous work 2019 - 2020 Sankaran / Griffith summer research
-2019: Mateo, Lauren, Ben
-2020: Matthew, Noah, Andrew, Jeremy
-Pulled from: https://github.com/scott-whitworth/Didymos-optimization on 6/7/2021
-
-The following is pulled in data and will need to be updated.
+Based on previous work 2019 - 2020 Sankaran / Griffith summer research  
+2019: Mateo, Lauren, Ben  
+2020: Matthew, Noah, Andrew, Jeremy  
+Pulled from: https://github.com/scott-whitworth/Didymos-optimization on 6/7/2021  
+  
+The following is pulled in data and will need to be updated.  
 
 
 

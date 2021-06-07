@@ -1,0 +1,119 @@
+<h1> Config File Specifications/Information </h1>
+<i>Last Updated: August 7th, 2020</i>
+
+<h2>File and variable format for config file</h2>
+
+- The config file allows empty rows and comments ("//" at start of comment line) for formatting the presentation of the contents, also allows in-line comments with only requirement being a space from the value assignment
+- The parsing process currently does not attempt any verification of assigning values to variables (lack of assignment nor duplications).  When reading values, it takes the assignment and uses the standard string to int/double for appriopriate variable types and does not currently handle arithmetic
+- When reading the file, the assumption is made that the config file contains valid simple values for all variables.  Also that there are no spaces until after the variable value assignment
+
+<h2>The cudaConstants struct</h2>
+
+- In the code, the structure that uses the config file is called <b>cudaConstants</b> and is only accessed when being constructed (therefore changing the config file during a run would have no impact).
+- An overloaded << operator for cudaConstants that outputs the object's contents with labelling/formatting for better readibility to output onto terminal screen in the main function.
+- For changing what config file is used, the file address can be changed where cudaConstants is declared within the main function in optimization.cu. Requires re-compiling the code.
+- Default address is "genetic.config" in same folder as the .exe file, optimization.cu has address set as "../Config_Constants/genetic.config".
+- If config file address is invalid, will output to terminal that is the case.
+
+<h2>Variables in cudaConstants</h2>
+
+Table 1. Setup & General Values
+| Variable Name              	| Data Type  	| Units 	| Usage                                                                                                                                                      	                    |   	|
+|----------------------------	|------------	|-------	|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---	|
+| time_seed                  	| int/string 	| None  	| Sets the seed used in random generation initialization and labeling file outputs, either specify a seed to use or place "NONE" for the seed to be time(0)                         |   	|
+| random_start               	| boolean    	| None  	| If "true", sets initial generation's individuals to hold parameters with random values of set range (refer to Table 4), if "false" it initializes the individuals from a provided file    |   	|
+| initial_start_file_address 	| string     	| None  	| If random_start is false, the program uses this address to get parameter values for the initial individuals with the assumption that the file hold 14 sets 	                    |   	|
+| record_mode                 	| boolean       | None  	| If "true", sets program to output various files that describe the performance, meant to be used in helping verify/debug behavior.                                                 |   	|
+| write_freq                 	| int        	| None  	| Sets number of generations to process before writing information onto files, 1 is to write every generation                                               	                    |   	|
+| disp_freq                  	| int        	| None  	| Sets number of gnerations to process before outputting to console terminal, 1 is to display output every generation                                       	                    |   	|
+| rk_tol                 	    | double     	| None  	| The relative/absolute (not sure which one it is) tolerance for the runge kutta algorithm	                                                                                        |   	|
+| doublePrecThresh              | double     	| None  	| The smallest error difference in runge kutta algorithm allowed, having the value set too small would result in differences between GPU and CPU runge-kutta due to the data types limits of precision |   	|
+| GuessMaxPossibleSteps         | int        	| None  	| Used as a large value to ensure adequete memory allocation in the arrays that record information in rk4sys() in output.cpp, should be greater than possible number of steps taken in the runge kutta methods |   	|
+| min_numsteps                 	| int        	| None  	| Minimum number of steps in the runge kutta used in the GPU and in EarthInfo's reverse runge kutta method, note that changing the numsteps but keeping same time_seed value can lead to different results due to slight variance in the results that changes the aglorithm's path to finding a solution    |   	|
+| max_numsteps                 	| int        	| None  	| Maximum number of steps in the runge kutta used in the GPU and in EarthInfo's reverse runge kutta method, note that changing the numsteps but keeping same time_seed value can lead to different results due to slight variance in the results that changes the aglorithm's path to finding a solution    |   	|
+| cpu_numsteps                 	| int        	| None  	| Set time step size in the runge kutta used in the CPU, which is called after a set of parameters lead to convergence in the GPU and needs to be recorded in trajectoryPrint() (set equal to max_numsteps) |   	|
+| timeRes                    	| int        	| seconds   | The "gap" between each calculation for Earth's backward runge-kutta, for example 3600 sets every calculation to be 1 hour apart                                                   |   	|
+
+Table 2. Genetic Algorithm Values
+| Variable Name              	| Data Type  	| Units 	| Usage                                                                                                                                                      	                    |   	|
+|----------------------------	|------------	|-------	|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---	|
+| best_count                 	| int        	| None  	| How many individuals must have obtained a solution before ending the algorithm, also outputs the top number of individuals up to best_count 	                                    |   	|
+| max_generations           	| int        	| None  	| Sets the maximum number of generation iterations to evaluate in the optimization loop before exiting regardless of if a valid solution was reached or not 	                    |   	|
+| run_count                    	| int        	| None  	| Set how many runs of optimize with slightly altered randomization seeds to perform with current cudaConstants                                              	                    |   	|
+| num_individuals           	| int        	| None  	| Sets the size of the population pool and number of threads used as an individual is given a thread, recommended to not change 	                                                |   	|
+| survivor_count               	| int        	| None  	| Number of individuals selected as "survivors" to produce new individuals in the next generation in the genetic algorithm, every pair produces 8 new individuals, value must be even|   	|
+| survivorRatio               	| double        | None  	| The percentage of the survivor pool that is to contain the best individuals for posDiff, the rest of the survivor pool is given individuals for best velDiff (0.5 is half and half)|   	|
+| thread_block_size           	| int        	| None  	| Number of threads per block on the GPU being used, recommended to not change 	                                                                                                    |   	|
+| anneal_initial             	| double     	| None  	| The initial anneal value used, anneal impacts the maximum possible mutation value when generating a new individual (does not impact probability) 	                                |   	|
+| anneal_factor             	| double     	| None  	| The multiplier applied to anneal value if no change in the best individual is occurring                                                                        	                |   	|
+| change_check               	| int        	| None  	| For how many generations until it checks to see if the best individual has changed, if no change the anneal value is reduced by multiplying with anneal_factor                    |   	|
+| mutation_rate              	| double     	| None  	| The probability of a mutations occurring when generating a new individual, checks the mutation_rate before setting a random gene to be mutated and continues checking to mutate more unique genes until the check fails |   	|
+| gamma_mutate_scale           	| double     	| None  	| Affects the maximum mutation range for gamma values (maximum mutation for the corresponding parameter is annealing * [this scale])	                                            |   	|
+| tau_mutate_scale           	| double     	| None  	| Affects the maximum mutation range for tau values (maximum mutation for the corresponding parameter is annealing * [this scale]) 	                                                |   	|
+| coast_mutate_scale           	| double     	| None  	| Affects the maximum mutation range for coast values (maximum mutation for the corresponding parameter is annealing * [this scale]) 	                                            |   	|
+| triptime_mutate_scale 	    | double     	| Years  	| Affects the maximum mutation range for triptime values (maximum mutation for the corresponding parameter is annealing * [this scale] * SECONDS_IN_A_YEAR) 	                    |   	|
+| zeta_mutate_scale          	| double     	| Radians  	| Affects the maximum mutation range for zeta values (maximum mutation for the corresponding parameter is annealing * [this scale]) 	                                            |   	|
+| alpha_mutate_scale           	| double     	| Radians  	| Affects the maximum mutation range for alpha values (maximum mutation for the corresponding parameter is annealing * [this scale])                                                |   	|
+| beta_mutate_scale           	| double     	| Radians  	| Affects the maximum mutation range for beta values (maximum mutation for the corresponding parameter is annealing * [this scale])                                                 |   	|
+
+
+Table 3. Mission Values
+| Variable Name              	| Data Type  	| Units 	| Usage                                                                                                                                                      	                    |   	|
+|----------------------------	|------------	|-------	|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---	|
+| thruster_type                	| int        	| None  	| Determine what thruster is used, 0 for none and 1 for NEXT ion thruster 	                                                                                                        |   	|
+| dry_mass                     	| double        | kg      	| Set the mass of the spacecraft without fuel, also used in determining wet_mass 	                                                                                                |   	|
+| fuel_mass                     | double        | kg      	| Sets the initial mass of fuel in the spacecraft, used in determining wet_mass 	                                                                                                |   	|
+| wet_mass                     	| double        | kg      	| The total mass of the spacecraft with fuel, value is derived after reading the config file when dry_mass and fuel_mass have had their values read                                 |   	|
+| coast_threshold             	| double     	| None  	| In a range from 0 to 1, 1 sets the spacecraft to coast at all times while 0 sets the spacecraft to always have thruster on 	                                                    |   	|
+| c3scale                     	| double     	| None 	    | The scalar multiplier used to adjust c3energy by percentages for test runs, current implementation assumes that c3scale is assigned a value before c3energy (in config file c3scale is set before c3energy) 	|   	|
+| c3energy                     	| double     	| m<sup>2</sup>/s<sup>2</sup>  	| The specific energy of the spacecraft when leaving the sphere of influence of the earth-moon center of mass, determines the magnitude of the escape velocity that is stored in v_escape 	|   	|
+| v_escape                     	| double     	| AU/s  	| The magnitude of the initial velocity of the spacecraft when leaving the sphere of influence of the earth-moon center of mass, not in config file but rather derived from c3energy 	                        |   	|
+| v_impact                 	    | double     	| AU/s  	| NASA's official mission impact velocity difference the spacecraft will collide with Dimorphos, does not impact the performance of the code	                                    |   	|
+| pos_threshold              	| double     	| AU      	| Sets the maximum positional difference of the spacecraft to the target at end of its trajectory path                                                    	                        |   	|
+
+
+Table 3a. Impact Position & Velocity Values
+| Variable Name              	| Data Type  	| Units 	| Usage                                                                                                                                                      	                    |   	|
+|----------------------------	|------------	|-------	|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---	|
+| r_fin_ast           	        | double     	| AU      	| The radius position of the target at impact date, relative to the Sun bodycenter 	                                                                                                        |   	|
+| theta_fin_ast        	        | double     	| Radians  	| The theta angle position of the target at impact date, relative to the Sun bodycenter	                                                                                                    |   	|
+| z_fin_ast           	        | double     	| AU      	| The z (off-plane offset) position of the target at impact date, relative to the Sun bodycenter	                                                                                        |   	|
+| vr_fin_ast           	        | double     	| AU/s  	| The velocity of the radius component of the target at impact date, relative to Sun bodycenter	                                                                                            |   	|
+| vtheta_fin_ast      	        | double     	| AU/s  	| The tangental velocity of the target at impact date	                                                                                                                                    |   	|
+| vz_fin_ast           	        | double     	| AU/s  	| The velocity of the z component of the target at impact date, relative to the Sun bodycenter	                                                                                            |   	|
+| r_fin_earth           	    | double     	| AU     	| The radius position of the earth-moon center of mass at impact date, relative to the Sun bodycenter	                                                                                    |   	|
+| theta_fin_earth          	    | double     	| Radians  	| The theta angle position of the earth-moon center of mass at impact date, relative to the Sun bodycenter	                                                                                |   	|
+| z_fin_earth           	    | double     	| AU      	| The z (off-plane offset) position of the earth-moon center of mass at impact date, relative to the Sun and used to plot it's path backwards in time for launch positions of the spacecraft|   	|
+| vr_fin_earth           	    | double     	| AU/s  	| The velocity of the radius component of the earth at impact date 	                                                                                                                        |   	|
+| vtheta_fin_earth         	    | double     	| AU/s  	| The tangental velocity of the earth-moon center of mass at impact date 	                                                                                                                |   	|
+| vz_fin_earth           	    | double     	| AU/s  	| The velocity of the z component of the earth-moon center of mass at impact date, relative to Sun bodycenter and used to plot it's path backwards in time for launch positions of the spacecraft|   	|
+
+Table 4. Random Starting Initializing Values when (random_start == true) & Triptime Range
+| Variable Name              	| Data Type  	| Units 	| Usage                                                                                                                                                      	                |   	|
+|----------------------------	|------------	|-------	|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------    |---    |
+| alpha_random_start_range      | double     	| Radians   | The magnitude of the +/- value range for alpha random initial values 	                                                                                                        |   	|
+| beta_random_start_range       | double     	| Radians   | The magnitude of the positive only value range for beta random initial values 	                                                                                            |   	|
+| zeta_random_start_range       | double     	| Radians   | The magnitude of the +/- value range for zeta random initial values 	                                                                                                        |   	|
+| triptime_max                  | double     	| Seconds   | The maximum triptime, not only impacts the random starting guesses but also in deriving the time range calculation on EarthInfo and also assumed to be larger than triptime_min |   	|
+| triptime_min                  | double     	| Seconds   | The minimum triptime, not only impacts the random starting guesses but also in deriving the time range calculation on EarthInfo and also assumes that it is less than triptime_max |   	|
+| gamma_random_start_range      | double     	| None      | The magnitude of the +/- value range for gamma coefficient random initial values 	                                                                                            |   	|
+| tau_random_start_range        | double     	| None      | The magnitude of the +/- value range for tau coefficient random initial values 	                                                                                            |   	|
+| coast_random_start_range      | double     	| None      | The magnitude of the +/- value range for coast coefficient random initial values 	                                                                                            |   	|
+
+<h2>Current Recommended/Set Values</h2>
+A table to elaborate on why some variables are assigned certain values
+
+| Variable Name              	| Value  	| Reasoning 	|   |
+|-----------------------------	|-------	| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------	|---    |
+| mutation_rate                 | 0.5       | From test runs involving different mutation rates, 0.5 showed to be most effective at converging on a solution.  This was for singlue mutations, while mutation rates for more genes occurring after only showing no serious change.                          |       |
+| GuessMaxPossibleSteps         | 1000000   | This value must be set such that it is ensured that the data allocation size exceeds the possible number of steps occurring.  Reason why this value doesn't use scientific notation (1e6) is due to the standard string to integer method not able to correctly parse that value. |       |
+| triptime_min                  | 0         | Previously was set to 0.5, and it was found that when coast threshold is greater than 0 and less than 1 that the algorithm could not converge on a solution where the path taken had a triptime greater than 0.5.                                             |       |
+| triptime_max                  | 1.5       | Considering that the official mission (which doesn't use a thruster) is less than 1.5 years, any solution with or without a thruster is expected to have a triptime equivalent or under.  1.5 years as a max is considered sufficient for considering possibly longer trips that could be more effective given different constraints (such as lower c3energy).  |       |
+| timeRes                       | 3600      | Equivalent to 1 hour, this resolution for deriving earth location elements to store is considered sufficient.  For triptimes that fall between two indexes, the position/velocity is interpolated by a weighted average                                       |       |
+| max_generations               | 10001     | With current status of convergence rates for the algorithm in finding a valid solution being in the low thousands range, 10001 generations is considered plenty of time for the algorithm to find a solution and if it does reach this point then it won't find a solution as the annealing would become too small to lead to notable change that leads to a solution.  |       |
+| num_individuals               | 2880      | Population size is based on the number of available threads in the Tesla GPU, optimizing the rate a pool can be calculated.                                                                   |       |
+| survivor_count                | 360       | The newGeneration produces 8 new individuals out of every 2 survivors, setting the value to 360 results in half the pool (which is set to contain 2880 individuals) being replaced with new individuals.|       |
+| thread_block_size             | 32        | Based on the Tesla GPU.                                                                                                                                                                       |       |
+| random_start                  | true      | Random starting parameters allow for more diverse possible solutions, rather than a constrained initial start from a file.                                                                    |       |
+| best_count                    | 1         | It was found that in a given run, the best individuals when convergence occurs are very similar to each other, so setting more than 1 does not lead to more different solutions in a single run.|       |
+| doublePrecThresh              | 1e-12     | The double data type experiences loss in precision for differences in two elements within runge-kutta that as a result could lead to differences between the CPU and GPU computations of runge-kutta.  This value is a starting point in finding the smallest threshold for that difference. |     |

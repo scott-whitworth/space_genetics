@@ -1,0 +1,13 @@
+**/bin
+**/.vscode
+*.exe
+*.json
+*.csv
+*.exp
+*.lib
+#**/CUDA/**/*.lib
+#**/CUDA/**/*.exp
+*final-optimization.bin
+*final-optimization.txt
+*orbitalMotion-accel.bin
+*optimized-start-conditions.txt

@@ -57,8 +57,9 @@ On WU System & Personal Computers:
    1. Open VSCode and open the Didymos Optimization project folder
    2. Open command prompt in the VScode terminal.
    3. Navigate to the Optimization folder (input and enter "cd Cuda" then "cd Optimization").
-   4. Enter the following
-      `nvcc -ccbin "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.22.27905\bin\Hostx64\x64\cl.exe" -o <OutputFileNameHere>.exe optimization.cu`   
+   4. Enter the following(new Summer 2021):
+      `nvcc -ccbin "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.22.27905\bin\Hostx64\x64\cl.exe" -o <outputFileName> optimization.cu -arch=compute_50 -code=sm_50`   
+    - Added flags to force GPU to use its own architecture(summer 2021).
     - Make sure that <OutputFileNameHere> has a specific name (it will create a .exe file with whatever you named it), a file path could also be made so that the files created from the compiler are not in the same folder
     - *If your computer can’t find the file, then there is a problem with the path. Copy and paste the file path into a file explorer, and delete everything after `\MSVC\` then click through until you get to `\cl.exe`. Copy this path and use it to replace the old path.*
     - This code should add an .exe file with the output name that was entered

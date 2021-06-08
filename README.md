@@ -6,6 +6,7 @@ Pulled from: https://github.com/scott-whitworth/Didymos-optimization on 6/7/2021
   
 The following is pulled in data and will need to be updated.  
 
+Trevor was here
 
 
 <h1>DART Mission Optimization Project</h1>

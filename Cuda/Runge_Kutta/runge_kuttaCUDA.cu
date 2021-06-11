@@ -111,7 +111,7 @@ __global__ void rk4SimpleCUDA(Individual *individuals, double *timeInitial, doub
             }
 
             // if the spacecraft is within 0.5 au of the sun, the radial position of the spacecraft artificially increases to 1000, to force that path to not be used in the optimization.
-            if ( sqrt(pow(curPos.r,2) + pow(curPos.z,2)) < 0.5) {
+            if ( sqrt(pow(curPos.r,2) + pow(curPos.z,2)) < cConstant->sun_r_min) {
                 //This is a bad result, needs to be set to be removed
                 // Right after callRK we check for NaN in the elements, then reset individual
                 individuals[threadId].finalPos.r = nan("");

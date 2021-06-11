@@ -244,6 +244,9 @@ void cudaConstants::FileRead(std::string fileName) {
                 else if (variableName == "timeRes") {
                     this->timeRes = std::stoi(variableValue);
                 }
+                else if (variableName == "sun_r_min") {
+                    this->sun_r_min = std::stod(variableValue);
+                }
                 else if (variableName == "time_seed") { // If the conifguration sets time_seed to NONE then time_seed is set to time(0) 
                     if (variableValue != "NONE") {
                         // If variableValue is not NONE, assumption is that it is a valid double value that can be converted and used
@@ -279,7 +282,7 @@ std::ostream& operator<<(std::ostream& os, const cudaConstants& object) {
 
     os << "Runge-Kutta Related Values:\n";
     os << "\trk_tol: " << object.rk_tol << "\tdoublePrecThresh: " << object.doublePrecThresh << "\ttimeRes: " << object.timeRes << "\tGuessMaxPossibleSteps: " << object.GuessMaxPossibleSteps << "\n";
-    os << "\tmax_numsteps: " << object.max_numsteps << "\tmin_numsteps: "  << object.min_numsteps << "\tcpu_numsteps: " << object.cpu_numsteps << "\n\n";
+    os << "\tmax_numsteps: " << object.max_numsteps << "\tmin_numsteps: "  << object.min_numsteps << "\tcpu_numsteps: " << object.cpu_numsteps << "\tsun_r_min: " << object.sun_r_min << "\n\n";
 
     os << "Output Variables:\n";
     os << "\trecord_mode: " << object.record_mode << "\twrite_freq: " << object.write_freq << "\tdisp_freq: " << object.disp_freq << "\n\n";

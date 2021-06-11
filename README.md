@@ -7,17 +7,14 @@ Pulled from: https://github.com/scott-whitworth/Didymos-optimization on 6/7/2021
   
 The following is pulled in data and will need to be updated.  
 
-Trevor was here
-
-
 <h1>DART Mission Optimization Project</h1>
 <i>Last updated: August 6th, 2020</i>
 
 <h2>Project Background & Current Objective</h2>
 
-  NASA's Double Asteroid Redirection Test (DART) mission involves having the spacecraft perform a kinetic impact to change the orbital trajectory of Dimorphos around the parent body, Didymos.  The spacecraft to be used is fitted with a NEXT ion thruster though is not required to hit the target but rather be used as a technical demonstration.  For this project, our goal is to find an optimal trajectory using the thruster that would result in a greater difference in velocity with the target to make for a more effective change in Dimorphos' orbit.  Along with optimizing the effectiveness of the DART mission, this project also aims at optimizing the process of finding a solution.
+  NASA's Double Asteroid Redirection Test (DART) mission involves having the spacecraft perform a kinetic impact to change the orbital trajectory of Dimorphos around the parent body, Didymos.  The spacecraft to be used is fitted with a NEXT ion thruster though is not required to hit the target but rather be used as a technical demonstration.  For the previous project, the goal was to find an optimal trajectory using the thruster that would result in a greater difference in velocity with the target to make for a more effective change in Dimorphos' orbit. For the summer of 2021, the new goal is to attempt to optimize the program so that the spacecraft can instead perform a soft landing on the asteroid.
 
-  Currently, the tools for finding the best trajectory is utilizing a genetic algorithm that uses Nvidia's CUDA platform to optimize parameters that leads to both hitting the asteriod and maximizing the velocity difference.  At this stage of development the focus is on improving and verifying the effectiveness of the genetic algorithm in finding valid parameters that leads to an impact on the asteriod.
+  Currently, the tools for finding the best trajectory is utilizing a genetic algorithm that uses Nvidia's CUDA platform to optimize parameters that leads to both hitting the asteriod and maximizing the velocity difference. At this stage of development the focus is to use the refined genetic algorithm to optimize the cost function to work for a soft landing instead of a crash into the asteroid.
 
   Parameters being optimizing are the following
   | Variable Name               | Units    	  | Description                                                                                                                                                |   	|
@@ -45,18 +42,13 @@ There are many folders and files in this project, so here's a short rundown of f
     * Thrust_Files: Contains the code that describes the thruster and its behavior using a Fourier series to determine angles of direction. Dependent on Config_Constants/config.h
     * optimizedVector.bin: Binary file containing 14 parameters that can be used as initial guesses in the genetic algorithm, values derived from previous code in orbitalOptimization folder which is also based on old impact date data.
   - PostProcessing: Contains MATLAB files that take in output files from the Cuda program to display results.
-  - Legacy: Contains currently unused code from Summer 2019 research
-    * archives: Contains MATLAB code files that are considered no longer relevant to the project but shouldn't be completely discarded.
-    * cuda_framework: Contains code that was used in setting up and testing usage of the CUDA platform, not actively used in finding a solution
-    * earthPosition: Isolated version of earthInfo used in Cuda to calcualte the path of the Earth, not updated to usage of cudaConstants config file reading
-    * orbitalOptimization: Summer 2019's non-GPU dependent optimization method that utilizes Nelder-Mead instead of a genetic algorithm, also not actively used in current appraoch to the task.
   - DerivingImpactValues.xlsx : A current (likely temporary) method of converting JPL data values from cartesian to cylindrical units by using spreadhsheet fields and computations.  The converted values are then copied and put into genetic.config to be read and used.  This does not directly impact the code.
   
 <h2> Running CUDA Code: </h2>
 
 On WU System & Personal Computers:
 1. To Compile:
-   1. Open VSCode and open the Didymos Optimization project folder
+   1. Open VSCode and open the Space_Genetics project folder
    2. Open command prompt in the VScode terminal.
    3. Navigate to the Optimization folder (input and enter "cd Cuda" then "cd Optimization").
    4. Enter the following(new Summer 2021):

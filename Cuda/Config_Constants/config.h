@@ -90,6 +90,9 @@ struct cudaConstants {
     // Used in generating time range for Earth calculations (units in seconds), distance between explicit time intervals stored
     int timeRes;
 
+    // minimum distance the spacecraft can be to the sun.
+    double sun_r_min;
+
     // Default constructor, sets the config file path to be "genetic.config" for geneticFileRead()
     cudaConstants();
 

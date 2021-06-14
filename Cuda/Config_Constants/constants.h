@@ -7,6 +7,7 @@
 
 // Planetary properties and constants
 #define earthRadius (1.49598261e11/AU) // radial distance of Earth from Sun (au)
+#define earthPeriod SECONDS_IN_YEAR //Orbital period of the Earth around the Sun (s)
 #define earthMass 5.97237e24 // mass of the earth (kg)
 #define lunarMass 7.34767e22 // mass of the earth's moon (kg)
 #define ESOI (earthRadius*pow(((earthMass+lunarMass)/massSun),0.4)) // escape sphere of influence (au)

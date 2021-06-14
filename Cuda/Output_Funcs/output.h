@@ -6,7 +6,7 @@
 // Utility function to display the currently best individual onto the terminal while the algorithm is still running
 // input: Individual to be displayed (assumed to be the best individual of the pool) 
 //        and the value for the current generation iterated
-// output: display: generation, individual's posDiff, velDiff, and cost values
+// output: display: generation, individual's posDiff, speedDiff, and cost values
 void terminalDisplay(Individual& individual, unsigned int currentGeneration);
 
 // Records error in energy conservation due to thrust calculations
@@ -47,7 +47,7 @@ void progressiveAnalysis(int generation, int numStep, double *start, elements<do
 
 // Initialize some of the files used in record mode with header rows
 // input: cConstants - to access time_seed for deriving file name conventions
-// output: files genPerformanceT-[time_seed].csv is given initial header row info for generation, best posDiff, best velDiff, and parameters of best individual
+// output: files genPerformanceT-[time_seed].csv is given initial header row info for generation, best posDiff, best speedDiff, and parameters of best individual
 void initializeRecord(const cudaConstants * cConstants);
 
 // Take in the current state of the generation and appends to files

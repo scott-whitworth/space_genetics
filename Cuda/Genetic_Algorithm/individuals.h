@@ -11,7 +11,7 @@ struct Individual {
     elements<double> finalPos; // final position of the spacecraft at end of run
 
     double posDiff; // difference in position between spacecraft and center of asteroid at end of run
-    double velDiff; // difference in velocity between spacecraft and asteroid at end of run
+    double speedDiff; // difference in velocity between spacecraft and asteroid at end of run
     double cost;    // cost value of the individual, something that the genetic algorithm is attempting to minimize
 
     // Default constructor
@@ -28,15 +28,17 @@ struct Individual {
     // Output: Assigns and returns this individual's posDiff value
     __host__ __device__ double getPosDiff(const cudaConstants* cConstants);
 
-    // Calculates a velDiff value
+    // Calculates a speedDiff value
     // Input: cConstants in accessing properties such as vr_fin_ast, vtheta_fin_ast, and vz_fin_ast
-    // Output: Assigns and returns this individual's velDiff value
-    __host__ __device__ double getVelDiff(const cudaConstants* cConstants);
+    // Output: Assigns and returns this individual's speedDiff value
+    __host__ __device__ double getSpeedDiff(const cudaConstants* cConstants);
 
     // Calculates a cost value to quantitatively evaluate this Individual
     // Input: cConstants in accessing properties such as pos_threshold, c3energy, and v_impact
     // Output: Assigns and returns this individual's cost value
-    __host__ __device__ double getCost(const cudaConstants* cConstants);
+    //__host__ __device__ double getCost(const cudaConstants* cConstants);
+    __host__ __device__ double getCost_Hard(const cudaConstants* cConstants);
+    __host__ __device__ double getCost_Soft(const cudaConstants* cConstants);
 
     // Comparison operators overloaded to compare individuals by their cost values (determined in getCost())
     bool operator>(Individual &other);
@@ -52,7 +54,7 @@ bool BetterPosDiff(Individual& personA, Individual& personB);
 // Compare two individuals by their velocity difference values
 // input: two individuals
 // output: returns true if personB has a higher velocity difference than personA
-bool BetterVelDiff(Individual& personA, Individual& personB);
+bool BetterSpeedDiff(Individual& personA, Individual& personB);
 
 //Utility to calculate the position difference between a position velocity set and the asteroid final position
 // Input: currentState - set of position and velocity coordinates

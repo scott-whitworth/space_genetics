@@ -145,8 +145,8 @@ void cudaConstants::FileRead(std::string fileName) {
                 else if (variableName == "anneal_initial") {
                     this->anneal_initial = std::stod(variableValue);
                 }
-                else if (variableName == "survivorRatio") {
-                    this->survivorRatio = std::stod(variableValue);
+                else if (variableName == "sortingRatio") {
+                    this->sortingRatio = std::stod(variableValue);
                 }
                 else if (variableName == "mutation_rate") {
                     this->mutation_rate = std::stod(variableValue);
@@ -263,6 +263,9 @@ void cudaConstants::FileRead(std::string fileName) {
                 else if (variableName == "orbitalPeriod") {
                     this->orbitalPeriod = stod(variableValue);
                 }
+                else if (variableName == "missionType") {
+                    this->missionType = std::stoi(variableValue);
+                }
                 else if (variableName == "time_seed") { // If the conifguration sets time_seed to NONE then time_seed is set to time(0) 
                     if (variableValue != "NONE") {
                         // If variableValue is not NONE, assumption is that it is a valid double value that can be converted and used
@@ -293,7 +296,7 @@ std::ostream& operator<<(std::ostream& os, const cudaConstants& object) {
     os << "\ttime_seed: "       << object.time_seed       << "\trandom_start: "   << object.random_start   << "\t\tnon_r_start_address: " << object.initial_start_file_address << "\n";
     os << "\tanneal_factor: "   << object.anneal_factor   << "\tanneal_initial: " << object.anneal_initial <<   "\tchange_check: "        << object.change_check << "\n";
     os << "\tnum_individuals: " << object.num_individuals << "\tthread_block_size: "     << object.thread_block_size << "\n";
-    os << "\tsurvivor_count: "  << object.survivor_count  << "\tsurvivorRatio: "    << object.survivorRatio;
+    os << "\tsurvivor_count: "  << object.survivor_count  << "\tsortingRatio: "    << object.sortingRatio;
     os << "\tbest_count: "      << object.best_count      << "\t\tmax_generations: "<< object.max_generations<< "\trun_count: " << object.run_count << "\n\n";
 
     os << "Runge-Kutta Related Values:\n";
@@ -324,7 +327,9 @@ std::ostream& operator<<(std::ostream& os, const cudaConstants& object) {
 
     os << "Earth Info:\n";
     os << "\t R: " << object.r_fin_earth  << "\t 0: " << object.theta_fin_earth  << "\t Z: " << object.z_fin_earth  << "\n";
-    os << "\tvR: " << object.vr_fin_earth << "\tv0: " << object.vtheta_fin_earth << "\tvZ: " << object.vz_fin_earth << "\n";
+    os << "\tvR: " << object.vr_fin_earth << "\tv0: " << object.vtheta_fin_earth << "\tvZ: " << object.vz_fin_earth << "\n\n";
+
+    os << "Mission Type: " << object.missionType << "\n";
     os << "====================================================================================================\n";
     
     return os;

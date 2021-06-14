@@ -69,7 +69,7 @@ template <class T> void rk4sys(const T & timeInitial, const T & timeFinal, T *ti
     
     // Test outputs to observe difference between rk4sys results with CUDA runge-kutta results
     std::cout << "rk4sys posDiff: " << sqrt(pow(cConstant->r_fin_ast - y_new[lastStep].r, 2) + pow(cConstant->r_fin_ast * cConstant->theta_fin_ast - y_new[lastStep].r * fmod(y_new[lastStep].theta, 2 * M_PI), 2) + pow(cConstant->z_fin_ast - y_new[lastStep].z, 2)) << std::endl;
-    std::cout << "rk4sys velDiff: " << sqrt(pow(cConstant->vr_fin_ast - y_new[lastStep].vr, 2) + pow(cConstant->vtheta_fin_ast - y_new[lastStep].vtheta, 2) + pow(cConstant->vz_fin_ast - y_new[lastStep].vz, 2));
+    std::cout << "rk4sys speedDiff: " << sqrt(pow(cConstant->vr_fin_ast - y_new[lastStep].vr, 2) + pow(cConstant->vtheta_fin_ast - y_new[lastStep].vtheta, 2) + pow(cConstant->vz_fin_ast - y_new[lastStep].vz, 2));
 }
 
 // ** Currently not used **

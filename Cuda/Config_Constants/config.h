@@ -26,7 +26,7 @@ struct cudaConstants {
     double anneal_factor;  // factor by which annealing is multiplied with when there is no change in the best individual over 100 generations
 
     double mutation_rate; // The percentage for probability of mutating a gene in a new individual, called iteratively to mutate more genes until the check fails
-    double survivorRatio; // A percentage for how much of selectSurvivors() chooses individuals that are bestPosDiff rather than bestVelDiff (0.95 = more posDiff, 0.05 = more velDiff)
+    double sortingRatio; // A percentage for how much of selectSurvivors() chooses individuals that are bestPosDiff rather than bestSpeedDiff (0.95 = more posDiff, 0.05 = more speedDiff)
     
     // Used in mutate(), affects the scale of change for the respective parameter values, in conjunction with annealing
     // Represents max bounds of mutation, mutation will never be +/- this value
@@ -97,7 +97,11 @@ struct cudaConstants {
     //destination asteroid file. The constants for the asteroid and earth data are passed in with a different file in order to switch between asteroids easier.
     std::string destination;
 
+    //asteroid orbital constant
     double orbitalPeriod;
+
+    //Flag for what type of landing you want. Current modes: "soft"=1, "hard"=2
+    int missionType;
 
     // Default constructor, sets the config file path to be "genetic.config" for geneticFileRead()
     cudaConstants();

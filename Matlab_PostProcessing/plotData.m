@@ -7,7 +7,10 @@ function [] = plotData(cR,y0A,y0E,sizeC,tripTime,coast,coast_threshold,gammaCoef
     % Solving differential motions
     %65803 Didymos orbital period = 770.2656051223044 days.
     %1999RQ36 Bennu orbital period = 436.6487281348487 days.
-    timeFinal=(436.6487281348487*24*3600); % orbital period
+    T_Bennu=436.6487281348487*24*3600;
+    T_Didymos=770.2656051223044*24*3600;
+
+%    timeFinal=T_Bennu; % orbital period
 %    tspan=[timeFinal 0];
 %    options = odeset('RelTol',1e-12);
 %    [tE, yE] = ode45(@orbitalMotion,tspan,y0E,options,gammaCoeff,tauCoeff,timeFinal,0);
@@ -344,28 +347,35 @@ function [] = plotData(cR,y0A,y0E,sizeC,tripTime,coast,coast_threshold,gammaCoef
     [x,y,z] = sphere;
     
     Earth=0.05;%NOT to scale, for visualization only
-    surf(eX_launch+Earth*r_esoi*x, eY_launch+Earth*r_esoi*y, eZ_launch+Earth*r_esoi*z, 'FaceColor','b','FaceAlpha',1.0, 'LineStyle',':')
+%    surf(eX_launch+Earth*r_esoi*x, eY_launch+Earth*r_esoi*y, eZ_launch+Earth*r_esoi*z, 'FaceColor','b','FaceAlpha',1.0, 'LineStyle',':')
+    surf(Earth*r_esoi*x, Earth*r_esoi*y, Earth*r_esoi*z, 'FaceColor','b','FaceAlpha',1.0, 'LineStyle',':')
     hold on
     % Earth's sphere of influence at launch
-    surf(eX_launch+r_esoi*x, eY_launch+r_esoi*y, eZ_launch+r_esoi*z, 'FaceColor','b','FaceAlpha',0.125, 'LineStyle',':')
+%    surf(eX_launch+r_esoi*x, eY_launch+r_esoi*y, eZ_launch+r_esoi*z, 'FaceColor','b','FaceAlpha',0.125, 'LineStyle',':')
+    surf(r_esoi*x, r_esoi*y, r_esoi*z, 'FaceColor','b','FaceAlpha',0.125, 'LineStyle',':')
     hold on
     
-    % In-plane initial position
+    % In-plane initial position in the reference of the Earth
     [alpha_x, alpha_y, alpha_z] = pol2cart(alpha, r_esoi, 0);
-    plot3(alpha_x+eX_launch, alpha_y+eY_launch, alpha_z+eZ_launch,'*r')
+%    plot3(alpha_x+eX_launch, alpha_y+eY_launch, alpha_z+eZ_launch,'*r')
+    plot3(alpha_x, alpha_y, alpha_z,'*r')
     hold on
     
-    % Initial velocity vector
-    quiver3(alpha_x+eX_launch, alpha_y+eY_launch, alpha_z+eZ_launch, sin(beta)*cos(zeta), cos(beta)*cos(zeta), sin(zeta),'k','Autoscalefactor',.005,'LineWidth',1);
+    % Initial velocity vector in the reference of the Earth
+%    quiver3(alpha_x+eX_launch, alpha_y+eY_launch, alpha_z+eZ_launch, sin(beta)*cos(zeta), cos(beta)*cos(zeta), sin(zeta),'k','Autoscalefactor',.005,'LineWidth',1);
+    quiver3(alpha_x, alpha_y, alpha_z, sin(beta)*cos(zeta), cos(beta)*cos(zeta), sin(zeta),'k','Autoscalefactor',.005,'LineWidth',1);
 
     % analytical scaling
-    xlim([eX_launch-2*r_esoi, eX_launch+2*r_esoi])
-    ylim([eY_launch-2*r_esoi, eY_launch+2*r_esoi])
-    zlim([eZ_launch-2*r_esoi, eZ_launch+2*r_esoi])
+%    xlim([eX_launch-2*r_esoi, eX_launch+2*r_esoi])
+%    ylim([eY_launch-2*r_esoi, eY_launch+2*r_esoi])
+%    zlim([eZ_launch-2*r_esoi, eZ_launch+2*r_esoi])
+    xlim([-2*r_esoi, 2*r_esoi])
+    ylim([-2*r_esoi, 2*r_esoi])
+    zlim([-2*r_esoi, 2*r_esoi])
     xlabel('x (AU)')
     ylabel('y (AU)')
     zlabel('z (AU)')
-    title('Launch conditions')
+    title('Earth-Centered Launch conditions')
     legend({'Earth','ESOI','Position','Velocity'})
     
     

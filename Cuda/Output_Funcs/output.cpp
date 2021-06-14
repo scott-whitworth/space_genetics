@@ -4,12 +4,12 @@
 
 // Utility function to display the currently best individual onto the terminal while the algorithm is still running
 // input: Individual to be displayed (assumed to be the best individual of the pool) and the value for the current generation iterated
-// output: onto the console termina, generation is displayed and best individual's posDiff, velDiff, and cost values
+// output: onto the console termina, generation is displayed and best individual's posDiff, speedDiff, and cost values
 void terminalDisplay(Individual& individual, unsigned int currentGeneration) {
     std::cout << "\nGeneration: " << currentGeneration << std::endl;
     std::cout << "Best individual:" << std::endl;
     std::cout << "\tposDiff: " << individual.posDiff << std::endl;
-    std::cout << "\tvelDiff: " << individual.velDiff << std::endl;
+    std::cout << "\tspeedDiff: " << individual.speedDiff << std::endl;
     std::cout << "\tcost: "    << individual.cost << std::endl;
 }
 
@@ -264,7 +264,7 @@ void progressiveAnalysis(int generation, int numStep, double *start, elements<do
   //Set up file
   std::ofstream output;
   output.open("progressiveAnalysis.csv", std::ios_base::app);
-  output << "\ntime_seed,numStep,posDiff,velDiff,tripTime,alpha,beta,zeta,";
+  output << "\ntime_seed,numStep,posDiff,speedDiff,tripTime,alpha,beta,zeta,";
 
   //Headers
   for (int i = 0; i < GAMMA_ARRAY_SIZE; i++) {
@@ -334,7 +334,7 @@ void initializeRecord(const cudaConstants * cConstants) {
   std::string fileId = std::to_string(seed);
   excelFile.open("genPerformance-" + fileId + ".csv", std::ios_base::app);
 
-  excelFile << "gen,bestPosDiff,bestVelDiff,alpha,beta,zeta,tripTime,";
+  excelFile << "gen,bestPosDiff,bestSpeedDiff,alpha,beta,zeta,tripTime,";
   
   for (int i = 0; i < GAMMA_ARRAY_SIZE; i++) {
     excelFile << "gamma"; 
@@ -383,9 +383,9 @@ void recordGenerationPerformance(const cudaConstants * cConstants, Individual * 
   int seed = cConstants->time_seed;
   std::string fileId = std::to_string(seed);
   excelFile.open("genPerformance-" + fileId + ".csv", std::ios_base::app);
-  // Record best individuals best posDiff and velDiff of this generation
+  // Record best individuals best posDiff and speedDiff of this generation
   excelFile << generation << "," << pool[0].posDiff << ",";
-  excelFile << pool[0].velDiff << ",";
+  excelFile << pool[0].speedDiff << ",";
 
   // Record best individuals parameters
   excelFile << pool[0].startParams.alpha << ",";
@@ -481,7 +481,7 @@ void finalRecord(const cudaConstants* cConstants, Individual * pool, int generat
   // Test outputs
   std::cout << "Comparison\n";
   std::cout << "CUDA posDiff: " << pool[0].posDiff << std::endl;
-  std::cout << "CUDA velDiff: " << pool[0].velDiff << std::endl;
+  std::cout << "CUDA speedDiff: " << pool[0].speedDiff << std::endl;
 
   // Evaluate and print this solution's information to binary files
   trajectoryPrint(start, generation, cConstants, pool[0]);
@@ -527,7 +527,7 @@ void recordFuelOutput(const cudaConstants* cConstants, double solution[], double
   excelFile << cConstants->fuel_mass << ",";
   excelFile << fuelSpent << ",";
   excelFile << solution[TRIPTIME_OFFSET]/(3600*24) << ",";
-  excelFile << best.velDiff*AU << "\n";
+  excelFile << best.speedDiff*AU << "\n";
 
   excelFile.close();
 }

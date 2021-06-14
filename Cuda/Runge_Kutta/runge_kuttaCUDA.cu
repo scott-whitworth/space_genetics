@@ -116,9 +116,9 @@ __global__ void rk4SimpleCUDA(Individual *individuals, double *timeInitial, doub
                 // Right after callRK we check for NaN in the elements, then reset individual
                 individuals[threadId].finalPos.r = nan("");
 
-                //Just to make sure invalidating posDiff/velDiff
+                //Just to make sure invalidating posDiff/speedDiff
                 individuals[threadId].posDiff = nan("");
-                individuals[threadId].velDiff = nan("");            
+                individuals[threadId].speedDiff = nan("");            
 
                 return;
             }
@@ -129,9 +129,15 @@ __global__ void rk4SimpleCUDA(Individual *individuals, double *timeInitial, doub
 
         // Calculate new values for this thread
         individuals[threadId].getPosDiff(cConstant);
-        individuals[threadId].getVelDiff(cConstant);
-        individuals[threadId].getCost(cConstant);
+        individuals[threadId].getSpeedDiff(cConstant);
 
+        if (cConstant->missionType == 1){
+            individuals[threadId].getCost_Soft(cConstant);
+        }
+        else if (cConstant->missionType == 2){
+            individuals[threadId].getCost_Hard(cConstant);    
+        }
+        
         return;
     }
     return;

@@ -11,7 +11,7 @@
 //        survivors - pointer array of individuals to promote via crossover / mutate 
 // Output: pool is left sorted by individuals with higher velocity difference
 //         survivors contains an array of size selectionSize of individuals to be used in newGeneration()
-void selectSurvivors(Individual * pool, int poolSize, int selectionSize, Individual* survivors, const double & ratio);
+void selectSurvivors(Individual * pool, int poolSize, int selectionSize, Individual* survivors, const double & ratio, const int & missionType);
 
 ///////////////////////////////////////////////////////////////
 // Crossover Functions                                       //

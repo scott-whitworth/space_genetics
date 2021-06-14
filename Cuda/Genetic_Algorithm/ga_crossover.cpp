@@ -11,7 +11,7 @@ enum maskValue {
 };
 
 // Determing selection of survivors that will carry properties into the new individuals of the newGeneration
-void selectSurvivors(Individual * pool, int poolSize, int selectionSize, Individual* survivors, const double & ratio) {
+void selectSurvivors(Individual * pool, int poolSize, int selectionSize, Individual* survivors, const double & ratio, const int & missionType) {
     // Sort the pool by position difference
     // and assign the first part of the survivor array for best posDiff individuals
     // portion size based on the ratio percentage
@@ -21,8 +21,14 @@ void selectSurvivors(Individual * pool, int poolSize, int selectionSize, Individ
         survivors[i] = pool[i];
     }
 
-    // Sort the pool by velocity difference
-    std::sort(pool, pool+poolSize, BetterVelDiff);
+    // Sort the pool by speed difference. If mission type is soft, use LowerSpeedDiff because we want velocity = 0
+    if(missionType == 2){
+        std::sort(pool, pool+poolSize, HigherSpeedDiff);
+    }
+    else if(missionType == 1){
+        std::sort(pool, pool+poolSize, LowerSpeedDiff);
+    }
+
     //starting where first loop ended
     for (int i = selectionSize*ratio; i < selectionSize; i++) {
         survivors[(i)] = pool[i];

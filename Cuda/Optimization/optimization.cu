@@ -26,7 +26,7 @@ bool changeInBest(double previousBestPos, double previousBestVel, const Individu
     }
     else {
         /* //Used if Velocity should be considered
-        if (trunc(previousBestVel/distinguishRate) != trunc(currentBest.velDiff/distinguishRate)) {
+        if (trunc(previousBestVel/distinguishRate) != trunc(currentBest.speedDiff/distinguishRate)) {
             return true;
         }
         else return false;
@@ -42,13 +42,27 @@ bool changeInBest(double previousBestPos, double previousBestVel, const Individu
 //        cConstants - struct holding config values, used for accessing best_count value
 // Output: Returns true if top best_count individuals within the pool are within the tolerance
 bool allWithinTolerance(double tolerance, Individual * pool, const cudaConstants* cConstants) {
-    // Iterate to check best_count number of 'top' individuals
-    for (int i = 0; i < cConstants->best_count; i++) {
-        if(pool[i].getCost(cConstants) >= tolerance) {
-            //One was not within tolerance
-            return false;
+
+    //Check what type of mission is running to use the correct cost function
+    if (cConstants->missionType == 1){
+        // Iterate to check best_count number of 'top' individuals
+        for (int i = 0; i < cConstants->best_count; i++) {
+            if(pool[i].getCost_Soft(cConstants) >= tolerance) {
+                //One was not within tolerance
+                return false;
+            }
         }
     }
+    else if(cConstants->missionType == 2){
+        // Iterate to check best_count number of 'top' individuals
+        for (int i = 0; i < cConstants->best_count; i++) {
+            if(pool[i].getCost_Hard(cConstants) >= tolerance) {
+                //One was not within tolerance
+                return false;
+            }
+        }  
+    }
+
     // If iterated through and all were within tolerance, success
     return true;
 }
@@ -200,22 +214,30 @@ double optimize(const cudaConstants* cConstants) {
                 //std::cout << std::endl << std::endl << "NAN FOUND" << std::endl << std::endl;
                 numNans++;
                 inputParameters[k] = Individual(randomParameters(rng, cConstants), cConstants);
-                // Set to be a bad individual by giving it bad posDiff and velDiffs
+                // Set to be a bad individual by giving it bad posDiff and speedDiffs
                 // therefore also having a bad cost value
                 // won't be promoted in crossover
                 inputParameters[k].posDiff = 1.0;
-                inputParameters[k].velDiff = 0.0;
-                // calculate its new cost function based on 'bad' differences
-                inputParameters[k].getCost(cConstants);
+                inputParameters[k].speedDiff = 0.0;
+
+                if (cConstants->missionType == 1){
+                    // calculate its new cost function based on 'bad' differences
+                    inputParameters[k].getCost_Soft(cConstants);
+                }
+                else if (cConstants->missionType == 2){
+                    // calculate its new cost function based on 'bad' differences
+                    inputParameters[k].getCost_Hard(cConstants);                   
+                }
+                
              }
         }
         // Preparing survivor pool with individuals for the newGeneration crossover
         // Survivor pool contains:
         //               - individuals with best PosDiff
-        //               - individuals with best velDiffs
-        //               - depends on cConstants->survivorRatio (0.1 is 10% are best PosDiff for example)
-        // inputParameters is left sorted by individuals with best velDiffs 
-        selectSurvivors(inputParameters, cConstants->num_individuals, cConstants->survivor_count, survivors, cConstants->survivorRatio); // Choose which individuals are in survivors, current method selects half to be best posDiff and other half to be best velDiff
+        //               - individuals with best speedDiffs
+        //               - depends on cConstants->sortingRatio (0.1 is 10% are best PosDiff for example)
+        // inputParameters is left sorted by individuals with best speedDiffs 
+        selectSurvivors(inputParameters, cConstants->num_individuals, cConstants->survivor_count, survivors, cConstants->sortingRatio, cConstants->missionType); // Choose which individuals are in survivors, current method selects half to be best posDiff and other half to be best speedDiff
 
         // sort individuals based on overloaded relational operators
         // gives reference of which to replace and which to carry to the next generation
@@ -255,7 +277,7 @@ double optimize(const cudaConstants* cConstants) {
                 std::cout << "\nnew anneal: " << currentAnneal << std::endl;
             }
             previousBestPos = currentBest.posDiff;
-            previousBestVel = currentBest.velDiff;
+            previousBestVel = currentBest.speedDiff;
         }
 
         // If in recording mode and write_freq reached, call the record method
@@ -265,7 +287,7 @@ double optimize(const cudaConstants* cConstants) {
         
         // Only call terminalDisplay every DISP_FREQ, not every single generation
         if ( static_cast<int>(generation) % cConstants->disp_freq == 0) {
-            // Prints the best individual's posDiff / velDiff and cost
+            // Prints the best individual's posDiff / speedDiff and cost
             terminalDisplay(inputParameters[0], generation);
             std::cout << "\n# of Nans this increment: " << numNans << "\n" << std::endl;
             numNans = 0; //Reset the tally of nans.

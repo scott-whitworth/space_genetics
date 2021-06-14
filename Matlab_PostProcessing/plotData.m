@@ -37,23 +37,23 @@ function [] = plotData(cR,y0A,y0E,sizeC,tripTime,coast,coast_threshold,gammaCoef
     figure(1) %orbitals
     subplot(2,3,1)
     polarplot(yE(:,2),yE(:,1),'.')
-    rlim([0 1.75])
+    rlim([0 1.5])
     rticks([0.25 0.5 0.75 1.0 1.25])
     hold on
     polarplot(yA(:,2),yA(:,1),'.')
-    rlim([0 1.75])
+    rlim([0 1.5])
     rticks([0.25 0.5 0.75 1.0 1.25])
     hold on
     polarplot(cR(2,1),cR(1,1),'r*')
-    rlim([0 1.75])
+    rlim([0 1.5])
     rticks([0.25 0.5 0.75 1.0 1.25])
     hold on
     polarplot(y0A(2),y0A(1),'*b')
-    rlim([0 1.75])
+    rlim([0 1.5])
     rticks([0.25 0.5 0.75 1.0 1.25])
     hold on
     polarplot(cR(2,:),cR(1,:),'Color',[0.4660, 0.6740, 0.1880],'LineWidth', 2)
-    rlim([0 1.75])
+    rlim([0 1.5])
     rticks([0.25 0.5 0.75 1.0 1.25])
     text(0, 0, '\Leftarrow Sun')
     text(cR(2,1), cR(1,1), '\leftarrow Launch')
@@ -249,51 +249,51 @@ function [] = plotData(cR,y0A,y0E,sizeC,tripTime,coast,coast_threshold,gammaCoef
     xlabel('t (days)')
     ylabel('a_{z} (m/s^{2})')
     
-    % Plot 4
-    %Thrust angle plots
-    figure(4)
-    
-    % Test Fourier calculation for start
-    % vpa(cR(8,1)), vpa(cR(9,1))
-    
-    subplot(2,3,1)
-    plot(cR(7,:)/(3600*24),mod(cR(8,:),2*pi),'color','k')
-    xlabel('t (days)'), ylabel('\gamma (rad)')
-    xlim([0 tripTime/(3600*24)])
-    title('In-plane thrust angle')
-    
-    subplot(2,3,2)
-    plot(cR(7,:)/(3600*24),cR(9,:),'color','k')
-    xlabel('t (days)'), ylabel('\tau (rad)')
-    xlim([0 tripTime/(3600*24)])
-    title('Out-of-plane thrust angle')
-    
-    subplot(2,3,3)
-    plot(cR(7,:)/(3600*24),co,'color','k')
-    xlabel('t (days)'), ylabel('\psi')
-    xlim([0 tripTime/(3600*24)])
-    title('Coast series')
-    
-    subplot(2,3,4)
-    plot(cR(7,:)/(3600*24),sin(cR(8,:)).*cos(cR(9,:)),'color','k')
-    xlim([0 tripTime/(3600*24)]), ylim([-1,1])
-    title('Radial thrust fraction')
-    xlabel('t (days)')
-    ylabel('sin(\gamma)cos(\tau)')
-    
-    subplot(2,3,5)
-    plot(cR(7,:)/(3600*24),cos(cR(8,:)).*cos(cR(9,:)),'color','k')
-    xlim([0 tripTime/(3600*24)]), ylim([-1,1])
-    title('Tangential thrust fraction')
-    xlabel('t (days)')
-    ylabel('cos(\gamma)cos(\tau)')
-    
-    subplot(2,3,6)
-    plot(cR(7,:)/(3600*24),sin(cR(9,:)),'color','k')
-    xlim([0 tripTime/(3600*24)]), ylim([-1,1])
-    title('Off-plane thrust fraction')
-    xlabel('t (days)')
-    ylabel('sin(\tau)')
+%     % Plot 4
+%     %Thrust angle plots
+%     figure(4)
+%     
+%     % Test Fourier calculation for start
+%     % vpa(cR(8,1)), vpa(cR(9,1))
+%     
+%     subplot(2,3,1)
+%     plot(cR(7,:)/(3600*24),mod(cR(8,:),2*pi),'color','k')
+%     xlabel('t (days)'), ylabel('\gamma (rad)')
+%     xlim([0 tripTime/(3600*24)])
+%     title('In-plane thrust angle')
+%     
+%     subplot(2,3,2)
+%     plot(cR(7,:)/(3600*24),cR(9,:),'color','k')
+%     xlabel('t (days)'), ylabel('\tau (rad)')
+%     xlim([0 tripTime/(3600*24)])
+%     title('Out-of-plane thrust angle')
+%     
+%     subplot(2,3,3)
+%     plot(cR(7,:)/(3600*24),co,'color','k')
+%     xlabel('t (days)'), ylabel('\psi')
+%     xlim([0 tripTime/(3600*24)])
+%     title('Coast series')
+%     
+%     subplot(2,3,4)
+%     plot(cR(7,:)/(3600*24),sin(cR(8,:)).*cos(cR(9,:)),'color','k')
+%     xlim([0 tripTime/(3600*24)]), ylim([-1,1])
+%     title('Radial thrust fraction')
+%     xlabel('t (days)')
+%     ylabel('sin(\gamma)cos(\tau)')
+%     
+%     subplot(2,3,5)
+%     plot(cR(7,:)/(3600*24),cos(cR(8,:)).*cos(cR(9,:)),'color','k')
+%     xlim([0 tripTime/(3600*24)]), ylim([-1,1])
+%     title('Tangential thrust fraction')
+%     xlabel('t (days)')
+%     ylabel('cos(\gamma)cos(\tau)')
+%     
+%     subplot(2,3,6)
+%     plot(cR(7,:)/(3600*24),sin(cR(9,:)),'color','k')
+%     xlim([0 tripTime/(3600*24)]), ylim([-1,1])
+%     title('Off-plane thrust fraction')
+%     xlabel('t (days)')
+%     ylabel('sin(\tau)')
     
     % Plot 5: full orbital plots (vectors and no vectors)
     
@@ -301,8 +301,8 @@ function [] = plotData(cR,y0A,y0E,sizeC,tripTime,coast,coast_threshold,gammaCoef
     %a=figure(3); % plot with vectors
     figure(5) % plot with vectors
     plot3(cX,cY,cZ,'LineWidth', 3,'Color',[0.4660, 0.6740, 0.1880])
-    xlim([-2.25 2.25])
-    ylim([-2.25 2.25])
+    xlim([-2.5 2.5])
+    ylim([-2.5 2.5])
     zlim([-0.25 0.25])
     xlabel('x (AU)')
     ylabel('y (AU)')

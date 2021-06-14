@@ -98,7 +98,6 @@ struct cudaConstants {
     std::string destination;
 
     double orbitalPeriod;
-    double orbitalInclination;
 
     // Default constructor, sets the config file path to be "genetic.config" for geneticFileRead()
     cudaConstants();

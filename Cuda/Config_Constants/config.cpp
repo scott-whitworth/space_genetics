@@ -7,6 +7,8 @@
 #include "constants.h" // for AU
 
 // Constructors uses geneticFileRead() to set the struct's properties from a default config file located in same folder as executable
+/*
+//This function is not used
 cudaConstants::cudaConstants() {
     // Get values from the file
     FileRead("genetic.config");
@@ -20,6 +22,7 @@ cudaConstants::cudaConstants() {
     // Assign cpu_numsteps to be equivalent to max_numsteps
     this->cpu_numsteps = this->max_numsteps;
 }
+*/
 
 // Operates same as default, however uses configFile as address for where the config file to be used is located
 // Asteroid file is determined within configFile
@@ -259,9 +262,6 @@ void cudaConstants::FileRead(std::string fileName) {
                 }
                 else if (variableName == "orbitalPeriod") {
                     this->orbitalPeriod = stod(variableValue);
-                }
-                else if (variableName == "orbitalInclination") {
-                    this->orbitalInclination = stod(variableValue);
                 }
                 else if (variableName == "time_seed") { // If the conifguration sets time_seed to NONE then time_seed is set to time(0) 
                     if (variableValue != "NONE") {

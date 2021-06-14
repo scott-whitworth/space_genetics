@@ -190,11 +190,15 @@ double optimize(const cudaConstants* cConstants) {
         // (inputParameters + (cConstants->num_individuals - newInd)) value accesses the start of the section of the inputParameters array that contains new individuals
         callRK(newInd, cConstants->thread_block_size, inputParameters + (cConstants->num_individuals - newInd), timeInitial, stepSize, absTol, calcPerS, cConstants); // calculate trajectories for new individuals
 
+        //numNans - number of times a nan is found in 100 generations.
+        int numNans = 0;
+
         // if we got bad results reset the Individual to random starting values (it may still be used for crossover) and set the final position to be way off so it gets replaced by a new Individual
         for (int k = 0; k < cConstants->num_individuals; k++) {
             //Checking each individuals final position for NaNs
             if (isnan(inputParameters[k].finalPos.r) || isnan(inputParameters[k].finalPos.theta) || isnan(inputParameters[k].finalPos.z) || isnan(inputParameters[k].finalPos.vr) || isnan(inputParameters[k].finalPos.vtheta) || isnan(inputParameters[k].finalPos.vz)) {
-                std::cout << std::endl << std::endl << "NAN FOUND" << std::endl << std::endl;
+                //std::cout << std::endl << std::endl << "NAN FOUND" << std::endl << std::endl;
+                numNans++;
                 inputParameters[k] = Individual(randomParameters(rng, cConstants), cConstants);
                 // Set to be a bad individual by giving it bad posDiff and velDiffs
                 // therefore also having a bad cost value
@@ -263,6 +267,8 @@ double optimize(const cudaConstants* cConstants) {
         if ( static_cast<int>(generation) % cConstants->disp_freq == 0) {
             // Prints the best individual's posDiff / velDiff and cost
             terminalDisplay(inputParameters[0], generation);
+            std::cout << "\n# of Nans this increment: " << numNans << "\n" << std::endl;
+            numNans = 0; //Reset the tally of nans.
         }
 
         // Before replacing new individuals, determine whether all are within tolerance

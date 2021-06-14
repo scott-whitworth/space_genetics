@@ -10,6 +10,8 @@
 cudaConstants::cudaConstants() {
     // Get values from the file
     FileRead("genetic.config");
+    //get the destination
+    FileRead(this->destination);
     // Now that dry_mass and fuel_mass have been acquired, derive wet_mass
     this->wet_mass = this->dry_mass + this->fuel_mass;
     // Now that c3scale and c3energy have been assigned values, derive the final c3energy and v_escape
@@ -20,9 +22,12 @@ cudaConstants::cudaConstants() {
 }
 
 // Operates same as default, however uses configFile as address for where the config file to be used is located
+// Asteroid file is determined within configFile
 cudaConstants::cudaConstants(std::string configFile) {
     // Get values from the file
     FileRead(configFile);
+    //get the destination
+    FileRead("../Config_Constants/" + this->destination);
     // Now that dry_mass and fuel_mass have been acquired, derive wet_mass
     this->wet_mass = this->dry_mass + this->fuel_mass;
     // Now that c3scale and c3energy have been assigned values, derive the final c3energy and v_escape
@@ -31,6 +36,8 @@ cudaConstants::cudaConstants(std::string configFile) {
     // Assign cpu_numsteps to be equivalent to max_numsteps
     this->cpu_numsteps = this->max_numsteps;
 }
+
+
 
 // http://www.cplusplus.com/forum/beginner/11304/ for refesher on reading line by line
 // Input: fileName - string address to the path to open the file being used
@@ -246,6 +253,15 @@ void cudaConstants::FileRead(std::string fileName) {
                 }
                 else if (variableName == "sun_r_min") {
                     this->sun_r_min = std::stod(variableValue);
+                }
+                else if (variableName == "destination") {
+                    this->destination = variableValue;
+                }
+                else if (variableName == "orbitalPeriod") {
+                    this->orbitalPeriod = stod(variableValue);
+                }
+                else if (variableName == "orbitalInclination") {
+                    this->orbitalInclination = stod(variableValue);
                 }
                 else if (variableName == "time_seed") { // If the conifguration sets time_seed to NONE then time_seed is set to time(0) 
                     if (variableValue != "NONE") {

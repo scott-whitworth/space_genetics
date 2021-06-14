@@ -55,6 +55,7 @@ Table 2. Genetic Algorithm Values
 | zeta_mutate_scale          	| double     	| Radians  	| Affects the maximum mutation range for zeta values (maximum mutation for the corresponding parameter is annealing * [this scale]) 	                                            |   	|
 | alpha_mutate_scale           	| double     	| Radians  	| Affects the maximum mutation range for alpha values (maximum mutation for the corresponding parameter is annealing * [this scale])                                                |   	|
 | beta_mutate_scale           	| double     	| Radians  	| Affects the maximum mutation range for beta values (maximum mutation for the corresponding parameter is annealing * [this scale])                                                 |   	|
+| destination                 	| string       	| None  	| used to switch between asteroid files.               	                                                                                                        |
 
 
 Table 3. Mission Values
@@ -70,8 +71,7 @@ Table 3. Mission Values
 | v_escape                     	| double     	| AU/s  	| The magnitude of the initial velocity of the spacecraft when leaving the sphere of influence of the earth-moon center of mass, not in config file but rather derived from c3energy 	                        |   	|
 | v_impact                 	    | double     	| AU/s  	| NASA's official mission impact velocity difference the spacecraft will collide with Dimorphos, does not impact the performance of the code	                                    |   	|
 | pos_threshold              	| double     	| AU      	| Sets the maximum positional difference of the spacecraft to the target at end of its trajectory path                                                    	                        |   	|
-| sun_r_min                 	| double       	| None  	| determines how close the spacecraft can get to the sun.               	                                                                                                        |
-    |
+| sun_r_min                 	| double       	| AU      	| determines how close the spacecraft can get to the sun.               	                                                                                                        |
 
 Table 3a. Impact Position & Velocity Values
 | Variable Name              	| Data Type  	| Units 	| Usage                                                                                                                                                      	                    |   	|

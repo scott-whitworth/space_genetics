@@ -3,6 +3,7 @@
 
 #include <iostream> // For << operator, fileRead, and std::cout
 #include <random>
+#include <string>
 
 // Structure that holds constant values related/used for the genetic algorithm that can be configured within a file 
 // (as of August 5th 2020, that file address is hardcoded in main to be "../Config_Constants/genetic.config")
@@ -92,6 +93,12 @@ struct cudaConstants {
 
     // minimum distance the spacecraft can be to the sun.
     double sun_r_min;
+
+    //destination asteroid file. The constants for the asteroid and earth data are passed in with a different file in order to switch between asteroids easier.
+    std::string destination;
+
+    double orbitalPeriod;
+    double orbitalInclination;
 
     // Default constructor, sets the config file path to be "genetic.config" for geneticFileRead()
     cudaConstants();

@@ -13,10 +13,6 @@
 #define AU 1.49597870691e11 // used to convert meters to astronomical units (m) 
 #define constG 1.99349603314131e-44 // gravitational constant- used to calculate the gravitational force (AU^3/(s^2 * kg)) 
 #define massSun 1.988500e30 // mass of the sun (kg)
-#define orbitalPeriod 3.772645011085093e+07 // orbital period time of 1999RQ36 Bennu (s)
-#define orbitalInclination 0.105329565020228 //orbital inclination of 1999RQ36 Bennu (rad)
-//#define orbitalPeriod 6.653820100923719e+07 // orbital period time of 65803 Didymos (s)
-//#define orbitalInclination 0.0594906 //orbital inclination of 65803 Didymos (rad)
 
 // Starting location and sizes in the optimization array for navigation to access specific values
 // Note: array sizes must be odd, coinciding with their use in computing Fourier series

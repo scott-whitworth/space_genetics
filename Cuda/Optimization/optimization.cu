@@ -44,7 +44,7 @@ bool changeInBest(double previousBestPos, double previousBestVel, const Individu
 bool allWithinTolerance(double tolerance, Individual * pool, const cudaConstants* cConstants) {
 
     //Check what type of mission is running to use the correct cost function
-    if (cConstants->missionType == 1){
+    if (cConstants->missionType == Rendezvous){
         // Iterate to check best_count number of 'top' individuals
         for (int i = 0; i < cConstants->best_count; i++) {
             if(pool[i].getCost_Soft(cConstants) >= tolerance) {
@@ -53,7 +53,7 @@ bool allWithinTolerance(double tolerance, Individual * pool, const cudaConstants
             }
         }
     }
-    else if(cConstants->missionType == 2){
+    else if(cConstants->missionType == Impact){
         // Iterate to check best_count number of 'top' individuals
         for (int i = 0; i < cConstants->best_count; i++) {
             if(pool[i].getCost_Hard(cConstants) >= tolerance) {
@@ -220,11 +220,11 @@ double optimize(const cudaConstants* cConstants) {
                 inputParameters[k].posDiff = 1.0;
                 inputParameters[k].speedDiff = 0.0;
 
-                if (cConstants->missionType == 1){
+                if (cConstants->missionType == Rendezvous){
                     // calculate its new cost function based on 'bad' differences
                     inputParameters[k].getCost_Soft(cConstants);
                 }
-                else if (cConstants->missionType == 2){
+                else if (cConstants->missionType == Impact){
                     // calculate its new cost function based on 'bad' differences
                     inputParameters[k].getCost_Hard(cConstants);                   
                 }

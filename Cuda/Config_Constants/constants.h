@@ -15,6 +15,9 @@
 #define constG 1.99349603314131e-44 // gravitational constant- used to calculate the gravitational force (AU^3/(s^2 * kg)) 
 #define massSun 1.988500e30 // mass of the sun (kg)
 
+#define Rendezvous 1
+#define Impact 2
+
 // Starting location and sizes in the optimization array for navigation to access specific values
 // Note: array sizes must be odd, coinciding with their use in computing Fourier series
 // Reason why these 3 values are not in config is due to need for static expected memory with the GPU,

@@ -131,10 +131,10 @@ __global__ void rk4SimpleCUDA(Individual *individuals, double *timeInitial, doub
         individuals[threadId].getPosDiff(cConstant);
         individuals[threadId].getSpeedDiff(cConstant);
 
-        if (cConstant->missionType == 1){
+        if (cConstant->missionType == Rendezvous){
             individuals[threadId].getCost_Soft(cConstant);
         }
-        else if (cConstant->missionType == 2){
+        else if (cConstant->missionType == Impact){
             individuals[threadId].getCost_Hard(cConstant);    
         }
         

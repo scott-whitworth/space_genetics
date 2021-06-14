@@ -22,10 +22,10 @@ void selectSurvivors(Individual * pool, int poolSize, int selectionSize, Individ
     }
 
     // Sort the pool by speed difference. If mission type is soft, use LowerSpeedDiff because we want velocity = 0
-    if(missionType == 2){
+    if(missionType == Impact){
         std::sort(pool, pool+poolSize, HigherSpeedDiff);
     }
-    else if(missionType == 1){
+    else if(missionType == Rendezvous){
         std::sort(pool, pool+poolSize, LowerSpeedDiff);
     }
 

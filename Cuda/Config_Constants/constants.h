@@ -3,7 +3,7 @@
 #include <math.h>
 
 #define _USE_MATH_DEFINES // for use of M_PI
-#define SECONDS_IN_YEAR (365.25*24*3600) // Used for converting units from years to seconds or vice-versa
+#define SECONDS_IN_YEAR (365.25*24*3600) // Used for converting units from years to seconds or vice-versa 31557600
 
 // Planetary properties and constants
 #define earthRadius (1.49598261e11/AU) // radial distance of Earth from Sun (au)
@@ -15,6 +15,7 @@
 #define constG 1.99349603314131e-44 // gravitational constant- used to calculate the gravitational force (AU^3/(s^2 * kg)) 
 #define massSun 1.988500e30 // mass of the sun (kg)
 
+//Definitions for mission type
 #define Rendezvous 1
 #define Impact 2
 
@@ -25,8 +26,8 @@
 //       (coefficients struct for example)
 // WARNING: As of 7/6/2020, the file used in non-random start (optimizedVector.bin) is based on previous definition of values and so if these are changed from old sizes then it may cause issues for it
 #define GAMMA_ARRAY_SIZE 7  // Number of coefficients for gamma
-#define   TAU_ARRAY_SIZE 3  // Number of coefficients for tau
-#define COAST_ARRAY_SIZE 5  // Number of coefficients for coasting
+#define   TAU_ARRAY_SIZE 7  // Number of coefficients for tau
+#define COAST_ARRAY_SIZE 7  // Number of coefficients for coasting
 
 // Offset values and total length are based on the array sizes defined above
 #define GAMMA_OFFSET     0                            // In the array of variables, GAMMA is at start index

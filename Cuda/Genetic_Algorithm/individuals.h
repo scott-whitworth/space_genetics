@@ -49,13 +49,13 @@ struct Individual {
 // Compare two individuals by their positional difference values
 // input: two individuals
 // output: returns true if personB has a higher positional difference than personA
-bool BetterPosDiff(Individual& personA, Individual& personB);
+bool LowerPosDiff(Individual& personA, Individual& personB);
 
 // Compare two individuals by their velocity difference values
 // input: two individuals
 // output: returns true if personB has a higher velocity difference than personA
 
-bool BetterSpeedDiff(Individual& personA, Individual& personB);
+//bool BetterSpeedDiff(Individual& personA, Individual& personB);
 bool HigherSpeedDiff(Individual& personA, Individual& personB);
 bool LowerSpeedDiff(Individual& personA, Individual& personB);
 
@@ -65,7 +65,7 @@ bool LowerSpeedDiff(Individual& personA, Individual& personB);
 //        cConstants   - Configuration information, primarily using the Asteroid final position and velocity
 // Return: Root of the sum of squares
 //         posDiff = sqrt(  (ast_r - craft_r) ^ 2 + (ast_r * ast_theta - craft_r * craft_theta % 2Pi)^2 +  (ast_z - craft_z)^2  )
-__host__ __device__ double calcPosDiff(const elements<double>& currentState, const cudaConstants* cConstants);
+//__host__ __device__ double calcPosDiff(const elements<double>& currentState, const cudaConstants* cConstants);
 
 
 #include "individuals.cpp"

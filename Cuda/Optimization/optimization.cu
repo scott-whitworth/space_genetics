@@ -231,10 +231,7 @@ double optimize(const cudaConstants* cConstants) {
                 // therefore also having a bad cost value
                 // won't be promoted in crossover
                 inputParameters[k].posDiff = 1.0;
-<<<<<<< HEAD
                 inputParameters[k].speedDiff = 1.0;
-=======
->>>>>>> 88fdfdef3bbc4974891fbac0193337bbfa1180a6
 
                 if (cConstants->missionType == Rendezvous){
                     inputParameters[k].speedDiff = 1.0;//This is an undesirable result for an rendezvous mission (approx. 500c!)
@@ -283,8 +280,8 @@ double optimize(const cudaConstants* cConstants) {
             // previousBest starts at 0 to ensure changeInBest = true on generation 0
             if ( !(changeInBest(previousBestCost, currentBest, dRate)) ) { 
                 //this ensures that changeInBest never compares two zeros, thus keeping dRate in relevance as the posDiff lowers
-                if (trunc(currentBest.posDiff/dRate) == 0) { 
-                    while (trunc(currentBest.posDiff/dRate) == 0) {
+                if (trunc(currentBest.cost/dRate) == 0) { 
+                    while (trunc(currentBest.cost/dRate) == 0) {
                         dRate = dRate/10; 
                     }
                     std::cout << "\nnew dRate: " << dRate << std::endl;

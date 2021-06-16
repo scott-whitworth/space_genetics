@@ -19,20 +19,32 @@
 //        currentBest     - 'best' individual from current run, based on how individuals are sorted
 //        distinguishRate - magnitude of difference
 // Called inside of optimize to see if anneal rate needs to change
-bool changeInBest(double previousBestPos, double previousBestVel, const Individual & currentBest, double distinguishRate) {
+
+//! Currently not in use, changeInBest determined by cost, not posDiff
+// bool changeInBest(double previousBestPos, double previousBestVel, const Individual & currentBest, double distinguishRate) {
+//     //truncate is used here to compare doubles via the distinguguishRate, to ensure that there has been relatively no change.
+//     if (trunc(previousBestPos/distinguishRate) != trunc(currentBest.posDiff/distinguishRate)) {
+//         return true;
+//     }
+//     else {
+//         /* //Used if Velocity should be considered
+//         if (trunc(previousBestVel/distinguishRate) != trunc(currentBest.speedDiff/distinguishRate)) {
+//             return true;
+//         }
+//         else return false;
+//         */
+//         return false;
+//     }
+// }
+
+bool changeInBest(double previousBestCost, const Individual & currentBest, double distinguishRate) {
     //truncate is used here to compare doubles via the distinguguishRate, to ensure that there has been relatively no change.
-    if (trunc(previousBestPos/distinguishRate) != trunc(currentBest.posDiff/distinguishRate)) {
-        return true;
-    }
-    else {
-        /* //Used if Velocity should be considered
-        if (trunc(previousBestVel/distinguishRate) != trunc(currentBest.speedDiff/distinguishRate)) {
+        if (trunc(previousBestCost/distinguishRate) != trunc(currentBest.cost/distinguishRate)) {
             return true;
         }
-        else return false;
-        */
-        return false;
-    }
+        else { 
+            return false;
+        }
 }
 
 // ** Assumes pool is sorted array of Individuals **
@@ -103,8 +115,9 @@ double optimize(const cudaConstants* cConstants) {
     Individual *inputParameters = new Individual[cConstants->num_individuals]; 
 
     // set to zero to force difference in first generation
-    double previousBestPos = 0; 
-    double previousBestVel = 0;
+    // double previousBestPos = 0; 
+    // double previousBestVel = 0;
+    double previousBestCost = 0;
 
     // Initilize individuals randomly or from a file
     if (cConstants->random_start) {
@@ -178,7 +191,7 @@ double optimize(const cudaConstants* cConstants) {
     double generation = 0;    
     
     // how far away the best individual is from the tolerance value
-    double currentDistance; 
+    double currentCost; 
     // Genetic solution tolerance 
     // - (currently just the position threshold which is furthest distance from the target allowed)
     // - could eventually take into account velocity too and become a more complex calculation
@@ -218,7 +231,7 @@ double optimize(const cudaConstants* cConstants) {
                 // therefore also having a bad cost value
                 // won't be promoted in crossover
                 inputParameters[k].posDiff = 1.0;
-                inputParameters[k].speedDiff = 0.0;
+                inputParameters[k].speedDiff = 1.0;
 
                 if (cConstants->missionType == Rendezvous){
                     // calculate its new cost function based on 'bad' differences
@@ -249,11 +262,11 @@ double optimize(const cudaConstants* cConstants) {
 
         // Calculate how far best individual is from the ideal cost value (currently is the positionalDifference of the best individual)
         // TODO: Change this later to take into account more than just the best individual and its position difference
-        currentDistance = inputParameters[0].posDiff; 
+        currentCost = inputParameters[0].cost; 
 
         // Scaling anneal based on proximity to tolerance
         // Far away: larger anneal scale, close: smaller anneal
-        double new_anneal = currentAnneal * (1 - tolerance / currentDistance);
+        double new_anneal = currentAnneal * (1 - tolerance / currentCost);
         
         //Process to see if anneal needs to be adjusted
         // If generations are stale, anneal drops
@@ -264,7 +277,7 @@ double optimize(const cudaConstants* cConstants) {
             currentBest = inputParameters[0];
             // checks for anneal to change
             // previousBest starts at 0 to ensure changeInBest = true on generation 0
-            if ( !(changeInBest(previousBestPos, previousBestVel, currentBest, dRate)) ) { 
+            if ( !(changeInBest(previousBestCost, currentBest, dRate)) ) { 
                 //this ensures that changeInBest never compares two zeros, thus keeping dRate in relevance as the posDiff lowers
                 if (trunc(currentBest.posDiff/dRate) == 0) { 
                     while (trunc(currentBest.posDiff/dRate) == 0) {
@@ -276,8 +289,10 @@ double optimize(const cudaConstants* cConstants) {
                 currentAnneal = currentAnneal * cConstants->anneal_factor;
                 std::cout << "\nnew anneal: " << currentAnneal << std::endl;
             }
-            previousBestPos = currentBest.posDiff;
-            previousBestVel = currentBest.speedDiff;
+
+            // previousBestPos = currentBest.posDiff;
+            // previousBestVel = currentBest.speedDiff;
+            previousBestCost = currentBest.cost;
         }
 
         // If in recording mode and write_freq reached, call the record method

@@ -65,7 +65,7 @@ __host__ __device__ double Individual::getCost_Hard(const cudaConstants* cConsta
 }
 
 __host__ __device__ double Individual::getCost_Soft(const cudaConstants* cConstants) {
-    this->cost = this->posDiff + (earthPeriod*(this->speedDiff));//This is in AU
+    this->cost = sqrt(pow(this->posDiff, 2) + pow((cConstants->timeRes*(this->speedDiff)), 2));//This is in AU
     return this->cost;
 }
 

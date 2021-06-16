@@ -231,17 +231,21 @@ double optimize(const cudaConstants* cConstants) {
                 // therefore also having a bad cost value
                 // won't be promoted in crossover
                 inputParameters[k].posDiff = 1.0;
+<<<<<<< HEAD
                 inputParameters[k].speedDiff = 1.0;
+=======
+>>>>>>> 88fdfdef3bbc4974891fbac0193337bbfa1180a6
 
                 if (cConstants->missionType == Rendezvous){
+                    inputParameters[k].speedDiff = 1.0;//This is an undesirable result for an rendezvous mission (approx. 500c!)
                     // calculate its new cost function based on 'bad' differences
                     inputParameters[k].getCost_Soft(cConstants);
                 }
                 else if (cConstants->missionType == Impact){
+                    inputParameters[k].speedDiff = 0.0;//This is an undesirable result for an impact mission
                     // calculate its new cost function based on 'bad' differences
                     inputParameters[k].getCost_Hard(cConstants);                   
                 }
-                
              }
         }
         // Preparing survivor pool with individuals for the newGeneration crossover
@@ -303,6 +307,20 @@ double optimize(const cudaConstants* cConstants) {
         // Only call terminalDisplay every DISP_FREQ, not every single generation
         if ( static_cast<int>(generation) % cConstants->disp_freq == 0) {
             // Prints the best individual's posDiff / speedDiff and cost
+            //terminalDisplay(inputParameters[0], generation);
+
+            //best position individual
+            std::cout << "\nBest Position Individual: \n";
+            std::sort(inputParameters, inputParameters + cConstants->num_individuals, LowerPosDiff);
+            terminalDisplay(inputParameters[0], generation);
+
+            //Best speed individual
+            std::cout << "\nBest Speed Individual: \n";
+            std::sort(inputParameters, inputParameters + cConstants->num_individuals, LowerSpeedDiff);
+            terminalDisplay(inputParameters[0], generation);
+
+            //reset array
+            std::sort(inputParameters, inputParameters + cConstants->num_individuals);
             terminalDisplay(inputParameters[0], generation);
             std::cout << "\n# of Nans this increment: " << numNans << "\n" << std::endl;
             numNans = 0; //Reset the tally of nans.

@@ -231,7 +231,6 @@ double optimize(const cudaConstants* cConstants) {
                 // therefore also having a bad cost value
                 // won't be promoted in crossover
                 inputParameters[k].posDiff = 1.0;
-                inputParameters[k].speedDiff = 1.0;
 
                 if (cConstants->missionType == Rendezvous){
                     inputParameters[k].speedDiff = 1.0;//This is an undesirable result for an rendezvous mission (approx. 500c!)
@@ -286,7 +285,7 @@ double optimize(const cudaConstants* cConstants) {
                     }
                     std::cout << "\nnew dRate: " << dRate << std::endl;
                 }
-                // If no change, multiply currentAnneal with anneal factor
+                // If no change in BestIndividual across generations, multiply currentAnneal with anneal factor
                 currentAnneal = currentAnneal * cConstants->anneal_factor;
                 std::cout << "\nnew anneal: " << currentAnneal << std::endl;
             }
@@ -311,10 +310,18 @@ double optimize(const cudaConstants* cConstants) {
             std::sort(inputParameters, inputParameters + cConstants->num_individuals, LowerPosDiff);
             terminalDisplay(inputParameters[0], generation);
 
-            //Best speed individual
-            std::cout << "\nBest Speed Individual: \n";
-            std::sort(inputParameters, inputParameters + cConstants->num_individuals, LowerSpeedDiff);
-            terminalDisplay(inputParameters[0], generation);
+            if(cConstants->missionType == Rendezvous){
+                //Best lower speed individual
+                std::cout << "\nBest Speed Individual: \n";
+                std::sort(inputParameters, inputParameters + cConstants->num_individuals, LowerSpeedDiff);
+                terminalDisplay(inputParameters[0], generation);
+            }
+            else if(cConstants->missionType == Impact){
+                //Best higher speed individual
+                std::cout << "\nBest Speed Individual: \n";
+                std::sort(inputParameters, inputParameters + cConstants->num_individuals, HigherSpeedDiff);
+                terminalDisplay(inputParameters[0], generation);
+            }
 
             //reset array
             std::sort(inputParameters, inputParameters + cConstants->num_individuals);

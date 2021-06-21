@@ -30,21 +30,14 @@ Individual::Individual(rkParameters<double> & newInd, const cudaConstants* cCons
 // Input: cConstants in accessing properties such as r_fin_ast, theta_fin_ast, and z_fin_ast
 // Output: Assigns and returns this individual's posDiff value
 __host__ __device__ double Individual::getPosDiff(const cudaConstants* cConstants) {
-    this->posDiff = sqrt(pow(cConstants->r_fin_ast - this->finalPos.r, 2) + pow( (cConstants->r_fin_ast * cConstants->theta_fin_ast) - (this->finalPos.r * fmod(this->finalPos.theta, 2 * M_PI)), 2) + pow(cConstants->z_fin_ast - this->finalPos.z, 2));
-//    this->posDiff = calcPosDiff(this->finalPos, cConstants);
+   this->posDiff = sqrt(pow(cConstants->r_fin_ast - this->finalPos.r, 2) + pow( (cConstants->r_fin_ast * cConstants->theta_fin_ast) - (this->finalPos.r * fmod(this->finalPos.theta, 2 * M_PI)), 2) + pow(cConstants->z_fin_ast - this->finalPos.z, 2));
    return this->posDiff;
 }
-
-//Utility to calculate the position difference between a position velocity set and the asteroid final position
-//__host__ __device__ double calcPosDiff(const elements<double>& currentState, const cudaConstants* cConstants){
-//    return  sqrt(pow(cConstants->r_fin_ast - currentState.r, 2) + pow( (cConstants->r_fin_ast * cConstants->theta_fin_ast) - (currentState.r * fmod(currentState.theta, 2 * M_PI) ) , 2) + pow(cConstants->z_fin_ast - currentState.z, 2));
-//}
 
 // Calculates a speedDiff value
 // Input: cConstants in accessing properties such as vr_fin_ast, vtheta_fin_ast, and vz_fin_ast
 // Output: Assigns and returns this individual's speedDiff value
 __host__ __device__ double Individual::getSpeedDiff(const cudaConstants* cConstants) {
-//    this->speedDiff = sqrt(pow(cConstants->vr_fin_ast - this->finalPos.vr, 2) + pow(cConstants->vtheta_fin_ast - this->finalPos.vtheta, 2) + pow(cConstants->vz_fin_ast - this->finalPos.vz, 2));
     this->speedDiff = sqrt(pow(cConstants->vr_fin_ast - this->finalPos.vr, 2) + pow(cConstants->vtheta_fin_ast - this->finalPos.vtheta, 2) + pow(cConstants->vz_fin_ast - this->finalPos.vz, 2)); 
     return this->speedDiff;
 }
@@ -65,7 +58,8 @@ __host__ __device__ double Individual::getCost_Hard(const cudaConstants* cConsta
 }
 
 __host__ __device__ double Individual::getCost_Soft(const cudaConstants* cConstants) {
-    this->cost = sqrt(pow(this->posDiff, 2) + pow((cConstants->timeRes*(this->speedDiff)), 2));//This is in AU
+    this->cost = sqrt(pow((this->posDiff), 2) + pow(((this->speedDiff)*cConstants->timeRes), 2));//This is in AU when speedDiff is multiplied by seconds
+    //this->cost = this->speedDiff;
     return this->cost;
 }
 
@@ -133,4 +127,3 @@ bool LowerSpeedDiff(Individual& personA, Individual& personB) {
     }
 
 }
-

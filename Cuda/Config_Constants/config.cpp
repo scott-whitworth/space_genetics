@@ -266,6 +266,9 @@ void cudaConstants::FileRead(std::string fileName) {
                 else if (variableName == "missionType") {
                     this->missionType = std::stoi(variableValue);
                 }
+                else if (variableName == "omega") {
+                    this->omega = std::stod(variableValue);
+                }
                 else if (variableName == "time_seed") { // If the conifguration sets time_seed to NONE then time_seed is set to time(0) 
                     if (variableValue != "NONE") {
                         // If variableValue is not NONE, assumption is that it is a valid double value that can be converted and used
@@ -330,6 +333,7 @@ std::ostream& operator<<(std::ostream& os, const cudaConstants& object) {
     os << "\tvR: " << object.vr_fin_earth << "\tv0: " << object.vtheta_fin_earth << "\tvZ: " << object.vz_fin_earth << "\n\n";
 
     os << "Mission Type: " << object.missionType << "\n";
+    os << "Omega: " << object.omega << "\n";
     os << "====================================================================================================\n";
     
     return os;

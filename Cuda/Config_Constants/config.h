@@ -103,6 +103,9 @@ struct cudaConstants {
     //Flag for what type of landing you want. Current modes: "soft"=1, "hard"=2
     int missionType;
 
+    //ratio uesd to weigh the cost function.
+    double omega;
+
     // Default constructor, sets the config file path to be "genetic.config" for geneticFileRead()
     cudaConstants();
 

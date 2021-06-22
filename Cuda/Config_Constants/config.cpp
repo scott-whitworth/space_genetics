@@ -66,20 +66,24 @@ void cudaConstants::FileRead(std::string fileName) {
                 std::string variableValue = line.substr( equals_pivot + 1, end_point - equals_pivot - 1);
                 // Assign variableValue to the appropriate variable based on variableName, with conversion to the right data type
                 // cudaConstant properties that are not expected in config are wet_mass, v_escape, and cpu_numsteps (those are to be derived in the constructor after this function is complete)
-                if (variableName == "pos_threshold") {
-                    this->pos_threshold = std::stod(variableValue);
-                }
-                else if (variableName == "coast_threshold") {
-                    this->coast_threshold = std::stod(variableValue);
+
+
+//////////////////////////////////////////////////////////////////// -- INITIALIZING & RANDOM -- /////////////////////////////////////////////////////////////////////////
+                if (variableName == "time_seed") { // If the conifguration sets time_seed to NONE then time_seed is set to time(0) 
+                    if (variableValue != "NONE") {
+                        // If variableValue is not NONE, assumption is that it is a valid double value that can be converted and used
+                        this->time_seed = std::stod(variableValue);
+                    }
+                    else {
+                        this->time_seed = time(0);
+                        std::cout << "time_seed value set to time(0)\n";
+                    }
                 }
                 else if (variableName == "max_generations") {
                     this->max_generations = std::stoi(variableValue);
                 }
                 else if (variableName == "run_count") {
                     this->run_count = std::stoi(variableValue);
-                }
-                else if (variableName == "thruster_type") {
-                    this->thruster_type = std::stoi(variableValue);
                 }
                 else if (variableName == "random_start") {
                     if (variableValue == "false") {
@@ -90,6 +94,93 @@ void cudaConstants::FileRead(std::string fileName) {
                         this->random_start = true;
                     }
                 }
+                else if (variableName == "initial_start_file_address") {
+                    // Assumption that the address does not need to be converted/checked
+                    this->initial_start_file_address = variableValue;
+                }
+
+
+//////////////////////////////////////////////////////////////////////// -- RUNGE KUTTA -- /////////////////////////////////////////////////////////////////////////////
+                else if (variableName == "rk_tol") {
+                    this->rk_tol = std::stod(variableValue);
+                }
+                else if (variableName == "doublePrecThresh") {
+                    this->doublePrecThresh = std::stod(variableValue);
+                }
+                else if (variableName == "GuessMaxPossibleSteps") {
+                    this->GuessMaxPossibleSteps = std::stoi(variableValue);
+                }
+                else if (variableName == "max_numsteps") {
+                    this->max_numsteps = std::stoi(variableValue);
+                }
+                else if (variableName == "min_numsteps") {
+                    this->min_numsteps = std::stoi(variableValue);
+                }
+
+
+//////////////////////////////////////////////////////////////////// -- POOL & THREAD BLOCK -- /////////////////////////////////////////////////////////////////////////
+                else if (variableName == "num_individuals") {
+                    this->num_individuals = std::stoi(variableValue);
+                }
+                else if (variableName == "survivor_count") {
+                    this->survivor_count = std::stoi(variableValue);
+                }
+                else if (variableName == "thread_block_size") {
+                    this->thread_block_size = std::stoi(variableValue);
+                }
+
+
+////////////////////////////////////////////////////////////////////////// -- OUTPUT -- /////////////////////////////////////////////////////////////////////////////////
+                else if (variableName == "record_mode") {
+                    if (variableValue == "true") {
+                        this->record_mode = true;
+                    }
+                    else {
+                        // If not set to true, then it is assumed the value is false
+                        this->record_mode = false;
+                    }
+                }
+            
+                else if (variableName == "write_freq") {
+                    this->write_freq = std::stoi(variableValue);
+                }
+                else if (variableName == "disp_freq") {
+                    this->disp_freq = std::stoi(variableValue);
+                }
+
+                
+///////////////////////////////////////////////////////////////////////// -- SPACECRAFT -- //////////////////////////////////////////////////////////////////////////////
+                else if (variableName == "thruster_type") {
+                    this->thruster_type = std::stoi(variableValue);
+                }
+                else if (variableName == "dry_mass") {
+                    this->dry_mass = std::stod(variableValue);
+                }
+                else if (variableName == "fuel_mass") {
+                    this->fuel_mass = std::stod(variableValue);
+                }
+
+
+/////////////////////////////////////////////////////////////////////////// -- MISSION -- ////////////////////////////////////////////////////////////////////////////////
+                else if (variableName == "missionType") {
+                    this->missionType = std::stoi(variableValue);
+                }
+                else if (variableName == "destination") {
+                    this->destination = variableValue;
+                }
+                else if (variableName == "c3scale") {
+                    this->c3scale = std::stod(variableValue);
+                }
+                else if (variableName == "c3energy") {
+                    // Initially have c3energy just be the assigned value in the config, c3scale impacts c3energy (and by extension v_escape) within the constructor  
+                    this->c3energy = std::stod(variableValue);
+                }
+                else if (variableName == "v_impact") {
+                    this->v_impact = std::stod(variableValue);
+                }
+
+
+////////////////////////////////////////////////////////////////////// -- GENETIC ALGORITHM -- ///////////////////////////////////////////////////////////////////////////
                 else if (variableName == "alpha_random_start_range") {
                     this->alpha_random_start_range = std::stod(variableValue);
                 }
@@ -114,43 +205,15 @@ void cudaConstants::FileRead(std::string fileName) {
                 else if (variableName == "coast_random_start_range") {
                     this->coast_random_start_range = std::stod(variableValue);
                 }
-                else if (variableName == "record_mode") {
-                    if (variableValue == "true") {
-                        this->record_mode = true;
-                    }
-                    else {
-                        // If not set to true, then it is assumed the value is false
-                        this->record_mode = false;
-                    }
-                }
-                else if (variableName == "initial_start_file_address") {
-                    // Assumption that the address does not need to be converted/checked
-                    this->initial_start_file_address = variableValue;
-                }
-                else if (variableName == "anneal_factor") {
-                    this->anneal_factor = std::stod(variableValue);
-                }
-                else if (variableName == "write_freq") {
-                    this->write_freq = std::stoi(variableValue);
-                }
-                else if (variableName == "disp_freq") {
-                    this->disp_freq = std::stoi(variableValue);
-                }
-                else if (variableName == "best_count") {
-                    this->best_count = std::stoi(variableValue);
-                }
-                else if (variableName == "change_check") {
-                    this->change_check = std::stoi(variableValue);
-                }
-                else if (variableName == "anneal_initial") {
-                    this->anneal_initial = std::stod(variableValue);
-                }
+
                 else if (variableName == "sortingRatio") {
                     this->sortingRatio = std::stod(variableValue);
                 }
+                
                 else if (variableName == "mutation_rate") {
                     this->mutation_rate = std::stod(variableValue);
                 }
+
                 else if (variableName == "gamma_mutate_scale") {
                     this->gamma_mutate_scale = std::stod(variableValue);
                 }
@@ -172,16 +235,37 @@ void cudaConstants::FileRead(std::string fileName) {
                 else if (variableName == "alpha_mutate_scale") {
                     this->alpha_mutate_scale = std::stod(variableValue);
                 }
+
+                else if (variableName == "anneal_factor") {
+                    this->anneal_factor = std::stod(variableValue);
+                }
+                else if (variableName == "anneal_initial") {
+                    this->anneal_initial = std::stod(variableValue);
+                }
+                else if (variableName == "change_check") {
+                    this->change_check = std::stoi(variableValue);
+                }
+
+
+/////////////////////////////////////////////////////////////////////////// -- OTHER -- //////////////////////////////////////////////////////////////////////////////////
+                else if (variableName == "timeRes") {
+                    this->timeRes = std::stoi(variableValue);
+                }
+                else if (variableName == "sun_r_min") {
+                    this->sun_r_min = std::stod(variableValue);
+                }
+                else if (variableName == "best_count") {
+                    this->best_count = std::stoi(variableValue);
+                }
+                else if (variableName == "pos_threshold") {
+                    this->pos_threshold = std::stod(variableValue);
+                }
                 else if (variableName == "coast_threshold") {
                     this->coast_threshold = std::stod(variableValue);
                 }
-                else if (variableName == "c3scale") {
-                    this->c3scale = std::stod(variableValue);
-                }
-                else if (variableName == "c3energy") {
-                    // Initially have c3energy just be the assigned value in the config, c3scale impacts c3energy (and by extension v_escape) within the constructor  
-                    this->c3energy = std::stod(variableValue);
-                }
+
+
+/////////////////////////////////////////////////////////////////////////// -- ASTEROID -- //////////////////////////////////////////////////////////////////////////////////
                 else if (variableName == "r_fin_ast") {
                     this->r_fin_ast = std::stod(variableValue);
                 }
@@ -200,6 +284,12 @@ void cudaConstants::FileRead(std::string fileName) {
                 else if (variableName == "vz_fin_ast") {
                     this->vz_fin_ast = std::stod(variableValue);
                 }
+                else if (variableName == "orbitalPeriod") {
+                    this->orbitalPeriod = stod(variableValue);
+                }
+
+
+/////////////////////////////////////////////////////////////////////////// -- EARTH -- //////////////////////////////////////////////////////////////////////////////////
                 else if (variableName == "r_fin_earth") {
                     this->r_fin_earth = std::stod(variableValue);
                 }
@@ -218,67 +308,9 @@ void cudaConstants::FileRead(std::string fileName) {
                 else if (variableName == "vz_fin_earth") {
                     this->vz_fin_earth = std::stod(variableValue);
                 }
-                else if (variableName == "dry_mass") {
-                   this->dry_mass = std::stod(variableValue);
-                }
-                else if (variableName == "fuel_mass") {
-                    this->fuel_mass = std::stod(variableValue);
-                }
-                else if (variableName == "v_impact") {
-                    this->v_impact = std::stod(variableValue);
-                }
-                else if (variableName == "rk_tol") {
-                    this->rk_tol = std::stod(variableValue);
-                }
-                else if (variableName == "doublePrecThresh") {
-                    this->doublePrecThresh = std::stod(variableValue);
-                }
-                else if (variableName == "GuessMaxPossibleSteps") {
-                    this->GuessMaxPossibleSteps = std::stoi(variableValue);
-                }
-                else if (variableName == "max_numsteps") {
-                    this->max_numsteps = std::stoi(variableValue);
-                }
-                else if (variableName == "min_numsteps") {
-                    this->min_numsteps = std::stoi(variableValue);
-                }
-                else if (variableName == "num_individuals") {
-                    this->num_individuals = std::stoi(variableValue);
-                }
-                else if (variableName == "survivor_count") {
-                    this->survivor_count = std::stoi(variableValue);
-                }
-                else if (variableName == "thread_block_size") {
-                    this->thread_block_size = std::stoi(variableValue);
-                }
-                else if (variableName == "timeRes") {
-                    this->timeRes = std::stoi(variableValue);
-                }
-                else if (variableName == "sun_r_min") {
-                    this->sun_r_min = std::stod(variableValue);
-                }
-                else if (variableName == "destination") {
-                    this->destination = variableValue;
-                }
-                else if (variableName == "orbitalPeriod") {
-                    this->orbitalPeriod = stod(variableValue);
-                }
-                else if (variableName == "missionType") {
-                    this->missionType = std::stoi(variableValue);
-                }
-                else if (variableName == "omega") {
-                    this->omega = std::stod(variableValue);
-                }
-                else if (variableName == "time_seed") { // If the conifguration sets time_seed to NONE then time_seed is set to time(0) 
-                    if (variableValue != "NONE") {
-                        // If variableValue is not NONE, assumption is that it is a valid double value that can be converted and used
-                        this->time_seed = std::stod(variableValue);
-                    }
-                    else {
-                        this->time_seed = time(0);
-                        std::cout << "time_seed value set to time(0)\n";
-                    }
-                }
+
+
+/////////////////////////////////////////////////////////////////////////// -- ERROR -- //////////////////////////////////////////////////////////////////////////////////
                 else {
                     // If none of the if cases were matches, then this is some unknown variable in the config file and output this to the terminal
                     std::cout << "Unknown variable '" << variableName <<"' in " << fileName <<"!\n";
@@ -333,7 +365,6 @@ std::ostream& operator<<(std::ostream& os, const cudaConstants& object) {
     os << "\tvR: " << object.vr_fin_earth << "\tv0: " << object.vtheta_fin_earth << "\tvZ: " << object.vz_fin_earth << "\n\n";
 
     os << "Mission Type: " << object.missionType << "\n";
-    os << "Omega: " << object.omega << "\n";
     os << "====================================================================================================\n";
     
     return os;

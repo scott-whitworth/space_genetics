@@ -29,8 +29,8 @@ void selectSurvivors(Individual * pool, int poolSize, int selectionSize, Individ
         std::sort(pool, pool+poolSize, LowerSpeedDiff);
     }
 
-    //to make sure pool stars at 0
-    int j = selectionSize*ratio;
+    //Used to make sure pool[] starts at 0 
+    int j = selectionSize*ratio; 
     //starting where first loop ended
     for (int i = selectionSize*ratio; i < selectionSize; i++) {
         survivors[(i)] = pool[i - j];

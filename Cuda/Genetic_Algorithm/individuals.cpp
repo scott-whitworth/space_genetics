@@ -6,6 +6,8 @@
 Individual::Individual() {
     this->posDiff = 1.0;
     this->speedDiff = 0.0;
+    this->isClone = false;
+    this->cost = 10;
 }
 
 // Set the initial position of the spacecraft according to the newly generated parameters
@@ -24,6 +26,9 @@ Individual::Individual(rkParameters<double> & newInd, const cudaConstants* cCons
         earth.vr+cos(this->startParams.zeta)*sin(this->startParams.beta)*cConstants->v_escape, 
         earth.vtheta+cos(this->startParams.zeta)*cos(this->startParams.beta)*cConstants->v_escape,
         earth.vz+sin(this->startParams.zeta)*cConstants->v_escape);
+    
+    this->isClone = false;
+    this->cost = 10;
 }
 
 // Calculates a posDiff value
@@ -126,4 +131,26 @@ bool LowerSpeedDiff(Individual& personA, Individual& personB) {
         return false;
     }
 
+}
+
+bool same(Individual& personA, Individual& personB, double percent) {
+
+    //double avg = (personA.cost + personB.cost)/2
+    double percentDiff = ((abs(personA.cost - personB.cost))/((personA.cost + personB.cost)/2))*100;
+    if (percentDiff < percent) {
+        return true;
+    }
+    else {
+        return false;
+    }
+
+}
+
+bool notAClone(Individual& personA, Individual& personB) {
+    if(personA.isClone < personB.isClone){
+        return true;
+    }
+    else {
+        return false;
+    }
 }

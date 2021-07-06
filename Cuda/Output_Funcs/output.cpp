@@ -383,6 +383,8 @@ void recordGenerationPerformance(const cudaConstants * cConstants, Individual * 
   int seed = cConstants->time_seed;
   std::string fileId = std::to_string(seed);
   excelFile.open("genPerformance-" + fileId + ".csv", std::ios_base::app);
+  excelFile << std::setprecision(20);
+  excelFile << std::fixed;
   // Record best individuals best posDiff and speedDiff of this generation
   excelFile << generation << "," << pool[0].posDiff << ",";
   excelFile << pool[0].speedDiff << ",";
@@ -404,8 +406,11 @@ void recordGenerationPerformance(const cudaConstants * cConstants, Individual * 
     excelFile << pool[0].startParams.coeff.coast[i-COAST_OFFSET] << ","; 
   }
 
+  //New anneal every gen
+  excelFile << new_anneal << ",";
   excelFile << "\n"; // End of row
   excelFile.close();
+  
 }
 
 // Takes in a pool and records the parameter info on all individuals, currently unused
@@ -429,7 +434,11 @@ void recordAllIndividuals(const cudaConstants * cConstants, Individual * pool, i
   for (int i = 0; i < COAST_ARRAY_SIZE; i++) {
     entirePool << "coast" << i << ",";
   }
+  entirePool << "cost,";
   entirePool << '\n';
+
+  entirePool << std::setprecision(20);
+  entirePool << std::fixed;
 
   // Record all individuals in the pool
   for (int i = 0; i < poolSize; i++) {
@@ -448,6 +457,7 @@ void recordAllIndividuals(const cudaConstants * cConstants, Individual * pool, i
     for (int j = 0; j < COAST_ARRAY_SIZE; j++) {
       entirePool << pool[i].startParams.coeff.coast[j] << ",";
     }
+    entirePool << pool[i].cost << ",";
     entirePool << "\n";
   }
   entirePool.close();

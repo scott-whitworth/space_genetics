@@ -243,6 +243,9 @@ double optimize(const cudaConstants* cConstants) {
                     inputParameters[k].getCost_Hard(cConstants);                   
                 }
              }
+             if(inputParameters[k].isClone == true){
+                 inputParameters[k].cost = inputParameters[k].cost * 2;
+             }
         }
         // Preparing survivor pool with individuals for the newGeneration crossover
         // Survivor pool contains:
@@ -328,6 +331,8 @@ double optimize(const cudaConstants* cConstants) {
             terminalDisplay(inputParameters[0], generation);
             std::cout << "\n# of Nans this increment: " << numNans << "\n" << std::endl;
             numNans = 0; //Reset the tally of nans.
+
+            recordAllIndividuals(cConstants, inputParameters, cConstants->num_individuals, generation);
         }
 
         // Before replacing new individuals, determine whether all are within tolerance

@@ -14,6 +14,7 @@ struct Individual {
     double speedDiff; // difference in velocity between spacecraft and asteroid at end of run
     double cost;    // cost value of the individual, something that the genetic algorithm is attempting to minimize
 
+    bool isClone; //bool that tells if the individual is a clone of the best cost individual or not.
     // Default constructor
     Individual();
 

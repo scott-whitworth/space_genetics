@@ -1,26 +1,15 @@
 function [] = plotData(cR,y0A,y0E,sizeC,tripTime,coast,coast_threshold,gammaCoeff,tauCoeff,fuelMass,alpha,beta,zeta,launchPos)
 
-    %% Data that is required
-    
+    %% Conversion data
     au=1.49597870691E11; % conversion of m/au
     
     % Solving differential motions
-    %65803 Didymos orbital period = 770.2656051223044 days.
-    %1999RQ36 Bennu orbital period = 436.6487281348487 days.
-    T_Bennu=436.6487281348487*24*3600;
-    T_Didymos=770.2656051223044*24*3600;
-
-%    timeFinal=T_Bennu; % orbital period
-%    tspan=[timeFinal 0];
-%    options = odeset('RelTol',1e-12);
-%    [tE, yE] = ode45(@orbitalMotion,tspan,y0E,options,gammaCoeff,tauCoeff,timeFinal,0);
-%    [tA, yA] = ode45(@orbitalMotion,tspan,y0A,options,gammaCoeff,tauCoeff,timeFinal,0);
-
-    tspan=[tripTime 0];
+    timeFinal=(6.653820100923719e+07); % orbital period
+    tspan=[timeFinal 0];
     options = odeset('RelTol',1e-12);
-    [tE, yE] = ode45(@orbitalMotion,tspan,y0E,options,gammaCoeff,tauCoeff,tripTime,0);
-    [tA, yA] = ode45(@orbitalMotion,tspan,y0A,options,gammaCoeff,tauCoeff,tripTime,0);
-
+    [tE, yE] = ode45(@orbitalMotion,tspan,y0E,options,gammaCoeff,tauCoeff,timeFinal,0);
+    [tA, yA] = ode45(@orbitalMotion,tspan,y0A,options,gammaCoeff,tauCoeff,timeFinal,0);
+    
     % Transform to cartesian coordinates for position and velocity of asteroid and earth
     [cX,cY,cZ]= pol2cart(cR(2,:),cR(1,:),cR(3,:));
     [eX,eY,eZ]= pol2cart(yE(:,2),yE(:,1),yE(:,3));
@@ -35,29 +24,24 @@ function [] = plotData(cR,y0A,y0E,sizeC,tripTime,coast,coast_threshold,gammaCoef
       
     
     
-    % Plot 1
+    %% Plot 1 -------------------------------------------------------------
     
     figure(1) %orbitals
     subplot(2,3,1)
     polarplot(yE(:,2),yE(:,1),'.')
-    rlim([0 1.5])
-    rticks([0.25 0.5 0.75 1.0 1.25])
+    rlim([0 1.25])
     hold on
     polarplot(yA(:,2),yA(:,1),'.')
-    rlim([0 1.5])
-    rticks([0.25 0.5 0.75 1.0 1.25])
+    rlim([0 1.125])
     hold on
     polarplot(cR(2,1),cR(1,1),'r*')
-    rlim([0 1.5])
-    rticks([0.25 0.5 0.75 1.0 1.25])
+    rlim([0 1.125])
     hold on
     polarplot(y0A(2),y0A(1),'*b')
-    rlim([0 1.5])
-    rticks([0.25 0.5 0.75 1.0 1.25])
+    rlim([0 1.125])
     hold on
     polarplot(cR(2,:),cR(1,:),'Color',[0.4660, 0.6740, 0.1880],'LineWidth', 2)
-    rlim([0 1.5])
-    rticks([0.25 0.5 0.75 1.0 1.25])
+    rlim([0 1.125])
     text(0, 0, '\Leftarrow Sun')
     text(cR(2,1), cR(1,1), '\leftarrow Launch')
     text(y0A(2),y0A(1), '\leftarrow Impact')
@@ -66,10 +50,9 @@ function [] = plotData(cR,y0A,y0E,sizeC,tripTime,coast,coast_threshold,gammaCoef
     
     %specific angular momentum vs. time
     subplot(2,3,2)
-%    plot((tE-(timeFinal-tripTime))/(3600*24),yE(:,1).*yE(:,5),'.')
-    plot(tE/(3600*24),yE(:,1).*yE(:,5),'.')
+    plot((tE-(timeFinal-tripTime))/(3600*24),yE(:,1).*yE(:,5),'.')
     hold on
-    plot(tA/(3600*24),yA(:,1).*yA(:,5),'.')
+    plot((tA-(timeFinal-tripTime))/(3600*24),yA(:,1).*yA(:,5),'.')
     hold on
     plot(cR(7,:)/(3600*24),cR(1,:).*cR(5,:),'Color',[0.4660, 0.6740, 0.1880],'LineWidth', 2)
     ylabel('h (AU^{2}/s)')
@@ -87,7 +70,7 @@ function [] = plotData(cR,y0A,y0E,sizeC,tripTime,coast,coast_threshold,gammaCoef
     hold on
     plot(cR(1,:).*cos(cR(2,:)), cR(3,:),'Color',[0.4660, 0.6740, 0.1880],'LineWidth', 2)
     xlim([-2.25 2.25])
-    ylim([-0.175 0.175])
+    ylim([-0.15 0.15])
     xlabel('x (AU)')
     ylabel('z (AU)')
     title('x-z plane')
@@ -97,10 +80,9 @@ function [] = plotData(cR,y0A,y0E,sizeC,tripTime,coast,coast_threshold,gammaCoef
     
     %radius vs. time
     subplot(2,3,4)
-%    plot((tE-(timeFinal-tripTime))/(3600*24),yE(:,1),'.')
-    plot(tE/(3600*24),yE(:,1),'.')
+    plot((tE-(timeFinal-tripTime))/(3600*24),yE(:,1),'.')
     hold on
-    plot(tA/(3600*24),yA(:,1),'.')
+    plot((tA-(timeFinal-tripTime))/(3600*24),yA(:,1),'.')
     hold on
     plot(cR(7,:)/(3600*24),cR(1,:),'Color',[0.4660, 0.6740, 0.1880],'LineWidth', 2)
     ylabel('r (AU)')
@@ -111,10 +93,9 @@ function [] = plotData(cR,y0A,y0E,sizeC,tripTime,coast,coast_threshold,gammaCoef
     
     %theta vs. time
     subplot(2,3,5)
-%    plot((tE-(timeFinal-tripTime))/(3600*24),mod(yE(:,2),2*pi),'.')
-    plot(tE/(3600*24),mod(yE(:,2),2*pi),'.')
+    plot((tE-(timeFinal-tripTime))/(3600*24),mod(yE(:,2),2*pi),'.')
     hold on
-    plot(tA/(3600*24),mod(yA(:,2), 2*pi),'.')
+    plot((tA-(timeFinal-tripTime))/(3600*24),mod(yA(:,2), 2*pi),'.')
     hold on
     plot(cR(7,:)/(3600*24),mod(cR(2,:), 2*pi),'Color',[0.4660, 0.6740, 0.1880],'LineWidth', 2)
     ylabel('\theta (rad)')
@@ -125,10 +106,9 @@ function [] = plotData(cR,y0A,y0E,sizeC,tripTime,coast,coast_threshold,gammaCoef
 
     %Z vs. time
     subplot(2,3,6)
-%    plot((tE-(timeFinal-tripTime))/(3600*24),yE(:,3),'.')
-    plot(tE/(3600*24),yE(:,3),'.')
+    plot((tE-(timeFinal-tripTime))/(3600*24),yE(:,3),'.')
     hold on
-    plot(tA/(3600*24),yA(:,3),'.')
+    plot((tA-(timeFinal-tripTime))/(3600*24),yA(:,3),'.')
     hold on
     plot(cR(7,:)/(3600*24),cR(3,:),'Color',[0.4660, 0.6740, 0.1880],'LineWidth', 2)
     ylabel('z (AU)')
@@ -138,7 +118,7 @@ function [] = plotData(cR,y0A,y0E,sizeC,tripTime,coast,coast_threshold,gammaCoef
     hold off
     
     
-    %% Plot 2
+    %% Plot 2 -------------------------------------------------------------
     
     figure(2) % acceleration vs. time
     subplot(2,2,1)
@@ -206,30 +186,39 @@ function [] = plotData(cR,y0A,y0E,sizeC,tripTime,coast,coast_threshold,gammaCoef
     ylabel('Error fraction')
     xlabel('t (days)')
 
-    % Plot 3
-    %Thrust fractions and velocity components
+    %% Plot 3 -------------------------------------------------------------
+    % Thrust fractions and velocity components
     figure(3)
 
     subplot(2,3,1)
     plot(cR(7,:)/(3600*24), au*cR(4,:),'color','k')
+    hold on
+    plot(cR(7,end)/(3600*24),au*y0A(4,end),'*')
     xlim([0 tripTime/(3600*24)])
     title('Radial velocity')
     xlabel('t (days)')
     ylabel('v_{r} (m/s)')
+    hold off
 
     subplot(2,3,2)
     plot(cR(7,:)/(3600*24), au*cR(5,:),'color','k')
+    hold on
+    plot(cR(7,end)/(3600*24),au*y0A(5,end),'*')
     xlim([0 tripTime/(3600*24)])
     title('Tangential velocity')
     xlabel('t (days)')
     ylabel('v_{\theta} (m/s)')
-
+    hold off
+    
     subplot(2,3,3)
     plot(cR(7,:)/(3600*24), au*cR(6,:),'color','k')
+    hold on
+    plot(cR(7,end)/(3600*24),au*y0A(6,end),'*')
     xlim([0 tripTime/(3600*24)])
     title('Axial velocity')
     xlabel('t (days)')
     ylabel('v_{z} (m/s)')
+    hold off
     
     subplot(2,3,4)
     plot(cR(7,:)/(3600*24), au*cR(10,:).*sin(cR(8,:)).*cos(cR(9,:)),'color','k')
@@ -252,8 +241,8 @@ function [] = plotData(cR,y0A,y0E,sizeC,tripTime,coast,coast_threshold,gammaCoef
     xlabel('t (days)')
     ylabel('a_{z} (m/s^{2})')
     
-%     % Plot 4
-%     %Thrust angle plots
+    %% Plot 4 -------------------------------------------------------------
+    % Thrust angle plots
 %     figure(4)
 %     
 %     % Test Fourier calculation for start
@@ -298,15 +287,15 @@ function [] = plotData(cR,y0A,y0E,sizeC,tripTime,coast,coast_threshold,gammaCoef
 %     xlabel('t (days)')
 %     ylabel('sin(\tau)')
     
-    % Plot 5: full orbital plots (vectors and no vectors)
+    %% Plot 5: full orbital plots (vectors and no vectors)-----------------
     
     radStep=1:15:length(cX)*1.0;
     %a=figure(3); % plot with vectors
     figure(5) % plot with vectors
     plot3(cX,cY,cZ,'LineWidth', 3,'Color',[0.4660, 0.6740, 0.1880])
-    xlim([-2.5 2.5])
-    ylim([-2.5 2.5])
-    zlim([-0.25 0.25])
+    xlim([-2.25 2.25])
+    ylim([-2.25 2.25])
+    zlim([-0.15 0.15])
     xlabel('x (AU)')
     ylabel('y (AU)')
     zlabel('z (AU)')
@@ -340,51 +329,44 @@ function [] = plotData(cR,y0A,y0E,sizeC,tripTime,coast,coast_threshold,gammaCoef
     hold off
 
     
-    % Plot 6: Leaving ESOI
-    figure(6)
-    
-    r_esoi = 6.211174738e-3; % radius of Earth's sphere of influence in AU
-    [x,y,z] = sphere;
-    
-    Earth=0.05;%NOT to scale, for visualization only
-%    surf(eX_launch+Earth*r_esoi*x, eY_launch+Earth*r_esoi*y, eZ_launch+Earth*r_esoi*z, 'FaceColor','b','FaceAlpha',1.0, 'LineStyle',':')
-    surf(Earth*r_esoi*x, Earth*r_esoi*y, Earth*r_esoi*z, 'FaceColor','b','FaceAlpha',1.0, 'LineStyle',':')
-    hold on
-    % Earth's sphere of influence at launch
-%    surf(eX_launch+r_esoi*x, eY_launch+r_esoi*y, eZ_launch+r_esoi*z, 'FaceColor','b','FaceAlpha',0.125, 'LineStyle',':')
-    surf(r_esoi*x, r_esoi*y, r_esoi*z, 'FaceColor','b','FaceAlpha',0.125, 'LineStyle',':')
-    hold on
-    
-    % In-plane initial position in the reference of the Earth
-    [alpha_x, alpha_y, alpha_z] = pol2cart(alpha, r_esoi, 0);
-%    plot3(alpha_x+eX_launch, alpha_y+eY_launch, alpha_z+eZ_launch,'*r')
-    plot3(alpha_x, alpha_y, alpha_z,'*r')
-    hold on
-    
-    % Initial velocity vector in the reference of the Earth
-%    quiver3(alpha_x+eX_launch, alpha_y+eY_launch, alpha_z+eZ_launch, sin(beta)*cos(zeta), cos(beta)*cos(zeta), sin(zeta),'k','Autoscalefactor',.005,'LineWidth',1);
-    quiver3(alpha_x, alpha_y, alpha_z, sin(beta)*cos(zeta), cos(beta)*cos(zeta), sin(zeta),'k','Autoscalefactor',.005,'LineWidth',1);
-
-    % analytical scaling
-%    xlim([eX_launch-2*r_esoi, eX_launch+2*r_esoi])
-%    ylim([eY_launch-2*r_esoi, eY_launch+2*r_esoi])
-%    zlim([eZ_launch-2*r_esoi, eZ_launch+2*r_esoi])
-    xlim([-2*r_esoi, 2*r_esoi])
-    ylim([-2*r_esoi, 2*r_esoi])
-    zlim([-2*r_esoi, 2*r_esoi])
-    xlabel('x (AU)')
-    ylabel('y (AU)')
-    zlabel('z (AU)')
-    title('Earth-Centered Launch conditions')
-    legend({'Earth','ESOI','Position','Velocity'})
-    
-    
-    Leave_txt = join(['alpha=',num2str(alpha,'%3.1f\n'),' rad\nbeta=',num2str(beta,'%3.1f\n'),' rad\nzeta=',num2str(zeta,'%3.1f\n'),' rad']);
-    Leave_txt = compose(Leave_txt);
-    dim = [.2 .5 .3 .3];
-    annotation('textbox',dim,'String',Leave_txt,'FitBoxToText','on');
-    
-    hold off
+    %% Plot 6: Leaving ESOI -----------------------------------------------
+%     figure(6)
+%     
+%     r_esoi = 6.211174738e-3; % radius of Earth's sphere of influence in AU
+%     [x,y,z] = sphere;
+%     
+%     Earth=0.05;%NOT to scale, for visualization only
+%     surf(eX_launch+Earth*r_esoi*x, eY_launch+Earth*r_esoi*y, eZ_launch+Earth*r_esoi*z, 'FaceColor','b','FaceAlpha',1.0, 'LineStyle',':')
+%     hold on
+%     % Earth's sphere of influence at launch
+%     surf(eX_launch+r_esoi*x, eY_launch+r_esoi*y, eZ_launch+r_esoi*z, 'FaceColor','b','FaceAlpha',0.125, 'LineStyle',':')
+%     hold on
+%     
+%     % In-plane initial position
+%     [alpha_x, alpha_y, alpha_z] = pol2cart(alpha, r_esoi, 0);
+%     plot3(alpha_x+eX_launch, alpha_y+eY_launch, alpha_z+eZ_launch,'*r')
+%     hold on
+%     
+%     % Initial velocity vector
+%     quiver3(alpha_x+eX_launch, alpha_y+eY_launch, alpha_z+eZ_launch, sin(beta)*cos(zeta), cos(beta)*cos(zeta), sin(zeta),'k','Autoscalefactor',.005,'LineWidth',1);
+% 
+%     % analytical scaling
+%     xlim([eX_launch-2*r_esoi, eX_launch+2*r_esoi])
+%     ylim([eY_launch-2*r_esoi, eY_launch+2*r_esoi])
+%     zlim([eZ_launch-2*r_esoi, eZ_launch+2*r_esoi])
+%     xlabel('x (AU)')
+%     ylabel('y (AU)')
+%     zlabel('z (AU)')
+%     title('Launch conditions')
+%     legend({'Earth','ESOI','Position','Velocity'})
+%     
+%     
+%     Leave_txt = join(['alpha=',num2str(alpha,'%3.1f\n'),' rad\nbeta=',num2str(beta,'%3.1f\n'),' rad\nzeta=',num2str(zeta,'%3.1f\n'),' rad']);
+%     Leave_txt = compose(Leave_txt);
+%     dim = [.2 .5 .3 .3];
+%     annotation('textbox',dim,'String',Leave_txt,'FitBoxToText','on');
+%     
+%     hold off
     
     
     end

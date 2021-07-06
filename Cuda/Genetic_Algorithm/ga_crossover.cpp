@@ -60,6 +60,7 @@ void crossOver_oneParent(int * mask) {
     for (int i = 0; i < OPTIM_VARS; i++) {
         mask[i] = PARTNER1;
     }
+    return;
 }
 
 // Creates a random mask
@@ -149,7 +150,7 @@ double getRand(double max, std::mt19937_64 & rng) {
 }
 
 // Creates a new rkParameters individual by combining properties of two parent Individuals using a mask to determine which
-rkParameters<double> generateNewIndividual(const rkParameters<double> & p1, const rkParameters<double> & p2, const int * mask, const cudaConstants * cConstants, double annealing, std::mt19937_64 & rng, double generation) {
+rkParameters<double> generateNewIndividual(const rkParameters<double> & p1, const rkParameters<double> & p2, const int * mask, const cudaConstants * cConstants, double annealing, std::mt19937_64 & rng, double generation, int gene) {
     // Set the new individual to hold traits from parent 1 
     rkParameters<double> newInd = p1;
 
@@ -217,7 +218,7 @@ rkParameters<double> generateNewIndividual(const rkParameters<double> & p1, cons
     }
     
     // Crossover complete, determine mutation
-    newInd = mutate(newInd, rng, annealing, cConstants, generation);
+    newInd = mutate(newInd, rng, annealing, cConstants, generation, gene);
 
     return newInd;    
 }
@@ -248,14 +249,48 @@ void mutateMask(std::mt19937_64 & rng, bool * mutateMask, double mutation_rate) 
     }
 }
 
+// Utility function to generate a boolean mask that determines which parameter value is mutating and how many based on mutation_rate iteratively
+void mutateGeneMask(std::mt19937_64 & rng, bool * mutateMask, double mutation_rate, int gene) {
+    for (int i = 0; i < OPTIM_VARS; i++) {
+        //Reset mask
+        mutateMask[i] = false;
+    }
+    if (gene == GAMMA_OFFSET){
+        for(int i = GAMMA_OFFSET; i < GAMMA_OFFSET + GAMMA_ARRAY_SIZE; i++){
+            mutateMask[i] = true;
+        }
+    }
+    else if (gene == TAU_OFFSET){
+        for(int i = TAU_OFFSET; i < TAU_OFFSET + TAU_ARRAY_SIZE; i++){
+            mutateMask[i] = true;
+        }
+    }
+    else if (gene == COAST_OFFSET){
+        for(int i = COAST_OFFSET; i < COAST_OFFSET + COAST_ARRAY_SIZE; i++){
+            mutateMask[i] = true;
+        }
+    }
+    else {
+        //Set requested gene to be mutated 
+        mutateMask[gene] = true;
+    }
+
+}
+
 // In a given Individual's parameters, generate a mutate mask using mutateMask() and then adjust parameters based on the mask, mutation of at least one gene is not guranteed
-rkParameters<double> mutate(const rkParameters<double> & p1, std::mt19937_64 & rng, double annealing, const cudaConstants* cConstants, double generation) {    
+rkParameters<double> mutate(const rkParameters<double> & p1, std::mt19937_64 & rng, double annealing, const cudaConstants* cConstants, double generation, int gene) {    
     // initially set new individual to have all parameter values from parent 1
     rkParameters<double> newInd = p1;
 
     // Declare and set a mutation_mask for which gene is being mutated
     bool * mutation_mask = new bool[OPTIM_VARS];
-    mutateMask(rng, mutation_mask, cConstants->mutation_rate);
+    if(gene == -1){
+        mutateMask(rng, mutation_mask, cConstants->mutation_rate);
+    }
+    else{
+        mutateGeneMask(rng, mutation_mask, cConstants->mutation_rate, gene);
+    }
+
 
     // Declare a record that is to describe what genes are being changed and by how much to record into mutateFile
     // double recordLog[OPTIM_VARS];
@@ -299,7 +334,7 @@ rkParameters<double> mutate(const rkParameters<double> & p1, std::mt19937_64 & r
             }
             else if (index == BETA_OFFSET) { // Beta
                 double randVar = getRand(cConstants->beta_mutate_scale * annealing, rng);
-                newInd.beta = randVar;
+                newInd.beta += randVar;
                 // recordLog[index] = randVar;
     
                 // A check to ensure beta remains in value range 0 to pi, doesn't update recordLog
@@ -338,7 +373,7 @@ rkParameters<double> mutate(const rkParameters<double> & p1, std::mt19937_64 & r
 
 
 // Method that creates a pair of new Individuals from a pair of other individuals and a mask
-void generateChildrenPair(Individual *pool, Individual *survivors, int * mask, int& newIndCount, int parentsIndex, double annealing, int poolSize, std::mt19937_64 & rng, const cudaConstants* cConstants, double generation) { 
+void generateChildrenPair(Individual *pool, Individual *survivors, int * mask, int& newIndCount, int parentsIndex, double annealing, int poolSize, std::mt19937_64 & rng, const cudaConstants* cConstants, double generation, int gene) { 
     // Determine where the parents and the new individual being created are located in the pool
     int parent1Index = parentsIndex;
     int parent2Index = parentsIndex + 1;
@@ -347,13 +382,13 @@ void generateChildrenPair(Individual *pool, Individual *survivors, int * mask, i
     // up the number of new individuals already created
     int newIndividualIndex = poolSize - 1 - newIndCount;    
     // Generate new offspring with mask
-    pool[newIndividualIndex] = Individual(generateNewIndividual(survivors[parent1Index].startParams, survivors[parent2Index].startParams, mask, cConstants, annealing, rng, generation), cConstants);
+    pool[newIndividualIndex] = Individual(generateNewIndividual(survivors[parent1Index].startParams, survivors[parent2Index].startParams, mask, cConstants, annealing, rng, generation, gene), cConstants);
     newIndCount++;
 
     // Get the opposite offspring from the mask by flipping the mask
     newIndividualIndex--; // Decrement newIndividualIndex value to access where the next individual must be as newIndCount has increased
     flipMask(mask);
-    pool[newIndividualIndex] = Individual(generateNewIndividual(survivors[parent1Index].startParams, survivors[parent2Index].startParams, mask, cConstants, annealing, rng, generation), cConstants);
+    pool[newIndividualIndex] = Individual(generateNewIndividual(survivors[parent1Index].startParams, survivors[parent2Index].startParams, mask, cConstants, annealing, rng, generation, gene), cConstants);
     newIndCount++;
 
     return;
@@ -365,40 +400,104 @@ int newGeneration(Individual *survivors, Individual *pool, int survivorSize, int
     int * mask = new int[OPTIM_VARS];
     // Number of new individuals created so far (initially none)
     // used in navigating through the pool when creating new individuals and returned at end of function
-    int newIndCount = 0; 
-    // Value for how many pairs to use and produce in each loop
-    // (as one iteration through a loop produces a new pair)
-    int numPairs = survivorSize / 2;
+    int newIndCount = 0;
 
-    // Shuffle the survivors to ensure diverse crossover
-    std::shuffle(survivors, survivors+survivorSize, rng);
+    //-------------------------------------NEW METHOD--------------------------------------------------------------------------------------------------
+    // If a generation gets a certain amount of clones, use this crossover method instead of the normal one to replace the clones.
+    // For this method to work, it is important that the pool is sorted by cost. That should be happening in optimization because it
+    // is also important for the normal crossovers.
 
-    // Generate two offspring through each crossover method
-    // total is 4 * survivorSize offspring in pool
+    //number of clones that can exist before needing to be replaced.
+    int cloneThresh = 1439;
 
-    // Every loop needs a unique mask each iteration
+    //count of clones identical to the best cost clone.
+    int cloneCount = 0;
+     
+    // Loop through all individuals. If they are a clone, increase cloneCount and toggle isClone bool for that individual.
+    for(int i = 1; i < poolSize; i++){
+        if (same(pool[0], pool[i], 0.01)){
+            cloneCount++;
+            pool[i].isClone = true;
+        }
+    }
 
-    // Loop for wholeRandom mask
-    for (int i = 0; i < numPairs; i++) {
-        crossOver_wholeRandom(mask, rng);
-        generateChildrenPair(pool, survivors, mask, newIndCount, 2*i, annealing, poolSize, rng, cConstants, generation);
-    }
-    // Loop for averaging mask
-    for (int i = 0; i < numPairs; i++) {
-        crossOver_average(mask);
-        generateChildrenPair(pool, survivors, mask, newIndCount, 2*i, annealing, poolSize, rng, cConstants, generation);
-    }
-    // 2 loops for bundleVars mask,
-    // two seperate loops resulting from carry over of past code
-    // also will allow easier changes in masks used (right now just using two bundleVars instead of two different ones)
-    for (int i = 0; i < numPairs; i++) {
-        crossOver_bundleVars(mask, rng);
-        generateChildrenPair(pool, survivors, mask, newIndCount, 2*i, annealing, poolSize, rng, cConstants, generation);
-    }
-    for (int i = 0; i < numPairs; i++) {
-        crossOver_bundleVars(mask, rng);
-        generateChildrenPair(pool, survivors, mask, newIndCount, 2*i, annealing, poolSize, rng, cConstants, generation);
-    }
+    std::cout << cloneCount;
+    // If cloneCount reaches a certain threshold, replace the clones with mutated versions of themselves.
+    // if (cloneCount > cloneThresh){
+    //     //Set mask to do no crossover and copy the same individual
+    //     crossOver_oneParent(mask);
+    //     //loop through all the individuals and find the ones that are clones
+    //     for (int i=1; i < poolSize; i++){
+    //         if(pool[i].isClone == true){
+    //             //replace individual with mutated version of itself.
+    //             int index = rng() % 7;
+    //             switch (index){
+    //                 case '0':
+    //                     pool[i] = Individual(generateNewIndividual(pool[i].startParams, pool[i].startParams, mask, cConstants, annealing, rng, generation, GAMMA_OFFSET), cConstants);
+    //                     break;
+    //                 case '1':
+    //                     pool[i] = Individual(generateNewIndividual(pool[i].startParams, pool[i].startParams, mask, cConstants, annealing, rng, generation, TAU_OFFSET), cConstants);
+    //                     break;
+    //                 case '2':
+    //                     pool[i] = Individual(generateNewIndividual(pool[i].startParams, pool[i].startParams, mask, cConstants, annealing, rng, generation, ALPHA_OFFSET), cConstants);
+    //                     break;
+    //                 case '3':
+    //                     pool[i] = Individual(generateNewIndividual(pool[i].startParams, pool[i].startParams, mask, cConstants, annealing, rng, generation, BETA_OFFSET), cConstants);
+    //                     break;
+    //                 case '4':
+    //                     pool[i] = Individual(generateNewIndividual(pool[i].startParams, pool[i].startParams, mask, cConstants, annealing, rng, generation, ZETA_OFFSET), cConstants);
+    //                     break;
+    //                 case '5':
+    //                     pool[i] = Individual(generateNewIndividual(pool[i].startParams, pool[i].startParams, mask, cConstants, annealing, rng, generation, TRIPTIME_OFFSET), cConstants);
+    //                     break;
+    //                 case '6':
+    //                     pool[i] = Individual(generateNewIndividual(pool[i].startParams, pool[i].startParams, mask, cConstants, annealing, rng, generation, COAST_OFFSET), cConstants);
+    //                     break;
+    //             }
+    //             //increment new individual count
+    //             newIndCount++; 
+    //         }
+    //     }
+    //     //Sort based on cost. This will put the new individuals at the bottom of the pack so that they get replaced. (The constructor's cost = 10)
+    //     std::sort(pool, pool + poolSize);
+    // }
+    //else {//Normal crossover methods when clones have not exeeded cloneThresh
+    
+        // Value for how many pairs to use and produce in each loop
+        // (as one iteration through a loop produces a new pair)
+        int numPairs = survivorSize / 2;
+
+        // Shuffle the survivors to ensure diverse crossover
+        std::shuffle(survivors, survivors+survivorSize, rng);
+
+        // Generate two offspring through each crossover method
+        // total is 4 * survivorSize offspring in pool
+
+        // Every loop needs a unique mask each iteration
+
+        // Loop for wholeRandom mask
+        for (int i = 0; i < numPairs; i++) {
+            crossOver_wholeRandom(mask, rng);
+            generateChildrenPair(pool, survivors, mask, newIndCount, 2*i, annealing, poolSize, rng, cConstants, generation, -1);
+        }
+        // Loop for averaging mask
+        for (int i = 0; i < numPairs; i++) {
+            crossOver_average(mask);
+            generateChildrenPair(pool, survivors, mask, newIndCount, 2*i, annealing, poolSize, rng, cConstants, generation, -1);
+        }
+        // 2 loops for bundleVars mask,
+        // two seperate loops resulting from carry over of past code
+        // also will allow easier changes in masks used (right now just using two bundleVars instead of two different ones)
+        for (int i = 0; i < numPairs; i++) {
+            crossOver_bundleVars(mask, rng);
+            generateChildrenPair(pool, survivors, mask, newIndCount, 2*i, annealing, poolSize, rng, cConstants, generation, -1);
+        }
+        for (int i = 0; i < numPairs; i++) {
+            crossOver_bundleVars(mask, rng);
+            generateChildrenPair(pool, survivors, mask, newIndCount, 2*i, annealing, poolSize, rng, cConstants, generation, -1);
+        }
+    //}
+
     delete [] mask;
     return newIndCount;
 }

@@ -7,7 +7,10 @@ Individual::Individual() {
     this->posDiff = 1.0;
     this->speedDiff = 0.0;
     this->isClone = false;
+    this->difference = 0;
     this->cost = 10;
+    this->dominatedCount = 0;
+    this->rank = 0; //might change later?
 }
 
 // Set the initial position of the spacecraft according to the newly generated parameters
@@ -28,7 +31,10 @@ Individual::Individual(rkParameters<double> & newInd, const cudaConstants* cCons
         earth.vz+sin(this->startParams.zeta)*cConstants->v_escape);
     
     this->isClone = false;
+    this->difference = 0;
     this->cost = 10;
+    this->dominatedCount = 0;
+    this->rank = 0; //might change later?
 }
 
 // Calculates a posDiff value
@@ -146,8 +152,46 @@ bool same(Individual& personA, Individual& personB, double percent) {
 
 }
 
+double checkDifference(Individual& personA, Individual& personB) {
+
+    double percentDiff = ((abs(personA.cost - personB.cost))/((personA.cost + personB.cost)/2))*100;
+    //double percentDiff = personA.startParams.compare(personB.startParams);
+    return percentDiff;
+
+}
+
 bool notAClone(Individual& personA, Individual& personB) {
     if(personA.isClone < personB.isClone){
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
+bool dominates(Individual& personA, Individual& personB) {
+
+    //Returns true if personA dominates personB.
+    //returns false if personA does not dominate personB.
+    bool AisEqual = false;
+    bool AisBetter = false;
+    if (personA.posDiff <= personB.posDiff && personA.speedDiff <= personB.speedDiff) {
+        AisEqual = true;
+    }
+    if (personA.posDiff < personB.posDiff || personA.speedDiff < personB.speedDiff){
+        AisBetter = true;
+    }
+    if (AisEqual && AisBetter){
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
+bool rankSort(Individual& personA, Individual& personB){
+
+    if (personA.rank < personB.rank) {
         return true;
     }
     else {

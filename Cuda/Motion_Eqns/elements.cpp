@@ -57,27 +57,17 @@ template <class T> elements<T> elements<T>::operator/(const T & i) const {
 // input: other - another elements object to compare to
 //        comp_Thresh - a threshold for comparison, so when elements are considered equivalent it is a not necessarrily 100% (when not equal to 0)
 // output: returns true if for all properties (pos & vel) the difference between them is less than or equal to comp_Thresh
-template <class T> bool elements<T>::compare(const elements<T> & other, T comp_Thresh) {
+template <class T> double elements<T>::compare(const elements<T> & other) {
     //Check values
-    if (abs(this->r - other.r) > comp_Thresh) {
-        return false;
-    }
-    if (abs(this->theta - other.theta) > comp_Thresh) {
-        return false;
-    }
-    if (abs(this->z - other.z) > comp_Thresh) {
-        return false;
-    }
-    if (abs(this->vr - other.vr) > comp_Thresh) {
-        return false;
-    }
-    if (abs(this->vtheta - other.vtheta) > comp_Thresh) {
-        return false;
-    }
-    if (abs(this->vz - other.vz) > comp_Thresh) {
-        return false;
-    }
-    return true;
+    double percentDiff = 0;
+    percentDiff += abs(100*abs(this->r - other.r)/(0.5*(this->r + other.r)));
+    percentDiff += abs(100*abs(this->theta - other.theta)/(0.5*(this->theta + other.theta)));
+    percentDiff += abs(100*abs(this->z - other.z)/(0.5*(this->z + other.z)));
+    percentDiff += abs(100*abs(this->vr - other.vr)/(0.5*(this->vr + other.vr)));
+    percentDiff += abs(100*abs(this->vtheta - other.vtheta)/(0.5*(this->vtheta + other.vtheta)));
+    percentDiff += abs(100*abs(this->vz - other.vz)/(0.5*(this->vz + other.vz)));
+
+    return percentDiff;
 }
 
 template <class T> std::ostream & operator<<(std::ostream & Str, const elements<T> & e) {

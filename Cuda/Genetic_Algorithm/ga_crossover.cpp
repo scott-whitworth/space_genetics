@@ -284,10 +284,10 @@ rkParameters<double> mutate(const rkParameters<double> & p1, std::mt19937_64 & r
 
     // Declare and set a mutation_mask for which gene is being mutated
     bool * mutation_mask = new bool[OPTIM_VARS];
-    if(gene == -1){
+    if(gene == 1000){
         mutateMask(rng, mutation_mask, cConstants->mutation_rate);
     }
-    else{
+    else {
         mutateGeneMask(rng, mutation_mask, cConstants->mutation_rate, gene);
     }
 
@@ -408,20 +408,20 @@ int newGeneration(Individual *survivors, Individual *pool, int survivorSize, int
     // is also important for the normal crossovers.
 
     //number of clones that can exist before needing to be replaced.
-    int cloneThresh = 1439;
+    //int cloneThresh = 1439;
 
     //count of clones identical to the best cost clone.
     int cloneCount = 0;
      
-    // Loop through all individuals. If they are a clone, increase cloneCount and toggle isClone bool for that individual.
+    //Loop through all individuals. If they are a clone, increase cloneCount and toggle isClone bool for that individual.
     for(int i = 1; i < poolSize; i++){
-        if (same(pool[0], pool[i], 0.01)){
+        if (same(pool[0], pool[i], 1.0)){
             cloneCount++;
             pool[i].isClone = true;
         }
     }
 
-    std::cout << cloneCount;
+    //std::cout << cloneCount;
     // If cloneCount reaches a certain threshold, replace the clones with mutated versions of themselves.
     // if (cloneCount > cloneThresh){
     //     //Set mask to do no crossover and copy the same individual
@@ -478,23 +478,23 @@ int newGeneration(Individual *survivors, Individual *pool, int survivorSize, int
         // Loop for wholeRandom mask
         for (int i = 0; i < numPairs; i++) {
             crossOver_wholeRandom(mask, rng);
-            generateChildrenPair(pool, survivors, mask, newIndCount, 2*i, annealing, poolSize, rng, cConstants, generation, -1);
+            generateChildrenPair(pool, survivors, mask, newIndCount, 2*i, annealing, poolSize, rng, cConstants, generation, 1000);
         }
         // Loop for averaging mask
         for (int i = 0; i < numPairs; i++) {
             crossOver_average(mask);
-            generateChildrenPair(pool, survivors, mask, newIndCount, 2*i, annealing, poolSize, rng, cConstants, generation, -1);
+            generateChildrenPair(pool, survivors, mask, newIndCount, 2*i, annealing, poolSize, rng, cConstants, generation, 1000);
         }
         // 2 loops for bundleVars mask,
         // two seperate loops resulting from carry over of past code
         // also will allow easier changes in masks used (right now just using two bundleVars instead of two different ones)
         for (int i = 0; i < numPairs; i++) {
             crossOver_bundleVars(mask, rng);
-            generateChildrenPair(pool, survivors, mask, newIndCount, 2*i, annealing, poolSize, rng, cConstants, generation, -1);
+            generateChildrenPair(pool, survivors, mask, newIndCount, 2*i, annealing, poolSize, rng, cConstants, generation, 1000);
         }
         for (int i = 0; i < numPairs; i++) {
             crossOver_bundleVars(mask, rng);
-            generateChildrenPair(pool, survivors, mask, newIndCount, 2*i, annealing, poolSize, rng, cConstants, generation, -1);
+            generateChildrenPair(pool, survivors, mask, newIndCount, 2*i, annealing, poolSize, rng, cConstants, generation, 1000);
         }
     //}
 

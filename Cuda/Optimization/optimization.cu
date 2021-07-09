@@ -11,7 +11,7 @@
 #include <iostream> // cout
 #include <iomanip>  // used for setw(), sets spaces between values output
 #include <random>   // for std::mt19937_64 object
-
+#include <vector>
 // Used to see if the best individual is changing when compared to a previous individual across generations 
 // Returns true if the currentBest is not equal to previousBest within a distinguishable difference
 // Input: previousBestPos - Position diference at the end of RK simulation, in AU
@@ -36,6 +36,85 @@
 //         return false;
 //     }
 // }
+
+//Used to give rankings for sorting based on non-dominated sorting method.
+//Assigns suitability rank to all individuals.
+//MUST be called after cost has been assigned to all individuals (calling callRK)
+//Input: pool - this generation of individuals, defined/initilized in optimimize
+//       cConstants
+void giveRank(Individual * inputParameters, const cudaConstants* cConstants) {
+    //non-denominated sorting method attempt
+    //https://www.iitk.ac.in/kangal/Deb_NSGA-II.pdf
+
+    //Used to store the current front of individuals. first filled with the first front individuals(best out of all population)
+    std::vector<Individual> front;
+    
+    //loop through each individual
+    for (int i = 0; i < cConstants->num_individuals; i++){
+        
+        //number of times inputParameters[i] has been dominated
+        inputParameters[i].dominatedCount = 0;
+
+        //set of solutions that inputParameters[i] dominates
+        // inputParameters[i].dominated.clear();
+        std::vector<Individual>().swap(inputParameters[i].dominated);
+
+        for(int j = 0; j < cConstants->num_individuals; j++){
+            
+            //if i dominates j, put j in the set of individuals dominated by i.
+            if (dominates(inputParameters[i], inputParameters[j])){
+                inputParameters[i].dominated.push_back(inputParameters[j]);
+            }
+            //if j dominates i, increase the number of times that i has been dominated
+            else if (dominates(inputParameters[j], inputParameters[i])) {
+                inputParameters[i].dominatedCount++;
+            }
+        }
+        
+        //if i was never dominated, add it to the best front, front1. Making its ranking = 1.
+        if (inputParameters[i].dominatedCount == 0){
+            inputParameters[i].rank = 1;
+            front.push_back(inputParameters[i]);
+        }
+        std::cout << i << " ";
+    }
+    std::cout << "QQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQ";
+    //Used to assign rank number
+    int rankNum = 1;
+    //vector to store individuals in next front
+    std::vector<Individual> newFront;
+
+    //go until all individuals have been put in better ranks and none are left to give a ranking
+    while(!front.empty()) {
+        //empty the new front to put new individuals in
+        //newFront.clear();
+        std::vector<Individual>().swap(newFront);
+
+        //loop through all individuals in old front
+        for(int i = 0; i < front.size(); i++){
+
+            //loop through all the individuals that individual i dominated
+            for(int j = 0; j < front[i].dominated.size(); j++){
+
+                //subtract 1 from the dominated individuals' dominatedCount.
+                //if an individual was dominated only once for example, it would be on the second front of individuals.
+                front[i].dominated[j].dominatedCount--;
+
+                //if the dominated count is at 0, add the individual to the next front and make its rank equal to the next front number.
+                if (front[i].dominated[j].dominatedCount == 0){
+                    front[i].dominated[j].rank = i + 1;
+                    newFront.push_back(front[i].dominated[j]);                        
+                }
+            }
+        }
+        //increment the rank number
+        rankNum++;
+
+        std::vector<Individual>().swap(front);
+        //go to next front
+        front = newFront;
+    }
+}
 
 bool changeInBest(double previousBestCost, const Individual & currentBest, double distinguishRate) {
     //truncate is used here to compare doubles via the distinguguishRate, to ensure that there has been relatively no change.
@@ -242,11 +321,54 @@ double optimize(const cudaConstants* cConstants) {
                     // calculate its new cost function based on 'bad' differences
                     inputParameters[k].getCost_Hard(cConstants);                   
                 }
-             }
-             if(inputParameters[k].isClone == true){
-                 inputParameters[k].cost = inputParameters[k].cost * 2;
-             }
+            }
+            
+            //if (k > 0 && (inputParameters[k].posDiff != 1.0)){
+            // if (inputParameters[k].posDiff != 1.0){
+            //     //calculate the % difference of the individual to the best cost individual
+            //     inputParameters[k].difference = checkDifference(inputParameters[0],inputParameters[k]); 
+
+                //if(inputParameters[0].posDiff > 1.0e-06){
+
+                    // if(inputParameters[k].difference < 20.0){
+                    //     inputParameters[k].cost = inputParameters[k].cost * 100000;
+                    // }
+                    // else if (inputParameters[k].difference < 50.0 && inputParameters[k].difference >= 20.0){
+                    //     inputParameters[k].cost = inputParameters[k].cost * 10000;
+                    // }
+                    // else if (inputParameters[k].difference < 70.0 && inputParameters[k].difference >= 50.0){
+                    //     inputParameters[k].cost = inputParameters[k].cost * 1000;
+                    // }
+                    // else if (inputParameters[k].difference < 90.0 && inputParameters[k].difference >= 70.0){
+                    //     inputParameters[k].cost = inputParameters[k].cost * 100;
+                    // }
+
+                    //low speed penalty
+                    // if(inputParameters[k].speedDiff > 1.0E-09){
+                    //     inputParameters[k].cost = inputParameters[k].cost * 10000;
+                    // }
+                    // else if (inputParameters[k].speedDiff < 1.0E-08 && inputParameters[k].speedDiff >= 1.0E-09){
+                    //     inputParameters[k].cost = inputParameters[k].cost * 1000;
+                    // }
+
+                //}
+                // else {
+                //     if(inputParameters[k].difference < 80.0){
+                //         inputParameters[k].cost = inputParameters[k].cost * 100000;
+                //     }
+                //     // else if (inputParameters[k].difference < 0.1 && inputParameters[k].difference >= 0.01){
+                //     //     inputParameters[k].cost = inputParameters[k].cost * 10000;
+                //     // }
+                //     // else if (inputParameters[k].difference < 1.0 && inputParameters[k].difference >= 0.1){
+                //     //     inputParameters[k].cost = inputParameters[k].cost * 1000;
+                //     // }
+                //     // else if (inputParameters[k].difference < 10.0 && inputParameters[k].difference >= 1.0){
+                //     //     inputParameters[k].cost = inputParameters[k].cost * 100;
+                //     // }
+                // }
+            //}
         }
+
         // Preparing survivor pool with individuals for the newGeneration crossover
         // Survivor pool contains:
         //               - individuals with best PosDiff
@@ -257,7 +379,8 @@ double optimize(const cudaConstants* cConstants) {
 
         // sort individuals based on overloaded relational operators
         // gives reference of which to replace and which to carry to the next generation
-        std::sort(inputParameters, inputParameters + cConstants->num_individuals);
+        giveRank(inputParameters, cConstants);
+        std::sort(inputParameters, inputParameters + cConstants->num_individuals, rankSort);
 
         // Display a '.' to the terminal to show that a generation has been performed
         // This also serves to visually seperate the terminalDisplay() calls across generations 

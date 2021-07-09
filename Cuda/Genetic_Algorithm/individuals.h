@@ -15,6 +15,12 @@ struct Individual {
     double cost;    // cost value of the individual, something that the genetic algorithm is attempting to minimize
 
     bool isClone; //bool that tells if the individual is a clone of the best cost individual or not.
+    double difference; //represents the percent similar to the best cost individual
+
+    int dominatedCount;
+    int rank;
+    std::vector<Individual> dominated;
+
     // Default constructor
     Individual();
 
@@ -68,6 +74,15 @@ bool LowerSpeedDiff(Individual& personA, Individual& personB);
 //         posDiff = sqrt(  (ast_r - craft_r) ^ 2 + (ast_r * ast_theta - craft_r * craft_theta % 2Pi)^2 +  (ast_z - craft_z)^2  )
 //__host__ __device__ double calcPosDiff(const elements<double>& currentState, const cudaConstants* cConstants);
 
+double checkDifference(Individual& personA, Individual& personB);
+
+bool same(Individual& personA, Individual& personB, double percent);
+
+bool notAClone(Individual& personA, Individual& personB);
+
+bool dominates(Individual& personA, Individual& personB);
+
+bool rankSort(Individual& personA, Individual& personB);
 
 #include "individuals.cpp"
 

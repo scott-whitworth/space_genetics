@@ -41,7 +41,7 @@ template <class T> struct elements {
     // input: other - another elements object to compare to
     //        comp_Thresh - a threshold for comparison, so when elements are considered equivalent it is a not necessarrily 100% (when not equal to 0)
     // output: returns true if for all properties (pos & vel) the difference between them is less than or equal to comp_Thresh
-    bool compare(const elements<T> & other, T comp_Thresh);
+    double compare(const elements<T> & other);
 
     // Overload the stream output for elements used for writing to a file
     template <class U> friend std::ostream & operator<<(std::ostream & Str, const elements<T> & e); 

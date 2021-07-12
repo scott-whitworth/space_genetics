@@ -19,7 +19,7 @@ struct Individual {
 
     int dominatedCount;
     int rank;
-    std::vector<Individual> dominated;
+    std::vector<int> dominated;
 
     // Default constructor
     Individual();

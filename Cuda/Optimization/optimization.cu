@@ -42,75 +42,146 @@
 //MUST be called after cost has been assigned to all individuals (calling callRK)
 //Input: pool - this generation of individuals, defined/initilized in optimimize
 //       cConstants
-void giveRank(Individual * inputParameters, const cudaConstants* cConstants) {
+void giveRank(Individual * pool, const cudaConstants* cConstants) {
     //non-denominated sorting method attempt
     //https://www.iitk.ac.in/kangal/Deb_NSGA-II.pdf
 
+    // //Used to store the current front of individuals. first filled with the first front individuals(best out of all population)
+    // std::vector<Individual> front;
+    
+    // //loop through each individual
+    // for (int i = 0; i < cConstants->num_individuals; i++){
+        
+    //     //number of times pool[i] has been dominated
+    //     pool[i].dominatedCount = 0;
+
+    //     //set of solutions that pool[i] dominates
+    //     // pool[i].dominated.clear();
+    //     std::vector<Individual>().swap(pool[i].dominated);
+
+    //     for(int j = 0; j < cConstants->num_individuals; j++){
+            
+    //         //if i dominates j, put j in the set of individuals dominated by i.
+    //         if (dominates(pool[i], pool[j])){
+    //             pool[i].dominated.push_back(pool[j]);
+    //         }
+    //         //if j dominates i, increase the number of times that i has been dominated
+    //         else if (dominates(pool[j], pool[i])) {
+    //             pool[i].dominatedCount++;
+    //         }
+    //     }
+        
+    //     //if i was never dominated, add it to the best front, front1. Making its ranking = 1.
+    //     if (pool[i].dominatedCount == 0){
+    //         pool[i].rank = 1;
+    //         front.push_back(pool[i]);
+    //     }
+    //     std::cout << i << " ";
+    // }
+    // std::cout << "QQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQ";
+    // //Used to assign rank number
+    // int rankNum = 1;
+    // //vector to store individuals in next front
+    // std::vector<Individual> newFront;
+
+    // //go until all individuals have been put in better ranks and none are left to give a ranking
+    // while(!front.empty()) {
+    //     //empty the new front to put new individuals in
+    //     //newFront.clear();
+    //     std::vector<Individual>().swap(newFront);
+
+    //     //loop through all individuals in old front
+    //     for(int i = 0; i < front.size(); i++){
+
+    //         //loop through all the individuals that individual i dominated
+    //         for(int j = 0; j < front[i].dominated.size(); j++){
+
+    //             //subtract 1 from the dominated individuals' dominatedCount.
+    //             //if an individual was dominated only once for example, it would be on the second front of individuals.
+    //             front[i].dominated[j].dominatedCount--;
+
+    //             //if the dominated count is at 0, add the individual to the next front and make its rank equal to the next front number.
+    //             if (front[i].dominated[j].dominatedCount == 0){
+    //                 front[i].dominated[j].rank = i + 1;
+    //                 newFront.push_back(front[i].dominated[j]);                        
+    //             }
+    //         }
+    //     }
+    //     //increment the rank number
+    //     rankNum++;
+
+    //     std::vector<Individual>().swap(front);
+    //     //go to next front
+    //     front = newFront;
+    // }
+
     //Used to store the current front of individuals. first filled with the first front individuals(best out of all population)
-    std::vector<Individual> front;
+    std::vector<int> front;
     
     //loop through each individual
     for (int i = 0; i < cConstants->num_individuals; i++){
         
-        //number of times inputParameters[i] has been dominated
-        inputParameters[i].dominatedCount = 0;
+        //number of times pool[i] has been dominated
+        pool[i].dominatedCount = 0;
 
-        //set of solutions that inputParameters[i] dominates
-        // inputParameters[i].dominated.clear();
-        std::vector<Individual>().swap(inputParameters[i].dominated);
+        //set of solutions that pool[i] dominates
+        // pool[i].dominated.clear();
+        std::vector<int>().swap(pool[i].dominated);
 
         for(int j = 0; j < cConstants->num_individuals; j++){
             
             //if i dominates j, put j in the set of individuals dominated by i.
-            if (dominates(inputParameters[i], inputParameters[j])){
-                inputParameters[i].dominated.push_back(inputParameters[j]);
+            if (dominates(pool[i], pool[j])){
+                pool[i].dominated.push_back(j);
             }
             //if j dominates i, increase the number of times that i has been dominated
-            else if (dominates(inputParameters[j], inputParameters[i])) {
-                inputParameters[i].dominatedCount++;
+            else if (dominates(pool[j], pool[i])) {
+                pool[i].dominatedCount++;
             }
         }
         
         //if i was never dominated, add it to the best front, front1. Making its ranking = 1.
-        if (inputParameters[i].dominatedCount == 0){
-            inputParameters[i].rank = 1;
-            front.push_back(inputParameters[i]);
+        if (pool[i].dominatedCount == 0){
+            pool[i].rank = 1;
+            front.push_back(i);
         }
-        std::cout << i << " ";
+        //std::cout << i << " ";
     }
-    std::cout << "QQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQ";
+    //std::cout << "QQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQ";
     //Used to assign rank number
     int rankNum = 1;
     //vector to store individuals in next front
-    std::vector<Individual> newFront;
+    std::vector<int> newFront;
 
     //go until all individuals have been put in better ranks and none are left to give a ranking
     while(!front.empty()) {
         //empty the new front to put new individuals in
         //newFront.clear();
-        std::vector<Individual>().swap(newFront);
+        std::vector<int>().swap(newFront);
 
         //loop through all individuals in old front
         for(int i = 0; i < front.size(); i++){
 
             //loop through all the individuals that individual i dominated
-            for(int j = 0; j < front[i].dominated.size(); j++){
+            for(int j = 0; j < pool[front[i]].dominated.size(); j++){
 
                 //subtract 1 from the dominated individuals' dominatedCount.
                 //if an individual was dominated only once for example, it would be on the second front of individuals.
-                front[i].dominated[j].dominatedCount--;
+                pool[pool[front[i]].dominated[j]].dominatedCount--;
 
                 //if the dominated count is at 0, add the individual to the next front and make its rank equal to the next front number.
-                if (front[i].dominated[j].dominatedCount == 0){
-                    front[i].dominated[j].rank = i + 1;
-                    newFront.push_back(front[i].dominated[j]);                        
+                if (pool[pool[front[i]].dominated[j]].dominatedCount == 0){
+
+                    pool[pool[front[i]].dominated[j]].rank = i + 1;
+                    
+                    newFront.push_back(pool[front[i]].dominated[j]);                        
                 }
             }
         }
         //increment the rank number
         rankNum++;
 
-        std::vector<Individual>().swap(front);
+        std::vector<int>().swap(front);
         //go to next front
         front = newFront;
     }
@@ -148,7 +219,7 @@ bool allWithinTolerance(double tolerance, Individual * pool, const cudaConstants
         // Iterate to check best_count number of 'top' individuals
         for (int i = 0; i < cConstants->best_count; i++) {
             if(pool[i].getCost_Hard(cConstants) >= tolerance) {
-                //One was not within tolerance
+                //One was not within 
                 return false;
             }
         }  
@@ -324,9 +395,9 @@ double optimize(const cudaConstants* cConstants) {
             }
             
             //if (k > 0 && (inputParameters[k].posDiff != 1.0)){
-            // if (inputParameters[k].posDiff != 1.0){
-            //     //calculate the % difference of the individual to the best cost individual
-            //     inputParameters[k].difference = checkDifference(inputParameters[0],inputParameters[k]); 
+            //if (inputParameters[k].posDiff != 1.0){
+                //calculate the % difference of the individual to the best cost individual
+                //inputParameters[k].difference = checkDifference(inputParameters[0],inputParameters[k]); 
 
                 //if(inputParameters[0].posDiff > 1.0e-06){
 

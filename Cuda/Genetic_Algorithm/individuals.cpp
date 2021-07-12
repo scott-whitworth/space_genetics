@@ -175,7 +175,19 @@ bool dominates(Individual& personA, Individual& personB) {
     //returns false if personA does not dominate personB.
     bool AisEqual = false;
     bool AisBetter = false;
-    if (personA.posDiff <= personB.posDiff && personA.speedDiff <= personB.speedDiff) {
+    double tolerance = 1.0e-11;
+    bool APosEqualsB = false;
+    bool ASpeedEqualsB = false;
+
+    //Used for equality comparison so that equals does not have to be exact.
+    if ((personA.posDiff < personB.posDiff + tolerance) && (personA.posDiff > personB.posDiff - tolerance)){
+        APosEqualsB = true;
+    }
+    if ((personA.speedDiff < personB.speedDiff + tolerance) && (personA.speedDiff > personB.speedDiff - tolerance)){
+        ASpeedEqualsB = true;
+    }
+
+    if ((personA.posDiff < personB.posDiff || APosEqualsB) && (personA.speedDiff <= personB.speedDiff || ASpeedEqualsB)) {
         AisEqual = true;
     }
     if (personA.posDiff < personB.posDiff || personA.speedDiff < personB.speedDiff){
@@ -192,6 +204,19 @@ bool dominates(Individual& personA, Individual& personB) {
 bool rankSort(Individual& personA, Individual& personB){
 
     if (personA.rank < personB.rank) {
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
+bool rankDistanceSort(Individual& personA, Individual& personB) {
+
+    if(personA.rank < personB.rank){
+        return true;
+    }
+    else if (personA.rank == personB.rank && personA.distance > personB.distance){
         return true;
     }
     else {

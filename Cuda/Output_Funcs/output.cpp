@@ -373,7 +373,7 @@ void initializeRecord(const cudaConstants * cConstants) {
     }
   }
 
-  excelFile << ",\n";
+  excelFile << "anneal,\n";
   excelFile.close();
 }
 
@@ -435,6 +435,9 @@ void recordAllIndividuals(const cudaConstants * cConstants, Individual * pool, i
     entirePool << "coast" << i << ",";
   }
   entirePool << "cost,";
+  entirePool << "posDiff,";
+  entirePool << "speedDiff,";
+  entirePool << "rank,";
   entirePool << '\n';
 
   entirePool << std::setprecision(20);
@@ -458,6 +461,9 @@ void recordAllIndividuals(const cudaConstants * cConstants, Individual * pool, i
       entirePool << pool[i].startParams.coeff.coast[j] << ",";
     }
     entirePool << pool[i].cost << ",";
+    entirePool << pool[i].posDiff << ",";
+    entirePool << pool[i].speedDiff << ",";
+    entirePool << pool[i].rank << ",";
     entirePool << "\n";
   }
   entirePool.close();

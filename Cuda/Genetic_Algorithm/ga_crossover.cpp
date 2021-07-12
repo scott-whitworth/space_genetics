@@ -411,15 +411,15 @@ int newGeneration(Individual *survivors, Individual *pool, int survivorSize, int
     //int cloneThresh = 1439;
 
     //count of clones identical to the best cost clone.
-    int cloneCount = 0;
+    //int cloneCount = 0;
      
     //Loop through all individuals. If they are a clone, increase cloneCount and toggle isClone bool for that individual.
-    for(int i = 1; i < poolSize; i++){
-        if (same(pool[0], pool[i], 1.0)){
-            cloneCount++;
-            pool[i].isClone = true;
-        }
-    }
+    // for(int i = 1; i < poolSize; i++){
+    //     if (same(pool[0], pool[i], 1.0)){
+    //         cloneCount++;
+    //         pool[i].isClone = true;
+    //     }
+    // }
 
     //std::cout << cloneCount;
     // If cloneCount reaches a certain threshold, replace the clones with mutated versions of themselves.

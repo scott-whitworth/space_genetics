@@ -20,6 +20,7 @@ struct Individual {
     int dominatedCount;
     int rank;
     std::vector<int> dominated;
+    double distance;
 
     // Default constructor
     Individual();

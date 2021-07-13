@@ -15,25 +15,29 @@ void selectSurvivors(Individual * pool, int poolSize, int selectionSize, Individ
     // Sort the pool by position difference
     // and assign the first part of the survivor array for best posDiff individuals
     // portion size based on the ratio percentage
-    std::sort(pool, pool+poolSize, LowerPosDiff);
-    //Select survivors (starting at 0)
-    for (int i = 0; i < selectionSize*ratio; i++) {
+    // std::sort(pool, pool+poolSize, LowerPosDiff);
+    // //Select survivors (starting at 0)
+    // for (int i = 0; i < selectionSize*ratio; i++) {
+    //     survivors[i] = pool[i];
+    // }
+
+    // // Sort the pool by speed difference. If mission type is soft, use LowerSpeedDiff because we want velocity = 0
+    // if(missionType == Impact){
+    //     std::sort(pool, pool+poolSize, HigherSpeedDiff);
+    // }
+    // else if(missionType == Rendezvous){
+    //     std::sort(pool, pool+poolSize, LowerSpeedDiff);
+    // }
+
+    // //Used to make sure pool[] starts at 0 
+    // int j = selectionSize*ratio; 
+    // //starting where first loop ended
+    // for (int i = selectionSize*ratio; i < selectionSize; i++) {
+    //     survivors[(i)] = pool[i - j];
+    // }
+    std::sort(pool, pool+poolSize, rankSort);
+    for (int i = 0; i < selectionSize; i++){
         survivors[i] = pool[i];
-    }
-
-    // Sort the pool by speed difference. If mission type is soft, use LowerSpeedDiff because we want velocity = 0
-    if(missionType == Impact){
-        std::sort(pool, pool+poolSize, HigherSpeedDiff);
-    }
-    else if(missionType == Rendezvous){
-        std::sort(pool, pool+poolSize, LowerSpeedDiff);
-    }
-
-    //Used to make sure pool[] starts at 0 
-    int j = selectionSize*ratio; 
-    //starting where first loop ended
-    for (int i = selectionSize*ratio; i < selectionSize; i++) {
-        survivors[(i)] = pool[i - j];
     }
     return;
 }

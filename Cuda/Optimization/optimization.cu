@@ -46,75 +46,6 @@ void giveRank(Individual * pool, const cudaConstants* cConstants) {
     //non-denominated sorting method attempt
     //https://www.iitk.ac.in/kangal/Deb_NSGA-II.pdf
 
-    // //Used to store the current front of individuals. first filled with the first front individuals(best out of all population)
-    // std::vector<Individual> front;
-    
-    // //loop through each individual
-    // for (int i = 0; i < cConstants->num_individuals; i++){
-        
-    //     //number of times pool[i] has been dominated
-    //     pool[i].dominatedCount = 0;
-
-    //     //set of solutions that pool[i] dominates
-    //     // pool[i].dominated.clear();
-    //     std::vector<Individual>().swap(pool[i].dominated);
-
-    //     for(int j = 0; j < cConstants->num_individuals; j++){
-            
-    //         //if i dominates j, put j in the set of individuals dominated by i.
-    //         if (dominates(pool[i], pool[j])){
-    //             pool[i].dominated.push_back(pool[j]);
-    //         }
-    //         //if j dominates i, increase the number of times that i has been dominated
-    //         else if (dominates(pool[j], pool[i])) {
-    //             pool[i].dominatedCount++;
-    //         }
-    //     }
-        
-    //     //if i was never dominated, add it to the best front, front1. Making its ranking = 1.
-    //     if (pool[i].dominatedCount == 0){
-    //         pool[i].rank = 1;
-    //         front.push_back(pool[i]);
-    //     }
-    //     std::cout << i << " ";
-    // }
-    // std::cout << "QQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQ";
-    // //Used to assign rank number
-    // int rankNum = 1;
-    // //vector to store individuals in next front
-    // std::vector<Individual> newFront;
-
-    // //go until all individuals have been put in better ranks and none are left to give a ranking
-    // while(!front.empty()) {
-    //     //empty the new front to put new individuals in
-    //     //newFront.clear();
-    //     std::vector<Individual>().swap(newFront);
-
-    //     //loop through all individuals in old front
-    //     for(int i = 0; i < front.size(); i++){
-
-    //         //loop through all the individuals that individual i dominated
-    //         for(int j = 0; j < front[i].dominated.size(); j++){
-
-    //             //subtract 1 from the dominated individuals' dominatedCount.
-    //             //if an individual was dominated only once for example, it would be on the second front of individuals.
-    //             front[i].dominated[j].dominatedCount--;
-
-    //             //if the dominated count is at 0, add the individual to the next front and make its rank equal to the next front number.
-    //             if (front[i].dominated[j].dominatedCount == 0){
-    //                 front[i].dominated[j].rank = i + 1;
-    //                 newFront.push_back(front[i].dominated[j]);                        
-    //             }
-    //         }
-    //     }
-    //     //increment the rank number
-    //     rankNum++;
-
-    //     std::vector<Individual>().swap(front);
-    //     //go to next front
-    //     front = newFront;
-    // }
-
     //Used to store the current front of individuals. first filled with the first front individuals(best out of all population)
     // filled with index of individuals in pool
     std::vector<int> front;
@@ -147,7 +78,7 @@ void giveRank(Individual * pool, const cudaConstants* cConstants) {
         }
         //std::cout << i << " ";
     }
-    //std::cout << "QQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQ";
+
     //Used to assign rank number
     int rankNum = 1;
     //vector to store individuals' indexes in next front
@@ -485,6 +416,13 @@ double optimize(const cudaConstants* cConstants) {
             //}
         }
 
+
+        // sort individuals based on overloaded relational operators
+        // gives reference of which to replace and which to carry to the next generation
+        giveRank(inputParameters, cConstants);
+        giveDistance(inputParameters, cConstants);
+        std::sort(inputParameters, inputParameters + cConstants->num_individuals, rankDistanceSort);
+
         // Preparing survivor pool with individuals for the newGeneration crossover
         // Survivor pool contains:
         //               - individuals with best PosDiff
@@ -493,11 +431,6 @@ double optimize(const cudaConstants* cConstants) {
         // inputParameters is left sorted by individuals with best speedDiffs 
         selectSurvivors(inputParameters, cConstants->num_individuals, cConstants->survivor_count, survivors, cConstants->sortingRatio, cConstants->missionType); // Choose which individuals are in survivors, current method selects half to be best posDiff and other half to be best speedDiff
 
-        // sort individuals based on overloaded relational operators
-        // gives reference of which to replace and which to carry to the next generation
-        giveRank(inputParameters, cConstants);
-        giveDistance(inputParameters, cConstants);
-        std::sort(inputParameters, inputParameters + cConstants->num_individuals, rankDistanceSort);
 
         // Display a '.' to the terminal to show that a generation has been performed
         // This also serves to visually seperate the terminalDisplay() calls across generations 

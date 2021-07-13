@@ -332,6 +332,7 @@ double optimize(const cudaConstants* cConstants) {
     // set by allWithinTolerance()
     bool convergence = false;
 
+    bool posReached = false;
     // main gentic algorithm loop
     // - continues until allWithinTolerance returns true (specific number of individuals are within threshold)
     do {
@@ -370,58 +371,7 @@ double optimize(const cudaConstants* cConstants) {
                 }
             }
             
-            //if (k > 0 && (inputParameters[k].posDiff != 1.0)){
-            //if (inputParameters[k].posDiff != 1.0){
-                //calculate the % difference of the individual to the best cost individual
-                //inputParameters[k].difference = checkDifference(inputParameters[0],inputParameters[k]); 
-
-                //if(inputParameters[0].posDiff > 1.0e-06){
-
-                    // if(inputParameters[k].difference < 20.0){
-                    //     inputParameters[k].cost = inputParameters[k].cost * 100000;
-                    // }
-                    // else if (inputParameters[k].difference < 50.0 && inputParameters[k].difference >= 20.0){
-                    //     inputParameters[k].cost = inputParameters[k].cost * 10000;
-                    // }
-                    // else if (inputParameters[k].difference < 70.0 && inputParameters[k].difference >= 50.0){
-                    //     inputParameters[k].cost = inputParameters[k].cost * 1000;
-                    // }
-                    // else if (inputParameters[k].difference < 90.0 && inputParameters[k].difference >= 70.0){
-                    //     inputParameters[k].cost = inputParameters[k].cost * 100;
-                    // }
-
-                    //low speed penalty
-                    // if(inputParameters[k].speedDiff > 1.0E-09){
-                    //     inputParameters[k].cost = inputParameters[k].cost * 10000;
-                    // }
-                    // else if (inputParameters[k].speedDiff < 1.0E-08 && inputParameters[k].speedDiff >= 1.0E-09){
-                    //     inputParameters[k].cost = inputParameters[k].cost * 1000;
-                    // }
-
-                //}
-                // else {
-                //     if(inputParameters[k].difference < 80.0){
-                //         inputParameters[k].cost = inputParameters[k].cost * 100000;
-                //     }
-                //     // else if (inputParameters[k].difference < 0.1 && inputParameters[k].difference >= 0.01){
-                //     //     inputParameters[k].cost = inputParameters[k].cost * 10000;
-                //     // }
-                //     // else if (inputParameters[k].difference < 1.0 && inputParameters[k].difference >= 0.1){
-                //     //     inputParameters[k].cost = inputParameters[k].cost * 1000;
-                //     // }
-                //     // else if (inputParameters[k].difference < 10.0 && inputParameters[k].difference >= 1.0){
-                //     //     inputParameters[k].cost = inputParameters[k].cost * 100;
-                //     // }
-                // }
-            //}
         }
-
-
-        // sort individuals based on overloaded relational operators
-        // gives reference of which to replace and which to carry to the next generation
-        giveRank(inputParameters, cConstants);
-        giveDistance(inputParameters, cConstants);
-        std::sort(inputParameters, inputParameters + cConstants->num_individuals, rankDistanceSort);
 
         // Preparing survivor pool with individuals for the newGeneration crossover
         // Survivor pool contains:
@@ -429,9 +379,27 @@ double optimize(const cudaConstants* cConstants) {
         //               - individuals with best speedDiffs
         //               - depends on cConstants->sortingRatio (0.1 is 10% are best PosDiff for example)
         // inputParameters is left sorted by individuals with best speedDiffs 
+        giveRank(inputParameters, cConstants);
+        giveDistance(inputParameters, cConstants);
         selectSurvivors(inputParameters, cConstants->num_individuals, cConstants->survivor_count, survivors, cConstants->sortingRatio, cConstants->missionType); // Choose which individuals are in survivors, current method selects half to be best posDiff and other half to be best speedDiff
 
-
+        // sort individuals based on overloaded relational operators
+        // gives reference of which to replace and which to carry to the next generation
+        // giveRank(inputParameters, cConstants);
+        // giveDistance(inputParameters, cConstants);
+        std::sort(inputParameters, inputParameters + cConstants->num_individuals, rankDistanceSort);
+        if(inputParameters[0].posDiff < 1.0e-10){
+            posReached = true;
+        }
+        if (inputParameters[0].posDiff < 1.0e-10){
+            std::sort(inputParameters, inputParameters + cConstants->num_individuals, LowerSpeedDiff);
+        }
+        else if(inputParameters[0].speedDiff < 1.0e-10){
+            std::sort(inputParameters, inputParameters + cConstants->num_individuals, LowerPosDiff);
+        }
+        else {
+            std::sort(inputParameters, inputParameters + cConstants->num_individuals, LowerSpeedDiff);
+        }
         // Display a '.' to the terminal to show that a generation has been performed
         // This also serves to visually seperate the terminalDisplay() calls across generations 
         std::cout << '.';
@@ -473,10 +441,9 @@ double optimize(const cudaConstants* cConstants) {
 
         // If in recording mode and write_freq reached, call the record method
         if (static_cast<int>(generation) % cConstants->write_freq == 0 && cConstants->record_mode == true) {
-            std::sort(inputParameters, inputParameters + cConstants->num_individuals);
             recordGenerationPerformance(cConstants, inputParameters, generation, new_anneal, cConstants->num_individuals);
         }
-        std::sort(inputParameters, inputParameters + cConstants->num_individuals, rankDistanceSort);
+    
         // Only call terminalDisplay every DISP_FREQ, not every single generation
         if ( static_cast<int>(generation) % cConstants->disp_freq == 0) {
             // Prints the best individual's posDiff / speedDiff and cost
@@ -508,7 +475,7 @@ double optimize(const cudaConstants* cConstants) {
 
             recordAllIndividuals(cConstants, inputParameters, cConstants->num_individuals, generation);
         }
-        std::sort(inputParameters, inputParameters + cConstants->num_individuals, rankDistanceSort);
+
         // Before replacing new individuals, determine whether all are within tolerance
         // Determines when loop is finished
         convergence = allWithinTolerance(tolerance, inputParameters, cConstants);

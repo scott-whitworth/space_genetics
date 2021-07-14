@@ -51,7 +51,7 @@ void giveRank(Individual * pool, const cudaConstants* cConstants) {
     std::vector<int> front;
     
     //loop through each individual
-    for (int i = 0; i < cConstants->num_individuals; i++){
+    for (int i = 0; i < cConstants->num_individuals*2; i++){
         
         //number of times pool[i] has been dominated
         pool[i].dominatedCount = 0;
@@ -59,7 +59,7 @@ void giveRank(Individual * pool, const cudaConstants* cConstants) {
         //set of solutions that pool[i] dominates. Need to empty for each generation
         std::vector<int>().swap(pool[i].dominated);
 
-        for(int j = 0; j < cConstants->num_individuals; j++){
+        for(int j = 0; j < cConstants->num_individuals*2; j++){
             
             //if i dominates j, put the j index in the set of individuals dominated by i.
             if (dominates(pool[i], pool[j])){
@@ -116,9 +116,9 @@ void giveRank(Individual * pool, const cudaConstants* cConstants) {
         front = newFront;
     }
     //for each individual, check if it is a NaN. If it is, give it a very low rank.
-    for (int i = 0; i < cConstants->num_individuals; i++){
+    for (int i = 0; i < cConstants->num_individuals*2; i++){
         if (pool[i].posDiff == 1.0){
-            pool[i].rank = cConstants->num_individuals;
+            pool[i].rank = cConstants->num_individuals*2;
         }
     }
 }
@@ -239,6 +239,13 @@ double optimize(const cudaConstants* cConstants) {
     // Main set of parameters for Genetic Algorithm
     // contains all thread unique input parameters
     Individual *inputParameters = new Individual[cConstants->num_individuals]; 
+
+    // Main set of parameters for Genetic Algorithm, the old generation parameters
+    // contains all thread unique input parameters
+    Individual *oldInputParameters = new Individual[cConstants->num_individuals]; 
+
+    //the set of all old and new individuals
+    Individual *allIndividuals = new Individual[cConstants->num_individuals*2];
 
     // set to zero to force difference in first generation
     // double previousBestPos = 0; 
@@ -373,33 +380,48 @@ double optimize(const cudaConstants* cConstants) {
             
         }
 
+        //fill with new individuals
+        for(int i = 0; i < cConstants->num_individuals; i++){
+            allIndividuals[i] = inputParameters[i];
+        }
+        //fill with old individuals
+        if(generation == 0){
+            for(int i = 0; i < cConstants->num_individuals; i++){
+            allIndividuals[i + cConstants->num_individuals] = inputParameters[i];
+        }
+        } else {
+            for(int i = 0; i < cConstants->num_individuals; i++){
+                allIndividuals[i + cConstants->num_individuals] = oldInputParameters[i];
+            }
+        }
+
+        //give a rank to each individual based on domination sort
+        giveRank(allIndividuals, cConstants);
+
+        // gives reference of which to replace and which to carry to the next generation
+        //sort individuals based on rank
+        std::sort(allIndividuals, allIndividuals + cConstants->num_individuals*2, rankSort);
+
+        //find lowest rank number
+        //NOT IN USE: need to figure out how to add last ranked individuals to inputParameters based on distance crowding.
+        //int lastRank = allIndividuals[cConstants->num_individuals*2].rank;
+
+        //fill inputParameters with the new best individuals
+        for(int i = 0; i < cConstants->num_individuals; i++){
+            inputParameters[i] = allIndividuals[i];
+        }
+
+        //Used for selectSurvivors
+        giveDistance(allIndividuals, cConstants);
         // Preparing survivor pool with individuals for the newGeneration crossover
         // Survivor pool contains:
         //               - individuals with best PosDiff
         //               - individuals with best speedDiffs
         //               - depends on cConstants->sortingRatio (0.1 is 10% are best PosDiff for example)
         // inputParameters is left sorted by individuals with best speedDiffs 
-        giveRank(inputParameters, cConstants);
-        giveDistance(inputParameters, cConstants);
         selectSurvivors(inputParameters, cConstants->num_individuals, cConstants->survivor_count, survivors, cConstants->sortingRatio, cConstants->missionType); // Choose which individuals are in survivors, current method selects half to be best posDiff and other half to be best speedDiff
 
-        // sort individuals based on overloaded relational operators
-        // gives reference of which to replace and which to carry to the next generation
-        // giveRank(inputParameters, cConstants);
-        // giveDistance(inputParameters, cConstants);
-        std::sort(inputParameters, inputParameters + cConstants->num_individuals, rankDistanceSort);
-        if(inputParameters[0].posDiff < 1.0e-10){
-            posReached = true;
-        }
-        if (inputParameters[0].posDiff < 1.0e-10){
-            std::sort(inputParameters, inputParameters + cConstants->num_individuals, LowerSpeedDiff);
-        }
-        else if(inputParameters[0].speedDiff < 1.0e-10){
-            std::sort(inputParameters, inputParameters + cConstants->num_individuals, LowerPosDiff);
-        }
-        else {
-            std::sort(inputParameters, inputParameters + cConstants->num_individuals, LowerSpeedDiff);
-        }
+        std::sort(inputParameters, inputParameters + cConstants->num_individuals, rankSort);
         // Display a '.' to the terminal to show that a generation has been performed
         // This also serves to visually seperate the terminalDisplay() calls across generations 
         std::cout << '.';
@@ -480,6 +502,8 @@ double optimize(const cudaConstants* cConstants) {
         // Determines when loop is finished
         convergence = allWithinTolerance(tolerance, inputParameters, cConstants);
 
+        //store away the old individuals
+        oldInputParameters = inputParameters;
         // Create a new generation and increment the generation counter
         // Genetic Crossover and mutation occur here
         newInd = newGeneration(survivors, inputParameters, cConstants->survivor_count, cConstants->num_individuals, new_anneal, cConstants, rng, generation);

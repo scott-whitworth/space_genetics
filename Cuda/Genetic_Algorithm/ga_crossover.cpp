@@ -35,7 +35,7 @@ void selectSurvivors(Individual * pool, int poolSize, int selectionSize, Individ
     // for (int i = selectionSize*ratio; i < selectionSize; i++) {
     //     survivors[(i)] = pool[i - j];
     // }
-    std::sort(pool, pool+poolSize, rankSort);
+    std::sort(pool, pool+poolSize, rankDistanceSort);
     for (int i = 0; i < selectionSize; i++){
         survivors[i] = pool[i];
     }
@@ -405,67 +405,6 @@ int newGeneration(Individual *survivors, Individual *pool, int survivorSize, int
     // Number of new individuals created so far (initially none)
     // used in navigating through the pool when creating new individuals and returned at end of function
     int newIndCount = 0;
-
-    //-------------------------------------NEW METHOD--------------------------------------------------------------------------------------------------
-    // If a generation gets a certain amount of clones, use this crossover method instead of the normal one to replace the clones.
-    // For this method to work, it is important that the pool is sorted by cost. That should be happening in optimization because it
-    // is also important for the normal crossovers.
-
-    //number of clones that can exist before needing to be replaced.
-    //int cloneThresh = 1439;
-
-    //count of clones identical to the best cost clone.
-    //int cloneCount = 0;
-     
-    //Loop through all individuals. If they are a clone, increase cloneCount and toggle isClone bool for that individual.
-    // for(int i = 1; i < poolSize; i++){
-    //     if (same(pool[0], pool[i], 1.0)){
-    //         cloneCount++;
-    //         pool[i].isClone = true;
-    //     }
-    // }
-
-    //std::cout << cloneCount;
-    // If cloneCount reaches a certain threshold, replace the clones with mutated versions of themselves.
-    // if (cloneCount > cloneThresh){
-    //     //Set mask to do no crossover and copy the same individual
-    //     crossOver_oneParent(mask);
-    //     //loop through all the individuals and find the ones that are clones
-    //     for (int i=1; i < poolSize; i++){
-    //         if(pool[i].isClone == true){
-    //             //replace individual with mutated version of itself.
-    //             int index = rng() % 7;
-    //             switch (index){
-    //                 case '0':
-    //                     pool[i] = Individual(generateNewIndividual(pool[i].startParams, pool[i].startParams, mask, cConstants, annealing, rng, generation, GAMMA_OFFSET), cConstants);
-    //                     break;
-    //                 case '1':
-    //                     pool[i] = Individual(generateNewIndividual(pool[i].startParams, pool[i].startParams, mask, cConstants, annealing, rng, generation, TAU_OFFSET), cConstants);
-    //                     break;
-    //                 case '2':
-    //                     pool[i] = Individual(generateNewIndividual(pool[i].startParams, pool[i].startParams, mask, cConstants, annealing, rng, generation, ALPHA_OFFSET), cConstants);
-    //                     break;
-    //                 case '3':
-    //                     pool[i] = Individual(generateNewIndividual(pool[i].startParams, pool[i].startParams, mask, cConstants, annealing, rng, generation, BETA_OFFSET), cConstants);
-    //                     break;
-    //                 case '4':
-    //                     pool[i] = Individual(generateNewIndividual(pool[i].startParams, pool[i].startParams, mask, cConstants, annealing, rng, generation, ZETA_OFFSET), cConstants);
-    //                     break;
-    //                 case '5':
-    //                     pool[i] = Individual(generateNewIndividual(pool[i].startParams, pool[i].startParams, mask, cConstants, annealing, rng, generation, TRIPTIME_OFFSET), cConstants);
-    //                     break;
-    //                 case '6':
-    //                     pool[i] = Individual(generateNewIndividual(pool[i].startParams, pool[i].startParams, mask, cConstants, annealing, rng, generation, COAST_OFFSET), cConstants);
-    //                     break;
-    //             }
-    //             //increment new individual count
-    //             newIndCount++; 
-    //         }
-    //     }
-    //     //Sort based on cost. This will put the new individuals at the bottom of the pack so that they get replaced. (The constructor's cost = 10)
-    //     std::sort(pool, pool + poolSize);
-    // }
-    //else {//Normal crossover methods when clones have not exeeded cloneThresh
     
         // Value for how many pairs to use and produce in each loop
         // (as one iteration through a loop produces a new pair)
@@ -500,7 +439,7 @@ int newGeneration(Individual *survivors, Individual *pool, int survivorSize, int
             crossOver_bundleVars(mask, rng);
             generateChildrenPair(pool, survivors, mask, newIndCount, 2*i, annealing, poolSize, rng, cConstants, generation, 1000);
         }
-    //}
+
 
     delete [] mask;
     return newIndCount;

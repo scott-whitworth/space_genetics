@@ -365,11 +365,13 @@ rkParameters<double> mutate(const rkParameters<double> & p1, std::mt19937_64 & r
                 // recordLog[index] = randVar;
     
                 // A check to ensure beta remains in value range 0 to pi, doesn't update recordLog
-                if (newInd.beta < 0) {
-                    newInd.beta = 0;
-                }
-                else if (newInd.beta > M_PI) {
-                    newInd.beta = M_PI;              
+                while (newInd.beta < 0 || newInd.beta > M_PI) {
+                    if (newInd.beta < 0) {
+                        newInd.beta += M_PI;
+                    }
+                    else if (newInd.beta > M_PI) {
+                        newInd.beta -= M_PI;              
+                    }
                 }
             }
             else if (index == ALPHA_OFFSET) { // Alpha

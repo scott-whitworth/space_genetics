@@ -35,9 +35,32 @@ void selectSurvivors(Individual * pool, int poolSize, int selectionSize, Individ
     // for (int i = selectionSize*ratio; i < selectionSize; i++) {
     //     survivors[(i)] = pool[i - j];
     // }
-    std::sort(pool, pool+poolSize, rankDistanceSort);
-    for (int i = 0; i < selectionSize; i++){
+
+    std::sort(pool, pool+poolSize, LowerPosDiff);
+    //Select survivors (starting at 0)
+    for (int i = 0; i < selectionSize*0.33; i++) {
         survivors[i] = pool[i];
+    }
+
+    if(missionType == Impact){
+        std::sort(pool, pool+poolSize, HigherSpeedDiff);
+    }
+    else if(missionType == Rendezvous){
+        std::sort(pool, pool+poolSize, LowerSpeedDiff);
+    }
+
+    //Used to make sure pool[] starts at 0 
+    int j = selectionSize*0.33; 
+    //starting where first loop ended
+    for (int i = selectionSize*0.33; i < selectionSize*0.66; i++) {
+        survivors[(i)] = pool[i - j];
+    }
+
+    int k = selectionSize*0.66;
+
+    std::sort(pool, pool+poolSize, rankDistanceSort);
+    for (int i = selectionSize*0.66; i < selectionSize; i++){
+        survivors[i] = pool[i - k];
     }
     return;
 }

@@ -37,6 +37,111 @@
 //     }
 // }
 
+
+//Returns the number of fronts until the poolSize is met (index+1), and the number of individuals per front.
+int fillParentPool(std::vector<int> &frontCounter, const cudaConstants* cConstants, int generation, Individual* pool, Individual* parentPool, const int parentPoolSize) {
+    //reallocate space for frontCounter. Delete last generation's frontCounter first
+    
+    int numFronts = 1;
+    for (int i = 1; i < parentPoolSize*2; i++) {
+        if (pool[i].rank > pool[i-1].rank) {
+            numFronts++;
+        }
+    }
+
+
+    //int* frontCounter = new int[numFronts];
+    //std::cout << "# of Fronts: " << numFronts << " | " << frontCounter.size() << std::endl; 
+
+    // //This counts the number of individuals per front
+    // int* frontCounter = new int[numFronts];
+    for (int i = 0; i < frontCounter.size(); i++) {
+        frontCounter[i] = 0;
+    }
+
+
+    //Fill frontCounter.
+    for (int i = 0; i < parentPoolSize*2; i++) {
+        // if (pool[i].rank <= 0) {
+        //     std::cout << "Error Detected In FillParentPool!" << std::endl;
+        // }
+        // else {
+        //     frontCounter[pool[i].rank - 1] += 1;
+        // }
+
+        if (pool[i].rank <= 0) {
+            std::cout << "Error Detected In FillParentPool!" << std::endl;
+        }
+        else {
+            frontCounter[pool[i].rank - 1] += 1;
+        }
+
+        //If it's a nan, put it in the last member of frontCounter.
+
+    }
+    // int x = 0;
+
+    //Print all ranks in order
+    // for (int i = 0; i < parentPoolSize * 2 - 1; i++) {
+    //     if (pool[i+1].rank > pool[i].rank + 1) {
+    //         std::cout << "XXXXXXXXXXXXXXXXXXXXXXXXXX" << std::endl;
+    //     }
+    // }
+    //std::cout << "\n-----------------------------------------------------------\n" << std::endl;
+
+    //Output front # and Size
+    // std::cout << "Front #  |  Size" << std::endl; 
+
+    //Print every front, try to retain fronts without individuals that are before fronts with 1+ individuals
+    // for (int i = 0; i < frontCounter.size(); i++) {
+    //     if (frontCounter[i-1] != 0 || frontCounter[i] != 0 || frontCounter[i+1] != 0 ) {
+    //         std::cout << i+1 << "  |  " << frontCounter[i] << std::endl;
+    //     }
+    // }
+    // std::cout << std::endl;
+
+
+    //* This part isn't really necessary, but being able to see how many individuals are in a front is good.
+    //Find the last front that parents are taken from
+    //int cutoffFront = pool[parentPoolSize - 1].rank - 1;
+
+    //Find the number of parents taken from entire fronts
+    // int start = 0;
+    // for (int i = 0; i < cutoffFront; i++) {
+    //     start += frontCounter[i];
+    // }
+    // int end = start + frontCounter[cutoffFront];
+
+
+    // int sum = 0;
+    // for (int i = 0; i < frontCounter.size(); i++) {
+    //     sum += frontCounter[i];
+    // }
+
+    //start < 1440 < end
+    // std::cout << "Start: " << start << " | Cutoff: " << (parentPoolSize - 1) << " | End: " << end << std::endl;
+    // std::cout << "Cutoff Front: " << (cutoffFront+1) << std::endl;
+    // std::cout << "Sum: " << sum << std::endl;
+    // std::cout << "________________________________________________________________________\n" << std::endl;
+
+
+
+    // std::sort(pool+start, pool+end, rankDistanceSort);
+    
+    if (generation % 25 == 0) {
+        recordFronts(cConstants, frontCounter, numFronts, generation);
+    }
+
+    //Fill the parent pool
+    for (int i = 0; i < parentPoolSize; i++) {
+        parentPool[i] = pool[i];
+    }
+
+    return numFronts;
+}
+
+
+
 //Used to give rankings for sorting based on non-dominated sorting method.
 //Assigns suitability rank to all individuals.
 //MUST be called after cost has been assigned to all individuals (calling callRK)
@@ -80,7 +185,7 @@ void giveRank(Individual * pool, const cudaConstants* cConstants) {
     }
 
     //Used to assign rank number
-    int rankNum = 1;
+    int rankNum = 2;
     //vector to store individuals' indexes in next front
     std::vector<int> newFront;
 
@@ -101,9 +206,7 @@ void giveRank(Individual * pool, const cudaConstants* cConstants) {
 
                 //if the dominated count is at 0, add the individual to the next front and make its rank equal to the next front number.
                 if (pool[pool[front[k]].dominated[l]].dominatedCount == 0){
-
-                    pool[pool[front[k]].dominated[l]].rank = k + 1;
-                    
+                    pool[pool[front[k]].dominated[l]].rank = rankNum;
                     newFront.push_back(pool[front[k]].dominated[l]);                        
                 }
             }
@@ -116,43 +219,42 @@ void giveRank(Individual * pool, const cudaConstants* cConstants) {
         front = newFront;
     }
     //for each individual, check if it is a NaN. If it is, give it a very low rank.
-    for (int i = 0; i < cConstants->num_individuals*2; i++){
-        if (pool[i].posDiff == 1.0){
-            pool[i].rank = cConstants->num_individuals*2;
-        }
-    }
+    // for (int i = 0; i < cConstants->num_individuals*2; i++){
+    //     if (pool[i].cost > 99.9 && pool[i].cost < 100.01){
+    //         pool[i].rank = cConstants->num_individuals*2;
+    //     }
+    // }
 }
 
-void giveDistance(Individual * pool, const cudaConstants* cConstants){
+void giveDistance(Individual * pool, const cudaConstants* cConstants, int poolSize){
 
-    for (int i = 0; i < cConstants->num_individuals; i++ ){
+    for (int i = 0; i < poolSize; i++ ){
         //reset each individual's distance
         pool[i].distance = 0;
     }
 
-    std::sort(pool, pool + cConstants->num_individuals, LowerPosDiff);
+    std::sort(pool, pool + poolSize, LowerPosDiff);
     pool[0].distance = 1.0e+12;
-    pool[cConstants->num_individuals - 1].distance = 1.0e+12;
+    pool[poolSize - 1].distance = 1.0e+12;
 
     //For each individual besides the upper and lower bounds, make their distance equal to
     //the current distance + the absolute normalized difference in the function values of two adjacent solutions.
-    for(int i = 1; i < cConstants->num_individuals - 1; i++){
-        
-        pool[i].distance = pool[i].distance + (pool[i+1].posDiff - pool[i-1].posDiff)/(pool[cConstants->num_individuals - 1].posDiff - pool[0].posDiff);
+    for(int i = 1; i < poolSize - 1; i++){
+        pool[i].distance = pool[i].distance + abs((pool[i+1].posDiff - pool[i-1].posDiff)/(pool[poolSize - 1].posDiff - pool[0].posDiff));
     }
 
     //Repeat above process for speedDiff    
-    std::sort(pool, pool + cConstants->num_individuals, LowerSpeedDiff);
+    std::sort(pool, pool + poolSize, LowerSpeedDiff);
     pool[0].distance = 1.0e+12;
-    pool[cConstants->num_individuals - 1].distance = 1.0e+12;
+    pool[poolSize - 1].distance = 1.0e+12;
 
     //For each individual besides the upper and lower bounds, make their distance equal to
     //the current distance + the absolute normalized difference in the function values of two adjacent solutions.
-    for(int i = 1; i < cConstants->num_individuals - 1; i++){
-        
-        pool[i].distance = pool[i].distance + (pool[i+1].speedDiff - pool[i-1].speedDiff)/(pool[cConstants->num_individuals - 1].speedDiff - pool[0].speedDiff);
+    for(int i = 1; i < poolSize - 1; i++){
+        pool[i].distance = pool[i].distance + abs((pool[i+1].speedDiff - pool[i-1].speedDiff)/(pool[poolSize - 1].speedDiff - pool[0].speedDiff));
     }
 
+    std::sort(pool, pool + poolSize, rankDistanceSort);
 }
 
 bool changeInBest(double previousBestCost, const Individual & currentBest, double distinguishRate) {
@@ -339,7 +441,8 @@ double optimize(const cudaConstants* cConstants) {
     // set by allWithinTolerance()
     bool convergence = false;
 
-    bool posReached = false;
+    std::vector<int> frontCounter(cConstants->num_individuals);
+
     // main gentic algorithm loop
     // - continues until allWithinTolerance returns true (specific number of individuals are within threshold)
     do {
@@ -354,31 +457,36 @@ double optimize(const cudaConstants* cConstants) {
         //numNans - number of times a nan is found in 100 generations.
         int numNans = 0;
 
+
         // if we got bad results reset the Individual to random starting values (it may still be used for crossover) and set the final position to be way off so it gets replaced by a new Individual
         for (int k = 0; k < cConstants->num_individuals; k++) {
             //Checking each individuals final position for NaNs
             if (isnan(inputParameters[k].finalPos.r) || isnan(inputParameters[k].finalPos.theta) || isnan(inputParameters[k].finalPos.z) || isnan(inputParameters[k].finalPos.vr) || isnan(inputParameters[k].finalPos.vtheta) || isnan(inputParameters[k].finalPos.vz)) {
                 //std::cout << std::endl << std::endl << "NAN FOUND" << std::endl << std::endl;
                 numNans++;
-                inputParameters[k] = Individual(randomParameters(rng, cConstants), cConstants);
+                //inputParameters[k] = Individual(randomParameters(rng, cConstants), cConstants);
                 // Set to be a bad individual by giving it bad posDiff and speedDiffs
                 // therefore also having a bad cost value
                 // won't be promoted in crossover
-                inputParameters[k].posDiff = 1.0;
+                inputParameters[k].posDiff = 100.0;
 
                 if (cConstants->missionType == Rendezvous){
-                    inputParameters[k].speedDiff = 1.0;//This is an undesirable result for an rendezvous mission (approx. 500c!)
+                    inputParameters[k].speedDiff = 100.0;//This is an undesirable result for an rendezvous mission (approx. 50000c!)
                     // calculate its new cost function based on 'bad' differences
-                    inputParameters[k].getCost_Soft(cConstants);
+                    inputParameters[k].cost = 100.0;
                 }
                 else if (cConstants->missionType == Impact){
                     inputParameters[k].speedDiff = 0.0;//This is an undesirable result for an impact mission
                     // calculate its new cost function based on 'bad' differences
-                    inputParameters[k].getCost_Hard(cConstants);                   
+                    inputParameters[k].cost = 100.0;                   
                 }
             }
             
         }
+        if (generation == 0) {
+            numNans *= 2;
+        }
+
 
         //fill with new individuals
         for(int i = 0; i < cConstants->num_individuals; i++){
@@ -387,32 +495,55 @@ double optimize(const cudaConstants* cConstants) {
         //fill with old individuals
         if(generation == 0){
             for(int i = 0; i < cConstants->num_individuals; i++){
-            allIndividuals[i + cConstants->num_individuals] = inputParameters[i];
-        }
-        } else {
+                allIndividuals[i + cConstants->num_individuals] = inputParameters[i];
+            }
+        } 
+        else {
             for(int i = 0; i < cConstants->num_individuals; i++){
                 allIndividuals[i + cConstants->num_individuals] = oldInputParameters[i];
             }
         }
 
+        //* Push the nans to the back of the vector natural individuals have rank = 0; nans have rank = 2880.
+        //std::sort(allIndividuals, allIndividuals + cConstants->num_individuals*2, rankSort);
+
         //give a rank to each individual based on domination sort
+        //* Ignore any nans at the end of allIndividuals
         giveRank(allIndividuals, cConstants);
 
         // gives reference of which to replace and which to carry to the next generation
         //sort individuals based on rank
         std::sort(allIndividuals, allIndividuals + cConstants->num_individuals*2, rankSort);
 
+
         //find lowest rank number
         //NOT IN USE: need to figure out how to add last ranked individuals to inputParameters based on distance crowding.
         //int lastRank = allIndividuals[cConstants->num_individuals*2].rank;
+        
+        giveDistance(allIndividuals, cConstants, cConstants->num_individuals*2 - numNans);
+        
+        
+        // for (int i = 0; i < cConstants->num_individuals * 2; i++) {
+        //     std::cout << allIndividuals[i].rank << " "; 
 
-        //fill inputParameters with the new best individuals
-        for(int i = 0; i < cConstants->num_individuals; i++){
+        //     if (allIndividuals[i].rank < allIndividuals[i+1].rank) {
+        //         std::cout << "\n" << std::endl;
+        //     }
+        // }
+        
+
+        //Fill the parent pool, keep the number of fronts for genPerformance
+        //int numFronts = fillParentPool(frontCounter, cConstants, generation, allIndividuals, inputParameters, cConstants->num_individuals);
+        
+        std::sort(allIndividuals, allIndividuals + cConstants->num_individuals*2, rankDistanceSort);
+        int numFronts = -1;
+        for (int i = 0; i < cConstants->num_individuals; i++) {
             inputParameters[i] = allIndividuals[i];
         }
 
+
         //Used for selectSurvivors
-        giveDistance(allIndividuals, cConstants);
+        
         // Preparing survivor pool with individuals for the newGeneration crossover
         // Survivor pool contains:
         //               - individuals with best PosDiff
@@ -421,7 +552,7 @@ double optimize(const cudaConstants* cConstants) {
         // inputParameters is left sorted by individuals with best speedDiffs 
         selectSurvivors(inputParameters, cConstants->num_individuals, cConstants->survivor_count, survivors, cConstants->sortingRatio, cConstants->missionType); // Choose which individuals are in survivors, current method selects half to be best posDiff and other half to be best speedDiff
 
-        std::sort(inputParameters, inputParameters + cConstants->num_individuals, rankSort);
+        std::sort(inputParameters, inputParameters + cConstants->num_individuals, rankDistanceSort);
         // Display a '.' to the terminal to show that a generation has been performed
         // This also serves to visually seperate the terminalDisplay() calls across generations 
         std::cout << '.';
@@ -463,9 +594,11 @@ double optimize(const cudaConstants* cConstants) {
 
         // If in recording mode and write_freq reached, call the record method
         if (static_cast<int>(generation) % cConstants->write_freq == 0 && cConstants->record_mode == true) {
-            recordGenerationPerformance(cConstants, inputParameters, generation, new_anneal, cConstants->num_individuals);
+            recordGenerationPerformance(cConstants, inputParameters, generation, new_anneal, cConstants->num_individuals, numFronts);
         }
-    
+
+        //std::cout << "Nans in gen " << generation << " : " << numNans << std::endl;
+
         // Only call terminalDisplay every DISP_FREQ, not every single generation
         if ( static_cast<int>(generation) % cConstants->disp_freq == 0) {
             // Prints the best individual's posDiff / speedDiff and cost
@@ -489,21 +622,30 @@ double optimize(const cudaConstants* cConstants) {
                 terminalDisplay(inputParameters[0], generation);
             }
 
+            std::sort(inputParameters, inputParameters+cConstants->num_individuals, rankDistanceSort);
+            recordAllIndividuals(cConstants, inputParameters, cConstants->num_individuals, generation);
+
             //reset array
             std::sort(inputParameters, inputParameters + cConstants->num_individuals);
             terminalDisplay(inputParameters[0], generation);
             std::cout << "\n# of Nans this increment: " << numNans << "\n" << std::endl;
             numNans = 0; //Reset the tally of nans.
 
-            recordAllIndividuals(cConstants, inputParameters, cConstants->num_individuals, generation);
+            
         }
 
         // Before replacing new individuals, determine whether all are within tolerance
         // Determines when loop is finished
         convergence = allWithinTolerance(tolerance, inputParameters, cConstants);
 
+
         //store away the old individuals
-        oldInputParameters = inputParameters;
+        for (int i = 0; i < cConstants->num_individuals; i++) {
+            oldInputParameters[i] = inputParameters[i];
+            //oldInputParameters[i].rank = 0; //Reset the rank to push nans to the end again
+        }
+
+
         // Create a new generation and increment the generation counter
         // Genetic Crossover and mutation occur here
         newInd = newGeneration(survivors, inputParameters, cConstants->survivor_count, cConstants->num_individuals, new_anneal, cConstants, rng, generation);
@@ -514,8 +656,9 @@ double optimize(const cudaConstants* cConstants) {
 
     // Call record for final generation regardless of frequency
     // for the annealing argument, set to -1 (since the anneal is only relevant to the next generation and so means nothing for the last one)
+    // for the numFront argument, set to -1 (just because)
     if (cConstants->record_mode == true) {
-        recordGenerationPerformance(cConstants, inputParameters, generation, -1, cConstants->num_individuals);
+        recordGenerationPerformance(cConstants, inputParameters, generation, -1, cConstants->num_individuals, -1);
     }
     // Only call finalRecord if the results actually converged on a solution
     // also display last generation onto terminal

@@ -334,7 +334,7 @@ void initializeRecord(const cudaConstants * cConstants) {
   std::string fileId = std::to_string(seed);
   excelFile.open("genPerformance-" + fileId + ".csv", std::ios_base::app);
 
-  excelFile << "gen,lowerPosDiff,bestSpeedDiff,bestCost,alpha,beta,zeta,tripTime,";
+  excelFile << "gen,lowerPosDiff,bestSpeedDiff,bestCost,numFronts,alpha,beta,zeta,tripTime,";
   
   for (int i = 0; i < GAMMA_ARRAY_SIZE; i++) {
     excelFile << "gamma"; 
@@ -378,7 +378,7 @@ void initializeRecord(const cudaConstants * cConstants) {
 }
 
 // Take in the current state of the generation and appends to excel file, assumes initializeRecord() had already been called before (no need to output a header row)
-void recordGenerationPerformance(const cudaConstants * cConstants, Individual * pool, double generation, double new_anneal, int poolSize) {
+void recordGenerationPerformance(const cudaConstants * cConstants, Individual * pool, double generation, double new_anneal, int poolSize, int numFronts) {
   std::ofstream excelFile;
   int seed = cConstants->time_seed;
   std::string fileId = std::to_string(seed);
@@ -389,6 +389,7 @@ void recordGenerationPerformance(const cudaConstants * cConstants, Individual * 
   excelFile << generation << "," << pool[0].posDiff << ",";
   excelFile << pool[0].speedDiff << ",";
   excelFile << pool[0].cost << ",";
+  excelFile << numFronts << ",";
 
   // Record best individuals parameters
   excelFile << pool[0].startParams.alpha << ",";
@@ -422,7 +423,7 @@ void recordGenerationPerformance(const cudaConstants * cConstants, Individual * 
 void recordAllIndividuals(const cudaConstants * cConstants, Individual * pool, int poolSize, int generation) {
   std::ofstream entirePool;
   int seed = cConstants->time_seed;
-  entirePool.open("generation#" + std::to_string(generation) + "-" + std::to_string(seed) + ".csv");
+  entirePool.open(std::to_string(seed) +"-generation#" + std::to_string(generation) + ".csv");
   // Setup the header row
   entirePool << "position,alpha,beta,zeta,tripTime,";
   for (int i = 0; i < GAMMA_ARRAY_SIZE; i++) {
@@ -437,7 +438,7 @@ void recordAllIndividuals(const cudaConstants * cConstants, Individual * pool, i
   entirePool << "cost,";
   entirePool << "posDiff,";
   entirePool << "speedDiff,";
-  entirePool << "rank,";
+  entirePool << "rank,distance,";
   entirePool << '\n';
 
   entirePool << std::setprecision(20);
@@ -464,6 +465,7 @@ void recordAllIndividuals(const cudaConstants * cConstants, Individual * pool, i
     entirePool << pool[i].posDiff << ",";
     entirePool << pool[i].speedDiff << ",";
     entirePool << pool[i].rank << ",";
+    entirePool << pool[i].distance << ",";
     entirePool << "\n";
   }
   entirePool.close();
@@ -547,4 +549,16 @@ void recordFuelOutput(const cudaConstants* cConstants, double solution[], double
   excelFile << best.speedDiff*AU << "\n";
 
   excelFile.close();
+}
+
+void recordFronts(const cudaConstants* cConstants, const std::vector<int> &frontCounter, const int &numFronts, const int &generation) {
+  std::ofstream excelFile;
+  int seed = cConstants->time_seed;
+
+  excelFile.open(std::to_string(seed) + " - FrontOutput-Gen#" + std::to_string(generation) + ".csv");
+
+  excelFile << "Front #,# Individuals" << "\n";
+  for (int i = 0; i < numFronts; i++) {
+    excelFile << i+1 << "," << frontCounter[i] << "\n";
+  }
 }

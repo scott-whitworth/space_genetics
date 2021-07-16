@@ -11,6 +11,7 @@ Individual::Individual() {
     this->cost = 10;
     this->dominatedCount = 0;
     this->rank = 0; //might change later?
+    this->distance = -1;
 }
 
 // Set the initial position of the spacecraft according to the newly generated parameters
@@ -35,6 +36,7 @@ Individual::Individual(rkParameters<double> & newInd, const cudaConstants* cCons
     this->cost = 10;
     this->dominatedCount = 0;
     this->rank = 0; //might change later?
+    this->distance = -1;
 }
 
 // Calculates a posDiff value
@@ -193,9 +195,12 @@ bool dominates(Individual& personA, Individual& personB) {
     if (personA.posDiff < personB.posDiff || personA.speedDiff < personB.speedDiff){
         AisBetter = true;
     }
+
+    //A Dominates B
     if (AisEqual && AisBetter){
         return true;
     }
+    //B dominates A or A & B are codominant
     else {
         return false;
     }

@@ -58,7 +58,7 @@ void initializeRecord(const cudaConstants * cConstants);
 //        new_anneal - currently unused
 //        poolSize - to know size of the pool, currently unused
 // output: genPerformanceT-[time_seed].csv is appended parameter information on the best individual in pool
-void recordGenerationPerformance(const cudaConstants * cConstants, Individual * pool, double generation, double new_anneal, int poolSize);
+void recordGenerationPerformance(const cudaConstants * cConstants, Individual * pool, double generation, double new_anneal, int poolSize, int numFronts);
 
 // Method for doing recording information at the end of the optimization process
 // input: cConstants - to access config info
@@ -103,6 +103,10 @@ void recordAllIndividuals(const cudaConstants * cConstants, Individual * pool, i
 //        best - To access the best individual (pool[0])
 // output: fuelOutput.csv - output file holding fuel consumption and impact data
 void recordFuelOutput(const cudaConstants* cConstants, double solution[], double fuelSpent, Individual best);
+
+
+void recordFronts(const cudaConstants* cConstants, const std::vector<int> &frontCounter, const int &numFronts, const int &generation);
+
 
 #include "output.cpp"
 

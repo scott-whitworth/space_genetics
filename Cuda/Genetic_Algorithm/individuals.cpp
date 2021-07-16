@@ -189,7 +189,7 @@ bool dominates(Individual& personA, Individual& personB) {
         ASpeedEqualsB = true;
     }
 
-    if ((personA.posDiff < personB.posDiff || APosEqualsB) && (personA.speedDiff <= personB.speedDiff || ASpeedEqualsB)) {
+    if ((personA.posDiff < personB.posDiff || APosEqualsB) && (personA.speedDiff < personB.speedDiff || ASpeedEqualsB)) {
         AisEqual = true;
     }
     if (personA.posDiff < personB.posDiff || personA.speedDiff < personB.speedDiff){

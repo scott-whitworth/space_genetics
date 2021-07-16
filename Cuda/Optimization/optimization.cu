@@ -39,106 +39,106 @@
 
 
 //Returns the number of fronts until the poolSize is met (index+1), and the number of individuals per front.
-int fillParentPool(std::vector<int> &frontCounter, const cudaConstants* cConstants, int generation, Individual* pool, Individual* parentPool, const int parentPoolSize) {
-    //reallocate space for frontCounter. Delete last generation's frontCounter first
+// int fillParentPool(std::vector<int> &frontCounter, const cudaConstants* cConstants, int generation, Individual* pool, Individual* parentPool, const int parentPoolSize) {
+//     //reallocate space for frontCounter. Delete last generation's frontCounter first
     
-    int numFronts = 1;
-    for (int i = 1; i < parentPoolSize*2; i++) {
-        if (pool[i].rank > pool[i-1].rank) {
-            numFronts++;
-        }
-    }
+//     int numFronts = 1;
+//     for (int i = 1; i < parentPoolSize*2; i++) {
+//         if (pool[i].rank > pool[i-1].rank) {
+//             numFronts++;
+//         }
+//     }
 
 
-    //int* frontCounter = new int[numFronts];
-    //std::cout << "# of Fronts: " << numFronts << " | " << frontCounter.size() << std::endl; 
+//     //int* frontCounter = new int[numFronts];
+//     //std::cout << "# of Fronts: " << numFronts << " | " << frontCounter.size() << std::endl; 
 
-    // //This counts the number of individuals per front
-    // int* frontCounter = new int[numFronts];
-    for (int i = 0; i < frontCounter.size(); i++) {
-        frontCounter[i] = 0;
-    }
-
-
-    //Fill frontCounter.
-    for (int i = 0; i < parentPoolSize*2; i++) {
-        // if (pool[i].rank <= 0) {
-        //     std::cout << "Error Detected In FillParentPool!" << std::endl;
-        // }
-        // else {
-        //     frontCounter[pool[i].rank - 1] += 1;
-        // }
-
-        if (pool[i].rank <= 0) {
-            std::cout << "Error Detected In FillParentPool!" << std::endl;
-        }
-        else {
-            frontCounter[pool[i].rank - 1] += 1;
-        }
-
-        //If it's a nan, put it in the last member of frontCounter.
-
-    }
-    // int x = 0;
-
-    //Print all ranks in order
-    // for (int i = 0; i < parentPoolSize * 2 - 1; i++) {
-    //     if (pool[i+1].rank > pool[i].rank + 1) {
-    //         std::cout << "XXXXXXXXXXXXXXXXXXXXXXXXXX" << std::endl;
-    //     }
-    // }
-    //std::cout << "\n-----------------------------------------------------------\n" << std::endl;
-
-    //Output front # and Size
-    // std::cout << "Front #  |  Size" << std::endl; 
-
-    //Print every front, try to retain fronts without individuals that are before fronts with 1+ individuals
-    // for (int i = 0; i < frontCounter.size(); i++) {
-    //     if (frontCounter[i-1] != 0 || frontCounter[i] != 0 || frontCounter[i+1] != 0 ) {
-    //         std::cout << i+1 << "  |  " << frontCounter[i] << std::endl;
-    //     }
-    // }
-    // std::cout << std::endl;
+//     // //This counts the number of individuals per front
+//     // int* frontCounter = new int[numFronts];
+//     for (int i = 0; i < frontCounter.size(); i++) {
+//         frontCounter[i] = 0;
+//     }
 
 
-    //* This part isn't really necessary, but being able to see how many individuals are in a front is good.
-    //Find the last front that parents are taken from
-    //int cutoffFront = pool[parentPoolSize - 1].rank - 1;
+//     //Fill frontCounter.
+//     for (int i = 0; i < parentPoolSize*2; i++) {
+//         // if (pool[i].rank <= 0) {
+//         //     std::cout << "Error Detected In FillParentPool!" << std::endl;
+//         // }
+//         // else {
+//         //     frontCounter[pool[i].rank - 1] += 1;
+//         // }
 
-    //Find the number of parents taken from entire fronts
-    // int start = 0;
-    // for (int i = 0; i < cutoffFront; i++) {
-    //     start += frontCounter[i];
-    // }
-    // int end = start + frontCounter[cutoffFront];
+//         if (pool[i].rank <= 0) {
+//             std::cout << "Error Detected In FillParentPool!" << std::endl;
+//         }
+//         else {
+//             frontCounter[pool[i].rank - 1] += 1;
+//         }
+
+//         //If it's a nan, put it in the last member of frontCounter.
+
+//     }
+//     // int x = 0;
+
+//     //Print all ranks in order
+//     // for (int i = 0; i < parentPoolSize * 2 - 1; i++) {
+//     //     if (pool[i+1].rank > pool[i].rank + 1) {
+//     //         std::cout << "XXXXXXXXXXXXXXXXXXXXXXXXXX" << std::endl;
+//     //     }
+//     // }
+//     //std::cout << "\n-----------------------------------------------------------\n" << std::endl;
+
+//     //Output front # and Size
+//     // std::cout << "Front #  |  Size" << std::endl; 
+
+//     //Print every front, try to retain fronts without individuals that are before fronts with 1+ individuals
+//     // for (int i = 0; i < frontCounter.size(); i++) {
+//     //     if (frontCounter[i-1] != 0 || frontCounter[i] != 0 || frontCounter[i+1] != 0 ) {
+//     //         std::cout << i+1 << "  |  " << frontCounter[i] << std::endl;
+//     //     }
+//     // }
+//     // std::cout << std::endl;
 
 
-    // int sum = 0;
-    // for (int i = 0; i < frontCounter.size(); i++) {
-    //     sum += frontCounter[i];
-    // }
+//     //* This part isn't really necessary, but being able to see how many individuals are in a front is good.
+//     //Find the last front that parents are taken from
+//     //int cutoffFront = pool[parentPoolSize - 1].rank - 1;
 
-    //start < 1440 < end
-    // std::cout << "Start: " << start << " | Cutoff: " << (parentPoolSize - 1) << " | End: " << end << std::endl;
-    // std::cout << "Cutoff Front: " << (cutoffFront+1) << std::endl;
-    // std::cout << "Sum: " << sum << std::endl;
-    // std::cout << "________________________________________________________________________\n" << std::endl;
+//     //Find the number of parents taken from entire fronts
+//     // int start = 0;
+//     // for (int i = 0; i < cutoffFront; i++) {
+//     //     start += frontCounter[i];
+//     // }
+//     // int end = start + frontCounter[cutoffFront];
+
+
+//     // int sum = 0;
+//     // for (int i = 0; i < frontCounter.size(); i++) {
+//     //     sum += frontCounter[i];
+//     // }
+
+//     //start < 1440 < end
+//     // std::cout << "Start: " << start << " | Cutoff: " << (parentPoolSize - 1) << " | End: " << end << std::endl;
+//     // std::cout << "Cutoff Front: " << (cutoffFront+1) << std::endl;
+//     // std::cout << "Sum: " << sum << std::endl;
+//     // std::cout << "________________________________________________________________________\n" << std::endl;
 
 
 
-    // std::sort(pool+start, pool+end, rankDistanceSort);
+//     // std::sort(pool+start, pool+end, rankDistanceSort);
     
-    if (generation % 25 == 0) {
-        recordFronts(cConstants, frontCounter, numFronts, generation);
-    }
+//     if (generation % 25 == 0) {
+//         recordFronts(cConstants, frontCounter, numFronts, generation);
+//     }
 
-    //Fill the parent pool
-    for (int i = 0; i < parentPoolSize; i++) {
-        parentPool[i] = pool[i];
-    }
+//     //Fill the parent pool
+//     for (int i = 0; i < parentPoolSize; i++) {
+//         parentPool[i] = pool[i];
+//     }
 
-    return numFronts;
-}
+//     return numFronts;
+// }
 
 
 
@@ -185,7 +185,7 @@ void giveRank(Individual * pool, const cudaConstants* cConstants) {
     }
 
     //Used to assign rank number
-    int rankNum = 2;
+    int rankNum = 1;
     //vector to store individuals' indexes in next front
     std::vector<int> newFront;
 
@@ -206,7 +206,7 @@ void giveRank(Individual * pool, const cudaConstants* cConstants) {
 
                 //if the dominated count is at 0, add the individual to the next front and make its rank equal to the next front number.
                 if (pool[pool[front[k]].dominated[l]].dominatedCount == 0){
-                    pool[pool[front[k]].dominated[l]].rank = rankNum;
+                    pool[pool[front[k]].dominated[l]].rank = rankNum + 1;
                     newFront.push_back(pool[front[k]].dominated[l]);                        
                 }
             }
@@ -230,7 +230,7 @@ void giveDistance(Individual * pool, const cudaConstants* cConstants, int poolSi
 
     for (int i = 0; i < poolSize; i++ ){
         //reset each individual's distance
-        pool[i].distance = 0;
+        pool[i].distance = 0.0;
     }
 
     std::sort(pool, pool + poolSize, LowerPosDiff);
@@ -240,6 +240,7 @@ void giveDistance(Individual * pool, const cudaConstants* cConstants, int poolSi
     //For each individual besides the upper and lower bounds, make their distance equal to
     //the current distance + the absolute normalized difference in the function values of two adjacent solutions.
     for(int i = 1; i < poolSize - 1; i++){
+        //distance = distance + ((i+1) - (i-1))/(best - worst)
         pool[i].distance = pool[i].distance + abs((pool[i+1].posDiff - pool[i-1].posDiff)/(pool[poolSize - 1].posDiff - pool[0].posDiff));
     }
 
@@ -256,6 +257,49 @@ void giveDistance(Individual * pool, const cudaConstants* cConstants, int poolSi
 
     std::sort(pool, pool + poolSize, rankDistanceSort);
 }
+
+// void fillParentPool(Individual * entirePool, Individual * parentPool, const cudaConstants* cConstants, int entirePoolSize){
+//     //sort all individuals based on rank
+//     std::sort(entirePool, entirePool + entirePoolSize, rankSort);         
+
+//     //the current rank of an individual
+//     int currentRank = 1;
+//     //the current index of an individual
+//     int currentIndex = 0;
+//     //the index of the first individual with the current rank
+//     int currentRankFirstIndex;
+//     //the index of the last individual with the current rank
+//     int currentRankLastIndex;
+//     int nextRank = 2;
+//     //the sum of all individuals counted so far
+//     int totalAdded = 0;
+
+//     //while number of individuals added to new parent population is less than how many we want 
+//     while(totalAdded < entirePoolSize/2){
+
+//         //how many individuals have a certain rank
+//         int rankCount = 0;
+//         //the index of the first individual in a rank
+//         currentRankFirstIndex = currentIndex;
+//         //while the rank has not gone to the next rank, added another individual to rankCount
+//         while(currentRank < nextRank) {
+//             rankCount++;
+//             //goes until it finds the idnividual with the next rank
+//             currentIndex++;
+//             currentRank = entirePool[currentIndex].rank;   
+//         }
+//         //the index of the last individual in a rank
+//         currentRankLastIndex = currentIndex - 1;
+//         totalAdded += rankCount;
+//         nextRank++;
+//     }
+//     //sort the individuals in last rank to be added by the distance.
+//     std::sort(entirePool + currentRankFirstIndex, entirePool + currentRankLastIndex, rankDistanceSort);
+//     //loop through individuals and fill new parent array with best individuals.
+//     for(int i = 0; i < entirePoolSize/2; i++){
+//         parentPool[i] = entirePool[i];
+//     }
+// }
 
 bool changeInBest(double previousBestCost, const Individual & currentBest, double distinguishRate) {
     //truncate is used here to compare doubles via the distinguguishRate, to ensure that there has been relatively no change.
@@ -509,41 +553,23 @@ double optimize(const cudaConstants* cConstants) {
 
         //give a rank to each individual based on domination sort
         //* Ignore any nans at the end of allIndividuals
+        //must be called after checking for nans
         giveRank(allIndividuals, cConstants);
-
-        // gives reference of which to replace and which to carry to the next generation
-        //sort individuals based on rank
-        std::sort(allIndividuals, allIndividuals + cConstants->num_individuals*2, rankSort);
-
-
-        //find lowest rank number
-        //NOT IN USE: need to figure out how to add last ranked individuals to inputParameters based on distance crowding.
-        //int lastRank = allIndividuals[cConstants->num_individuals*2].rank;
-        
         giveDistance(allIndividuals, cConstants, cConstants->num_individuals*2 - numNans);
+        int numFronts = -1;
         
-        
-        // for (int i = 0; i < cConstants->num_individuals * 2; i++) {
-        //     std::cout << allIndividuals[i].rank << " "; 
-
-        //     if (allIndividuals[i].rank < allIndividuals[i+1].rank) {
-        //         std::cout << "\n" << std::endl;
+        //sort by rank distance and then fill inputParameters with the best.
+        std::sort(allIndividuals, allIndividuals + cConstants->num_individuals*2, rankSort);
+        for(int i = 0; i < cConstants->num_individuals; i++){
+            inputParameters[i] = allIndividuals[i];
+            //std::cout << "Rank: " << inputParameters[i].rank << " | Distance: " << inputParameters[i].distance << std::endl;
+        }
+        // for(int i = 0; i < cConstants->num_individuals*2; i++){
+        //     std::cout << " " << allIndividuals[i].rank;
+        //     if(allIndividuals[i].rank != allIndividuals[i + 1].rank){
+        //         std::cout << std::endl;
         //     }
         // }
-        
-
-        //Fill the parent pool, keep the number of fronts for genPerformance
-        //int numFronts = fillParentPool(frontCounter, cConstants, generation, allIndividuals, inputParameters, cConstants->num_individuals);
-        
-        std::sort(allIndividuals, allIndividuals + cConstants->num_individuals*2, rankDistanceSort);
-        int numFronts = -1;
-        for (int i = 0; i < cConstants->num_individuals; i++) {
-            inputParameters[i] = allIndividuals[i];
-        }
-
-
-        //Used for selectSurvivors
-        
         // Preparing survivor pool with individuals for the newGeneration crossover
         // Survivor pool contains:
         //               - individuals with best PosDiff
@@ -552,7 +578,8 @@ double optimize(const cudaConstants* cConstants) {
         // inputParameters is left sorted by individuals with best speedDiffs 
         selectSurvivors(inputParameters, cConstants->num_individuals, cConstants->survivor_count, survivors, cConstants->sortingRatio, cConstants->missionType); // Choose which individuals are in survivors, current method selects half to be best posDiff and other half to be best speedDiff
 
-        std::sort(inputParameters, inputParameters + cConstants->num_individuals, rankDistanceSort);
+        std::sort(inputParameters, inputParameters + cConstants->num_individuals, rankSort);
+        //fillParentPool(allIndividuals, inputParameters, cConstants, cConstants->num_individuals*2);
         // Display a '.' to the terminal to show that a generation has been performed
         // This also serves to visually seperate the terminalDisplay() calls across generations 
         std::cout << '.';
@@ -640,11 +667,10 @@ double optimize(const cudaConstants* cConstants) {
 
 
         //store away the old individuals
-        for (int i = 0; i < cConstants->num_individuals; i++) {
+        for (int i = 0; i < cConstants->num_individuals; i++){
             oldInputParameters[i] = inputParameters[i];
-            //oldInputParameters[i].rank = 0; //Reset the rank to push nans to the end again
         }
-
+        //oldInputParameters = inputParameters;
 
         // Create a new generation and increment the generation counter
         // Genetic Crossover and mutation occur here
@@ -669,6 +695,8 @@ double optimize(const cudaConstants* cConstants) {
     
     delete [] inputParameters;
     delete [] survivors;
+    delete [] oldInputParameters;
+    delete [] allIndividuals;
 
     return calcPerS;
 }

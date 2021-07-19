@@ -39,9 +39,7 @@ void selectSurvivors(Individual * pool, int poolSize, int selectionSize, Individ
     std::sort(pool, pool+poolSize, LowerPosDiff);
     //Select survivors (starting at 0)
     for (int i = 0; i < selectionSize*0.33; i++) {
-        if (pool[i].distance > 0) {
-            survivors[i] = pool[i];
-        }
+        survivors[i] = pool[i];
     }
 
     if(missionType == Impact){
@@ -55,9 +53,7 @@ void selectSurvivors(Individual * pool, int poolSize, int selectionSize, Individ
     int j = selectionSize*0.33; 
     //starting where first loop ended
     for (int i = selectionSize*0.33; i < selectionSize*0.66; i++) {
-        if (pool[i-j].distance > 0) {
-            survivors[(i)] = pool[i - j];
-        }
+        survivors[(i)] = pool[i - j];
     
     }
 
@@ -65,9 +61,7 @@ void selectSurvivors(Individual * pool, int poolSize, int selectionSize, Individ
 
     std::sort(pool, pool+poolSize, rankDistanceSort);
     for (int i = selectionSize*0.66; i < selectionSize; i++){
-        if (pool[i-k].distance > 0) {
-            survivors[i] = pool[i - k];
-        }
+        survivors[i] = pool[i - k];
     
     }
 

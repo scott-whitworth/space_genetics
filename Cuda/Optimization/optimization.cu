@@ -555,11 +555,12 @@ double optimize(const cudaConstants* cConstants) {
         //* Ignore any nans at the end of allIndividuals
         //must be called after checking for nans
         giveRank(allIndividuals, cConstants);
+        std::sort(allIndividuals, allIndividuals + cConstants->num_individuals*2, rankSort);
         giveDistance(allIndividuals, cConstants, cConstants->num_individuals*2 - numNans);
         int numFronts = -1;
         
         //sort by rank distance and then fill inputParameters with the best.
-        std::sort(allIndividuals, allIndividuals + cConstants->num_individuals*2, rankSort);
+        
         for(int i = 0; i < cConstants->num_individuals; i++){
             inputParameters[i] = allIndividuals[i];
             //std::cout << "Rank: " << inputParameters[i].rank << " | Distance: " << inputParameters[i].distance << std::endl;

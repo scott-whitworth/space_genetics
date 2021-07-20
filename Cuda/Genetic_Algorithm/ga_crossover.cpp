@@ -36,10 +36,19 @@ void selectSurvivors(Individual * pool, int poolSize, int selectionSize, Individ
     //     survivors[(i)] = pool[i - j];
     // }
 
+    //Reset all the parentPool's "isParent" parameters
+    for (int i = 0; i < poolSize; i++) {
+        pool[i].isParent = false;
+    }
+
     std::sort(pool, pool+poolSize, LowerPosDiff);
     //Select survivors (starting at 0)
     for (int i = 0; i < selectionSize*0.33; i++) {
-        survivors[i] = pool[i];
+        if (!pool[i].isParent && pool[i].distance > 0) {
+            survivors[i] = pool[i];
+            pool[i].isParent = true;
+        }
+
     }
 
     if(missionType == Impact){
@@ -53,7 +62,10 @@ void selectSurvivors(Individual * pool, int poolSize, int selectionSize, Individ
     int j = selectionSize*0.33; 
     //starting where first loop ended
     for (int i = selectionSize*0.33; i < selectionSize*0.66; i++) {
-        survivors[(i)] = pool[i - j];
+        if (!pool[i-j].isParent && pool[i-j].distance > 0) {
+            survivors[(i)] = pool[i - j];
+            pool[i-j].isParent = true;
+        }
     
     }
 
@@ -61,7 +73,10 @@ void selectSurvivors(Individual * pool, int poolSize, int selectionSize, Individ
 
     std::sort(pool, pool+poolSize, rankDistanceSort);
     for (int i = selectionSize*0.66; i < selectionSize; i++){
-        survivors[i] = pool[i - k];
+        if (!pool[i-k].isParent && pool[i-k].distance > 0) {
+            survivors[i] = pool[i - k];
+            pool[i-k].isParent = true;
+        }
     
     }
 

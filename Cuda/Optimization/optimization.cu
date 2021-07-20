@@ -38,107 +38,26 @@
 // }
 
 
-//Returns the number of fronts until the poolSize is met (index+1), and the number of individuals per front.
-// int fillParentPool(std::vector<int> &frontCounter, const cudaConstants* cConstants, int generation, Individual* pool, Individual* parentPool, const int parentPoolSize) {
-//     //reallocate space for frontCounter. Delete last generation's frontCounter first
+//Returns the number of fronts and the number of individuals per front
+void countFrontSize(std::vector<int> &frontCounter, const cudaConstants* cConstants, int generation, Individual* pool, Individual* parentPool, const int parentPoolSize) {
+    //reallocate space for frontCounter. Delete last generation's frontCounter first
     
-//     int numFronts = 1;
-//     for (int i = 1; i < parentPoolSize*2; i++) {
-//         if (pool[i].rank > pool[i-1].rank) {
-//             numFronts++;
-//         }
-//     }
+    //Reset the vector to be the correct size (the size of the vector is equivalent to the number of fronts)
+    std::vector<int>().swap(frontCounter);
+    frontCounter.resize(pool[parentPoolSize*2 - 1].rank);
 
 
-//     //int* frontCounter = new int[numFronts];
-//     //std::cout << "# of Fronts: " << numFronts << " | " << frontCounter.size() << std::endl; 
+    //Fill frontCounter.
+    for (int i = 0; i < parentPoolSize*2; i++) {
+        if (pool[i].rank <= 0) {
+            std::cout << "Error Detected In FillParentPool!" << std::endl;
+        }
+        else {
+            frontCounter[pool[i].rank - 1] += 1;
+        }
+    }
 
-//     // //This counts the number of individuals per front
-//     // int* frontCounter = new int[numFronts];
-//     for (int i = 0; i < frontCounter.size(); i++) {
-//         frontCounter[i] = 0;
-//     }
-
-
-//     //Fill frontCounter.
-//     for (int i = 0; i < parentPoolSize*2; i++) {
-//         // if (pool[i].rank <= 0) {
-//         //     std::cout << "Error Detected In FillParentPool!" << std::endl;
-//         // }
-//         // else {
-//         //     frontCounter[pool[i].rank - 1] += 1;
-//         // }
-
-//         if (pool[i].rank <= 0) {
-//             std::cout << "Error Detected In FillParentPool!" << std::endl;
-//         }
-//         else {
-//             frontCounter[pool[i].rank - 1] += 1;
-//         }
-
-//         //If it's a nan, put it in the last member of frontCounter.
-
-//     }
-//     // int x = 0;
-
-//     //Print all ranks in order
-//     // for (int i = 0; i < parentPoolSize * 2 - 1; i++) {
-//     //     if (pool[i+1].rank > pool[i].rank + 1) {
-//     //         std::cout << "XXXXXXXXXXXXXXXXXXXXXXXXXX" << std::endl;
-//     //     }
-//     // }
-//     //std::cout << "\n-----------------------------------------------------------\n" << std::endl;
-
-//     //Output front # and Size
-//     // std::cout << "Front #  |  Size" << std::endl; 
-
-//     //Print every front, try to retain fronts without individuals that are before fronts with 1+ individuals
-//     // for (int i = 0; i < frontCounter.size(); i++) {
-//     //     if (frontCounter[i-1] != 0 || frontCounter[i] != 0 || frontCounter[i+1] != 0 ) {
-//     //         std::cout << i+1 << "  |  " << frontCounter[i] << std::endl;
-//     //     }
-//     // }
-//     // std::cout << std::endl;
-
-
-//     //* This part isn't really necessary, but being able to see how many individuals are in a front is good.
-//     //Find the last front that parents are taken from
-//     //int cutoffFront = pool[parentPoolSize - 1].rank - 1;
-
-//     //Find the number of parents taken from entire fronts
-//     // int start = 0;
-//     // for (int i = 0; i < cutoffFront; i++) {
-//     //     start += frontCounter[i];
-//     // }
-//     // int end = start + frontCounter[cutoffFront];
-
-
-//     // int sum = 0;
-//     // for (int i = 0; i < frontCounter.size(); i++) {
-//     //     sum += frontCounter[i];
-//     // }
-
-//     //start < 1440 < end
-//     // std::cout << "Start: " << start << " | Cutoff: " << (parentPoolSize - 1) << " | End: " << end << std::endl;
-//     // std::cout << "Cutoff Front: " << (cutoffFront+1) << std::endl;
-//     // std::cout << "Sum: " << sum << std::endl;
-//     // std::cout << "________________________________________________________________________\n" << std::endl;
-
-
-
-//     // std::sort(pool+start, pool+end, rankDistanceSort);
-    
-//     if (generation % 25 == 0) {
-//         recordFronts(cConstants, frontCounter, numFronts, generation);
-//     }
-
-//     //Fill the parent pool
-//     for (int i = 0; i < parentPoolSize; i++) {
-//         parentPool[i] = pool[i];
-//     }
-
-//     return numFronts;
-// }
+}
 
 
 
@@ -485,6 +404,7 @@ double optimize(const cudaConstants* cConstants) {
     // set by allWithinTolerance()
     bool convergence = false;
 
+    //Each member is a counter for a front. The value of a member equals the number of individuals in that front. The size of the whole vector equals the number of fronts.
     std::vector<int> frontCounter(cConstants->num_individuals);
 
     // main gentic algorithm loop
@@ -557,10 +477,12 @@ double optimize(const cudaConstants* cConstants) {
         giveRank(allIndividuals, cConstants);
         std::sort(allIndividuals, allIndividuals + cConstants->num_individuals*2, rankSort);
         giveDistance(allIndividuals, cConstants, cConstants->num_individuals*2 - numNans);
-        int numFronts = -1;
+        
         
         //sort by rank distance and then fill inputParameters with the best.
         
+        countFrontSize(frontCounter, cConstants, generation, allIndividuals, inputParameters, cConstants->num_individuals);
+
         for(int i = 0; i < cConstants->num_individuals; i++){
             inputParameters[i] = allIndividuals[i];
             //std::cout << "Rank: " << inputParameters[i].rank << " | Distance: " << inputParameters[i].distance << std::endl;
@@ -578,6 +500,10 @@ double optimize(const cudaConstants* cConstants) {
         //               - depends on cConstants->sortingRatio (0.1 is 10% are best PosDiff for example)
         // inputParameters is left sorted by individuals with best speedDiffs 
         selectSurvivors(inputParameters, cConstants->num_individuals, cConstants->survivor_count, survivors, cConstants->sortingRatio, cConstants->missionType); // Choose which individuals are in survivors, current method selects half to be best posDiff and other half to be best speedDiff
+
+        if (static_cast<int>(generation) % cConstants->disp_freq == 0) {
+            recordAllIndividuals("Survivors", cConstants, survivors, cConstants->survivor_count, generation);
+        }
 
         std::sort(inputParameters, inputParameters + cConstants->num_individuals, rankSort);
         //fillParentPool(allIndividuals, inputParameters, cConstants, cConstants->num_individuals*2);
@@ -622,7 +548,7 @@ double optimize(const cudaConstants* cConstants) {
 
         // If in recording mode and write_freq reached, call the record method
         if (static_cast<int>(generation) % cConstants->write_freq == 0 && cConstants->record_mode == true) {
-            recordGenerationPerformance(cConstants, inputParameters, generation, new_anneal, cConstants->num_individuals, numFronts);
+            recordGenerationPerformance(cConstants, inputParameters, generation, new_anneal, cConstants->num_individuals, frontCounter.size());
         }
 
         //std::cout << "Nans in gen " << generation << " : " << numNans << std::endl;
@@ -650,8 +576,8 @@ double optimize(const cudaConstants* cConstants) {
                 terminalDisplay(inputParameters[0], generation);
             }
 
-            std::sort(inputParameters, inputParameters+cConstants->num_individuals, rankDistanceSort);
-            recordAllIndividuals(cConstants, inputParameters, cConstants->num_individuals, generation);
+            //std::sort(inputParameters, inputParameters+cConstants->num_individuals, rankDistanceSort);
+            //recordAllIndividuals("AllIndividuals-End", cConstants, inputParameters, cConstants->num_individuals, generation);
 
             //reset array
             std::sort(inputParameters, inputParameters + cConstants->num_individuals);
@@ -685,13 +611,13 @@ double optimize(const cudaConstants* cConstants) {
     // for the annealing argument, set to -1 (since the anneal is only relevant to the next generation and so means nothing for the last one)
     // for the numFront argument, set to -1 (just because)
     if (cConstants->record_mode == true) {
-        recordGenerationPerformance(cConstants, inputParameters, generation, -1, cConstants->num_individuals, -1);
+        recordGenerationPerformance(cConstants, oldInputParameters, generation, -1, cConstants->num_individuals, -1);
     }
     // Only call finalRecord if the results actually converged on a solution
     // also display last generation onto terminal
     if (convergence) {
-        terminalDisplay(inputParameters[0], generation);
-        finalRecord(cConstants, inputParameters, static_cast<int>(generation));
+        terminalDisplay(oldInputParameters[0], generation);
+        finalRecord(cConstants, oldInputParameters, static_cast<int>(generation));
     }
     
     delete [] inputParameters;

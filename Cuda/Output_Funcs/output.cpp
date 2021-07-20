@@ -420,10 +420,10 @@ void recordGenerationPerformance(const cudaConstants * cConstants, Individual * 
 //        poolSize - to use in iterating through the pool
 //        generation - used in deriving file name
 // output: file generation#[generation]-[time_seed].csv is created with each row holding parameter values of individuals
-void recordAllIndividuals(const cudaConstants * cConstants, Individual * pool, int poolSize, int generation) {
+void recordAllIndividuals(std::string name, const cudaConstants * cConstants, Individual * pool, int poolSize, int generation) {
   std::ofstream entirePool;
   int seed = cConstants->time_seed;
-  entirePool.open(std::to_string(seed) +"-generation#" + std::to_string(generation) + ".csv");
+  entirePool.open(std::to_string(seed) + "-" + name +"-gen#" + std::to_string(generation) + ".csv");
   // Setup the header row
   entirePool << "position,alpha,beta,zeta,tripTime,";
   for (int i = 0; i < GAMMA_ARRAY_SIZE; i++) {

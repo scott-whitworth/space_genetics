@@ -17,6 +17,8 @@ struct Individual {
     bool isClone; //bool that tells if the individual is a clone of the best cost individual or not.
     double difference; //represents the percent similar to the best cost individual
 
+    bool isParent; //Indicates if this individual is already chosen as a survivor
+
     int dominatedCount;
     int rank;
     std::vector<int> dominated;

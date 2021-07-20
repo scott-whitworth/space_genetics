@@ -177,17 +177,23 @@ bool dominates(Individual& personA, Individual& personB) {
     //returns false if personA does not dominate personB.
     bool AisEqual = false;
     bool AisBetter = false;
-    double tolerance = 1.0e-11;
+    double posTolerance = 1.0e-14;
+    double speedTolerance = 1.0e-14;
+    //double costTolerance = 1.0e-11;
     bool APosEqualsB = false;
     bool ASpeedEqualsB = false;
+    //bool ACostEqualsB = false;
 
     //Used for equality comparison so that equals does not have to be exact.
-    if ((personA.posDiff < personB.posDiff + tolerance) && (personA.posDiff > personB.posDiff - tolerance)){
+    if ((personA.posDiff < personB.posDiff + posTolerance) && (personA.posDiff > personB.posDiff - posTolerance)){
         APosEqualsB = true;
     }
-    if ((personA.speedDiff < personB.speedDiff + tolerance) && (personA.speedDiff > personB.speedDiff - tolerance)){
+    if ((personA.speedDiff < personB.speedDiff + speedTolerance) && (personA.speedDiff > personB.speedDiff - speedTolerance)){
         ASpeedEqualsB = true;
     }
+    // if ((personA.cost < personB.cost + costTolerance) && (personA.cost > personB.cost - costTolerance)){
+    //     ACostEqualsB = true;
+    // }
 
     if ((personA.posDiff < personB.posDiff || APosEqualsB) && (personA.speedDiff < personB.speedDiff || ASpeedEqualsB)) {
         AisEqual = true;
@@ -200,7 +206,6 @@ bool dominates(Individual& personA, Individual& personB) {
     if (AisEqual && AisBetter){
         return true;
     }
-    //B dominates A or A & B are codominant
     else {
         return false;
     }

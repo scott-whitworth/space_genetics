@@ -228,6 +228,9 @@ void giveRank(Individual * pool, const cudaConstants* cConstants) {
 
 void giveDistance(Individual * pool, const cudaConstants* cConstants, int poolSize){
 
+    //starting rankSort to make sure nans are at the end of the array.
+    std::sort(pool, pool + cConstants->num_individuals*2, rankSort);
+
     for (int i = 0; i < poolSize; i++ ){
         //reset each individual's distance
         pool[i].distance = 0.0;
@@ -254,52 +257,59 @@ void giveDistance(Individual * pool, const cudaConstants* cConstants, int poolSi
     for(int i = 1; i < poolSize - 1; i++){
         pool[i].distance = pool[i].distance + abs((pool[i+1].speedDiff - pool[i-1].speedDiff)/(pool[poolSize - 1].speedDiff - pool[0].speedDiff));
     }
-
-    std::sort(pool, pool + poolSize, rankDistanceSort);
+    // double tolerance = 1.0e-11;
+    // for(int i = 0; i < poolSize; i++){
+    //     if((pool[i].cost < pool[0].cost + tolerance) && (pool[i].cost > pool[0].cost - tolerance)){
+    //         pool[i].distance = 0;
+    //     }
+    //     else {
+    //         pool[i].distance = 10;
+    //     }
+    // }
 }
 
-// void fillParentPool(Individual * entirePool, Individual * parentPool, const cudaConstants* cConstants, int entirePoolSize){
-//     //sort all individuals based on rank
-//     std::sort(entirePool, entirePool + entirePoolSize, rankSort);         
+void fillParentPool(Individual * entirePool, Individual * parentPool, const cudaConstants* cConstants, int entirePoolSize){
+    //sort all individuals based on rank
+    std::sort(entirePool, entirePool + entirePoolSize, rankSort);         
 
-//     //the current rank of an individual
-//     int currentRank = 1;
-//     //the current index of an individual
-//     int currentIndex = 0;
-//     //the index of the first individual with the current rank
-//     int currentRankFirstIndex;
-//     //the index of the last individual with the current rank
-//     int currentRankLastIndex;
-//     int nextRank = 2;
-//     //the sum of all individuals counted so far
-//     int totalAdded = 0;
+    //the current rank of an individual
+    int currentRank = 1;
+    //the current index of an individual
+    int currentIndex = 0;
+    //the index of the first individual with the current rank
+    int currentRankFirstIndex;
+    //the index of the last individual with the current rank
+    int currentRankLastIndex;
+    int nextRank = 2;
+    //the sum of all individuals counted so far
+    int totalAdded = 0;
 
-//     //while number of individuals added to new parent population is less than how many we want 
-//     while(totalAdded < entirePoolSize/2){
+    //while number of individuals added to new parent population is less than how many we want 
+    while(totalAdded < entirePoolSize/2){
 
-//         //how many individuals have a certain rank
-//         int rankCount = 0;
-//         //the index of the first individual in a rank
-//         currentRankFirstIndex = currentIndex;
-//         //while the rank has not gone to the next rank, added another individual to rankCount
-//         while(currentRank < nextRank) {
-//             rankCount++;
-//             //goes until it finds the idnividual with the next rank
-//             currentIndex++;
-//             currentRank = entirePool[currentIndex].rank;   
-//         }
-//         //the index of the last individual in a rank
-//         currentRankLastIndex = currentIndex - 1;
-//         totalAdded += rankCount;
-//         nextRank++;
-//     }
-//     //sort the individuals in last rank to be added by the distance.
-//     std::sort(entirePool + currentRankFirstIndex, entirePool + currentRankLastIndex, rankDistanceSort);
-//     //loop through individuals and fill new parent array with best individuals.
-//     for(int i = 0; i < entirePoolSize/2; i++){
-//         parentPool[i] = entirePool[i];
-//     }
-// }
+        //how many individuals have a certain rank
+        int rankCount = 0;
+        //the index of the first individual in a rank
+        currentRankFirstIndex = currentIndex;
+        //while the rank has not gone to the next rank, added another individual to rankCount
+        while(currentRank < nextRank) {
+            rankCount++;
+            //goes until it finds the idnividual with the next rank
+            currentIndex++;
+            currentRank = entirePool[currentIndex].rank;   
+        }
+        //the index of the last individual in a rank
+        currentRankLastIndex = currentIndex - 1;
+        totalAdded += rankCount;
+        nextRank++;
+    }
+    //sort the individuals in last rank to be added by the distance.
+    std::sort(entirePool + currentRankFirstIndex, entirePool + currentRankLastIndex, rankDistanceSort);
+    //loop through individuals and fill new parent array with best individuals.
+    for(int i = 0; i < entirePoolSize/2; i++){
+        parentPool[i] = entirePool[i];
+    }
+}
 
 bool changeInBest(double previousBestCost, const Individual & currentBest, double distinguishRate) {
     //truncate is used here to compare doubles via the distinguguishRate, to ensure that there has been relatively no change.
@@ -553,24 +563,26 @@ double optimize(const cudaConstants* cConstants) {
 
         //give a rank to each individual based on domination sort
         //* Ignore any nans at the end of allIndividuals
-        //must be called after checking for nans
+        //must be called after checking for nans and before giveDistance
         giveRank(allIndividuals, cConstants);
-        std::sort(allIndividuals, allIndividuals + cConstants->num_individuals*2, rankSort);
+
         giveDistance(allIndividuals, cConstants, cConstants->num_individuals*2 - numNans);
         int numFronts = -1;
         
         //sort by rank distance and then fill inputParameters with the best.
-        
+        // std::sort(allIndividuals, allIndividuals + cConstants->num_individuals*2, rankSort);
+        // for(int i = 0; i < cConstants->num_individuals; i++){
+        //     inputParameters[i] = allIndividuals[i];
+        //     //std::cout << "Rank: " << inputParameters[i].rank << " | Distance: " << inputParameters[i].distance << std::endl;
+        // }
+        fillParentPool(allIndividuals, inputParameters, cConstants, cConstants->num_individuals*2);
         for(int i = 0; i < cConstants->num_individuals; i++){
-            inputParameters[i] = allIndividuals[i];
+            // std::cout << " " << allIndividuals[i].rank;
+            // if(allIndividuals[i].rank != allIndividuals[i + 1].rank){
+            //     std::cout << std::endl;
+            // }
             //std::cout << "Rank: " << inputParameters[i].rank << " | Distance: " << inputParameters[i].distance << std::endl;
         }
-        // for(int i = 0; i < cConstants->num_individuals*2; i++){
-        //     std::cout << " " << allIndividuals[i].rank;
-        //     if(allIndividuals[i].rank != allIndividuals[i + 1].rank){
-        //         std::cout << std::endl;
-        //     }
-        // }
         // Preparing survivor pool with individuals for the newGeneration crossover
         // Survivor pool contains:
         //               - individuals with best PosDiff
@@ -579,12 +591,13 @@ double optimize(const cudaConstants* cConstants) {
         // inputParameters is left sorted by individuals with best speedDiffs 
         selectSurvivors(inputParameters, cConstants->num_individuals, cConstants->survivor_count, survivors, cConstants->sortingRatio, cConstants->missionType); // Choose which individuals are in survivors, current method selects half to be best posDiff and other half to be best speedDiff
 
-        std::sort(inputParameters, inputParameters + cConstants->num_individuals, rankSort);
-        //fillParentPool(allIndividuals, inputParameters, cConstants, cConstants->num_individuals*2);
+        //std::sort(inputParameters, inputParameters + cConstants->num_individuals, rankSort);
         // Display a '.' to the terminal to show that a generation has been performed
         // This also serves to visually seperate the terminalDisplay() calls across generations 
         std::cout << '.';
 
+        //sort new parent individuals by cost so that we can check the first individual for change
+        std::sort(inputParameters, inputParameters + cConstants->num_individuals, rankSort);
         // Calculate how far best individual is from the ideal cost value (currently is the positionalDifference of the best individual)
         // TODO: Change this later to take into account more than just the best individual and its position difference
         currentCost = inputParameters[0].cost; 
@@ -650,7 +663,7 @@ double optimize(const cudaConstants* cConstants) {
                 terminalDisplay(inputParameters[0], generation);
             }
 
-            std::sort(inputParameters, inputParameters+cConstants->num_individuals, rankDistanceSort);
+            std::sort(inputParameters, inputParameters+cConstants->num_individuals, rankSort);
             recordAllIndividuals(cConstants, inputParameters, cConstants->num_individuals, generation);
 
             //reset array

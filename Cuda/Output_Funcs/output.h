@@ -94,7 +94,7 @@ void recordEarthData(const cudaConstants * cConstants);
 //        poolSize - to use in iterating through the pool
 //        generation - used in deriving file name
 // output: file generation#[generation]-[time_seed].csv is created with each row holding parameter values of individuals
-void recordAllIndividuals(const cudaConstants * cConstants, Individual * pool, int poolSize, int generation);
+void recordAllIndividuals(std::string name, const cudaConstants * cConstants, Individual * pool, int poolSize, int generation);
 
 // Record initial and final fuel masses along with tripTime and relative velocity at impact
 // input: cConstants - access config constants

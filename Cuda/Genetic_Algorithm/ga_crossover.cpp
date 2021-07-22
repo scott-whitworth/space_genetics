@@ -35,18 +35,23 @@ void selectSurvivors(Individual * pool, int poolSize, int selectionSize, Individ
     // for (int i = selectionSize*ratio; i < selectionSize; i++) {
     //     survivors[(i)] = pool[i - j];
     // }
+    int x = 0;
 
     //Reset all the parentPool's "isParent" parameters
     for (int i = 0; i < poolSize; i++) {
         pool[i].isParent = false;
     }
 
+    int j = selectionSize*0.5; 
+    int k = selectionSize*0.5;
+
     std::sort(pool, pool+poolSize, LowerPosDiff);
     //Select survivors (starting at 0)
-    for (int i = 0; i < selectionSize*0.33; i++) {
+    for (int i = 0; x < j; i++) {
         if (!pool[i].isParent && pool[i].distance > 0) {
-            survivors[i] = pool[i];
+            survivors[x] = pool[i];
             pool[i].isParent = true;
+            x++;
         }
 
     }
@@ -59,23 +64,26 @@ void selectSurvivors(Individual * pool, int poolSize, int selectionSize, Individ
     }
 
     //Used to make sure pool[] starts at 0 
-    int j = selectionSize*0.33; 
+    
+
     //starting where first loop ended
-    for (int i = selectionSize*0.33; i < selectionSize*0.66; i++) {
+    for (int i = j; x < k; i++) {
         if (!pool[i-j].isParent && pool[i-j].distance > 0) {
-            survivors[(i)] = pool[i - j];
+            survivors[x] = pool[i - j];
             pool[i-j].isParent = true;
+            x++;
         }
     
     }
 
-    int k = selectionSize*0.66;
+    
 
     std::sort(pool, pool+poolSize, rankDistanceSort);
-    for (int i = selectionSize*0.66; i < selectionSize; i++){
+    for (int i = k; x < selectionSize; i++){
         if (!pool[i-k].isParent && pool[i-k].distance > 0) {
-            survivors[i] = pool[i - k];
+            survivors[x] = pool[i - k];
             pool[i-k].isParent = true;
+            x++;
         }
     
     }

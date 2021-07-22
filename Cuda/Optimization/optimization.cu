@@ -414,6 +414,10 @@ double optimize(const cudaConstants* cConstants) {
     // set by allWithinTolerance()
     bool convergence = false;
 
+    //Decrease the change check as time goes on without an anneal
+    //int check_decrease = 1;
+
+
     //Each member is a counter for a front. The value of a member equals the number of individuals in that front. The size of the whole vector equals the number of fronts.
     std::vector<int> frontCounter(cConstants->num_individuals);
 
@@ -487,17 +491,17 @@ double optimize(const cudaConstants* cConstants) {
         giveRank(allIndividuals, cConstants);
 
         giveDistance(allIndividuals, cConstants, cConstants->num_individuals*2 - numNans);
-        
+        std::sort(allIndividuals, allIndividuals + cConstants->num_individuals * 2, rankDistanceSort);
         
         //sort by rank distance and then fill inputParameters with the best.
         
-        countFrontSize(frontCounter, cConstants, generation, allIndividuals, inputParameters, cConstants->num_individuals);
+        //countFrontSize(frontCounter, cConstants, generation, allIndividuals, inputParameters, cConstants->num_individuals);
 
         // std::sort(allIndividuals, allIndividuals + cConstants->num_individuals*2, rankSort);
-        // for(int i = 0; i < cConstants->num_individuals; i++){
-        //     inputParameters[i] = allIndividuals[i];
-        //     //std::cout << "Rank: " << inputParameters[i].rank << " | Distance: " << inputParameters[i].distance << std::endl;
-        // }
+        for(int i = 0; i < cConstants->num_individuals; i++){
+            inputParameters[i] = allIndividuals[i];
+            //std::cout << "Rank: " << inputParameters[i].rank << " | Distance: " << inputParameters[i].distance << std::endl;
+        }
         //fillParentPool(allIndividuals, inputParameters, cConstants, cConstants->num_individuals*2);
         //for(int i = 0; i < cConstants->num_individuals; i++){
             // std::cout << " " << allIndividuals[i].rank;
@@ -518,7 +522,7 @@ double optimize(const cudaConstants* cConstants) {
             recordAllIndividuals("Survivors", cConstants, survivors, cConstants->survivor_count, generation);
         }
 
-        std::sort(inputParameters, inputParameters + cConstants->num_individuals, rankSort);
+        //std::sort(inputParameters, inputParameters + cConstants->num_individuals, rankSort);
         //fillParentPool(allIndividuals, inputParameters, cConstants, cConstants->num_individuals*2);
         //std::sort(inputParameters, inputParameters + cConstants->num_individuals, rankSort);
         // Display a '.' to the terminal to show that a generation has been performed
@@ -526,7 +530,14 @@ double optimize(const cudaConstants* cConstants) {
         std::cout << '.';
 
         //sort new parent individuals by cost so that we can check the first individual for change
-        std::sort(inputParameters, inputParameters + cConstants->num_individuals, rankSort);
+        if (static_cast<int>(generation) % (cConstants->change_check) == 0) {
+            std::sort(inputParameters, inputParameters + cConstants->num_individuals);
+        }
+        else {
+            std::sort(inputParameters, inputParameters + cConstants->num_individuals, rankDistanceSort);
+        }
+
+        // std::sort(inputParameters, inputParameters + cConstants->num_individuals, rankSort);
         // Calculate how far best individual is from the ideal cost value (currently is the positionalDifference of the best individual)
         // TODO: Change this later to take into account more than just the best individual and its position difference
         currentCost = inputParameters[0].cost; 
@@ -535,12 +546,15 @@ double optimize(const cudaConstants* cConstants) {
         // Far away: larger anneal scale, close: smaller anneal
         double new_anneal = currentAnneal * (1 - tolerance / currentCost);
         
+        //std::cout << cConstants->change_check << " | " << cConstants->change_check / check_decrease << std::endl;
+    
+
         //Process to see if anneal needs to be adjusted
         // If generations are stale, anneal drops
         Individual currentBest;
         // Compare current best individual to that from CHANGE_CHECK many generations ago.
         // If they are the same, change size of mutations
-        if (static_cast<int>(generation) % cConstants->change_check == 0) { 
+        if (static_cast<int>(generation) % (cConstants->change_check) == 0) { 
             currentBest = inputParameters[0];
             // checks for anneal to change
             // previousBest starts at 0 to ensure changeInBest = true on generation 0
@@ -555,7 +569,18 @@ double optimize(const cudaConstants* cConstants) {
                 // If no change in BestIndividual across generations, multiply currentAnneal with anneal factor
                 currentAnneal = currentAnneal * cConstants->anneal_factor;
                 std::cout << "\nnew anneal: " << currentAnneal << std::endl;
+                
+                //Reset check_decrease
+                // check_decrease = 1;
             }
+            // else {
+            //     if (check_decrease < 4 && generation > 0) { //Check every 200, then 100, then 50 generations until there's no change in best.
+            //         check_decrease *= 2;
+                    
+            //         std::cout << "Change_Check Decreased!" << std::endl;
+            //     }
+
+            // }
 
             // previousBestPos = currentBest.posDiff;
             // previousBestVel = currentBest.speedDiff;
@@ -592,17 +617,19 @@ double optimize(const cudaConstants* cConstants) {
                 terminalDisplay(inputParameters[0], generation);
             }
 
-            //std::sort(inputParameters, inputParameters+cConstants->num_individuals, rankDistanceSort);
-            //recordAllIndividuals("AllIndividuals-End", cConstants, inputParameters, cConstants->num_individuals, generation);
-            std::sort(inputParameters, inputParameters+cConstants->num_individuals, rankSort);
-            recordAllIndividuals(cConstants, inputParameters, cConstants->num_individuals, generation);
-
-            //reset array
             std::sort(inputParameters, inputParameters + cConstants->num_individuals);
             terminalDisplay(inputParameters[0], generation);
             std::cout << "\n# of Nans this increment: " << numNans << "\n" << std::endl;
-            numNans = 0; //Reset the tally of nans.
+            
 
+            std::sort(inputParameters, inputParameters+cConstants->num_individuals, rankDistanceSort);
+            recordAllIndividuals("AllIndividuals-End", cConstants, inputParameters, cConstants->num_individuals, generation);
+            // std::sort(inputParameters, inputParameters+cConstants->num_individuals, rankSort);
+            //recordAllIndividuals(cConstants, inputParameters, cConstants->num_individuals, generation);
+
+            
+            //Reset the tally of nans.
+            numNans = 0;
             
         }
 

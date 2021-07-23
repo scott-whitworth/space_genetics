@@ -4,11 +4,12 @@ function [] = plotData(cR,y0A,y0E,sizeC,tripTime,coast,coast_threshold,gammaCoef
     au=1.49597870691E11; % conversion of m/au
     
     % Solving differential motions
-    timeFinal=(6.653820100923719e+07); % orbital period
-    tspan=[timeFinal 0];
+    timeFinal=(3.772645011085093e+07); % orbital period for Bennu
+    %timeFinal=(6.653820100923719e+07); % orbital period for Didymos
+    tspan=[tripTime 0];
     options = odeset('RelTol',1e-12);
-    [tE, yE] = ode45(@orbitalMotion,tspan,y0E,options,gammaCoeff,tauCoeff,timeFinal,0);
-    [tA, yA] = ode45(@orbitalMotion,tspan,y0A,options,gammaCoeff,tauCoeff,timeFinal,0);
+    [tE, yE] = ode45(@orbitalMotion,tspan,y0E,options,gammaCoeff,tauCoeff,tripTime,0);
+    [tA, yA] = ode45(@orbitalMotion,tspan,y0A,options,gammaCoeff,tauCoeff,tripTime,0);
     
     % Transform to cartesian coordinates for position and velocity of asteroid and earth
     [cX,cY,cZ]= pol2cart(cR(2,:),cR(1,:),cR(3,:));
@@ -29,19 +30,19 @@ function [] = plotData(cR,y0A,y0E,sizeC,tripTime,coast,coast_threshold,gammaCoef
     figure(1) %orbitals
     subplot(2,3,1)
     polarplot(yE(:,2),yE(:,1),'.')
-    rlim([0 1.25])
+    %rlim([0 1.5])
     hold on
     polarplot(yA(:,2),yA(:,1),'.')
-    rlim([0 1.125])
+    %rlim([0 1.5])
     hold on
     polarplot(cR(2,1),cR(1,1),'r*')
-    rlim([0 1.125])
+    %rlim([0 1.5])
     hold on
     polarplot(y0A(2),y0A(1),'*b')
-    rlim([0 1.125])
+    %rlim([0 1.5])
     hold on
     polarplot(cR(2,:),cR(1,:),'Color',[0.4660, 0.6740, 0.1880],'LineWidth', 2)
-    rlim([0 1.125])
+    %rlim([0 1.5])
     text(0, 0, '\Leftarrow Sun')
     text(cR(2,1), cR(1,1), '\leftarrow Launch')
     text(y0A(2),y0A(1), '\leftarrow Impact')
@@ -50,9 +51,11 @@ function [] = plotData(cR,y0A,y0E,sizeC,tripTime,coast,coast_threshold,gammaCoef
     
     %specific angular momentum vs. time
     subplot(2,3,2)
-    plot((tE-(timeFinal-tripTime))/(3600*24),yE(:,1).*yE(:,5),'.')
+%    plot((tE-(timeFinal-tripTime))/(3600*24),yE(:,1).*yE(:,5),'.')
+    plot(tE/(3600*24),yE(:,1).*yE(:,5),'.')
     hold on
-    plot((tA-(timeFinal-tripTime))/(3600*24),yA(:,1).*yA(:,5),'.')
+%    plot((tA-(timeFinal-tripTime))/(3600*24),yA(:,1).*yA(:,5),'.')
+    plot(tA/(3600*24),yA(:,1).*yA(:,5),'.')
     hold on
     plot(cR(7,:)/(3600*24),cR(1,:).*cR(5,:),'Color',[0.4660, 0.6740, 0.1880],'LineWidth', 2)
     ylabel('h (AU^{2}/s)')
@@ -80,9 +83,9 @@ function [] = plotData(cR,y0A,y0E,sizeC,tripTime,coast,coast_threshold,gammaCoef
     
     %radius vs. time
     subplot(2,3,4)
-    plot((tE-(timeFinal-tripTime))/(3600*24),yE(:,1),'.')
+    plot(tE/(3600*24),yE(:,1),'.')
     hold on
-    plot((tA-(timeFinal-tripTime))/(3600*24),yA(:,1),'.')
+    plot(tA/(3600*24),yA(:,1),'.')
     hold on
     plot(cR(7,:)/(3600*24),cR(1,:),'Color',[0.4660, 0.6740, 0.1880],'LineWidth', 2)
     ylabel('r (AU)')
@@ -93,9 +96,9 @@ function [] = plotData(cR,y0A,y0E,sizeC,tripTime,coast,coast_threshold,gammaCoef
     
     %theta vs. time
     subplot(2,3,5)
-    plot((tE-(timeFinal-tripTime))/(3600*24),mod(yE(:,2),2*pi),'.')
+    plot(tE/(3600*24),mod(yE(:,2),2*pi),'.')
     hold on
-    plot((tA-(timeFinal-tripTime))/(3600*24),mod(yA(:,2), 2*pi),'.')
+    plot(tA/(3600*24),mod(yA(:,2), 2*pi),'.')
     hold on
     plot(cR(7,:)/(3600*24),mod(cR(2,:), 2*pi),'Color',[0.4660, 0.6740, 0.1880],'LineWidth', 2)
     ylabel('\theta (rad)')
@@ -106,9 +109,9 @@ function [] = plotData(cR,y0A,y0E,sizeC,tripTime,coast,coast_threshold,gammaCoef
 
     %Z vs. time
     subplot(2,3,6)
-    plot((tE-(timeFinal-tripTime))/(3600*24),yE(:,3),'.')
+    plot(tE/(3600*24),yE(:,3),'.')
     hold on
-    plot((tA-(timeFinal-tripTime))/(3600*24),yA(:,3),'.')
+    plot(tA/(3600*24),yA(:,3),'.')
     hold on
     plot(cR(7,:)/(3600*24),cR(3,:),'Color',[0.4660, 0.6740, 0.1880],'LineWidth', 2)
     ylabel('z (AU)')

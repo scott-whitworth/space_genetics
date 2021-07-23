@@ -161,20 +161,27 @@ void giveDistance(Individual * pool, const cudaConstants* cConstants, int poolSi
 
     //For each individual besides the upper and lower bounds, make their distance equal to
     //the current distance + the absolute normalized difference in the function values of two adjacent solutions.
+    double normalPosDiffLeft;
+    double normalPosDiffRight;
     for(int i = 1; i < poolSize - 1; i++){
         //distance = distance + ((i+1) - (i-1))/(best - worst)
-        pool[i].distance = pool[i].distance + abs((pool[i+1].posDiff - pool[i-1].posDiff)/(pool[poolSize - 1].posDiff - pool[0].posDiff));
+        normalPosDiffLeft = pool[i+1].posDiff/pool[poolSize - 1].posDiff;
+        normalPosDiffRight = pool[i-1].posDiff/pool[poolSize - 1].posDiff;
+        pool[i].distance = pool[i].distance + abs((normalPosDiffLeft - normalPosDiffRight));// /(pool[poolSize - 1].posDiff - pool[0].posDiff));
     }
 
     //Repeat above process for speedDiff    
     std::sort(pool, pool + poolSize, LowerSpeedDiff);
     pool[0].distance = 1.0e+12;
     pool[poolSize - 1].distance = 1.0e+12;
-
+    double normalSpeedDiffLeft;
+    double normalSpeedDiffRight;
     //For each individual besides the upper and lower bounds, make their distance equal to
     //the current distance + the absolute normalized difference in the function values of two adjacent solutions.
     for(int i = 1; i < poolSize - 1; i++){
-        pool[i].distance = pool[i].distance + abs((pool[i+1].speedDiff - pool[i-1].speedDiff)/(pool[poolSize - 1].speedDiff - pool[0].speedDiff));
+        normalSpeedDiffLeft = pool[i+1].speedDiff/pool[poolSize - 1].speedDiff;
+        normalSpeedDiffRight = pool[i-1].speedDiff/pool[poolSize - 1].speedDiff;
+        pool[i].distance = pool[i].distance + abs((normalSpeedDiffLeft - normalSpeedDiffRight));// /(pool[poolSize - 1].speedDiff - pool[0].speedDiff));
     }
     // double tolerance = 1.0e-11;
     // for(int i = 0; i < poolSize; i++){

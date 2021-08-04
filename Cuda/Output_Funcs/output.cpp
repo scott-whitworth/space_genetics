@@ -335,7 +335,7 @@ void initializeRecord(const cudaConstants * cConstants) {
   std::string fileId = std::to_string(seed);
   excelFile.open("genPerformance-" + fileId + ".csv", std::ios_base::app);
 
-  excelFile << "gen,lowerPosDiff,bestSpeedDiff,bestCost,numFronts,alpha,beta,zeta,tripTime,";
+  excelFile << "gen,lowerPosDiff,bestSpeedDiff,bestCost,alpha,beta,zeta,tripTime,";
   
   for (int i = 0; i < GAMMA_ARRAY_SIZE; i++) {
     excelFile << "gamma"; 
@@ -374,7 +374,7 @@ void initializeRecord(const cudaConstants * cConstants) {
     }
   }
 
-  excelFile << "anneal,\n";
+  excelFile << "anneal,anneal_min,\n";
   excelFile.close();
 }
 

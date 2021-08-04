@@ -19,7 +19,7 @@
 //MUST be called after cost has been assigned to all individuals (calling callRK)
 //Input: pool - this generation of individuals, defined/initilized in optimimize
 //       cConstants
-void giveRank(Individual * pool, const cudaConstants* cConstants) {
+void giveRank(Individual * pool, const cudaConstants* cConstants, int poolSize) {
     //non-denominated sorting method
     //https://www.iitk.ac.in/kangal/Deb_NSGA-II.pdf
 
@@ -28,7 +28,7 @@ void giveRank(Individual * pool, const cudaConstants* cConstants) {
     std::vector<int> front;
     
     //loop through each individual
-    for (int i = 0; i < cConstants->num_individuals*2; i++){
+    for (int i = 0; i < poolSize; i++){
         
         //number of times pool[i] has been dominated
         pool[i].dominatedCount = 0;
@@ -36,7 +36,7 @@ void giveRank(Individual * pool, const cudaConstants* cConstants) {
         //set of solutions that pool[i] dominates. Need to empty for each generation
         std::vector<int>().swap(pool[i].dominated);
 
-        for(int j = 0; j < cConstants->num_individuals*2; j++){
+        for(int j = 0; j < poolSize; j++){
             
             //if i dominates j, put the j index in the set of individuals dominated by i.
             if (dominates(pool[i], pool[j])){
@@ -401,7 +401,7 @@ double optimize(const cudaConstants* cConstants) {
             //give a rank to each individual based on domination sort
             //* Ignore any nans at the end of allIndividuals
             //must be called after checking for nans and before giveDistance
-            giveRank(allIndividuals, cConstants);
+            giveRank(allIndividuals, cConstants, cConstants->num_individuals*2);
             giveDistance(allIndividuals, cConstants, cConstants->num_individuals*2 - numNans);
             std::sort(allIndividuals, allIndividuals + cConstants->num_individuals * 2, rankDistanceSort);
         } 

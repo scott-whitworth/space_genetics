@@ -140,9 +140,12 @@ void cudaConstants::FileRead(std::string fileName) {
                         this->record_mode = false;
                     }
                 }
-            
+
                 else if (variableName == "write_freq") {
                     this->write_freq = std::stoi(variableValue);
+                }
+                else if (variableName == "all_write_freq") {
+                    this->all_write_freq = std::stoi(variableValue);
                 }
                 else if (variableName == "disp_freq") {
                     this->disp_freq = std::stoi(variableValue);
@@ -260,6 +263,9 @@ void cudaConstants::FileRead(std::string fileName) {
                 else if (variableName == "pos_threshold") {
                     this->pos_threshold = std::stod(variableValue);
                 }
+                else if (variableName == "speed_threshold") {
+                    this->speed_threshold = std::stod(variableValue);
+                }
                 else if (variableName == "coast_threshold") {
                     this->coast_threshold = std::stod(variableValue);
                 }
@@ -354,7 +360,7 @@ std::ostream& operator<<(std::ostream& os, const cudaConstants& object) {
     os << "\tthruster_type: " << object.thruster_type << "\tdry_mass: " << object.dry_mass << "\t\tfuel_mass: " << object.fuel_mass << "\t\twet_mass: " << object.wet_mass << "\n";
     // Display the c3energy assignment, showing c3scale to help clarify that it is not directly from config
     os << "\tc3energy (" << (object.c3scale * 100)    << "%): " << object.c3energy      << "\tv_escape: " << object.v_escape << "\t\tv_impact: " << object.v_impact << "\n";
-    os << "\tpos_threshold: " << object.pos_threshold << "\tcoast_threshold: "<< object.coast_threshold<< "\n\n";
+    os << "\tpos_threshold: " << object.pos_threshold << "\tspeed_threshold: " << object.speed_threshold << "\tcoast_threshold: "<< object.coast_threshold<< "\n\n";
 
     os << "Asteriod Info:\n";
     os << "\t R: " << object.r_fin_ast  << "\t 0: " << object.theta_fin_ast << "\t Z: " << object.z_fin_ast << "\n";

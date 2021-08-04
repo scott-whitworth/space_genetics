@@ -84,7 +84,7 @@ double getRand(double max, std::mt19937_64 & rng);
 //        cConstants, annealing, rng, generation - passed through to mutate()
 // Output: Returns rkParameter object that is new individual
 // Called from generateChildrenPair, calls mutate
-rkParameters<double> generateNewIndividual(const rkParameters<double> & p1, const rkParameters<double> & p2, const int * mask, const cudaConstants * cConstants, double annealing, std::mt19937_64 & rng, double generation, int gene);
+rkParameters<double> generateNewIndividual(const rkParameters<double> & p1, const rkParameters<double> & p2, const int * mask, const cudaConstants * cConstants, double annealing, std::mt19937_64 & rng, double generation);
 
 // Utility function, generates a boolean mask for which paramters to mutate (1: mutate, 0: not mutated)
 // Number of genes mutated is a compound probability of n-1 genes before it
@@ -99,9 +99,6 @@ rkParameters<double> generateNewIndividual(const rkParameters<double> & p1, cons
 // Called by mutate()
 void mutateMask(std::mt19937_64 & rng, bool * mutateMask, double mutation_rate);
 
-void mutateGeneMask(std::mt19937_64 & rng, bool * mutateMask, double mutation_rate, int gene);
-
-
 // Handles potential mutation of individual 
 // Calls mutateMask, then applied mutations as necessary
 // mutate a gene by adding or subtracting a small, random value on a parameter property
@@ -111,7 +108,7 @@ void mutateGeneMask(std::mt19937_64 & rng, bool * mutateMask, double mutation_ra
 //        cConstants - holds properties to use such as mutation rates and mutation scales for specific parameter property types
 // Output: Returns rkParameter object that is the mutated version of p1
 // Called by generateNewIndividual
-rkParameters<double> mutate(const rkParameters<double> & p1, std::mt19937_64 & rng, double annealing, const cudaConstants* gConstant, double generation, int gene);
+rkParameters<double> mutate(const rkParameters<double> & p1, std::mt19937_64 & rng, double annealing, const cudaConstants* gConstant, double generation);
 
 // Method that creates a pair of new Individuals from a pair of parent individuals and a mask
 // Input: pool - (output) pointer array to Individuals that is where the new pair of individuals are stored
@@ -128,7 +125,7 @@ rkParameters<double> mutate(const rkParameters<double> & p1, std::mt19937_64 & r
 //         mask is flipped in polarity between each (refer to flipMask method) 
 //         newIndCount is incremented by +2
 // Called by newGeneration()
-void generateChildrenPair(Individual *pool, Individual *survivors, int * mask, int& newIndCount, int parentsIndex, double annealing, int poolSize, std::mt19937_64 & rng, const cudaConstants* cConstants, double generation, int gene);
+void generateChildrenPair(Individual *pool, Individual *survivors, int * mask, int& newIndCount, int parentsIndex, double annealing, int poolSize, std::mt19937_64 & rng, const cudaConstants* cConstants, double generation);
 
 // Creates the next pool to be used in the optimize function in opimization.cu
 // Input: survivors - (parents) Individual pointer array of Individuals to be used in creating new individuals

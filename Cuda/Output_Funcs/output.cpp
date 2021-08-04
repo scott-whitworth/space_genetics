@@ -324,6 +324,7 @@ void progressiveAnalysis(int generation, int numStep, double *start, elements<do
   output.close();
 }
 
+//!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Initialize the .csv file with header row
 // input: cConstants - to access time_seed for deriving file name conventions and also thruster type
 // output: file genPerformanceT-[time_seed].csv, is appended with initial header row info
@@ -377,8 +378,9 @@ void initializeRecord(const cudaConstants * cConstants) {
   excelFile.close();
 }
 
+//!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Take in the current state of the generation and appends to excel file, assumes initializeRecord() had already been called before (no need to output a header row)
-void recordGenerationPerformance(const cudaConstants * cConstants, Individual * pool, double generation, double new_anneal, int poolSize, int numFronts) {
+void recordGenerationPerformance(const cudaConstants * cConstants, Individual * pool, double generation, double new_anneal, int poolSize, double anneal_min) {
   std::ofstream excelFile;
   int seed = cConstants->time_seed;
   std::string fileId = std::to_string(seed);
@@ -389,7 +391,6 @@ void recordGenerationPerformance(const cudaConstants * cConstants, Individual * 
   excelFile << generation << "," << pool[0].posDiff << ",";
   excelFile << pool[0].speedDiff << ",";
   excelFile << pool[0].cost << ",";
-  excelFile << numFronts << ",";
 
   // Record best individuals parameters
   excelFile << pool[0].startParams.alpha << ",";
@@ -409,11 +410,13 @@ void recordGenerationPerformance(const cudaConstants * cConstants, Individual * 
 
   //New anneal every gen
   excelFile << new_anneal << ",";
+  excelFile << anneal_min << ",";
   excelFile << "\n"; // End of row
   excelFile.close();
   
 }
 
+//!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Takes in a pool and records the parameter info on all individuals, currently unused
 // input: cConstants - to access time_seed in deriving file name
 //        pool - holds all the individuals to be stored
@@ -471,6 +474,7 @@ void recordAllIndividuals(std::string name, const cudaConstants * cConstants, In
   entirePool.close();
 }
 
+//!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Method for doing recording information at the end of the optimization process
 // input: cConstants - access record_mode, if record_mode == true then call progressiveRecord method, also passed into writeTrajectoryToFile method as well as progressiveRecord
 //        pool - To access the best individual (pool[0])
@@ -509,6 +513,7 @@ void finalRecord(const cudaConstants* cConstants, Individual * pool, int generat
   delete [] start;
 }
 
+//!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Stores information of launchCon of timeRes*24 resolution in EarthCheckValues-[time_seed].csv
 void recordEarthData(const cudaConstants * cConstants) {
   double timeStamp = cConstants->triptime_min; // Start the timeStamp at the triptime min (closest to impact)
@@ -551,14 +556,4 @@ void recordFuelOutput(const cudaConstants* cConstants, double solution[], double
   excelFile.close();
 }
 
-void recordFronts(const cudaConstants* cConstants, const std::vector<int> &frontCounter, const int &numFronts, const int &generation) {
-  std::ofstream excelFile;
-  int seed = cConstants->time_seed;
 
-  excelFile.open(std::to_string(seed) + " - FrontOutput-Gen#" + std::to_string(generation) + ".csv");
-
-  excelFile << "Front #,# Individuals" << "\n";
-  for (int i = 0; i < numFronts; i++) {
-    excelFile << i+1 << "," << frontCounter[i] << "\n";
-  }
-}

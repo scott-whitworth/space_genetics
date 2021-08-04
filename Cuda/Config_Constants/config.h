@@ -17,7 +17,10 @@ struct cudaConstants {
     std::string initial_start_file_address; // If random_start is false, use file_address to find what file is being used for the initial start
     
     double pos_threshold; // maximum distance for how close the spacecraft must be to the asteroid at end of its trajectory (AU) in the algorithm, also is what determines if a trajectory is considered a solution
+    double speed_threshold; // maximum distance for how fast the spacecraft must be going when it reaches the asteroid
+    
     int write_freq;       // Determine how many generations between calling recordGenerationPerformance() method (defined in Output_Funcs/output.cpp)
+    int all_write_freq;   // Determine how many generations between calling recordAllIndividuals() method (defined in Output_Funcs/output.cpp)
     int disp_freq;        // Determine how many generations between calling terminalDisplay() method (defined in Output_Funcs/output.cpp)
 
     int best_count;        // Number of individuals that needs to be within the acceptable condition before ending the algorithm, also how many of the top individuals are recorded

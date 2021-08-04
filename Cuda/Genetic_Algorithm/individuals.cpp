@@ -6,12 +6,11 @@
 Individual::Individual() {
     this->posDiff = 1.0;
     this->speedDiff = 0.0;
-    this->isClone = false;
-    this->difference = 0;
     this->cost = 10;
     this->dominatedCount = 0;
     this->rank = 0; //might change later?
     this->distance = -1;
+    this->isParent = false;
 }
 
 // Set the initial position of the spacecraft according to the newly generated parameters
@@ -31,14 +30,14 @@ Individual::Individual(rkParameters<double> & newInd, const cudaConstants* cCons
         earth.vtheta+cos(this->startParams.zeta)*cos(this->startParams.beta)*cConstants->v_escape,
         earth.vz+sin(this->startParams.zeta)*cConstants->v_escape);
     
-    this->isClone = false;
-    this->difference = 0;
     this->cost = 10;
     this->dominatedCount = 0;
     this->rank = 0; //might change later?
     this->distance = -1;
+    this->isParent = false;
 }
 
+//!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Calculates a posDiff value
 // Input: cConstants in accessing properties such as r_fin_ast, theta_fin_ast, and z_fin_ast
 // Output: Assigns and returns this individual's posDiff value
@@ -47,6 +46,7 @@ __host__ __device__ double Individual::getPosDiff(const cudaConstants* cConstant
    return this->posDiff;
 }
 
+//!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Calculates a speedDiff value
 // Input: cConstants in accessing properties such as vr_fin_ast, vtheta_fin_ast, and vz_fin_ast
 // Output: Assigns and returns this individual's speedDiff value
@@ -55,6 +55,7 @@ __host__ __device__ double Individual::getSpeedDiff(const cudaConstants* cConsta
     return this->speedDiff;
 }
 
+//!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Calculates a cost value to quantitatively evaluate this Individual
 // Input: cConstants in accessing properties such as pos_threshold, c3energy, and v_impact
 // Output: Assigns and returns this individuals cost value
@@ -76,6 +77,7 @@ __host__ __device__ double Individual::getCost_Soft(const cudaConstants* cConsta
     return this->cost;
 }
 
+//!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 bool Individual::operator>(Individual &other) {
     if (this->cost > other.cost) {
         return true;
@@ -84,6 +86,7 @@ bool Individual::operator>(Individual &other) {
         return false;
     }
 }
+
 
 bool Individual::operator<(Individual &other) {
     if (this->cost < other.cost) {
@@ -103,6 +106,7 @@ bool Individual::operator==(Individual &other) {
     }
 }
 
+//!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Compare two individuals by their positional difference values, used in standard sort to have array contain lowest posDiff individual at start
 // input: two individuals
 // output: returns true if personB has a higher positional difference than personA
@@ -141,76 +145,65 @@ bool LowerSpeedDiff(Individual& personA, Individual& personB) {
 
 }
 
-bool same(Individual& personA, Individual& personB, double percent) {
-
-    //double avg = (personA.cost + personB.cost)/2
-    double percentDiff = ((abs(personA.cost - personB.cost))/((personA.cost + personB.cost)/2))*100;
-    if (percentDiff < percent) {
-        return true;
-    }
-    else {
-        return false;
-    }
-
-}
-
-double checkDifference(Individual& personA, Individual& personB) {
-
-    double percentDiff = ((abs(personA.cost - personB.cost))/((personA.cost + personB.cost)/2))*100;
-    //double percentDiff = personA.startParams.compare(personB.startParams);
-    return percentDiff;
-
-}
-
-bool notAClone(Individual& personA, Individual& personB) {
-    if(personA.isClone < personB.isClone){
-        return true;
-    }
-    else {
-        return false;
-    }
-}
-
+//!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//Compare two individuals to see if the first individual dominates the second individual
+//Returns true if personA dominates personB.
+//returns false if personA does not dominate personB.
 bool dominates(Individual& personA, Individual& personB) {
-
-    //Returns true if personA dominates personB.
-    //returns false if personA does not dominate personB.
+    
+    //Is true if A is at least equally as good as B for all objectives
     bool AisEqual = false;
+    //Is true if A is better than B for at least one objective
     bool AisBetter = false;
+    //tolerances used to determine the range of values considered equal
     double posTolerance = 1.0e-14;
     double speedTolerance = 1.0e-14;
-    //double costTolerance = 1.0e-11;
+    //true if A posDiff "equals" B posDiff
     bool APosEqualsB = false;
+    //true if A speedDiff "equals" B speedDiff
     bool ASpeedEqualsB = false;
-    //bool ACostEqualsB = false;
 
-    //Used for equality comparison so that equals does not have to be exact.
+    //True is A posdiff is equal to B posDiff +- posTolerance
     if ((personA.posDiff < personB.posDiff + posTolerance) && (personA.posDiff > personB.posDiff - posTolerance)){
         APosEqualsB = true;
     }
+    //True is A speeddiff is equal to B speedDiff +- speedTolerance
     if ((personA.speedDiff < personB.speedDiff + speedTolerance) && (personA.speedDiff > personB.speedDiff - speedTolerance)){
         ASpeedEqualsB = true;
     }
-    // if ((personA.cost < personB.cost + costTolerance) && (personA.cost > personB.cost - costTolerance)){
-    //     ACostEqualsB = true;
-    // }
-
+    //If A.posDiff is approximately/better than B.posDiff, and A.speedDiff is approximately/better than B.speedDiff, then A is equal to B.
     if ((personA.posDiff < personB.posDiff || APosEqualsB) && (personA.speedDiff < personB.speedDiff || ASpeedEqualsB)) {
         AisEqual = true;
     }
+    //If A has a better posDiff or speedDiff than B, then A is better than B
     if (personA.posDiff < personB.posDiff || personA.speedDiff < personB.speedDiff){
         AisBetter = true;
     }
 
     //A Dominates B
+    //A only dominates B if:
+        //A.posDiff - posTolerance < B.posDiff <= A.posDiff, and A.speedDiff < B.speedDiff
+        //A.posDiff < B.posDiff, and A.speedDiff - speedTolerance < B.speedDiff <= A.speedDiff
+        //A.posDiff < B.posDiff and A.speedDiff < B.speedDiff (better in every way)
     if (AisEqual && AisBetter){
         return true;
     }
+    //A and B are codominant if:
+        //A.posDiff < B.posDiff & A.speedDiff > B.speedDiff
+        //A.posDiff > B.posDiff & A.speedDiff < B.speedDiff
+        //A.posDiff = B.posDiff & A.speedDiff = B.speedDiff (Unlikely since they're doubles, unless A & B are clones or genetically similar)
+    //B dominates A if any of the conditions for "A dominates B", when reversed, are true.
     else {
         return false;
     }
 }
 
+//!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//Compare two individuals by their rank
+//WARNING: Using this function to sort individuals will sort them by rank, but within those ranks they will be sorted by the last method used to sort them.
+//         For example, if all the individuals are rank 1, sorting them using this method will do nothing. 
+//input: two individuals
+//output: if person A's rank is lower than person B's rank, return true
 bool rankSort(Individual& personA, Individual& personB){
 
     if (personA.rank < personB.rank) {
@@ -221,6 +214,10 @@ bool rankSort(Individual& personA, Individual& personB){
     }
 }
 
+//Compare two individuals by their rank and distance
+//input: two individuals
+//output: if person A's rank is lower than person B's rank, return true
+//        if person A and person B have the same rank and person A has a greater distance than person B, return true
 bool rankDistanceSort(Individual& personA, Individual& personB) {
 
     if(personA.rank < personB.rank){

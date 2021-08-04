@@ -38,6 +38,7 @@
 // }
 
 
+//----------------------------------------------------------------------------------------------------------------------------
 //Returns the number of fronts and the number of individuals per front
 void countFrontSize(std::vector<int> &frontCounter, const cudaConstants* cConstants, int generation, Individual* pool, Individual* parentPool, const int parentPoolSize) {
     //reallocate space for frontCounter. Delete last generation's frontCounter first
@@ -61,6 +62,7 @@ void countFrontSize(std::vector<int> &frontCounter, const cudaConstants* cConsta
 
 
 
+//----------------------------------------------------------------------------------------------------------------------------
 //Used to give rankings for sorting based on non-dominated sorting method.
 //Assigns suitability rank to all individuals.
 //MUST be called after cost has been assigned to all individuals (calling callRK)
@@ -145,6 +147,7 @@ void giveRank(Individual * pool, const cudaConstants* cConstants) {
     // }
 }
 
+//----------------------------------------------------------------------------------------------------------------------------
 void giveDistance(Individual * pool, const cudaConstants* cConstants, int poolSize){
 
     //starting rankSort to make sure nans are at the end of the array.
@@ -194,6 +197,7 @@ void giveDistance(Individual * pool, const cudaConstants* cConstants, int poolSi
     // }
 }
 
+//----------------------------------------------------------------------------------------------------------------------------
 void fillParentPool(Individual * entirePool, Individual * parentPool, const cudaConstants* cConstants, int entirePoolSize){
     //sort all individuals based on rank
     std::sort(entirePool, entirePool + entirePoolSize, rankSort);         
@@ -237,6 +241,7 @@ void fillParentPool(Individual * entirePool, Individual * parentPool, const cuda
     }
 }
 
+//----------------------------------------------------------------------------------------------------------------------------
 bool changeInBest(double previousBestCost, const Individual & currentBest, double distinguishRate) {
     //truncate is used here to compare doubles via the distinguguishRate, to ensure that there has been relatively no change.
         if (trunc(previousBestCost/distinguishRate) != trunc(currentBest.cost/distinguishRate)) {
@@ -247,6 +252,7 @@ bool changeInBest(double previousBestCost, const Individual & currentBest, doubl
         }
 }
 
+//----------------------------------------------------------------------------------------------------------------------------
 // ** Assumes pool is sorted array of Individuals **
 // Used in determining if main optimize loop continues
 // Input: tolerance - posDiff threshold, determines max target distance
@@ -287,6 +293,7 @@ bool allWithinTolerance(double tolerance, Individual * pool, const cudaConstants
     return true;
 }
 
+//----------------------------------------------------------------------------------------------------------------------------
 // Main processing function for Genetic Algorithm
 // - manages memory needs for genetic algorithm
 // - deals with processing calls to CUDA callRK
@@ -405,8 +412,6 @@ double optimize(const cudaConstants* cConstants) {
     // number of current generation
     double generation = 0;    
     
-    // how far away the best individual is from the tolerance value
-    double currentCost; 
     // Genetic solution tolerance 
     // - (currently just the position threshold which is furthest distance from the target allowed)
     // - could eventually take into account velocity too and become a more complex calculation
@@ -453,7 +458,7 @@ double optimize(const cudaConstants* cConstants) {
                 // Set to be a bad individual by giving it bad posDiff and speedDiffs
                 // therefore also having a bad cost value
                 // won't be promoted in crossover
-                inputParameters[k].posDiff = 100.0;
+                inputParameters[k].posDiff = 100.0;//This is an undesirable position difference of 100 AU
 
                 if (cConstants->missionType == Rendezvous){
                     inputParameters[k].speedDiff = 100.0;//This is an undesirable result for an rendezvous mission (approx. 50000c!)
@@ -547,14 +552,21 @@ double optimize(const cudaConstants* cConstants) {
         // std::sort(inputParameters, inputParameters + cConstants->num_individuals, rankSort);
         // Calculate how far best individual is from the ideal cost value (currently is the positionalDifference of the best individual)
         // TODO: Change this later to take into account more than just the best individual and its position difference
-        currentCost = inputParameters[0].cost; 
+        // how far away the best individual is from the tolerance value
+        //double currentCost; 
+        //currentCost = inputParameters[0].cost; 
 
         // Scaling anneal based on proximity to tolerance
         // Far away: larger anneal scale, close: smaller anneal
-        double new_anneal = currentAnneal * (1 - tolerance / currentCost);
-        
-        //std::cout << cConstants->change_check << " | " << cConstants->change_check / check_decrease << std::endl;
-    
+        double new_anneal;
+        if (tolerance < inputParameters[0].posDiff){    
+            //new_anneal = currentAnneal * (1 - (tolerance / inputParameters[0].posDiff));
+            new_anneal = currentAnneal * (1 - pow(tolerance / inputParameters[0].posDiff,2.0));
+            if (new_anneal<1.0e-7){
+                new_anneal = 1.0e-7;//Set a true minimum for annealing
+            }
+        }
+        //double new_anneal = cConstants->anneal_initial * (1 - tolerance / inputParameters[0].posDiff);
 
         //Process to see if anneal needs to be adjusted
         // If generations are stale, anneal drops
@@ -573,22 +585,15 @@ double optimize(const cudaConstants* cConstants) {
                     }
                     std::cout << "\nnew dRate: " << dRate << std::endl;
                 }
-                // If no change in BestIndividual across generations, multiply currentAnneal with anneal factor
-                currentAnneal = currentAnneal * cConstants->anneal_factor;
-                std::cout << "\nnew anneal: " << currentAnneal << std::endl;
-                
-                //Reset check_decrease
-                // check_decrease = 1;
+                // If no change in BestIndividual across generations, reduce currentAnneal by anneal_factor while staying above anneal_min
+//                double anneal_min = cConstants->anneal_initial*exp(-sqrt(tolerance/inputParameters[0].posDiff)*generation);
+                double anneal_min = cConstants->anneal_initial*exp(-sqrt(tolerance/inputParameters[0].posDiff)*generation);
+                if (anneal_min<1.0e-7){
+                    anneal_min = 1.0e-7;//Set a true minimum for annealing
+                }
+                currentAnneal = (currentAnneal * cConstants->anneal_factor > anneal_min)? (currentAnneal * cConstants->anneal_factor):(anneal_min);
+                std::cout << "\nnew anneal: " << currentAnneal << std::endl;              
             }
-            // else {
-            //     if (check_decrease < 4 && generation > 0) { //Check every 200, then 100, then 50 generations until there's no change in best.
-            //         check_decrease *= 2;
-                    
-            //         std::cout << "Change_Check Decreased!" << std::endl;
-            //     }
-
-            // }
-
             // previousBestPos = currentBest.posDiff;
             // previousBestVel = currentBest.speedDiff;
             previousBestCost = currentBest.cost;
@@ -598,8 +603,6 @@ double optimize(const cudaConstants* cConstants) {
         if (static_cast<int>(generation) % cConstants->write_freq == 0 && cConstants->record_mode == true) {
             recordGenerationPerformance(cConstants, inputParameters, generation, new_anneal, cConstants->num_individuals, frontCounter.size());
         }
-
-        //std::cout << "Nans in gen " << generation << " : " << numNans << std::endl;
 
         // Only call terminalDisplay every DISP_FREQ, not every single generation
         if ( static_cast<int>(generation) % cConstants->disp_freq == 0) {
@@ -626,7 +629,7 @@ double optimize(const cudaConstants* cConstants) {
 
             std::sort(inputParameters, inputParameters + cConstants->num_individuals);
             terminalDisplay(inputParameters[0], generation);
-            std::cout << "\n# of Nans this increment: " << numNans << "\n" << std::endl;
+            std::cout << "\n# of Nans this generation: " << numNans << "\n" << std::endl;
             
 
             std::sort(inputParameters, inputParameters+cConstants->num_individuals, rankDistanceSort);
@@ -663,7 +666,7 @@ double optimize(const cudaConstants* cConstants) {
     // for the annealing argument, set to -1 (since the anneal is only relevant to the next generation and so means nothing for the last one)
     // for the numFront argument, set to -1 (just because)
     if (cConstants->record_mode == true) {
-        recordGenerationPerformance(cConstants, oldInputParameters, generation, -1, cConstants->num_individuals, -1);
+        recordGenerationPerformance(cConstants, oldInputParameters, generation, currentAnneal, cConstants->num_individuals, -1);
     }
     // Only call finalRecord if the results actually converged on a solution
     // also display last generation onto terminal
@@ -679,7 +682,7 @@ double optimize(const cudaConstants* cConstants) {
 
     return calcPerS;
 }
-
+//----------------------------------------------------------------------------------------------------------------------------
 int main () {
     // display GPU properties and ensure we are using the right one
     cudaDeviceProp prop;

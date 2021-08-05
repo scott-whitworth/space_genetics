@@ -512,23 +512,24 @@ double optimize(const cudaConstants* cConstants) {
             // Prints the best individual's posDiff / speedDiff and cost
 
             //best position individual
-            std::cout << "\nBest Position Individual: \n";
+            std::cout << "\n\nBest Position Individual:";
             std::sort(inputParameters, inputParameters + cConstants->num_individuals, LowerPosDiff);
             terminalDisplay(inputParameters[0], generation);
 
             if(cConstants->missionType == Rendezvous){
                 //Best lower speed individual
-                std::cout << "\nBest Speed Individual: \n";
+                std::cout << "\nBest Speed Individual:";
                 std::sort(inputParameters, inputParameters + cConstants->num_individuals, LowerSpeedDiff);
                 terminalDisplay(inputParameters[0], generation);
             }
             else if(cConstants->missionType == Impact){
                 //Best higher speed individual
-                std::cout << "\nBest Speed Individual: \n";
+                std::cout << "\nBest Speed Individual:";
                 std::sort(inputParameters, inputParameters + cConstants->num_individuals, HigherSpeedDiff);
                 terminalDisplay(inputParameters[0], generation);
             }
             //display to the terminal the best individual based on cost
+            std::cout << "\nBest Cost Individual:";
             std::sort(inputParameters, inputParameters + cConstants->num_individuals);
             terminalDisplay(inputParameters[0], generation);
             std::cout << "\n# of Nans this generation: " << numNans << "\n" << std::endl;

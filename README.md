@@ -4,17 +4,16 @@ Based on previous work 2019 - 2021 Sankaran / Griffith summer research
 2020: Matthew, Noah, Andrew, Jeremy  
 2021: Cassie, Trevor
 Pulled from: https://github.com/scott-whitworth/Didymos-optimization on 6/7/2021  
-  
-The following is pulled in data and will need to be updated.  
 
-<h1>DART Mission Optimization Project</h1>
-<i>Last updated: August 6th, 2020</i>
+<h1>Multi-Objective Optimization Project</h1>
+<i>Last updated: August 5th, 2021</i>
 
 <h2>Project Background & Current Objective</h2>
 
-  NASA's Double Asteroid Redirection Test (DART) mission involves having the spacecraft perform a kinetic impact to change the orbital trajectory of Dimorphos around the parent body, Didymos.  The spacecraft to be used is fitted with a NEXT ion thruster though is not required to hit the target but rather be used as a technical demonstration.  For the previous project, the goal was to find an optimal trajectory using the thruster that would result in a greater difference in velocity with the target to make for a more effective change in Dimorphos' orbit. For the summer of 2021, the new goal is to attempt to optimize the program so that the spacecraft can instead perform a soft landing on the asteroid.
+  NASA's Double Asteroid Redirection Test (DART) mission involves having the spacecraft perform a kinetic impact to change the orbital trajectory of Dimorphos around the parent body, Didymos.  The spacecraft to be used is fitted with a NEXT ion thruster though is not required to hit the target but rather be used as a technical demonstration.  For the previous project, the goal was to find an optimal trajectory using the thruster that would result in a greater difference in velocity with the target to make for a more effective change in Dimorphos' orbit. For the summer of 2021, the new goal is to attempt to optimize the program so that the spacecraft can instead perform a soft landing on the asteroid (similar to the OSIRIS-REx mission), while still being optimized to handle a DART mission.
 
-  Currently, the tools for finding the best trajectory is utilizing a genetic algorithm that uses Nvidia's CUDA platform to optimize parameters that leads to both hitting the asteriod and maximizing the velocity difference. At this stage of development the focus is to use the refined genetic algorithm to optimize the cost function to work for a soft landing instead of a crash into the asteroid.
+  To find the best trajectory, the program utilizes a multi-objective genetic algorithm which takes advantage of Nvidia's CUDA platform to optimize parameters which lead to landing the spacecraft on the asteroid. At this stage of development, the focus is to update the genetic algorithm to optimize the position and velocity of the spacecraft in reference to the asteroid.
+
 
   Parameters being optimizing are the following
   | Variable Name               | Units    	  | Description                                                                                                                                                |   	|
@@ -33,6 +32,7 @@ There are many folders and files in this project, so here's a short rundown of f
   - Cuda: Where the most recent optimization code that attempts to find a best trajectory can be found, uses the CUDA platform to use  GPU and genetic algorithm 
     * Config_Constants: Where cudaConstants structure is defined and default genetic.config file is, cudaConstants handles storing const values that we may want to be able to change for different runs of the program.  Also contains the constants.h file
       * constants.h: Stores constant properties, such as AU unit value and optimized variable offsets for the array that stores the values, these are constants that should not be easily changed.
+      * bennu.config and didymos.config: These two files hold information pertaining to their respective asteroids, so the user can switch between the target asteroid in genetic.config
     * Earth_calculations: Code for calculating the earth conditions and defines the global pointer variable launchCon (earthInfo.h). Dependent on Motion_Eqns/elements.h, Thrust_Files/thruster.h, and Config_Constants/config.h.
     * Genetic_Algorithm: Defines individuals used in the genetic algorithm and crossover/mutation methods to generate new generations in a pool.
     * Motion_Eqns: Defines elements structure that is used to describe the position and velocity of an object in space (such as Earth). Dependent on Thrust_Files and Config_Constants/config.h.
@@ -70,11 +70,11 @@ On WU System & Personal Computers:
        1. Outputs the GPU device name and intial values read from genetic.config that is in Config_Constants folder.
        2. Calculate the Earth data with a visible loading bar.  The range of this data is based on triptime_min and triptime_max in config file
        3. Outputs the number of threads and blocks that will be used in the optimize function and starts the algorithm.
-       4. On the terminal, displays a "." for every generation calculated and sorted.  Every disp_freq generation it displays the current generation number (how many have been calculated up to this point minus 1) and best individual in the pool.  Also displays change in anneal size every change_check generations.
+       4. On the terminal, displays a "." for every generation calculated and sorted.  Every disp_freq generation it displays the current generation number (how many have been calculated up to this point minus 1) and best speed, position and cost individuals in the pool.  Also displays change in anneal size every change_check generations.
        5. Along with terminal display, there are serveral file outputs made during the program's run.
-       6. Once the best individual in the pool has passed the tolerance (less than pos_threshold set in config file), the algorithm has "succeeded" and will output files that describe that individual's parameters that can be used in PostProcessing to observe.
+       6. Once the best individual in the pool has passed the tolerance, the algorithm has "succeeded" and will output files that describe that individual's parameters that can be used in PostProcessing to observe.
        7. Perform steps 2-6 again with different time_seed value if the number of runs performed is less than the run value in the config.
-       8. The program is finished and so closes.
+       8. The program is finished and will close.
 
 3. Changing properties:
       In Config_Constants, genetic.config holds a set of variables that can be changed before running the .exe file.  Refer to config_readme.md for specifics on how each variable impacts the program's behavior and format of the file.  The code does not need to be recompiled.
@@ -99,15 +99,12 @@ On WU System & Personal Computers:
 5. Graphs will be generated that show the path in a three dimensional graph, coast behavior, etc. that could be exported into png format.
 
 <h2>NASA JPL Data for Impact Date Position & Velocity</h2>
-Here is how the impact data was obtained to be used in the config value.
+Here is how the impact and rendezvous data was obtained to be used in the asteroid config files.
 
-1.  Navigate to https://ssd.jpl.nasa.gov/horizons.cgi, this database is used to retrieve final position and velocity vector components for both Earth and Didymos barycenter relative to the Sun.
+1.  Navigate to https://ssd.jpl.nasa.gov/horizons.cgi, this database is used to retrieve final position and velocity vector components for Earth, Didymos, and Bennu's barycenter relative to the Sun.
 2.  The ephemeris type should be a vector table. In table settings, select Type 2. Set the coordinate origin to the Sun's center of mass. The current impact date is 09-30-2022 19:54:55 UTC, so set an adequate time window with a resolution of 1 minute. Set the units to a.u. for position and a.u./day for velocity. Then, select Generate Ephemeris.
 3.  To obtain final Earth elements, change the target body to Earth-Moon barycenter and generate a new ephemeris.
 4.  Using impactParams.m, DerivingImpactValues.xlsx, or some other equivalent method, convert the values to cylindrical coordinates with velocity values changed from AU/day to AU/s.
 
 <h2>Flowchart Overview of CUDA Code</h2>
-<i>Last updated on August 4th, 2020</i>
-
-Note: Large arrows point to flowchart portion that describes that block's process
-<img src="flowchart.jpg">
+<i>Last updated on August 5th, 2021</i>

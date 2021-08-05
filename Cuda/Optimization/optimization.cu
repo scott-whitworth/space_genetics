@@ -224,6 +224,9 @@ double optimize(const cudaConstants* cConstants) {
     // Initial genetic anneal scalar
     double currentAnneal = cConstants->anneal_initial;
 
+    //lower bound for anneal so it does not get too small. Only used with rendezvous mission.
+    double anneal_min = cConstants->anneal_initial;
+    
     // Main set of parameters for Genetic Algorithm
     // contains all thread unique input parameters
     // The "children pool" of the current genertation
@@ -445,8 +448,6 @@ double optimize(const cudaConstants* cConstants) {
         //sets the anneal for the generation
         //used for proximity based annealing
         double new_anneal;
-        //lower bound for anneal so it does not get too small. Only used with rendezvous mission.
-        double anneal_min = cConstants->anneal_initial;
         
         // Scaling anneal based on proximity to tolerance
         // Far away: larger anneal scale, close: smaller anneal

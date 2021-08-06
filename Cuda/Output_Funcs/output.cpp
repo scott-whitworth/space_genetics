@@ -324,6 +324,7 @@ void progressiveAnalysis(int generation, int numStep, double *start, elements<do
   output.close();
 }
 
+//!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Initialize the .csv file with header row
 // input: cConstants - to access time_seed for deriving file name conventions and also thruster type
 // output: file genPerformanceT-[time_seed].csv, is appended with initial header row info
@@ -373,16 +374,19 @@ void initializeRecord(const cudaConstants * cConstants) {
     }
   }
 
-  excelFile << ",\n";
+  excelFile << "anneal,anneal_min,\n";
   excelFile.close();
 }
 
+//!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Take in the current state of the generation and appends to excel file, assumes initializeRecord() had already been called before (no need to output a header row)
-void recordGenerationPerformance(const cudaConstants * cConstants, Individual * pool, double generation, double new_anneal, int poolSize) {
+void recordGenerationPerformance(const cudaConstants * cConstants, Individual * pool, double generation, double new_anneal, int poolSize, double anneal_min) {
   std::ofstream excelFile;
   int seed = cConstants->time_seed;
   std::string fileId = std::to_string(seed);
   excelFile.open("genPerformance-" + fileId + ".csv", std::ios_base::app);
+  excelFile << std::setprecision(20);
+  excelFile << std::fixed;
   // Record best individuals best posDiff and speedDiff of this generation
   excelFile << generation << "," << pool[0].posDiff << ",";
   excelFile << pool[0].speedDiff << ",";
@@ -404,20 +408,25 @@ void recordGenerationPerformance(const cudaConstants * cConstants, Individual * 
     excelFile << pool[0].startParams.coeff.coast[i-COAST_OFFSET] << ","; 
   }
 
+  //New anneal every gen
+  excelFile << new_anneal << ",";
+  excelFile << anneal_min << ",";
   excelFile << "\n"; // End of row
   excelFile.close();
+  
 }
 
+//!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Takes in a pool and records the parameter info on all individuals, currently unused
 // input: cConstants - to access time_seed in deriving file name
 //        pool - holds all the individuals to be stored
 //        poolSize - to use in iterating through the pool
 //        generation - used in deriving file name
 // output: file generation#[generation]-[time_seed].csv is created with each row holding parameter values of individuals
-void recordAllIndividuals(const cudaConstants * cConstants, Individual * pool, int poolSize, int generation) {
+void recordAllIndividuals(std::string name, const cudaConstants * cConstants, Individual * pool, int poolSize, int generation) {
   std::ofstream entirePool;
   int seed = cConstants->time_seed;
-  entirePool.open("generation#" + std::to_string(generation) + "-" + std::to_string(seed) + ".csv");
+  entirePool.open(std::to_string(seed) + "-" + name +"-gen#" + std::to_string(generation) + ".csv");
   // Setup the header row
   entirePool << "position,alpha,beta,zeta,tripTime,";
   for (int i = 0; i < GAMMA_ARRAY_SIZE; i++) {
@@ -429,7 +438,14 @@ void recordAllIndividuals(const cudaConstants * cConstants, Individual * pool, i
   for (int i = 0; i < COAST_ARRAY_SIZE; i++) {
     entirePool << "coast" << i << ",";
   }
+  entirePool << "cost,";
+  entirePool << "posDiff,";
+  entirePool << "speedDiff,";
+  entirePool << "rank,distance,";
   entirePool << '\n';
+
+  entirePool << std::setprecision(20);
+  entirePool << std::fixed;
 
   // Record all individuals in the pool
   for (int i = 0; i < poolSize; i++) {
@@ -448,11 +464,17 @@ void recordAllIndividuals(const cudaConstants * cConstants, Individual * pool, i
     for (int j = 0; j < COAST_ARRAY_SIZE; j++) {
       entirePool << pool[i].startParams.coeff.coast[j] << ",";
     }
+    entirePool << pool[i].cost << ",";
+    entirePool << pool[i].posDiff << ",";
+    entirePool << pool[i].speedDiff << ",";
+    entirePool << pool[i].rank << ",";
+    entirePool << pool[i].distance << ",";
     entirePool << "\n";
   }
   entirePool.close();
 }
 
+//!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Method for doing recording information at the end of the optimization process
 // input: cConstants - access record_mode, if record_mode == true then call progressiveRecord method, also passed into writeTrajectoryToFile method as well as progressiveRecord
 //        pool - To access the best individual (pool[0])
@@ -491,6 +513,7 @@ void finalRecord(const cudaConstants* cConstants, Individual * pool, int generat
   delete [] start;
 }
 
+//!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Stores information of launchCon of timeRes*24 resolution in EarthCheckValues-[time_seed].csv
 void recordEarthData(const cudaConstants * cConstants) {
   double timeStamp = cConstants->triptime_min; // Start the timeStamp at the triptime min (closest to impact)
@@ -532,3 +555,5 @@ void recordFuelOutput(const cudaConstants* cConstants, double solution[], double
 
   excelFile.close();
 }
+
+

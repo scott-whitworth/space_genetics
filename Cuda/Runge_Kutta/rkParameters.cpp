@@ -115,41 +115,27 @@ rkParameters<double> randomParameters(std::mt19937_64 & rng, const cudaConstants
 }
 
 
-template <class T> bool rkParameters<T>::compare(const rkParameters<T> & other, T comp_Thresh) {
-    //First Check Coefficient element
+template <class T> double rkParameters<T>::compare(const rkParameters<T> & other) {
+
+    //Add the percent differences of all the variables together to create a total difference
+    double percentDiff = 0;
+    //coefficients
     for (int i = 0; i < this->coeff.gammaSize; i++) {
-        if (abs(this->coeff.gamma[i] - other.coeff.gamma[i]) > comp_Thresh) {
-            return false;
-        }
+        percentDiff += abs(100*abs(this->coeff.gamma[i] - other.coeff.gamma[i])/(0.5*(this->coeff.gamma[i]+other.coeff.gamma[i])));
     }
     for (int i = 0; i < this->coeff.tauSize; i++) {
-        if (abs(this->coeff.tau[i] - other.coeff.tau[i]) > comp_Thresh) {
-            return false;
-        }
+        percentDiff += abs(100*abs(this->coeff.tau[i] - other.coeff.tau[i])/(0.5*(this->coeff.tau[i]+other.coeff.tau[i])));
     }
     for (int i = 0; i < this->coeff.coastSize; i++) {
-        if (abs(this->coeff.coast[i] - other.coeff.coast[i]) > comp_Thresh) {
-            return false;
-        }
+        percentDiff += abs(100*abs(this->coeff.coast[i] - other.coeff.coast[i])/(0.5*(this->coeff.coast[i]+other.coeff.coast[i])));
     }
+    //launch angles
+    percentDiff += this->y0.compare(other.y0);
+    //tripTime
+    percentDiff += abs(100*abs(this->tripTime - other.tripTime)/(0.5*(this->tripTime+other.tripTime)));
 
-    //Check Starting pos/vel
-    if ( !this->y0.compare(other.y0,comp_Thresh) ) {
-        return false;
-    }
-
-    //Other Conditions
-    if (abs(this->tripTime - other.tripTime) > comp_Thresh) {
-        return false;
-    }
-    /*
-    if( abs(this->wetMass - other.wetMass) > comp_Thresh){
-        return false;
-    }
-    */
-
-    //If we have made it this far, everthing is good
-    return true;
+    //return total
+    return percentDiff;
 }
 
 template <class T> void rkParameters<T>::parametersRK4Simple(T timeInitial, T stepSize, T absTol, elements<T> & y) {

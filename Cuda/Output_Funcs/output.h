@@ -55,10 +55,11 @@ void initializeRecord(const cudaConstants * cConstants);
 // input: cConstants - access time_seed to derive file name
 //        pool - access individuals of current generation, assumed to be ordered by cost
 //        generation - record current generation
-//        new_anneal - currently unused
+//        new_anneal - outputs the current generation's anneal
+//        anneal_min - outputs the current generation's anneal_min
 //        poolSize - to know size of the pool, currently unused
 // output: genPerformanceT-[time_seed].csv is appended parameter information on the best individual in pool
-void recordGenerationPerformance(const cudaConstants * cConstants, Individual * pool, double generation, double new_anneal, int poolSize);
+void recordGenerationPerformance(const cudaConstants * cConstants, Individual * pool, double generation, double new_anneal, int poolSize, double anneal_min);
 
 // Method for doing recording information at the end of the optimization process
 // input: cConstants - to access config info
@@ -88,13 +89,12 @@ void recordMutateFile(const cudaConstants * cConstants, double generation, doubl
 void recordEarthData(const cudaConstants * cConstants);
 
 // Takes in a pool and records the parameter info on all individuals
-// ** Currently not used **
 // input: cConstants - to access time_seed in deriving file name
 //        pool - holds all the individuals to be stored
 //        poolSize - to use in iterating through the pool
 //        generation - used in deriving file name
 // output: file generation#[generation]-[time_seed].csv is created with each row holding parameter values of individuals
-void recordAllIndividuals(const cudaConstants * cConstants, Individual * pool, int poolSize, int generation);
+void recordAllIndividuals(std::string name, const cudaConstants * cConstants, Individual * pool, int poolSize, int generation);
 
 // Record initial and final fuel masses along with tripTime and relative velocity at impact
 // input: cConstants - access config constants
@@ -103,6 +103,7 @@ void recordAllIndividuals(const cudaConstants * cConstants, Individual * pool, i
 //        best - To access the best individual (pool[0])
 // output: fuelOutput.csv - output file holding fuel consumption and impact data
 void recordFuelOutput(const cudaConstants* cConstants, double solution[], double fuelSpent, Individual best);
+
 
 #include "output.cpp"
 

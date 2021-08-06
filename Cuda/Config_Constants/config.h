@@ -17,12 +17,18 @@ struct cudaConstants {
     std::string initial_start_file_address; // If random_start is false, use file_address to find what file is being used for the initial start
     
     double pos_threshold; // maximum distance for how close the spacecraft must be to the asteroid at end of its trajectory (AU) in the algorithm, also is what determines if a trajectory is considered a solution
+    double speed_threshold; // maximum distance for how fast the spacecraft must be going when it reaches the asteroid
+    double posDominationTolerance; //Tolerance for individual posDiff equality in dominates function
+    double speedDominationTolerance; //Tolerance for individual speedDiff equality in dominates function
+
     int write_freq;       // Determine how many generations between calling recordGenerationPerformance() method (defined in Output_Funcs/output.cpp)
+    int all_write_freq;   // Determine how many generations between calling recordAllIndividuals() method (defined in Output_Funcs/output.cpp)
     int disp_freq;        // Determine how many generations between calling terminalDisplay() method (defined in Output_Funcs/output.cpp)
 
     int best_count;        // Number of individuals that needs to be within the acceptable condition before ending the algorithm, also how many of the top individuals are recorded
     int change_check;      // How often it checks for if the best individual has changed, used in the basis of Jeremy's method of anneal value dependent on if there was no change
     double anneal_initial; // initial value for annealing, meant to replace the previously used calculation involving ANNEAL_MIN and ANNEAL_MAX with something more simple
+    double anneal_final;   // final value for annealing, anneal cannot be reduced beyond this point
     double anneal_factor;  // factor by which annealing is multiplied with when there is no change in the best individual over 100 generations
 
     double mutation_rate; // The percentage for probability of mutating a gene in a new individual, called iteratively to mutate more genes until the check fails

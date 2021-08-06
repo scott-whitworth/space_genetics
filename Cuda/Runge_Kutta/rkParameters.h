@@ -77,7 +77,7 @@ template <class T> struct rkParameters {
     // Param: comp_Thresh - comparison threshold
     // Returns true all elements of other are the same as *this, within the threshold comp_Thresh
     // Not exact, as there are a number of different magnitudes represented in parameters
-    bool compare(const rkParameters<T> & other, T comp_Thresh);
+    double compare(const rkParameters<T> & other);
 
     // Based on *this parameters, calculates the final position of the spacecraft using CPU based Methods
     // runs the CPU version of the RK calculation to find the final position of the spacecraft, using rkParameters for input

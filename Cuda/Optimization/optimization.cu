@@ -459,8 +459,8 @@ double optimize(const cudaConstants* cConstants) {
         else if (cConstants->missionType == Rendezvous) {
             if (posTolerance < inputParameters[0].posDiff){    
                 new_anneal = currentAnneal * (1 - pow(posTolerance / inputParameters[0].posDiff,2.0));
-                if (new_anneal<1.0e-7){
-                    new_anneal = 1.0e-7;//Set a true minimum for annealing
+                if (new_anneal < cConstants->anneal_final){
+                    new_anneal = cConstants->anneal_final; //Set a true minimum for annealing
                 }
             }
         }

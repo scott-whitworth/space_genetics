@@ -571,7 +571,7 @@ double optimize(const cudaConstants* cConstants) {
     // for the annealing argument, set to -1 (since the anneal is only relevant to the next generation and so means nothing for the last one)
     // for the numFront argument, set to -1 (just because)
     if (cConstants->record_mode == true) {
-        recordGenerationPerformance(cConstants, oldInputParameters, generation, currentAnneal, cConstants->num_individuals, -1);
+        recordGenerationPerformance(cConstants, oldInputParameters, generation, currentAnneal, cConstants->num_individuals, anneal_min);
     }
     // Only call finalRecord if the results actually converged on a solution
     // also display last generation onto terminal

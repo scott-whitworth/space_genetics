@@ -245,6 +245,9 @@ void cudaConstants::FileRead(std::string fileName) {
                 else if (variableName == "anneal_initial") {
                     this->anneal_initial = std::stod(variableValue);
                 }
+                else if (variableName == "anneal_final") {
+                    this->anneal_final = std::stod(variableValue);
+                }
                 else if (variableName == "change_check") {
                     this->change_check = std::stoi(variableValue);
                 }
@@ -266,8 +269,11 @@ void cudaConstants::FileRead(std::string fileName) {
                 else if (variableName == "speed_threshold") {
                     this->speed_threshold = std::stod(variableValue);
                 }
-                else if (variableName == "coast_threshold") {
-                    this->coast_threshold = std::stod(variableValue);
+                else if (variableName == "posDominationTolerance") {
+                    this->posDominationTolerance = std::stod(variableValue);
+                }
+                else if (variableName == "speedDominationTolerance") {
+                    this->posDominationTolerance = std::stod(variableValue);
                 }
 
 

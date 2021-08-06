@@ -39,11 +39,11 @@ void giveRank(Individual * pool, const cudaConstants* cConstants, int poolSize) 
         for(int j = 0; j < poolSize; j++){
             
             //if i dominates j, put the j index in the set of individuals dominated by i.
-            if (dominates(pool[i], pool[j])){
+            if (dominates(pool[i], pool[j], cConstants)){
                 pool[i].dominated.push_back(j);
             }
             //if j dominates i, increase the number of times that i has been dominated
-            else if (dominates(pool[j], pool[i])) {
+            else if (dominates(pool[j], pool[i], cConstants)) {
                 pool[i].dominatedCount++;
             }
         }
@@ -485,8 +485,8 @@ double optimize(const cudaConstants* cConstants) {
                 // If no change in BestIndividual across generations, reduce currentAnneal by anneal_factor while staying above anneal_min
                 //reduce anneal_min
                 anneal_min = cConstants->anneal_initial*exp(-sqrt(posTolerance/inputParameters[0].posDiff)*generation);
-                if (anneal_min<1.0e-7){
-                    anneal_min = 1.0e-7;//Set a true minimum for annealing
+                if (anneal_min < cConstants->anneal_final){
+                    anneal_min = cConstants->anneal_final;//Set a true minimum for annealing
                 }
 
                 //Rendezvous mission uses anneal_min, Impact does not

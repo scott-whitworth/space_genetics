@@ -76,6 +76,7 @@ __host__ __device__ double Individual::getCost_Soft(const cudaConstants* cConsta
     double posProximity = this->posDiff - cConstants->pos_threshold;
     double speedProximity = this->speedDiff - cConstants->speed_threshold;
 
+    //If it's already passed the tolerance in one objective, don't let it become negative
     if (posProximity < 0) {
         posProximity = 0;
     }
@@ -160,15 +161,15 @@ bool LowerSpeedDiff(Individual& personA, Individual& personB) {
 //Compare two individuals to see if the first individual dominates the second individual
 //Returns true if personA dominates personB.
 //returns false if personA does not dominate personB.
-bool dominates(Individual& personA, Individual& personB) {
+bool dominates(Individual& personA, Individual& personB, const cudaConstants* cConstants) {
     
     //Is true if A is at least equally as good as B for all objectives
     bool AisEqual = false;
     //Is true if A is better than B for at least one objective
     bool AisBetter = false;
     //tolerances used to determine the range of values considered equal
-    double posTolerance = 1.0e-14;
-    double speedTolerance = 1.0e-14;
+    double posTolerance = cConstants->posDominationTolerance;
+    double speedTolerance = cConstants->speedDominationTolerance;
     //true if A posDiff "equals" B posDiff
     bool APosEqualsB = false;
     //true if A speedDiff "equals" B speedDiff

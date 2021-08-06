@@ -74,7 +74,7 @@ bool LowerSpeedDiff(Individual& personA, Individual& personB);
 //Compare two individuals to see if the first individual dominates the second individual
 //Returns true if personA dominates personB.
 //returns false if personA does not dominate personB.
-bool dominates(Individual& personA, Individual& personB);
+bool dominates(Individual& personA, Individual& personB, const cudaConstants* cConstants);
 
 //Compare two individuals by their rank
 //WARNING: Using this function to sort individuals will sort them by rank, but within those ranks they will be sorted by the last method used to sort them.

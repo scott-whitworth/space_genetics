@@ -230,6 +230,7 @@ bool rankSort(Individual& personA, Individual& personB){
 //input: two individuals
 //output: if person A's rank is lower than person B's rank, return true
 //        if person A and person B have the same rank and person A has a greater distance than person B, return true
+//Sorts the whole pool from lowest to highest rank. Individuals of the same rank are sorted from highest to lowest distance
 bool rankDistanceSort(Individual& personA, Individual& personB) {
 
     if(personA.rank < personB.rank){

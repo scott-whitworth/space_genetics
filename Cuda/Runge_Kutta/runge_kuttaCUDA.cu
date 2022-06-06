@@ -136,7 +136,7 @@ __global__ void rk4SimpleCUDA(Individual *individuals, double *timeInitial, doub
         }
         else if (cConstant->missionType == Impact){
             individuals[threadId].getCost_Hard(cConstant);    
-        }
+        } //TODO:: Else case of cost define
         
         return;
     }

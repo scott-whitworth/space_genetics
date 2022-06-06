@@ -112,6 +112,8 @@ void giveDistance(Individual * pool, const cudaConstants* cConstants, int poolSi
     pool[0].distance = 1.0e+12;
     pool[poolSize - 1].distance = 1.0e+12;
 
+    //TODO:: Constant set for these numbers MAX_DISTANCE
+
     //For each individual besides the upper and lower bounds, make their distance equal to
     //the current distance + the absolute normalized difference in the function values of two adjacent individuals.
     double normalPosDiffLeft;
@@ -129,6 +131,8 @@ void giveDistance(Individual * pool, const cudaConstants* cConstants, int poolSi
     //Set the boundaries
     pool[0].distance = 1.0e+12;
     pool[poolSize - 1].distance = 1.0e+12;
+
+    //TODO:: Constant set for these numbers MAX_DISTANCE
     
     //For each individual besides the upper and lower bounds, make their distance equal to
     //the current distance + the absolute normalized difference in the function values of two adjacent individuals.
@@ -350,6 +354,8 @@ double optimize(const cudaConstants* cConstants) {
                 // won't be promoted in crossover
                 inputParameters[k].posDiff = 100.0;//This is an undesirable position difference of 100 AU
 
+                //TODO: We could change this to a const MAX_POSDIFF or MIN_POSDIFF / SPD_DIFF
+
                 if (cConstants->missionType == Rendezvous){
                     inputParameters[k].speedDiff = 100.0;//This is an undesirable result for an rendezvous mission (approx. 50000c!)
                 }
@@ -395,6 +401,16 @@ double optimize(const cudaConstants* cConstants) {
                 allIndividuals[i + cConstants->num_individuals] = oldInputParameters[i];
             }
         }
+
+        //TODO:: Major space for efficeincy change
+        /*
+            in reference to 2002-Deb_NSGA-II.pdf, 186/page 5:
+            old individuals (Qt) are added to the newly computed next generation (Pt)
+            The issue is that Qt has already been computed, we should look to see if we can limit the amount we re-calculate individuals
+            This would mean we need to store if it has been calculated or not
+
+            Possible direction: just put callRK inside newGeneration() (ga_crossover.cpp)
+        */
 
         if (cConstants->missionType == Impact) {
             //Decide the next generation of potential parents based on cost.
@@ -458,6 +474,7 @@ double optimize(const cudaConstants* cConstants) {
 
         else if (cConstants->missionType == Rendezvous) {
             if (posTolerance < inputParameters[0].posDiff){    
+                //Exponentially changing annealing
                 new_anneal = currentAnneal * (1 - pow(posTolerance / inputParameters[0].posDiff,2.0));
                 if (new_anneal < cConstants->anneal_final){
                     new_anneal = cConstants->anneal_final; //Set a true minimum for annealing

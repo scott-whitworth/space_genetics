@@ -5,7 +5,7 @@
 // Default constructor
 Individual::Individual() {
     this->posDiff = 1.0;
-    this->speedDiff = 0.0;
+    this->speedDiff = 0.0; //TODO: This is ok for impact, but an issue for soft landing
     this->cost = 10;
     this->dominatedCount = 0;
     this->rank = 0; //might change later?
@@ -84,13 +84,14 @@ __host__ __device__ double Individual::getCost_Soft(const cudaConstants* cConsta
         speedProximity = 0;
     }
     
-    this->cost = posProximity + speedProximity;
+    this->cost = posProximity + speedProximity; //TODO: This may need to change
     
     return this->cost;
 }
 
 //!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 bool Individual::operator>(Individual &other) {
+    //TODO:: This should call getCost
     if (this->cost > other.cost) {
         return true;
     }
@@ -122,6 +123,8 @@ bool Individual::operator==(Individual &other) {
 // Compare two individuals by their positional difference values, used in standard sort to have array contain lowest posDiff individual at start
 // input: two individuals
 // output: returns true if personB has a higher positional difference than personA
+
+//TODO:: These should be const references
 bool LowerPosDiff(Individual& personA, Individual& personB) {
     if (personA.posDiff < personB.posDiff) {
         return true;
@@ -162,6 +165,8 @@ bool LowerSpeedDiff(Individual& personA, Individual& personB) {
 //Returns true if personA dominates personB.
 //returns false if personA does not dominate personB.
 bool dominates(Individual& personA, Individual& personB, const cudaConstants* cConstants) {
+
+    //TODO: Might want to consider modifying tolerances 
     
     //Is true if A is at least equally as good as B for all objectives
     bool AisEqual = false;

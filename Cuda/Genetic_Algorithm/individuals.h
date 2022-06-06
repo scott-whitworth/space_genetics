@@ -17,6 +17,9 @@ struct Individual {
 
     int dominatedCount; //keeps track of how many individuals this individual has been dominated by
     int rank; //how good this individual is compared to other individuals in it's generation. The lower the rank, the better.
+    //TODO: I think this is a problem - Scott
+    //      Individuals get copied onto the GPU. This means the this vector is getting copied onto the GPU as well.
+    //      Dynamic memmory and GPUs never mix well 
     std::vector<int> dominated; //The pool indexes of individuals that have been dominated by this individual 
     double distance; //how different this individual is from the individuals most similar to it.
 

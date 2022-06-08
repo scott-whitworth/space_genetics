@@ -125,16 +125,12 @@ __global__ void rk4SimpleCUDA(Child *children, double *timeInitial, double *star
                 if (cConstant-> missionType == Impact) {
                     //Set a low speed diff so this individual is less likely to be selected for future generations
                     children[threadId].speedDiff = BAD_HARD_SPEEDDIFF; 
+                }  
+                else {
+                    //Set a high speed diff, which is bad for rendezvous missions
+                    //This makes it unlikely to be selected as a parent
+                    children[threadId].speedDiff = BAD_SOFT_SPEEDDIFF;
                 }
-
-                /*
-                // Right after callRK we check for NaN in the elements, then reset child
-                children[threadId].finalPos.r = nan("");
-
-                //Just to make sure invalidating posDiff/speedDiff
-                children[threadId].posDiff = nan("");
-                children[threadId].speedDiff = nan("");         
-                */   
 
                 return;
             }
@@ -148,16 +144,6 @@ __global__ void rk4SimpleCUDA(Child *children, double *timeInitial, double *star
         // Calculate new values for this thread
         children[threadId].getPosDiff(cConstant);
         children[threadId].getSpeedDiff(cConstant);
-
-        /*
-        //wanting to phase out the use of cost because it functions as an arbitrary system
-        if (cConstant->missionType == Rendezvous){
-            children[threadId].getCost_Soft(cConstant);
-        }
-        else if (cConstant->missionType == Impact){
-            children[threadId].getCost_Hard(cConstant);    
-        } //TODO:: Else case of cost define
-        */
         return;
     }
     return;

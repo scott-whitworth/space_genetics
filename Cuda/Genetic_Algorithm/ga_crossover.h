@@ -130,6 +130,11 @@ void generateChildrenPair(Adult parent1, Adult parent2, Child * newChildren, std
 //         Returns number of new individuals created (newIndCount)
 void newGeneration(std::vector<Adult> & oldAdults, std::vector<Adult> & newAdults, const double & annealing, const int & generation, const std::mt19937_64 & rng, const cudaConstants* cConstants);
 
+// Converts children previously simulated by callRK into adults and inserts the new adults into the submitted adult vector
+// Input: newAdults - the vector of adults the converted adults will be inserted into
+//        newChildren - the array of simulated children that will be tranformed into adults
+//        cConstants - needed for the number of individuals
+// Output: newAdults will be filled with the children that are converted into adults 
 void convertToAdults(std::vector<Adult> & newAdults, Child* newChildren, const cudaConstants* cConstants);
 
 // Creates the first generation of adults by taking in an array of children with randomly generated parameters

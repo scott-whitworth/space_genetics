@@ -74,13 +74,11 @@ bool dominates(Adult& personA, Adult& personB, const cudaConstants* cConstants);
 //output: if person A's rank is lower than person B's rank, return true
 bool rankSort(const Adult& personA, const Adult& personB);
 
-
-// CONSIDERING OVERLOADING GREATER THAN INSTEAD OF CALLING rankDistanceSort
 //Compare two individuals by their rank and distance
 //input: two individuals
 //output: if person A's rank is lower than person B's rank, return true
 //        if person A and person B have the same rank and person A has a greater distance than person B, return true
-//bool rankDistanceSort(const Adult& personA, const Adult& personB);
+bool rankDistanceSort(const Adult& personA, const Adult& personB);
 
 #include "adults.cpp"
 

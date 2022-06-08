@@ -235,6 +235,7 @@ rkParameters<double> mutate(const rkParameters<double> & p1, std::mt19937_64 & r
     // Declare and set a mutation_mask for which gene is being mutated
     bool * mutation_mask = new bool[OPTIM_VARS];
 
+    // Determine which parameters will be mutated with the mutate mask
     mutateMask(rng, mutation_mask, cConstants->mutation_rate);
 
     // Declare a record that is to describe what genes are being changed and by how much to record into mutateFile
@@ -314,6 +315,7 @@ rkParameters<double> mutate(const rkParameters<double> & p1, std::mt19937_64 & r
     //     recordMutateFile(cConstants, generation, annealing, genesMutated, recordLog);
     // }
 
+    //Delete the mask and set of parameters to free memory
     delete [] mutation_mask;
     return newChild;
 }
@@ -416,6 +418,7 @@ void newGeneration (std::vector<Adult> & oldAdults, std::vector<Adult> & newAdul
     //This will also put the converted children into the newAdults vector
     convertToAdults(newAdults, newChildren, cConstants); 
 
+    //Free the pointer's memory
     delete[] newChildren; 
 }
 
@@ -431,6 +434,7 @@ void convertToAdults(std::vector<Adult> & newAdults, Child* newChildren, const c
     }
 }
 
+//Will create the first generation of adults from random parameters so that future generations have a pre-existing base of adults
 void firstGeneration(Child* initialChildren, std::vector<Adult>& oldAdults, const cudaConstants* cConstants){
     const double timeIntial = 0;
     double calcPerS  = 0;

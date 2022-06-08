@@ -20,8 +20,6 @@
 //Assigns suitability rank to all adults.
 //Input: pool - this generation of adults, defined/initilized in optimimize
 //       cConstants
-//OLD VERSION: void giveRank(Individual * pool, const cudaConstants* cConstants, int poolSize); 
-//OLD VERSION: void giveRank(Adult * pool, const cudaConstants* cConstants, int poolSize); 
 void giveRank(std::vector<Adult> pool, const cudaConstants* cConstants);
 
 //----------------------------------------------------------------------------------------------------------------------------
@@ -29,12 +27,14 @@ void giveRank(std::vector<Adult> pool, const cudaConstants* cConstants);
 // The distance is how different an adult is from the two adults closest to it for each objective function.
 // Input: pool - the full pool of 2N adults excluding NaNs
 //        poolSize - the poolSize of all the adults excluding NaNs
-//OLD VERSION: void giveDistance(Individual * pool, const cudaConstants* cConstants, int poolSize);
-//OLD VERSION: void giveDistance(Adult * pool, const cudaConstants* cConstants, int poolSize);
 void giveDistance(std::vector<Adult> pool, const cudaConstants* cConstants, int poolSize);
 
 //----------------------------------------------------------------------------------------------------------------------------
-//bool changeInBest(double previousBestCost, const Individual & currentBest, double distinguishRate);
+// Used to identify if the best adult has changed
+// Input: previousBestPosDiff - the posDiff of the previous best adult
+//        currentBest - the best Adult currently identified
+//        distingushRate - utility variable used to help determine if the current best and previous best is different, will allow for comparison, regardless of how small the posDiffs are
+// Output: Returns true if there was a change in the best individual
 bool changeInBest(double previousBestPosDiff, const Adult & currentBest, double distinguishRate);
 
 //----------------------------------------------------------------------------------------------------------------------------
@@ -45,61 +45,42 @@ bool changeInBest(double previousBestPosDiff, const Adult & currentBest, double 
 //        pool - this generation of Adults, defined/initilized in optimimize
 //        cConstants - struct holding config values, used for accessing best_count value
 // Output: Returns true if top best_count adults within the pool are within the tolerance
-//bool allWithinTolerance(double posTolerance, double speedTolerance, Individual * pool, const cudaConstants* cConstants);
 bool allWithinTolerance(double posTolerance, double speedTolerance, std::vector<Adult> pool, const cudaConstants* cConstants);
 
 //----------------------------------------------------------------------------------------------------------------------------
 //Function that will create the first generation of individuals within inputParamaeters
 //Input: N set of adults as inputParameters, cConstants
 //Output: new Adults of the first generation based on random parameters
-//void createFirstGeneration(Individual * inputParameters, const cudaConstants* cConstants);
 void createFirstGeneration(std::vector<Adult> oldAdults, const cudaConstants* cConstants, std::mt19937_64 rng);
-
-//----------------------------------------------------------------------------------------------------------------------------
-//Function that facilitates the filtering of nan individuals from being a survivor 
-//Input: set of N Adults, cConstants, number of nans currently 
-//Output: change of status of adults if a nan and updated number of nans
-//void checkForNans(Individual * inputParameters, const cudaConstants* cConstants, int & numNans);
-void checkForNans(std::vector<Adult> newAdults, const cudaConstants* cConstants, int & numNans);
 
 //----------------------------------------------------------------------------------------------------------------------------
 //Function that fill the allIndividuals array
 //Input: allAdults, newAdults, oldAdults 
 //Output: filled allAdults with the new and old
-//void fillAllIndividuals (Individual * allIndividuals, Individual * inputParameters, Individual * oldInputParameters, const cudaConstants* cConstants, const int& generation);
 void fillAllAdults (std::vector<Adult> allAdults, std::vector<Adult> newAdults, std::vector<Adult> oldAdults, const cudaConstants* cConstants, const int& generation);
 
 //----------------------------------------------------------------------------------------------------------------------------
 //Function that will call the right sorting methods for the allIndividuals array
 //Input: allAdults, numNans, cConstants 
 //Output: impact sorted by posDiff, rendezvous sorted by rank and distance
-//void callSorts (Individual * allIndividuals, const int & numNans, const cudaConstants* cConstants);
 void callSorts (std::vector<Adult> allAdults, const int & numNans, const cudaConstants* cConstants);
 
 //----------------------------------------------------------------------------------------------------------------------------
 // Function that will sort the adults from oldAdults and newAdults into allAdults
 // Input: allAdults, oldAdults, and newAdults
 // Output: oldAdults is filled with the adults that are potential parents for the next generation
-void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& newAdults, std::vector<Adult>& oldAdults, const int& numNans, const cudaConstants* cConstants);
-
-//----------------------------------------------------------------------------------------------------------------------------
-//Function that will call other functions to change utility variables such as anneal
-//currently not in use
-//void utility (Individual * inputParameters, const cudaConstants* cConstants, double & new_anneal, double & currentAnneal, double & anneal_min,  double & previousBestCost, double & generation, const double & posTolerance, double & dRate, int & numNans); 
-//void utility (Adult * inputParameters, const cudaConstants* cConstants, double & new_anneal, double & currentAnneal, double & anneal_min,  double & previousBestCost, double & generation, const double & posTolerance, double & dRate, int & numNans); 
+void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& newAdults, std::vector<Adult>& oldAdults, int& numNans, const cudaConstants* cConstants);
 
 //----------------------------------------------------------------------------------------------------------------------------
 //Input: current anneal and dRate
 //Output: an update of the anneal and dRate based on the tolerance and changeInBest
 //Function that adjusts the anneal based on the current circumstances
-//void changeAnneal (Individual * inputParameters, const cudaConstants* cConstants, double & new_anneal, double & currentAnneal, double & anneal_min,  double & previousBestCost, double & generation, const double & posTolerance, double & dRate);
 void changeAnneal (std::vector<Adult> newAdults, const cudaConstants* cConstants, double & new_anneal, double & currentAnneal, double & anneal_min,  double & previousBestPosDiff, double & generation, const double & posTolerance, double & dRate);
 
 //----------------------------------------------------------------------------------------------------------------------------
 //Input: all the updated parameters of the current generation
 //Output: calls the various terminal display functions when needed
 //Function that handles the reporting of a generation's performance
-//void reportGeneration (Individual * inputParameters, const cudaConstants* cConstants, const double & new_anneal, const double & anneal_min, const int & generation, int & numNans);
 void reportGeneration (std::vector<Adult> newAdults, const cudaConstants* cConstants, const double & new_anneal, const double & anneal_min, const int & generation, int & numNans);
 
 //----------------------------------------------------------------------------------------------------------------------------
@@ -153,6 +134,7 @@ int main () {
     return 0;
 }
 
+//gives each adult in the pool a rank
 void giveRank(std::vector<Adult> pool, const cudaConstants* cConstants) {
     //non-denominated sorting method
     //https://www.iitk.ac.in/kangal/Deb_NSGA-II.pdf
@@ -225,6 +207,7 @@ void giveRank(std::vector<Adult> pool, const cudaConstants* cConstants) {
     }
 }
 
+//gives each adult in the pool a distance representing how different it is from other individuals
 void giveDistance(std::vector<Adult> pool, const cudaConstants* cConstants, int poolSize){
 
     //starting rankSort to make sure nans are at the end of the array.
@@ -275,6 +258,7 @@ void giveDistance(std::vector<Adult> pool, const cudaConstants* cConstants, int 
     }
 }
 
+//tests if the best value has changed much in the since the last time this was called
 bool changeInBest(double previousBestPosDiff, const Adult & currentBest, double distinguishRate) {
     //truncate is used here to compare doubles via the distinguguishRate, to ensure that there has been relatively no change.
         if (trunc(previousBestPosDiff/distinguishRate) != trunc(currentBest.posDiff/distinguishRate)) {
@@ -285,6 +269,7 @@ bool changeInBest(double previousBestPosDiff, const Adult & currentBest, double 
         }
 }
 
+//Returns true if top best_count adults within the pool are within the tolerance
 bool allWithinTolerance(double posTolerance, double speedTolerance, std::vector<Adult>pool, const cudaConstants* cConstants) {
 
     //Check what type of mission is running to use the correct posDiff function
@@ -315,7 +300,8 @@ bool allWithinTolerance(double posTolerance, double speedTolerance, std::vector<
     return true;
 }
 
-void createFirstGeneration(std::vector<Adult>oldAdults, const cudaConstants* cConstants, std::mt19937_64 rng){\
+//Creating a generation either randomly or based on values from a file
+void createFirstGeneration(std::vector<Adult>oldAdults, const cudaConstants* cConstants, std::mt19937_64 rng){
     Child* initialChildren = new Child[cConstants->num_individuals]; 
     // Initilize individuals randomly or from a file
     if (cConstants->random_start) {
@@ -378,54 +364,7 @@ void createFirstGeneration(std::vector<Adult>oldAdults, const cudaConstants* cCo
     delete[] initialChildren;
 }
 
-void checkForNans(std::vector<Adult>newAdults, const cudaConstants* cConstants, int & numNans, const int& generation){
-    // if we got bad results reset the adult to random starting values (it may still be used for crossover) and set the final position to be way off so it gets replaced by a newAdult
-    for (int k = 0; k < cConstants->num_individuals; k++) {
-        //Checking each adult final position for NaNs
-        if (isnan(newAdults[k].finalPos.r) || isnan(newAdults[k].finalPos.theta) || isnan(newAdults[k].finalPos.z) || isnan(newAdults[k].finalPos.vr) || isnan(newAdults[k].finalPos.vtheta) || isnan(newAdults[k].finalPos.vz)) {
-            numNans++;
-            // Set to be a bad individual by giving it bad posDiff and speedDiffs
-            // therefore also having a bad cost value
-            // won't be promoted in crossover
-            newAdults[k].posDiff = BAD_POSDIFF;//This is an undesirable position difference of 100 AU (10 AU?)
-            newAdults[k].status = OTHER_ERROR;
-            //TODO: We could change this to a const MAX_POSDIFF or MIN_POSDIFF / SPD_DIFF
-
-            if (cConstants->missionType == Rendezvous){
-                newAdults[k].speedDiff = BAD_SOFT_SPEEDDIFF;//This is an undesirable result for an rendezvous mission (approx. 50000c!)
-            }
-            else if (cConstants->missionType == Impact){
-                newAdults[k].speedDiff = BAD_HARD_SPEEDDIFF;//This is an undesirable result for an impact mission
-            }
-        }
-        
-    }
-    //numNans will be twice as much in the 0th generation since second half of allAdults is also newAdults
-    if (generation == 0) {
-        numNans *= 2;
-    }
-}
-/*
-void fillAllIndividuals (std::vector<Adult>allAdults, std::vector<Adult>newAdults, std::vector<Adult>oldAdults, const cudaConstants* cConstants, const int& generation) {
-    //fill allIndividuals with new children individuals
-    for(int i = 0; i < cConstants->num_individuals; i++){
-        allAdults[i] = newAdults[i];
-    }
-    //fill allIndividuals with old individuals
-    if(generation == 0){
-        //There are no old individuals yet, so allIndividuals has two sets of inputParameters
-        for(int i = 0; i < cConstants->num_individuals; i++){
-            allAdults[i + cConstants->num_individuals] = newAdults[i];
-        }
-    } 
-    else {
-        for(int i = 0; i < cConstants->num_individuals; i++){
-            allAdults[i + cConstants->num_individuals] = oldAdults[i];
-        }
-    } 
-}
-*/
-
+//Function that calls the sorting algorithims, depending on the selected mission
 void callSorts (std::vector<Adult>allAdults, const int & numNans, const cudaConstants* cConstants){
     if (cConstants->missionType == Impact) {
         //Decide the next generation of potential parents based on posDiff? was cost
@@ -442,19 +381,30 @@ void callSorts (std::vector<Adult>allAdults, const int & numNans, const cudaCons
 }
 
 //fills oldAdults with the best adults from this generation and the previous generation so that the best parents can be selected
-void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& newAdults, std::vector<Adult>& oldAdults, const int & numNans, const cudaConstants* cConstants){
+void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& newAdults, std::vector<Adult>& oldAdults, int& numNans, const cudaConstants* cConstants){
     allAdults.clear(); //ensures this vector is empty and ready for new inputs
+    numNans = 0;
 
-    allAdults = newAdults; //all the elements of newAdults are copied into allAdults
+    for (int i = 0; i < newAdults.size(); i++){ //copies all the elements of newAdults into allAdults
+        allAdults.push_back(newAdults[i]);
+        if(newAdults[i].status != VALID){ //tallies the number of nans in allAdults by checking if the adult being passed into newAdult is a Nan or not
+            numNans++;
+        }
+    }
     for (int i = 0; i < oldAdults.size(); i++){ //copies over all the elements of oldAdults into allAdults
         allAdults.push_back(oldAdults[i]);
+        if(oldAdults[i].status != VALID){//tallies the number of nans in allAdults by checking if the adult being passed into newAdult is a Nan or not
+            numNans++;
+        }
     }
 
+    //Sort the set of adults
     callSorts(allAdults, numNans, cConstants);
 
     oldAdults.clear(); //empties oldAdults so new values can be put in it
     int counter = 0; //a variable that ensures we put the correct number of adults in oldAdults
     //copies the best adults from allAdults into oldAdults (should be half of allAdults that are copied over)
+    //TODO:: Make sure dividing num_individuals / 2 is correct or if we should divide by something else
     while (counter < (cConstants->num_individuals)/2 && counter < allAdults.size()){
         oldAdults.push_back(allAdults[counter]);
         counter++;
@@ -467,17 +417,8 @@ void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& 
 
 }
 
-/*
-void utility (Individual * inputParameters, const cudaConstants* cConstants, double & new_anneal, double & currentAnneal, double & anneal_min,  double & previousBestCost, double & generation, const double & posTolerance, double & dRate, int & numNans){
-    //Change the anneal based on the current conditions
-    changeAnneal (inputParameters, cConstants, new_anneal, currentAnneal, anneal_min, previousBestCost, generation, posTolerance, dRate);
-
-    //Output the generation data if needed
-    reportGeneration (inputParameters, cConstants, new_anneal, anneal_min, generation, numNans); 
-}
-*/
-
 //TODO: Figure out what to replace posDiff (what used to be cost)
+//Function that will adjust the annneal based on the previous anneal and if there was a change in the best individual
 void changeAnneal (std::vector<Adult> newAdults, const cudaConstants* cConstants, double & new_anneal, double & currentAnneal, double & anneal_min,  double & previousBestPosDiff, double & generation, const double & posTolerance, double & dRate){
     // Scaling anneal based on proximity to tolerance
     // Far away: larger anneal scale, close: smaller anneal
@@ -535,6 +476,7 @@ void changeAnneal (std::vector<Adult> newAdults, const cudaConstants* cConstants
     }
 }
 
+//Function that writes the results of the inserted generation
 void reportGeneration (std::vector<Adult> newAdults, const cudaConstants* cConstants, const double & new_anneal, const double & anneal_min, const int & generation, int & numNans){
     // If in recording mode and write_freq reached, call the record method
     if (static_cast<int>(generation) % cConstants->write_freq == 0 && cConstants->record_mode == true) {
@@ -583,6 +525,7 @@ void reportGeneration (std::vector<Adult> newAdults, const cudaConstants* cConst
     }
 }
 
+//Function that will facilitate the process of finding an optimal flight path
 double optimize(const cudaConstants* cConstants) {
     // Not used, previously used for reporting computational performance
     double calcPerS = 0;
@@ -600,8 +543,11 @@ double optimize(const cudaConstants* cConstants) {
     // input parameters for Runge Kutta process
     // Each parameter is the same for each thread on the GPU
     double timeInitial = 0; // the starting time of the trip is always defined as zero   
+
     // Runge Kutta adaptive time step error tolerance
+    // Not used now that callRK has been moved to ga_crossover
     //double absTol = cConstants->rk_tol; 
+
     // the starting step size for RK run
     // - note that the current step size varies throughout each run
     //TODO: Should this be based on max_numsteps?
@@ -625,16 +571,6 @@ double optimize(const cudaConstants* cConstants) {
 
     //the set of all old and new individuals
     std::vector<Adult> allAdults;
-
-    // Collection of individuals used in the genetic selection process
-    //  - filled in selectSurvivors, based on callRK output
-    //  - stores the winners of the head-to-head competition
-    //std::vector<Adult>survivors[cConstants->survivor_count];
-
-    // Number of individuals that need to be evaluated
-    // - the whole population is in first loop
-    // - subsequent generations only calculate *new* individuals
-    //int newInd = cConstants->num_individuals;
 
     //used to compare the progress in cost between generations
     //Set as 0 at first to make sure that there is a change in the best indvidivual for the first check
@@ -660,6 +596,9 @@ double optimize(const cudaConstants* cConstants) {
     //used for proximity based annealing
     double new_anneal;
 
+    //A place to hold the number of Nans for recording at the end - numNans is for all adults in the generation - the oldAdults and the newAdults that have nan values are both tallied here
+    int numNans = 0;
+
     //Creates the individuals needed for the 0th generation
     //Need to make children, then callRK, then make into adults (not currently doing that)
     createFirstGeneration(oldAdults, cConstants, rng); 
@@ -671,13 +610,7 @@ double optimize(const cudaConstants* cConstants) {
         //takes in oldAdults (the potential parents) and fills newAdults with descendants of the old adults
         newGeneration(oldAdults, newAdults, currentAnneal, generation, rng, cConstants);
 
-        //numNans - number of times a nan is found in this generation
-        int numNans = 0;
-
-        //Check for individuals with nan outputs and artifically set their diffs to bad values
-        checkForNans(newAdults, cConstants, numNans, generation); 
-
-        //fill oldAdults with the best adults from this generation and the previous generation so that the best parents can be selected
+        //fill oldAdults with the best adults from this generation and the previous generation so that the best parents can be selected (numNans is for all adults in the generation - the oldAdults and the newAdults)
         preparePotentialParents(allAdults, newAdults, oldAdults, numNans, cConstants);
 
         //TODO:: Major space for efficeincy change
@@ -689,6 +622,7 @@ double optimize(const cudaConstants* cConstants) {
 
             Possible direction: just put callRK inside newGeneration() (ga_crossover.cpp)
         */
+        //UPDATE (6/7/22): callRK moved into ga_crossover, the effect on the efficiency of the code is not known yet
         
         //Output survivors for the current generation if write_freq is reached
         if (static_cast<int>(generation) % cConstants->all_write_freq == 0 && cConstants->record_mode == true) {
@@ -706,14 +640,8 @@ double optimize(const cudaConstants* cConstants) {
         // Before replacing new adults, determine whether all are within tolerance
         // Determines when loop is finished
         convergence = allWithinTolerance(posTolerance, speedTolerance, newAdults, cConstants);
-
-        // //store away the old adults
-        // for (int i = 0; i < cConstants->num_individuals; i++){
-        //     oldAdults[i] = newAdults[i];
-        // }
         
-        //increment the generation counter
-        // newInd = newGeneration(oldAdults, newAdults, cConstants->survivor_count, cConstants->num_individuals, new_anneal, cConstants, rng, generation);
+        //Increment the generation counter
         ++generation;
     
         //Loop exits based on result of allWithinTolerance and if max_generations has been hit
@@ -731,11 +659,6 @@ double optimize(const cudaConstants* cConstants) {
         terminalDisplay(oldAdults[0], generation);
         finalRecord(cConstants, oldAdults, static_cast<int>(generation));
     }
-    
-    //might not need to delete these since we are not using the new keyword?
-    //delete oldAdults;
-    //delete newAdults;
-    //delete allAdults;
 
     return calcPerS;
 }

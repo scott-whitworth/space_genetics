@@ -1,13 +1,14 @@
 #ifndef OUTPUT_H
 #define OUTPUT_H
 
-#include <fstream>
+#include <fstream> //for file input/output
+#include <vector> //allows for using vectors instead of just dynamic arrays
 
 // Utility function to display the currently best individual onto the terminal while the algorithm is still running
 // input: Individual to be displayed (assumed to be the best individual of the pool) 
 //        and the value for the current generation iterated
-// output: display: generation, individual's posDiff, speedDiff, and cost values
-void terminalDisplay(Individual& individual, unsigned int currentGeneration);
+// output: display: generation, individual's posDiff, speedDiff
+void terminalDisplay(const Adult& individual, unsigned int currentGeneration);
 
 // Records error in energy conservation due to thrust calculations
 // For a single set of rkParameters
@@ -33,7 +34,7 @@ void errorCheck(double *time, elements<double> *yp,  double *gamma,  double *tau
 //        best - To access the best individual (pool[0])
 // output: file orbitalMotion-[time_seed].bin is created that holds spacecraft RK steps and error
 //         file finalOptimization-[time_seed].bin is created that holds earth/ast/ and trajectory parameter values
-void trajectoryPrint(double x[], int generation, const cudaConstants* cConstants, Individual best);
+void trajectoryPrint(double x[], int generation, const cudaConstants* cConstants, const Adult best);
 
 // Record progress of individual
 // Called if record_mode is true at end of optimize process
@@ -59,14 +60,14 @@ void initializeRecord(const cudaConstants * cConstants);
 //        anneal_min - outputs the current generation's anneal_min
 //        poolSize - to know size of the pool, currently unused
 // output: genPerformanceT-[time_seed].csv is appended parameter information on the best individual in pool
-void recordGenerationPerformance(const cudaConstants * cConstants, Individual * pool, double generation, double new_anneal, int poolSize, double anneal_min);
+void recordGenerationPerformance(const cudaConstants * cConstants, const std::vector<Adult>& pool, double generation, double new_anneal, int poolSize, double anneal_min);
 
 // Method for doing recording information at the end of the optimization process
 // input: cConstants - to access config info
 //        pool - To access the best individual (pool[0])
 //        generation - to record the generation value 
 // output: trajectoryPrint is called to generate binary files for MATLAB plotting
-void finalRecord(const cudaConstants* cConstants, Individual * pool, int generation);
+void finalRecord(const cudaConstants* cConstants, const std::vector<Adult> pool, int generation);
 
 // ** Currently unused ** 
 // input: cConstants - access time_seed to derive file name
@@ -94,7 +95,7 @@ void recordEarthData(const cudaConstants * cConstants);
 //        poolSize - to use in iterating through the pool
 //        generation - used in deriving file name
 // output: file generation#[generation]-[time_seed].csv is created with each row holding parameter values of individuals
-void recordAllIndividuals(std::string name, const cudaConstants * cConstants, Individual * pool, int poolSize, int generation);
+void recordAllIndividuals(std::string name, const cudaConstants * cConstants, const std::vector<Adult>& pool, int poolSize, int generation);
 
 // Record initial and final fuel masses along with tripTime and relative velocity at impact
 // input: cConstants - access config constants
@@ -102,7 +103,7 @@ void recordAllIndividuals(std::string name, const cudaConstants * cConstants, In
 //        fuelSpent - total fuel spent
 //        best - To access the best individual (pool[0])
 // output: fuelOutput.csv - output file holding fuel consumption and impact data
-void recordFuelOutput(const cudaConstants* cConstants, double solution[], double fuelSpent, Individual best);
+void recordFuelOutput(const cudaConstants* cConstants, double solution[], double fuelSpent, const Adult best);
 
 
 #include "output.cpp"

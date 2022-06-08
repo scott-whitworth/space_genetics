@@ -5,12 +5,12 @@
 // Utility function to display the currently best individual onto the terminal while the algorithm is still running
 // input: Individual to be displayed (assumed to be the best individual of the pool) and the value for the current generation iterated
 // output: onto the console termina, generation is displayed and best individual's posDiff, speedDiff, and cost values
-void terminalDisplay(Individual& individual, unsigned int currentGeneration) {
+void terminalDisplay(const Adult& individual, unsigned int currentGeneration) {
     std::cout << "\nGeneration: " << currentGeneration << std::endl;
     std::cout << "Best individual:" << std::endl;
     std::cout << "\tposDiff: " << individual.posDiff << std::endl;
     std::cout << "\tspeedDiff: " << individual.speedDiff << std::endl;
-    std::cout << "\tcost: "    << individual.cost << std::endl;
+    //std::cout << "\tcost: "    << individual.cost << std::endl;
 }
 
 // mutateFile[time_seed].csv is given a header row, now ready to be used by recordMutateFile()
@@ -102,7 +102,7 @@ void recordMutateFile(const cudaConstants * cConstants, double generation, doubl
 //        best - To access the best individual (pool[0])
 // output: file orbitalMotion-[time_seed].bin is created that holds spacecraft RK steps and error
 //         file finalOptimization-[time_seed].bin is created that holds earth/ast/ and trajectory parameter values
-void trajectoryPrint( double x[], int generation, const cudaConstants* cConstants, Individual best) {
+void trajectoryPrint( double x[], int generation, const cudaConstants* cConstants, const Adult best) {
   /*set the asteroid and inital conditions for the earth and spacecraft:
   constructor takes in radial position(au), angluar position(rad), axial position(au),
   radial velocity(au/s), tangential velocity(au/s), axial velocity(au/s)*/
@@ -380,7 +380,7 @@ void initializeRecord(const cudaConstants * cConstants) {
 
 //!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Take in the current state of the generation and appends to excel file, assumes initializeRecord() had already been called before (no need to output a header row)
-void recordGenerationPerformance(const cudaConstants * cConstants, Individual * pool, double generation, double new_anneal, int poolSize, double anneal_min) {
+void recordGenerationPerformance(const cudaConstants * cConstants, const std::vector<Adult>& pool, double generation, double new_anneal, int poolSize, double anneal_min) {
   std::ofstream excelFile;
   int seed = cConstants->time_seed;
   std::string fileId = std::to_string(seed);
@@ -390,7 +390,7 @@ void recordGenerationPerformance(const cudaConstants * cConstants, Individual * 
   // Record best individuals best posDiff and speedDiff of this generation
   excelFile << generation << "," << pool[0].posDiff << ",";
   excelFile << pool[0].speedDiff << ",";
-  excelFile << pool[0].cost << ",";
+  //excelFile << pool[0].cost << ",";
 
   // Record best individuals parameters
   excelFile << pool[0].startParams.alpha << ",";
@@ -423,7 +423,7 @@ void recordGenerationPerformance(const cudaConstants * cConstants, Individual * 
 //        poolSize - to use in iterating through the pool
 //        generation - used in deriving file name
 // output: file generation#[generation]-[time_seed].csv is created with each row holding parameter values of individuals
-void recordAllIndividuals(std::string name, const cudaConstants * cConstants, Individual * pool, int poolSize, int generation) {
+void recordAllIndividuals(std::string name, const cudaConstants * cConstants, const std::vector<Adult>& pool, int poolSize, int generation) {
   std::ofstream entirePool;
   int seed = cConstants->time_seed;
   entirePool.open(std::to_string(seed) + "-" + name +"-gen#" + std::to_string(generation) + ".csv");
@@ -464,7 +464,7 @@ void recordAllIndividuals(std::string name, const cudaConstants * cConstants, In
     for (int j = 0; j < COAST_ARRAY_SIZE; j++) {
       entirePool << pool[i].startParams.coeff.coast[j] << ",";
     }
-    entirePool << pool[i].cost << ",";
+    //entirePool << pool[i].cost << ",";
     entirePool << pool[i].posDiff << ",";
     entirePool << pool[i].speedDiff << ",";
     entirePool << pool[i].rank << ",";
@@ -481,7 +481,7 @@ void recordAllIndividuals(std::string name, const cudaConstants * cConstants, In
 //        generation - to record the generation value 
 //        thrust - passed into progressiveRecord and writeTrajectoryToFile
 // output: writeTrajectoryToFile is called, if in record_mode then progressiveRecord is called as well
-void finalRecord(const cudaConstants* cConstants, Individual * pool, int generation) {
+void finalRecord(const cudaConstants* cConstants, const std::vector<Adult>pool, int generation) {
   // To store parameter values and pass onto writeTrajectoryToFile
   double *start = new double[OPTIM_VARS];
 
@@ -540,7 +540,7 @@ void recordEarthData(const cudaConstants * cConstants) {
 //        fuelSpent - total fuel spent
 //        best - To access the best individual (pool[0])
 // output: fuelOutput.csv - output file holding fuel consumption and impact data
-void recordFuelOutput(const cudaConstants* cConstants, double solution[], double fuelSpent, Individual best) {
+void recordFuelOutput(const cudaConstants* cConstants, double solution[], double fuelSpent, const Adult best) {
 
   std::ofstream excelFile;
   excelFile.open("fuelOutput.csv", std::ios_base::app);

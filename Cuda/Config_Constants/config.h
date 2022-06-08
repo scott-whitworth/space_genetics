@@ -100,6 +100,9 @@ struct cudaConstants {
     // minimum distance the spacecraft can be to the sun.
     double sun_r_min;
 
+    //max distance for giveDistance, boundary conditions
+    double MAX_DISTANCE;
+    
     //destination asteroid file. The constants for the asteroid and earth data are passed in with a different file in order to switch between asteroids easier.
     std::string destination;
 
@@ -108,9 +111,6 @@ struct cudaConstants {
 
     //Flag for what type of landing you want. Current modes: "soft"=1, "hard"=2
     int missionType;
-
-    //ratio uesd to weigh the cost function.
-    double omega;
 
     // Default constructor, sets the config file path to be "genetic.config" for geneticFileRead()
     cudaConstants();

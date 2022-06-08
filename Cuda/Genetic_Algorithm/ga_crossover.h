@@ -3,16 +3,6 @@
 
 #include <random>
 
-// Method of determing selection of survivors that will carry properties into the new individuals of the newGeneration
-// Called from optimize::optimization.cu
-// Input: pool - (inputParameters) generation of individuals to pull from, no implied order
-//        poolSize - integer number of length of the pool
-//        selectionSize - integer number of how many survivors to choose out of the pool
-//        survivors - pointer array of individuals to promote via crossover / mutate 
-// Output: pool is left sorted by individuals with higher velocity difference
-//         survivors contains an array of size selectionSize of individuals to be used in newGeneration()
-void selectSurvivors(Individual * pool, int poolSize, int selectionSize, Individual* survivors, const double & ratio, const int & missionType);
-
 ///////////////////////////////////////////////////////////////
 // Crossover Functions                                       //
 ///////////////////////////////////////////////////////////////
@@ -35,36 +25,36 @@ void selectSurvivors(Individual * pool, int poolSize, int selectionSize, Individ
 // Creates a random bifurcation mask
 // ** currently not in use - replaced with bundleVars / average **
 // Randomly picks one index to be the start of the '2's from mask
-void crossOver_randHalf(int * mask, std::mt19937_64 & rng);
+void crossOver_randHalf(std::vector<int> & mask, std::mt19937_64 & rng);
 
 
 // Creates a mask where no mixing occurs
 // ** currently not in use **
 // Sets the mask to be entirely PARTNER1, use flipMask() to have PARTNER2
-void crossOver_oneParent(int * mask);
+void crossOver_oneParent(std::vector<int> & mask);
 
 // Creates a mask that is contains randomly chosen values in each index
 // Each element in a mask is randomly set to either PARTNER1 or PARTNER2
-void crossOver_wholeRandom(int * mask, std::mt19937_64 & rng);
+void crossOver_wholeRandom(std::vector<int> & mask, std::mt19937_64 & rng);
 
 // Generates crossover mask that maintains paramter relationships (gamma, tau, coast values grouped)
 // Similar to crossOver_wholeRandom, but with parameter grouping
 // Input: mask - set, size OPTIM_VARS, 
 //        rng - managed from optimize()
 // Output: mask contains values either 1 or 2 (equivalent to PARTNER1 or PARTNER2)
-void crossOver_bundleVars(int * mask, std::mt19937_64 & rng);
+void crossOver_bundleVars(std::vector<int> & mask, std::mt19937_64 & rng);
 
 // Sets the entire mask to be AVG for length OPTIM_VARS
 // Input: mask - pointer integer array of length OPTIM_VARS
 // Output: mask is set to contain all AVG values
-void crossOver_average(int * mask);
+void crossOver_average(std::vector<int> & mask);
 
 // Utility to flip the polarity of a mask
 // Input:  mask should have already be set from other crossover functions
 // Output: each PARTNER1 in mask will be reassigned to be a PARTNER2
 //         each PARTNER2 will be reassigned PARTNER1
 //         AVG is left unchanged
-void flipMask(int * mask);
+void flipMask(std::vector<int> & mask);
 
 // Copy contents of maskIn into maskOut of size OPTIM_VARS
 // Output: maskIn remains unchanged, maskOut will have same contents as maskIn
@@ -84,7 +74,7 @@ double getRand(double max, std::mt19937_64 & rng);
 //        cConstants, annealing, rng, generation - passed through to mutate()
 // Output: Returns rkParameter object that is new individual
 // Called from generateChildrenPair, calls mutate
-rkParameters<double> generateNewIndividual(const rkParameters<double> & p1, const rkParameters<double> & p2, const int * mask, const cudaConstants * cConstants, double annealing, std::mt19937_64 & rng, double generation);
+rkParameters<double> generateNewChild(const rkParameters<double> & p1, const rkParameters<double> & p2, const std::vector<int> & mask, const cudaConstants * cConstants, const double & annealing, std::mt19937_64 & rng, const double & generation);
 
 // Utility function, generates a boolean mask for which paramters to mutate (1: mutate, 0: not mutated)
 // Number of genes mutated is a compound probability of n-1 genes before it
@@ -108,7 +98,7 @@ void mutateMask(std::mt19937_64 & rng, bool * mutateMask, double mutation_rate);
 //        cConstants - holds properties to use such as mutation rates and mutation scales for specific parameter property types
 // Output: Returns rkParameter object that is the mutated version of p1
 // Called by generateNewIndividual
-rkParameters<double> mutate(const rkParameters<double> & p1, std::mt19937_64 & rng, double annealing, const cudaConstants* gConstant, double generation);
+rkParameters<double> mutate(const rkParameters<double> & p1, std::mt19937_64 & rng, const double & annealing, const cudaConstants* cConstants, const double & generation);
 
 // Method that creates a pair of new Individuals from a pair of parent individuals and a mask
 // Input: pool - (output) pointer array to Individuals that is where the new pair of individuals are stored
@@ -116,7 +106,7 @@ rkParameters<double> mutate(const rkParameters<double> & p1, std::mt19937_64 & r
 //        mask - pointer array of maskValues used to decide on which property from which parent is acquired (or average of the two)
 //        newIndCount - value that tracks number of newly created indiviudals in the pool so far in the newGeneration process
 //                    - also impacts where to put the new individuals in the pool
-//        parentsIndex - value determing where the pair of parent survivors are selected (parent 1 is at parentsIndex, parent 2 is offset by +1)
+//        parentsIndex - value determining where the pair of parent survivors are selected (parent 1 is at parentsIndex, parent 2 is offset by +1)
 //        annealing - double variable passed onto mutateNewIndividual
 //        poolSize - length of the pool array
 //        rng - random number generator passed on to generateNewIndividual
@@ -125,9 +115,9 @@ rkParameters<double> mutate(const rkParameters<double> & p1, std::mt19937_64 & r
 //         mask is flipped in polarity between each (refer to flipMask method) 
 //         newIndCount is incremented by +2
 // Called by newGeneration()
-void generateChildrenPair(Individual *pool, Individual *survivors, int * mask, int& newIndCount, int parentsIndex, double annealing, int poolSize, std::mt19937_64 & rng, const cudaConstants* cConstants, double generation);
+void generateChildrenPair(Adult parent1, Adult parent2, Child * newChildren, std::vector<int> & mask, const double & annealing, const std::mt19937_64 & rng, int & numNewChildren, const int & generation, const cudaConstants* cConstants);
 
-// Creates the next pool to be used in the optimize function in opimization.cu
+// Creates the next pool to be used in the optimize function in optimization.cu
 // Input: survivors - (parents) Individual pointer array of Individuals to be used in creating new individuals
 //        pool - Sorted Individual pointer array that contains current generation and is modified for next generation
 //        survivorSize - length of survivors array
@@ -138,7 +128,16 @@ void generateChildrenPair(Individual *pool, Individual *survivors, int * mask, i
 // Output: lower (survivorSize * 4) portion of pool is replaced with new individuals
 //         Each parent pair produces 8 new children (4 masks, two children per mask)
 //         Returns number of new individuals created (newIndCount)
-int newGeneration(Individual *survivors, Individual *pool, int survivorSize, int poolSize, double annealing, const cudaConstants* cConstants, std::mt19937_64 & rng, double generation );
+void newGeneration(std::vector<Adult> & oldAdults, std::vector<Adult> & newAdults, const double & annealing, const int & generation, const std::mt19937_64 & rng, const cudaConstants* cConstants);
+
+void convertToAdults(std::vector<Adult> & newAdults, Child* newChildren, const cudaConstants* cConstants);
+
+// Creates the first generation of adults by taking in an array of children with randomly generated parameters
+// Input: initialChildren - children with randomly generated parameters whose runge kutta values have not yet been computed 
+//        oldAdults - a vector that will be filled with the children once they've gone through callRK and are converted into adults
+//        cConstants - passed on into callRK and convertToAdults
+// Output: oldAdults is full of the children that have been converted into adults - this allows us to have a bunch of random adults to create a new generation
+void firstGeneration(Child* initialChildren, std::vector<Adult>& oldAdults, const cudaConstants* cConstants);
 
 #include "ga_crossover.cpp"
 #endif

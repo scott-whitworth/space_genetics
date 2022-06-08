@@ -123,7 +123,7 @@ bool Individual::operator==(Individual &other) {
 // Compare two individuals by their positional difference values, used in standard sort to have array contain lowest posDiff individual at start
 // input: two individuals
 // output: returns true if personB has a higher positional difference than personA
-
+/*
 //TODO:: These should be const references
 bool LowerPosDiff(Individual& personA, Individual& personB) {
     if (personA.posDiff < personB.posDiff) {
@@ -248,3 +248,4 @@ bool rankDistanceSort(Individual& personA, Individual& personB) {
         return false;
     }
 }
+*/

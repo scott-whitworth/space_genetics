@@ -6,27 +6,27 @@
 #include <random>
 
 // Called by optimize() in optimization.cu
-void callRK(const int numThreads, const int blockThreads, Individual *generation, double timeInitial, double stepSize, double absTol, double & calcPerS, const cudaConstants* cConstant) {
+void callRK(const int numThreads, const int blockThreads, Child *generation, double timeInitial, double stepSize, double absTol, double & calcPerS, const cudaConstants* cConstant) {
     
     cudaEvent_t kernelStart, kernelEnd;
     cudaEventCreate(&kernelStart);
     cudaEventCreate(&kernelEnd);
 
-    Individual *devGeneration; 
+    Child *devGeneration; 
     double *devTimeInitial;
     double *devStepSize;
     double *devAbsTol;
     cudaConstants *devCConstant;
 
     // allocate memory for the parameters passed to the device
-    cudaMalloc((void**) &devGeneration, numThreads * sizeof(Individual));
+    cudaMalloc((void**) &devGeneration, numThreads * sizeof(Child));
     cudaMalloc((void**) &devTimeInitial, sizeof(double));
     cudaMalloc((void**) &devStepSize, sizeof(double));
     cudaMalloc((void**) &devAbsTol, sizeof(double));
     cudaMalloc((void**) &devCConstant, sizeof(cudaConstants));
 
     // copy values of parameters passed from host onto device
-    cudaMemcpy(devGeneration, generation, numThreads * sizeof(Individual), cudaMemcpyHostToDevice);
+    cudaMemcpy(devGeneration, generation, numThreads * sizeof(Child), cudaMemcpyHostToDevice);
     cudaMemcpy(devTimeInitial, &timeInitial, sizeof(double), cudaMemcpyHostToDevice);
     cudaMemcpy(devStepSize, &stepSize, sizeof(double), cudaMemcpyHostToDevice);
     cudaMemcpy(devAbsTol, &absTol, sizeof(double), cudaMemcpyHostToDevice);
@@ -39,7 +39,7 @@ void callRK(const int numThreads, const int blockThreads, Individual *generation
     cudaEventRecord(kernelEnd);
 
     // copy the result of the kernel onto the host
-    cudaMemcpy(generation, devGeneration, numThreads * sizeof(Individual), cudaMemcpyDeviceToHost);
+    cudaMemcpy(generation, devGeneration, numThreads * sizeof(Child), cudaMemcpyDeviceToHost);
     
     // free memory from device
     cudaFree(devGeneration);
@@ -58,10 +58,10 @@ void callRK(const int numThreads, const int blockThreads, Individual *generation
 }
 
 // seperate conditions are passed for each thread, but timeInitial, stepSize, and absTol are the same for every thread
-__global__ void rk4SimpleCUDA(Individual *individuals, double *timeInitial, double *startStepSize, double *absTolInput, int n, const cudaConstants* cConstant) {
+__global__ void rk4SimpleCUDA(Child *children, double *timeInitial, double *startStepSize, double *absTolInput, int n, const cudaConstants* cConstant) {
     int threadId = threadIdx.x + blockIdx.x * blockDim.x;
     if (threadId < n) {
-        rkParameters<double> threadRKParameters = individuals[threadId].startParams; // get the parameters for this thread
+        rkParameters<double> threadRKParameters = children[threadId].startParams; // get the parameters for this thread
 
         elements<double> curPos = threadRKParameters.y0; // start with the initial conditions of the spacecraft
 
@@ -113,31 +113,51 @@ __global__ void rk4SimpleCUDA(Individual *individuals, double *timeInitial, doub
             // if the spacecraft is within 0.5 au of the sun, the radial position of the spacecraft artificially increases to 1000, to force that path to not be used in the optimization.
             if ( sqrt(pow(curPos.r,2) + pow(curPos.z,2)) < cConstant->sun_r_min) {
                 //This is a bad result, needs to be set to be removed
-                // Right after callRK we check for NaN in the elements, then reset individual
-                individuals[threadId].finalPos.r = nan("");
+                //Setting the child's status to be a sun error
+                children[threadId].status = SUN_ERROR;
+
+                //Set the child's diffs to undesirable values
+                //First, set posDiff to a high value to make the sorting algorithim think it ended up far from the asteroid
+                children[threadId].posDiff = BAD_POSDIFF;
+
+                //Set the velocity difference to a bad value
+                //Different depending on the mission type, so we need to check and see what type of mission this is
+                if (cConstant-> missionType == Impact) {
+                    //Set a low speed diff so this individual is less likely to be selected for future generations
+                    children[threadId].speedDiff = BAD_HARD_SPEEDDIFF; 
+                }
+
+                /*
+                // Right after callRK we check for NaN in the elements, then reset child
+                children[threadId].finalPos.r = nan("");
 
                 //Just to make sure invalidating posDiff/speedDiff
-                individuals[threadId].posDiff = nan("");
-                individuals[threadId].speedDiff = nan("");            
+                children[threadId].posDiff = nan("");
+                children[threadId].speedDiff = nan("");         
+                */   
 
                 return;
             }
         }
 
+        //Setting the status of the child to be valid
+        children[threadId].status = VALID; 
          // output to this thread's index
-        individuals[threadId].finalPos = curPos;
+        children[threadId].finalPos = curPos;
 
         // Calculate new values for this thread
-        individuals[threadId].getPosDiff(cConstant);
-        individuals[threadId].getSpeedDiff(cConstant);
+        children[threadId].getPosDiff(cConstant);
+        children[threadId].getSpeedDiff(cConstant);
 
+        /*
+        //wanting to phase out the use of cost because it functions as an arbitrary system
         if (cConstant->missionType == Rendezvous){
-            individuals[threadId].getCost_Soft(cConstant);
+            children[threadId].getCost_Soft(cConstant);
         }
         else if (cConstant->missionType == Impact){
-            individuals[threadId].getCost_Hard(cConstant);    
+            children[threadId].getCost_Hard(cConstant);    
         } //TODO:: Else case of cost define
-        
+        */
         return;
     }
     return;

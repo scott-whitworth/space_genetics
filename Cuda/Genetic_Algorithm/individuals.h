@@ -57,7 +57,7 @@ struct Individual {
     bool operator<(Individual &other);
     bool operator==(Individual &other);
 };
-
+/*
 // Compare two individuals by their positional difference values
 // input: two individuals
 // output: returns true if personB has a higher positional difference than personA
@@ -91,6 +91,7 @@ bool rankSort(Individual& personA, Individual& personB);
 //output: if person A's rank is lower than person B's rank, return true
 //        if person A and person B have the same rank and person A has a greater distance than person B, return true
 bool rankDistanceSort(Individual& personA, Individual& personB);
+*/
 
 #include "individuals.cpp"
 

@@ -5,6 +5,8 @@
 
 // Default constructor
 Child::Child() {
+    //TODO: all we do is set status to DEFAULT_CHILD (which is essentially an error if we ever try to process)
+    //TODO: get rid of posDiff/speedDiff
     posDiff = 1.0;
     speedDiff = 0.0; //TODO: This is ok for impact, but an issue for soft landing
 }
@@ -25,6 +27,8 @@ Child::Child(rkParameters<double> & newChild, const cudaConstants* cConstants) {
         earth.vr+cos(startParams.zeta)*sin(startParams.beta)*cConstants->v_escape, 
         earth.vtheta+cos(startParams.zeta)*cos(startParams.beta)*cConstants->v_escape,
         earth.vz+sin(startParams.zeta)*cConstants->v_escape);
+
+        //TODO: set status to something (like FUNCTIONAL_CHILD)
 }
 
 // Copy constructor
@@ -56,3 +60,10 @@ __host__ __device__ double Child::getSpeedDiff(const cudaConstants* cConstants) 
     speedDiff = sqrt(pow(cConstants->vr_fin_ast - finalPos.vr, 2) + pow(cConstants->vtheta_fin_ast - finalPos.vtheta, 2) + pow(cConstants->vz_fin_ast - finalPos.vz, 2)); 
     return speedDiff;
 }
+
+//TODO: Long term we need to consider the velocity vector, not just the magnitude
+//      this would be where we want to introduce those calculations
+//      Three parameters:
+//              position diff
+//              vector direction (unit vector) diff (this is what we will need to implement)
+//              magnitude of velocity diff (this is what we have)

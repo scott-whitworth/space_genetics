@@ -208,8 +208,9 @@ void mutateMask(std::mt19937_64 & rng, bool * mutateMask, double mutation_rate) 
         mutateMask[i] = false;
     }
     
-    // counter to make sure in the unlikely event that all genes are being mutated the code doesn't get stuck in infinite loop looking for a false spot in the array
-    int geneCount = 0; 
+    // counter to make sure in the unlikely event that all genes are being mutated the code doesn't
+    // get stuck in infinite loop looking for a false spot in the array
+    int geneCount = 0; //How many gene's have we changed
     // Set a gene to mutate if a randomized values is less than mutation_rate, repeating everytime this is true
     while ((static_cast<double>(rng()) / rng.max()) < mutation_rate && geneCount < OPTIM_VARS) {
         bool geneSet = false; // boolean to flag if a gene was successfully selected to be set as true
@@ -343,6 +344,13 @@ void generateChildrenPair (Adult parent1, Adult parent2, Child * newChildren, st
 //!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Creates the next pool to be used in the optimize function in opimization.cu
 void newGeneration (std::vector<Adult> & oldAdults, std::vector<Adult> & newAdults, const double & annealing, const int & generation, std::mt19937_64 & rng, const cudaConstants* cConstants) {
+    //TODO: This is a good start, I like it
+    //      Next step: think about how we can dynamically change based on available crossover methods.
+    //                 why are we doing 8? :shrug:
+    //                 In theory we will want to be able to test different crossover methods, so this algorithm should be 
+    //                         malleable to differeing numbers of children produced via the functions
+    //                  as an example: right now we generate two individuals from the averaging crossover (we only really need to make one!)
+
     //Import number of new individuals the GPU needs to fill its threads
     //int newChildren = cConstants -> num_individuals;
 
@@ -356,8 +364,9 @@ void newGeneration (std::vector<Adult> & oldAdults, std::vector<Adult> & newAdul
     //Create a mask to determine which of the child's parameters will be inherited from which parents
     std::vector<int> mask;
 
+    //TODO: Think about this shuffle, and sizes through this whole function
     //Shuffle the oldAdults vector to randomize the parents for each of the children
-    std::shuffle(std::begin(oldAdults), std::end(oldAdults), rng); //possibly need to use iterators for the beginning and ending and a timeseed (std::default_random_engine(seed)) -> https://www.cplusplus.com/reference/algorithm/shuffle/?kw=shuffle
+    std::shuffle(oldAdults.begin(), oldAdults.begin() + (cConstants->num_individuals/4) , rng); //possibly need to use iterators for the beginning and ending and a timeseed (std::default_random_engine(seed)) -> https://www.cplusplus.com/reference/algorithm/shuffle/?kw=shuffle
 
     //Create a int that will store the number of pairs needed to generate enough children for the number of threads
     //Assigned as num_individuals / 8 as each pair will generate 8 individuals

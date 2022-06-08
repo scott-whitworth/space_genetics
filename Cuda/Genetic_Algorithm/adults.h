@@ -6,17 +6,22 @@
 #include "../Earth_calculations/earthInfo.h"
 #include <vector>
 
+//TODO: Clarify / change 'individual' term vs. 'Child' and 'Adult'
+
+//TODO: documentation to be VERY clear why we are inheriting 
+//      gene-perspective would be helpful
 // Individual is a structure member of the genetic algorithm's population and has set of parameters and the resulting position and velocity
 struct Adult: public Child {
    // double cost;    // cost value of the individual, something that the genetic algorithm is attempting to minimize
+   //TODO: probably don't need isParent, this also could be STATUS
     bool isParent; //Indicates if this individual is already chosen as a survivor
 
     int dominatedByCount; //keeps track of how many individuals this individual has been dominated by
+    //TODO: more documentation (like this is used by the dominated sort...)
     int rank; //how good this individual is compared to other individuals in it's generation. The lower the rank, the better.
-    //TODO: I think this is a problem - Scott
-    //      Individuals get copied onto the GPU. This means the this vector is getting copied onto the GPU as well.
-    //      Dynamic memory and GPUs never mix well 
+
     std::vector<int> dominates; //The pool indexes of individuals that have been dominated by this individual 
+    //TODO: See comment in optimiaztion.cu, giveRank() about moving dominates and dominatedByCount
     double distance; //how different this individual is from the individuals most similar to it.
 
 //!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -24,6 +29,7 @@ struct Adult: public Child {
     Adult();
 
     //TODO: Rank 0 might not be the best value to initialize rank to - consider whether or not this should be changed
+    //      This is probably just assigning max int (google search: c++ MAX_INT value)
 
     // Set the initial position of the spacecraft according to the newly generated parameters
     // Input: cConstants - to access c3energy value used in getCost()
@@ -36,15 +42,22 @@ struct Adult: public Child {
     // Output: a child is turned into an adult
     Adult(const Child& c): Child(c), dominatedByCount(0), rank(0), distance(-1), isParent(false){}
 
+    //TODO: Comments on where these ^^^^ constructors should be called (i.e. at the end of newGeneration, after callRK)
+
     
     //Compare two adults by their rank and distance
     //input: another adult
     //output: if this adult's rank is lower than the other adult's rank, return true
     //        if this adult and the other adult have the same rank and this adult has a greater distance than the other adult, return true
+    //TODO: What about status? We should probably document that here
     //Sorts the whole pool from lowest to highest rank. Adults of the same rank are sorted from highest to lowest distance
     bool operator<(const Adult &other);
 
 };
+
+//TODO: document style: where are these being used? They are pretty major, we should help clarify
+
+//TODO: We need to Refactor the below if we are going to change the optimized parameters (velocity direction)
 
 // Compare two adults by their positional difference values
 // input: two adults
@@ -76,6 +89,8 @@ bool rankSort(const Adult& personA, const Adult& personB);
 
 //Compare two individuals by their rank and distance
 //input: two individuals
+//TODO: consider status (this goes for the above ones)
+//TODO: Where is this called ? Used?
 //output: if person A's rank is lower than person B's rank, return true
 //        if person A and person B have the same rank and person A has a greater distance than person B, return true
 bool rankDistanceSort(const Adult& personA, const Adult& personB);

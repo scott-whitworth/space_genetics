@@ -12,6 +12,8 @@
 // PARTNER2 (2) - At this index of the OPTIM_VARS array, accept the gene value from parent 2
 //      AVG (3) - At this index of the OPTIM_VARS array, use the average value for the gene from parent 1 and parent 2
 
+//TODO: Document org: probably group / document everything together
+
 // Mask definition / example
 // mask is a pointer array set to OPTIM_VARS length and contains enumeration values (ranges from 1 to 3)
 // used in determing for a given parameter value which parent to receive it from
@@ -68,7 +70,7 @@ void copyMask(int * maskIn, int * maskOut);
 double getRand(double max, std::mt19937_64 & rng);
 
 // Creates a new rkParameters individual by combining properties of two parent Individuals using a crossover mask
-// Input: two rkParameter individuals (p1 and p2) - source of genes for new individual
+// Input: two rkParameter from individuals (p1 and p2) - source of genes for new individual
 //        mask - Contains maskValue values and length of OPTIM_VARS,
 //               determines how the two parent properties are merged into creating the new individual
 //        cConstants, annealing, rng, generation - passed through to mutate()
@@ -100,6 +102,8 @@ void mutateMask(std::mt19937_64 & rng, bool * mutateMask, double mutation_rate);
 // Called by generateNewIndividual
 rkParameters<double> mutate(const rkParameters<double> & p1, std::mt19937_64 & rng, const double & annealing, const cudaConstants* cConstants, const double & generation);
 
+
+//TODO: Update this header (things have changed)
 // Method that creates a pair of new Individuals from a pair of parent individuals and a mask
 // Input: pool - (output) pointer array to Individuals that is where the new pair of individuals are stored
 //        survivors - (parents) pointer array to Individuals to access the two parents from
@@ -117,6 +121,7 @@ rkParameters<double> mutate(const rkParameters<double> & p1, std::mt19937_64 & r
 // Called by newGeneration()
 void generateChildrenPair(Adult parent1, Adult parent2, Child * newChildren, std::vector<int> & mask, const double & annealing, const std::mt19937_64 & rng, int & numNewChildren, const int & generation, const cudaConstants* cConstants);
 
+//TODO: Update this header (things have changed)
 // Creates the next pool to be used in the optimize function in optimization.cu
 // Input: survivors - (parents) Individual pointer array of Individuals to be used in creating new individuals
 //        pool - Sorted Individual pointer array that contains current generation and is modified for next generation
@@ -128,6 +133,7 @@ void generateChildrenPair(Adult parent1, Adult parent2, Child * newChildren, std
 // Output: lower (survivorSize * 4) portion of pool is replaced with new individuals
 //         Each parent pair produces 8 new children (4 masks, two children per mask)
 //         Returns number of new individuals created (newIndCount)
+//TODO: Const references that should not be changing
 void newGeneration(std::vector<Adult> & oldAdults, std::vector<Adult> & newAdults, const double & annealing, const int & generation, const std::mt19937_64 & rng, const cudaConstants* cConstants);
 
 // Converts children previously simulated by callRK into adults and inserts the new adults into the submitted adult vector
@@ -135,6 +141,7 @@ void newGeneration(std::vector<Adult> & oldAdults, std::vector<Adult> & newAdult
 //        newChildren - the array of simulated children that will be tranformed into adults
 //        cConstants - needed for the number of individuals
 // Output: newAdults will be filled with the children that are converted into adults 
+//TODO: specify where this is happening
 void convertToAdults(std::vector<Adult> & newAdults, Child* newChildren, const cudaConstants* cConstants);
 
 // Creates the first generation of adults by taking in an array of children with randomly generated parameters

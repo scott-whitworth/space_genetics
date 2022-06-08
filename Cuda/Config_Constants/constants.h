@@ -41,4 +41,7 @@
 // OPTIM_VARS = Number of variables (array sizes plus 4 for alpha, beta, zeta, and triptime)
 #define OPTIM_VARS (GAMMA_ARRAY_SIZE + TAU_ARRAY_SIZE + COAST_ARRAY_SIZE + 4)
 
+//TODO: add enums
+//TODO: add error value
+
 #endif

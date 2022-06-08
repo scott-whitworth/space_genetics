@@ -134,6 +134,8 @@ int main () {
     return 0;
 }
 
+//TODO: unit test to make sure every individual is given NEW rank
+
 //gives each adult in the pool a rank
 void giveRank(std::vector<Adult> pool, const cudaConstants* cConstants) {
     //non-denominated sorting method
@@ -142,6 +144,9 @@ void giveRank(std::vector<Adult> pool, const cudaConstants* cConstants) {
     //Used to store the current front of individuals. first filled with the first front individuals(best out of all population)
     // filled with index of individuals in pool
     std::vector<int> front;
+
+    //TODO: Pull Adult::dominates and Adult::dominatedByCount into this function
+    // probably a 2D vector, or an array of vectors
     
     //loop through each individual
     for (int i = 0; i < pool.size(); i++){

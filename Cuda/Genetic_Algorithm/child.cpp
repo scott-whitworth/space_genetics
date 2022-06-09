@@ -13,7 +13,7 @@ Child::Child() {
 
     funcStatus = DEFAULT_CHILD;//not ready to be an adult
 
-    errorStatus = VALID; //no nans that we know of yet
+    errorStatus = NOT_RUN; //not run through callRk
 }
 
 // Set the initial position of the spacecraft according to the newly generated parameters
@@ -34,7 +34,7 @@ Child::Child(rkParameters<double> & childParameters, const cudaConstants* cConst
         earth.vz+sin(startParams.zeta)*cConstants->v_escape);
 
     funcStatus = FUNCTIONAL_CHILD;//ready to be an adult
-    errorStatus = VALID; //no nans that we know of yet
+    errorStatus = NOT_RUN; //not run through callRK yet
 }
 
 // Copy constructor
@@ -47,6 +47,7 @@ Child:: Child(const Child& other){
     posDiff = other.posDiff; 
     speedDiff = other.speedDiff;
     funcStatus = other.funcStatus;
+    errorStatus = other.errorStatus;
 }
 
 //!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

@@ -9,7 +9,8 @@
 #include "../Output_Funcs/output.h" // For terminalDisplay(), recordGenerationPerformance(), and finalRecord()
 #include "../Runge_Kutta/runge_kuttaCUDA.cuh" // for testing rk4simple
 #include "../Genetic_Algorithm/ga_crossover.h" // for selectSurvivors() and newGeneration()
-#include "../Unit_Testing/testing_sorts.cpp"
+//
+//#include "../Unit_Testing/testing_sorts.cpp"
 
 #include <iostream> // cout
 #include <iomanip>  // used for setw(), sets spaces between values output

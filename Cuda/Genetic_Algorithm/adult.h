@@ -73,7 +73,7 @@ struct Adult: public Child {
     // Input: A rank (r), a distance (d), and a STATUS (s) -> status defaults to VALID if undefined
     // Output: Constructs an Adult using the unit testing Child constructor that only contains default and sets its rank and distance so it can be sorted using rankDistanceSort
     // ONLY USE FOR UNIT TESTING!!! SHOULD NEVER BE CALLED ELSEWHERE 
-    Adult(int r, double d, int s = VALID): Child(s), rank(r), distance(d){}
+    Adult(int r, double d, ERROR_STATUS s = VALID): Child(s), rank(r), distance(d){}
    
     // A function used exclusively for unit testing that prints that rank and distance of an adult
     // Output: takes an adult's rank, distance, and status and creates a string holding this information

@@ -93,7 +93,7 @@ bool sortAdultVec(){
     
     //goes through this process for all the different vectors of Adults that are created by differentTestsSetUp
     for (int i = 1; i <= testTypes; i++) {
-        cout << "\n Test " << i << ": " << endl;
+        cout << "\nTest " << i << ": " << endl;
         differentTestsSetUp(i, forRankSort); //depending on which time through the loop this is, sets up fills forRankSort with values 
         forRDSort = forRankSort;
         

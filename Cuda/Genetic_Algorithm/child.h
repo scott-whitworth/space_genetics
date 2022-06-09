@@ -3,14 +3,7 @@
 
 #include "../Runge_Kutta/rkParameters.h"
 #include "../Earth_calculations/earthInfo.h"
-
-//enumeration to make error status easier to keep track of, as opposed to using hard-coded numbers 
-//could be removed in the future, included for now to check if the default constructor is being used
-enum STATUS {
-    DEFAULT_CHILD = 0, //child that is created through the default constructor, not ready to be made an adult
-    FUNCTIONAL_CHILD = 1, //child that is created in main constructor and given startParams
-    FUNCTIONAL_ADULT = 2, //once the child has gone through callRK and become an adult, we can change its status to FUNCTIONAL_ADULT
-};
+#include "../Config_Constants/constants.h"
 
 //TODO: Big step: think about where in the code we rely on numeric data to determine errors (like checking for NAN)
 //      Change to interface with STATUS instead
@@ -25,9 +18,11 @@ struct Child {
     double posDiff; // in AU, difference in position between spacecraft and center of asteroid at end of run
     double speedDiff; // in AU/s, difference in velocity between spacecraft and asteroid at end of run
 
+    //Both status and error_status are defined in constants.h
+
     STATUS funcStatus;//flag that keeps track of the status of the child (and eventually adult)
     
-    int errorStatus;//flag that keeps track of what kind of nan it is and if it is a nan
+    ERROR_STATUS errorStatus; //record of if child is computed correctly, should be set in callRK
 
 //!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     // Default constructor
@@ -55,7 +50,7 @@ struct Child {
     // Input: status - this is the only thing set in Child by this constructor
     // Output: A child with only its errorStatus set
     // ONLY USED FOR UNIT TESTING!!! DO NOT USE ELSEWHERE
-    Child(int status): errorStatus(status){}
+    Child(ERROR_STATUS status): errorStatus(status){}
     #endif //unit testing end if
 
     //Child(rkParameters<double> & childParams, elements<double> posFinal,  double posD,  double speedD, STATUS s, int errStat): startParams(childParams), finalPos(posFinal), posDiff(posD), speedDiff(speedD), funcStatus(s), errorStatus(errorStatus){}

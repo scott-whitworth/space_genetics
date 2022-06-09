@@ -4,6 +4,7 @@
 
 #include <iostream> // used for cout
 #include <cmath> // used for sine, cosine, and pow functions
+#include "../Motion_Eqns/motion_equations.h"
 
 template <class T> void rk4sys(const T & timeInitial, const T & timeFinal, T *times, const elements<T> & y0, T stepSize, elements<T> *y_new, 
                                const T & absTol, coefficients<T> coeff, T *gamma,  T *tau, int & lastStep, T *accel_output, T *fuelSpent, const T & wetMass, const cudaConstants* cConstant) {

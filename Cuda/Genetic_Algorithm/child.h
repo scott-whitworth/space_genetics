@@ -50,17 +50,17 @@ struct Child {
     //TODO: See if we need this defined (the default might work?)
     Child(const Child& other);
 
-    #ifdef UNITTEST //set up in unit_testing_main.cpp
+    //#ifdef UNITTEST //set up in unit_testing_main.cpp
     // Child constructor only with status - ONLY USED FOR UNIT TESTING!!!
     // Input: status - this is the only thing set in Child by this constructor
     // Output: A child with only its errorStatus set
     // ONLY USED FOR UNIT TESTING!!! DO NOT USE ELSEWHERE
     Child(int status): errorStatus(status){}
-    #endif //unit testing end if
+    //#endif //unit testing end if
 
     //Child(rkParameters<double> & childParams, elements<double> posFinal,  double posD,  double speedD, STATUS s, int errStat): startParams(childParams), finalPos(posFinal), posDiff(posD), speedDiff(speedD), funcStatus(s), errorStatus(errorStatus){}
 
-
+    rkParameters<double> getRKParams() {return startParams;}
 
 //!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  

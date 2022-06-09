@@ -119,7 +119,7 @@ rkParameters<double> mutate(const rkParameters<double> & p1, std::mt19937_64 & r
 //         mask is flipped in polarity between each (refer to flipMask method) 
 //         newIndCount is incremented by +2
 // Called by newGeneration()
-void generateChildrenPair(Adult parent1, Adult parent2, Child * newChildren, std::vector<int> & mask, const double & annealing, std::mt19937_64 & rng, int & numNewChildren, const int & generation, const cudaConstants* cConstants);
+void generateChildrenPair(const Adult & parent1, const Adult & parent2, Child * newChildren, std::vector<int> & mask, const double & annealing, std::mt19937_64 & rng, int & numNewChildren, const int & generation, const cudaConstants* cConstants);
 
 //TODO: Update this header (things have changed)
 // Creates the next pool to be used in the optimize function in optimization.cu

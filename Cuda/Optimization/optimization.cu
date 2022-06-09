@@ -9,7 +9,7 @@
 #include "../Output_Funcs/output.h" // For terminalDisplay(), recordGenerationPerformance(), and finalRecord()
 #include "../Runge_Kutta/runge_kuttaCUDA.cuh" // for testing rk4simple
 #include "../Genetic_Algorithm/ga_crossover.h" // for selectSurvivors() and newGeneration()
-#include "../Unit_Testing/testing_sorts.cpp"
+#include "../Unit_Testing/testing_rank.cpp"
 
 #include <iostream> // cout
 #include <iomanip>  // used for setw(), sets spaces between values output
@@ -104,7 +104,7 @@ int main () {
     // Declare the genetic constants used, with file path being used to receive initial values
     cudaConstants * cConstants = new cudaConstants("../Config_Constants/genetic.config"); 
 
-    //test_main(cConstants);
+    test_main();
 
     // Sets run0 seed, used to change seed between runs
     // Seed is set in cudaConstants: current time or passed in via config

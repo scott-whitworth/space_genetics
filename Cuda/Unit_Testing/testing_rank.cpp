@@ -1,3 +1,9 @@
+#include "../Genetic_Algorithm/adult.h"
+#include <iostream>
+#include <vector>
+#include <string> //allows us to use to_string and string
+using std::cout;
+using std::endl;
 
 
 // this function will check if giveRank is functioning as expected
@@ -10,9 +16,20 @@ void giveRankTest(std::vector<Adult> & allAdults);
 bool GDTest();
 
 //test version of the giveDistance function from optimization
-void giveDistanceTest(std::vector<Adult> pool, int poolSize)
+void giveDistanceTest(std::vector<Adult> pool, int poolSize);
 
+int test_main(){
 
+    if(dominationTest()){
+        cout << "dominationTest has ended" <<endl;
+    }
+    //if(GDTest()){
+      //  cout << "GDTest has ended" << endl;
+    //}
+
+    return 0;
+
+}
 
 
 
@@ -27,7 +44,7 @@ bool dominationTest(){
 
     //creating the vector and filling it with adults
     for(int i = 0; i < vectSize; i++){
-        GRtest.push_back(Adult(r, d)); 
+        GRtest.push_back(Adult(r+i, d+i)); 
     }
     
     //giving each adult specific posDiffs and speedDiffs for expected results
@@ -56,6 +73,9 @@ bool dominationTest(){
         cout << "r: " << GRtest[i].rank << ", p: " << GRtest[i].posDiff << ", s: " << GRtest[i].speedDiff << endl;  
     }
     
+    giveDistanceTest(GRtest, GRtest.size());
+
+
     return true;
     
 }
@@ -79,7 +99,12 @@ void giveRankTest(std::vector<Adult> & allAdults) {
     //Each index in this vector will correspond to the same index within allAdults
     //Note: fill the vector with 0s to make sure the count is accurate
     //TODO: unit test to make sure the whole vector is actually initially filled with 0's and not just the first index or the original vector size
-    std::vector<int> dominatedByCount(0); 
+    std::vector<int> dominatedByCount; 
+
+    for(int i = 0; i < allAdults.size(); i++){
+        dominatedByCount[i].push_back(0);        
+        cout << dominatedByCount[i] << ", ";
+    }
 
     //loop through each individual within the allAdults vector
     for (int i = 0; i < allAdults.size(); i++){
@@ -106,6 +131,7 @@ void giveRankTest(std::vector<Adult> & allAdults) {
                 cout << " j dominated i ";
                 //Add one to i's dominated by count
                 dominatedByCount[i]++; 
+                cout << "count: " << dominatedByCount[i];
             }
             
         }
@@ -193,7 +219,7 @@ bool GDTest(){
 void giveDistanceTest(std::vector<Adult> pool, int poolSize){
 
     //starting rankSort to make sure nans are at the end of the array.
-    std::sort(pool.begin(), pool.begin() + cConstants->num_individuals*2, rankSort);
+    std::sort(pool.begin(), pool.begin() + poolSize, rankSort);
 
     for (int i = 0; i < poolSize; i++ ){
         //reset each individual's distance
@@ -217,6 +243,7 @@ void giveDistanceTest(std::vector<Adult> pool, int poolSize){
         normalPosDiffRight = pool[i-1].posDiff/pool[poolSize - 1].posDiff;
         //distance = distance + abs((i+1) - (i-1))
         pool[i].distance = pool[i].distance + abs((normalPosDiffLeft - normalPosDiffRight));// /(pool[poolSize - 1].posDiff - pool[0].posDiff));
+        cout << i << " posDiff Distance " << pool[i].distance << endl;
     }
 
     //Repeat above process for speedDiff    
@@ -236,5 +263,7 @@ void giveDistanceTest(std::vector<Adult> pool, int poolSize){
         normalSpeedDiffRight = pool[i-1].speedDiff/pool[poolSize - 1].speedDiff;
         //distance = distance + abs((i+1) - (i-1))
         pool[i].distance = pool[i].distance + abs((normalSpeedDiffLeft - normalSpeedDiffRight));// /(pool[poolSize - 1].speedDiff - pool[0].speedDiff));
+
+        cout << i << " total Distance " << pool[i].distance << endl;
     }
 }

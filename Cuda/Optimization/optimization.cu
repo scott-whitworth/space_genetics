@@ -105,7 +105,7 @@ int main () {
     // Declare the genetic constants used, with file path being used to receive initial values
     cudaConstants * cConstants = new cudaConstants("../Config_Constants/genetic.config"); 
 
-    //test_main(cConstants);
+    test_main();
 
     // Sets run0 seed, used to change seed between runs
     // Seed is set in cudaConstants: current time or passed in via config

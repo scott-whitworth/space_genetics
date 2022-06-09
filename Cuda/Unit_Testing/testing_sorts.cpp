@@ -16,12 +16,12 @@ bool compareTwoAdults();
 // Starts with two identical copies of a vector of adults and sorts them using rankSort and rankDistanceSort
 // Prints cout statements to the terminal that show you what is going on with the sort
 // Returns a bool that says whether or not it passed all the tests
-bool sortAdultVec();
+bool sortAdultVec(bool printStuff);
 
 // This function is just here to keep sortAdultVec from being to insanely long - it initializes a different vector of adults based on which test we are trying to perform
 // Input: which test is being accomplished
 // Output: all the current values are cleared from a and it is filled with adults corresponding to which test we are performing
-void differentTestsSetUp(int testNum, std::vector<Adult>& a);
+void differentTestsSetUp(int testNum, std::vector<Adult>& a, bool print);
 
 //prints the rank, distance, and status of every element in the vector using unitTestingRankDistanceStatusPrint()
 // Input: a vector of adults
@@ -85,7 +85,7 @@ bool compareTwoAdults(){
     return true;
 }
 
-bool sortAdultVec(){
+bool sortAdultVec(bool printStuff){
     std::vector<Adult> forRankSort;
     std::vector<Adult> forRDSort; 
     
@@ -93,54 +93,66 @@ bool sortAdultVec(){
     
     //goes through this process for all the different vectors of Adults that are created by differentTestsSetUp
     for (int i = 1; i <= testTypes; i++) {
-        cout << "\nTest " << i << ": " << endl;
-        differentTestsSetUp(i, forRankSort); //depending on which time through the loop this is, sets up fills forRankSort with values 
+        if (printStuff){
+            cout << "\nTest " << i << ": " << endl;
+        }
+        differentTestsSetUp(i, forRankSort, printStuff); //depending on which time through the loop this is, sets up fills forRankSort with values 
         forRDSort = forRankSort;
         
-        //Prints the adults before they are sorted -> just making sure forRDSort and forRankSort actually have same values ->this part can be deleted later
-        cout << "Before Sorting: ";
-        for (int j = 0; j < forRDSort.size(); j++){
-            cout << forRDSort[j].unitTestingRankDistanceStatusPrint() << "; ";
+        if (printStuff){
+            //Prints the adults before they are sorted -> just making sure forRDSort and forRankSort actually have same values ->this part can be deleted later
+            cout << "Before Sorting (checking to make sure everything is correctly copied): " << endl;
+            for (int j = 0; j < forRDSort.size(); j++){
+                cout << forRDSort[j].unitTestingRankDistanceStatusPrint() << "; ";
+            }
+            cout << endl; 
         }
-        cout << endl;
+        
+    
 
         //sorts the two vectors using their corresponding sorts
         std::sort(forRankSort.begin(), forRankSort.end(), rankSort);
         std::sort(forRDSort.begin(), forRDSort.end(), rankDistanceSort);
+
+        if (printStuff){
+            //Prints the results of the sorts
+            cout << "After Sorting (rankSort): " << endl;
+            vecPrinting(forRankSort);
+            cout << "After Sorting (rankDistanceSort): " << endl;
+            vecPrinting(forRDSort);
+        }
         
-        //Prints the results of the sorts
-        cout << "After Sorting (rankSort): " << endl;
-        vecPrinting(forRankSort);
-        cout << "After Sorting (rankDistanceSort): " << endl;
-        vecPrinting(forRDSort);
-        
-        //Once I take out most of the cout statements, have it go through every element, comparing neighbors to ensure their ranks and distances have the right relationship
-        //if the last one is an error tyoe, based on the way this is currently laid out, its rank might not actually be worse
-        if (forRankSort[forRankSort.size()-1].errorStatus == VALID){
-            //If the rank of the last thing is lower/better than that of the first, there is definitely something going wrong
-            if (forRankSort[0].getRank() > forRankSort[forRankSort.size()-1].getRank()){
-                cout << "There was a problem with rankSort on test " << i << endl;
-                return false;
+        //Checks to make sure that every element was organized correctly by rankSort
+        for (int j = 0; j < forRankSort.size()-1; j++){
+            if (forRankSort[j+1].errorStatus == VALID){ //if the next one is an error type, based on the way this is currently laid out, its rank might not actually be worse
+                //If the rank of the last thing is lower/better than that of the first, there is definitely something going wrong
+                if (forRankSort[j].getRank() > forRankSort[j+1].getRank()){
+                    cout << "There was a problem with rankSort on test " << i << endl;
+                    return false;
+                }
             }
         }
-        //if the last one is an error tyoe, based on the way this is currently laid out, its rank might not actually be worse
-        if (forRDSort[forRDSort.size()-1].errorStatus == VALID){
-            //If the rank of the last thing is lower/better than that of the first, there is definitely something going wrong
-            if (forRDSort[0].getRank() > forRDSort[forRDSort.size()-1].getRank()){
-                cout << "There was a problem with rankDistanceSort on test " << i << endl;
-                return false;
-            }
-            //If the first and last have the same rank, but the smaller distance comes first, that is an issue
-            else if (forRDSort[0].getRank() == forRDSort[forRDSort.size()-1].getRank() && forRDSort[0].getDistance() < forRDSort[forRDSort.size()-1].getDistance()){
-                cout << "There was a problem with rankDistanceSort on test " << i << endl;
-                return false;
+        //Checks to make sure every element was organized correctly by rankDistanceSort
+        for (int k = 0; k < forRDSort.size()-1; k++){
+            if (forRDSort[k+1].errorStatus == VALID){//if the next one is an error type, based on the way this is currently laid out, its rank might not actually be worse
+                //If the rank of the last thing is lower/better than that of the first, there is definitely something going wrong
+                if (forRDSort[k].getRank() > forRDSort[k+1].getRank()){
+                    cout << "There was a problem with rankDistanceSort on test " << i << endl;
+                    return false;
+                }
+                //If the first and last have the same rank, but the smaller distance comes first, that is an issue
+                else if (forRDSort[k].getRank() == forRDSort[k+1].getRank() && forRDSort[k].getDistance() < forRDSort[k+1].getDistance()){
+                    cout << "There was a problem with rankDistanceSort on test " << i << endl;
+                    return false;
+                }
             }
         }
     }
+    //if it makes it through all the tests successfully, it passes and returns true
     return true;
 }
 
-void differentTestsSetUp(int testNum, std::vector<Adult>& a){
+void differentTestsSetUp(int testNum, std::vector<Adult>& a, bool print){
     a.clear(); //starts by emptying the vector
     if(a.size() != 0){
         cout << "Clear did not work as expected " << endl;
@@ -153,9 +165,9 @@ void differentTestsSetUp(int testNum, std::vector<Adult>& a){
         a.push_back(Adult(3,27, VALID));
         a.push_back(Adult(4,1, VALID));
         a.push_back(Adult(6,2,VALID));
-        a.push_back(Adult(7,9,VALID));
-        a.push_back(Adult(5,50,VALID));
-        a.push_back(Adult(2,3,VALID));
+        a.push_back(Adult(7,9));
+        a.push_back(Adult(5,50));
+        a.push_back(Adult(2,3));
     }
     //The second test looks at adults with tht same ranks, but differing distances
     else if (testNum == 2){
@@ -212,8 +224,10 @@ void differentTestsSetUp(int testNum, std::vector<Adult>& a){
         a.push_back(Adult(1,29, VALID));
         a.push_back(Adult(2,9, SUN_ERROR));
     }
-    cout << "Before Sorting: ";
-    vecPrinting(a);
+    if (print){
+        cout << "Before Sorting: ";
+        vecPrinting(a);
+    }
 }
 
 //prints the rank, distance, and errorStatus of each element of the vector

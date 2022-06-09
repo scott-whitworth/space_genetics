@@ -378,12 +378,6 @@ void newGeneration (std::vector<Adult> & oldAdults, std::vector<Adult> & newAdul
     //TODO: This function could be broken up into at least two more functions, if not more
 
     //Import number of new individuals the GPU needs to fill its threads
-    //int newChildren = cConstants -> num_individuals;
-
-    //Create a newChildren function to fill in with children generated from oldAdults
-    //Child * newChildren[newChildren];
-
-    //Import number of new individuals the GPU needs to fill its threads
     //Create a newChildren function to fill in with children generated from oldAdults
     Child* newChildren = new Child[cConstants->num_individuals]; 
 
@@ -394,37 +388,23 @@ void newGeneration (std::vector<Adult> & oldAdults, std::vector<Adult> & newAdul
     {
         mask.push_back(AVG); //TODO: Why are we setting this to AVG?
     }
-    
 
-    int parentNum = cConstants->num_individuals/4; //TODO: This may need to change / be adaptable
-
-    //Vector that determines which parents will be paired up to generate children
+    //Array that determines which parents will be paired up to generate children
     //it will contain indexes of adults that are deemed to be parents
     //it will be shuffled to generate random parent pairings
-    int* parentPairs = new int [parentNum]; //TODO: This is an array not a vector (the comment says vector)
+    //NOTE: this will only be effective after oldAdults has been sorted (with the best Adults at the front)
+    int* parentPairs = new int [cConstants->survivor_count];
 
-    
-    //TODO: This probably needs an adjoining comment to specify that the number of parentNum and the mapping
-    //      of indicies only works if oldAdults is already sorted
     //Fill the parentPairs index with the number of indexes desired for survivors
-    for (int i = 0; i < parentNum; i++)
+    for (int i = 0; i < cConstants->survivor_count; i++)
     {
         parentPairs[i] = i; 
     }
 
-    std::shuffle(parentPairs, parentPairs + parentNum, rng); 
-
-    /*
-    //TODO: Think about this shuffle, and sizes through this whole function
-    //Shuffle the oldAdults vector to randomize the parents for each of the children
-    //std::shuffle(survivors.begin(), survivors.end(), rng); 
-    //possibly need to use iterators for the beginning and ending and a timeseed (std::default_random_engine(seed)) -> https://www.cplusplus.com/reference/algorithm/shuffle/?kw=shuffle
-    for (int i = 0; i < parentNum; i++)
-    {
-        Adult temp = 
-        std::swap(oldAdults[rng()%parentNum], oldAdults[rng()%parentNum]);
-    }
-    */
+    //Shuffle the parentPairs mapping array
+    //This will generate a random list of indicies, which can then be used to map to random Adults within oldAdult's survivor range to pair parents
+    //This will effectively generate random parent pairs
+    std::shuffle(parentPairs, parentPairs + cConstants->survivor_count, rng); 
 
     //Int that tracks the number of new individuals that have been generated
     //Used primarily to make sure that no children are overwritten in newChildren; indexing in generatechildrenPair, should equal N when finished
@@ -483,13 +463,13 @@ void newGeneration (std::vector<Adult> & oldAdults, std::vector<Adult> & newAdul
 
         //Check to see if parents from outside the selected survivor/shuffled range
         //This will make sure that only the best adults have the potential to become parents
-        if (parentIndex >= (parentNum)) {
+        if (parentIndex >= (cConstants->survivor_count)) {
             //Reset the parent index to start from the beginning of the shuffled section of oldAdults
             parentIndex = 0;
 
             //Re-shuffle the best/survivor section of oldAdults to make sure there are new pairs of parents
             //This will ideally not harm genetic diversity too much, even with the same set of parents
-            std::shuffle(parentPairs, parentPairs + parentNum, rng);
+            std::shuffle(parentPairs, parentPairs + cConstants->survivor_count, rng);
 
             //TODO: Kind of weird, but I like it.
             //      Ok, so the rationale is that you only want to pull from the 'best' individuals

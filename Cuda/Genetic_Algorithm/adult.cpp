@@ -34,24 +34,6 @@ bool Adult::operator<(const Adult &other) {
     }
 }
 
-const std::string Adult::unitTestingRankDistanceStatusPrint(){
-    std::string allInfo = "Rank: " + std::to_string(rank) + "- Distance: " + std::to_string(static_cast<int>(distance));
-    if (errorStatus == VALID){
-        allInfo += "- VALID";
-    }
-    else {
-        allInfo += "- Invalid (error type)";
-    }
-    return allInfo;
-}
-
-int Adult::getRank(){
-    return rank;
-}
-
-double Adult::getDistance(){
-    return distance;
-}
 
 //!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Compare two individuals by their positional difference values, used in standard sort to have array contain lowest posDiff individual at start
@@ -258,3 +240,26 @@ bool dominationCheckTest(Adult& personA, Adult& personB) {
         return false;
     }
 }
+
+#ifdef UNITTEST //this should be defined in unit testing
+
+const std::string Adult::unitTestingRankDistanceStatusPrint(){
+    std::string allInfo = "Rank: " + std::to_string(rank) + "- Distance: " + std::to_string(static_cast<int>(distance));
+    if (errorStatus == VALID){
+        allInfo += "- VALID";
+    }
+    else {
+        allInfo += "- Invalid (error type)";
+    }
+    return allInfo;
+}
+
+int Adult::getRank(){
+    return rank;
+}
+
+double Adult::getDistance(){
+    return distance;
+}
+
+#endif //unit testing endif

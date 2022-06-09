@@ -55,19 +55,6 @@ struct Adult: public Child {
     //            This is needed to create the temp Adult needed to do the swap
     Adult(const Adult& a): Child(a), rank(a.rank), distance(a.distance){}
 
-    //TODO: Comments on where these ^^^^ constructors should be called (i.e. at the end of newGeneration, after callRK)
-
-    //#ifdef UNITTEST
-
-    // Constructor used ONLY FOR UNIT TESTING!!!
-    // This constructor uses the default rkParameters, elements, posDiff and speedDiff, the only things that are defined are the rank and distance because that is all rankDistance sort cares about
-    // Input: A rank (r), a distance (d), and a STATUS (s) -> status defaults to VALID if undefined
-    // Output: Constructs an Adult using the unit testing Child constructor that only contains default and sets its rank and distance so it can be sorted using rankDistanceSort
-    // ONLY USE FOR UNIT TESTING!!! SHOULD NEVER BE CALLED ELSEWHERE 
-    Adult(int r, double d, int s = VALID): Child(s), rank(r), distance(d){}
-    //#endif
-
-
     //TODO: Consider deleting this -> it is weird sorting from best to worst and calling best less than worst (unless we want to be very specific we mean LESS WRONG or something?)
     //Compare two adults by their rank and distance
     //input: another adult
@@ -77,6 +64,17 @@ struct Adult: public Child {
     //Sorts the whole pool from lowest to highest rank. Adults of the same rank are sorted from highest to lowest distance
     bool operator<(const Adult &other);
 
+    //TODO: Comments on where these ^^^^ constructors should be called (i.e. at the end of newGeneration, after callRK)
+
+    #ifdef UNITTEST //this should be defined in unit testing
+
+    // Constructor used ONLY FOR UNIT TESTING!!!
+    // This constructor uses the default rkParameters, elements, posDiff and speedDiff, the only things that are defined are the rank and distance because that is all rankDistance sort cares about
+    // Input: A rank (r), a distance (d), and a STATUS (s) -> status defaults to VALID if undefined
+    // Output: Constructs an Adult using the unit testing Child constructor that only contains default and sets its rank and distance so it can be sorted using rankDistanceSort
+    // ONLY USE FOR UNIT TESTING!!! SHOULD NEVER BE CALLED ELSEWHERE 
+    Adult(int r, double d, int s = VALID): Child(s), rank(r), distance(d){}
+   
     // A function used exclusively for unit testing that prints that rank and distance of an adult
     // Output: takes an adult's rank, distance, and status and creates a string holding this information
     // ONLY USE FOR UNIT TESTING!!! Note: This was purposefully given a long name to discourage people from using it
@@ -85,7 +83,7 @@ struct Adult: public Child {
     //getters used exclusively in unit testing
     int getRank();
     double getDistance();
-
+    #endif //unit testing endif
 
 };
 

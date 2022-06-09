@@ -119,7 +119,7 @@ rkParameters<double> mutate(const rkParameters<double> & p1, std::mt19937_64 & r
 //         mask is flipped in polarity between each (refer to flipMask method) 
 //         newIndCount is incremented by +2
 // Called by newGeneration()
-void generateChildrenPair(Adult parent1, Adult parent2, Child * newChildren, std::vector<int> & mask, const double & annealing, const std::mt19937_64 & rng, int & numNewChildren, const int & generation, const cudaConstants* cConstants);
+void generateChildrenPair(Adult parent1, Adult parent2, Child * newChildren, std::vector<int> & mask, const double & annealing, std::mt19937_64 & rng, int & numNewChildren, const int & generation, const cudaConstants* cConstants);
 
 //TODO: Update this header (things have changed)
 // Creates the next pool to be used in the optimize function in optimization.cu
@@ -141,7 +141,7 @@ void newGeneration(std::vector<Adult> & oldAdults, std::vector<Adult> & newAdult
 //        newChildren - the array of simulated children that will be tranformed into adults
 //        cConstants - needed for the number of individuals
 // Output: newAdults will be filled with the children that are converted into adults 
-//TODO: specify where this is happening
+//this happens after teh first generation is created and then after every new child generation is made 
 void convertToAdults(std::vector<Adult> & newAdults, Child* newChildren, const cudaConstants* cConstants);
 
 // Creates the first generation of adults by taking in an array of children with randomly generated parameters
@@ -149,6 +149,7 @@ void convertToAdults(std::vector<Adult> & newAdults, Child* newChildren, const c
 //        oldAdults - a vector that will be filled with the children once they've gone through callRK and are converted into adults
 //        cConstants - passed on into callRK and convertToAdults
 // Output: oldAdults is full of the children that have been converted into adults - this allows us to have a bunch of random adults to create a new generation
+//
 void firstGeneration(Child* initialChildren, std::vector<Adult>& oldAdults, const cudaConstants* cConstants);
 
 #include "ga_crossover.cpp"

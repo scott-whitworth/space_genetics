@@ -3,7 +3,7 @@
 
 #include "../Thrust_FIles/calcFourier.h"
 #include "../Motion_Eqns/motion_equations.h" // Utility functions for calc_k()
-#include "../Genetic_Algorithm/children.h"
+#include "../Genetic_Algorithm/child.h"
 
 // sets up parameters and allocates memory for and then calls rk4SimpleCUDA()
 // Called by optimize() in optimization.cu

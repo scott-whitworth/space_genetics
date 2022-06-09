@@ -41,7 +41,16 @@
 // OPTIM_VARS = Number of variables (array sizes plus 4 for alpha, beta, zeta, and triptime)
 #define OPTIM_VARS (GAMMA_ARRAY_SIZE + TAU_ARRAY_SIZE + COAST_ARRAY_SIZE + 4)
 
-//TODO: add enums
-//TODO: add error value
+
+//status values used for child and adult that tell us if it is a nan and what kind of nan error it is
+#define VALID       0   //not a nan, no problems with any of the parameter values
+#define SUN_ERROR   1   //flew too close to the sun, the posDiff and speedDiff are set to bad values during callRK
+#define OTHER_ERROR 2   //any nans not caught during callRk are set to this error status in optimization
+
+//Error values for nans to be changed to, used in callRK and optimization when finding nans
+#define BAD_POSDIFF          10 //a bad posDiff for either mission to have (10 AU)
+#define BAD_RENDEV_SPEEDDIFF 10 //a bad speedDiff for a rendezvous mission to have (10 AU/s)
+#define BAD_IMPACT_SPEEDDIFF 0  //a bad speedDiff for an impact mission to have (0 AU/s)
+
 
 #endif

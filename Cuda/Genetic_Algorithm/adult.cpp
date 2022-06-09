@@ -1,16 +1,18 @@
 #include <math.h>
 #define _USE_MATH_DEFINES // for use of M_PI
-#include "adults.h"
+#include "adult.h"
 
 // Default constructor
 Adult::Adult(){
-    dominatedByCount = 0;
-    rank = 0; //might change later?
+    rank = INT_MAX; //might change later?
     distance = -1;
-    isParent = false;
 }
 
+//Adult::Adult(rkParameters<double> & childParameters, const cudaConstants* cConstants): Child(childParameters, cConstants), rank(INT_MAX), distance(-1){
+//do we need this?
+//}
 
+//TODO: Consider deleting this - calling this less than and then sorting from best to worst is a little misleading 
 //Compare two adults by their rank and distance
 //input: another adult
 //output: if this adult's rank is lower than the other adult's rank, return true
@@ -18,7 +20,7 @@ Adult::Adult(){
 //Sorts the whole pool from lowest to highest rank. Adults of the same rank are sorted from highest to lowest distance
 bool Adult::operator<(const Adult &other) {
     //TODO: is this a good system to check validity first?
-    if (status != VALID){
+    if (errorStatus != VALID){
         return false;
     }
     if(rank < other.rank){
@@ -30,6 +32,25 @@ bool Adult::operator<(const Adult &other) {
     else {
         return false;
     }
+}
+
+const std::string Adult::unitTestingRankDistanceStatusPrint(){
+    std::string allInfo = "Rank: " + std::to_string(rank) + "- Distance: " + std::to_string(static_cast<int>(distance));
+    if (errorStatus == VALID){
+        allInfo += "- VALID";
+    }
+    else {
+        allInfo += "- Invalid (error type)";
+    }
+    return allInfo;
+}
+
+int Adult::getRank(){
+    return rank;
+}
+
+double Adult::getDistance(){
+    return distance;
 }
 
 //!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -75,17 +96,21 @@ bool LowerSpeedDiff(const Adult& personA, const Adult& personB) {
 //Compare two individuals to see if the first individual dominates the second individual
 //Returns true if personA dominates personB.
 //returns false if personA does not dominate personB.
-bool dominates(Adult& personA, Adult& personB, const cudaConstants* cConstants) {
-
-    //TODO: Might want to consider modifying tolerances 
+bool dominationCheck(Adult& personA, Adult& personB, const cudaConstants* cConstants) {
     
     //Is true if A is at least equally as good as B for all objectives
     bool AisEqual = false;
     //Is true if A is better than B for at least one objective
     bool AisBetter = false;
+    //TODO: Might want to consider modifying tolerances 
     //tolerances used to determine the range of values considered equal
-    double posTolerance = cConstants->posDominationTolerance;
-    double speedTolerance = cConstants->speedDominationTolerance;
+    //these are both currently set to 1e-14 AU, I don't think these need to be modified 
+    //this tolerance is about 0.0015m, and I don't think we can go lower?
+
+    //double posTolerance = cConstants->posDominationTolerance;
+    //double speedTolerance = cConstants->speedDominationTolerance;
+    double posTolerance = 1e-14;
+    double speedTolerance = 1e-14;
     //true if A posDiff "equals" B posDiff
     bool APosEqualsB = false;
     //true if A speedDiff "equals" B speedDiff
@@ -134,7 +159,7 @@ bool dominates(Adult& personA, Adult& personB, const cudaConstants* cConstants) 
 //output: if person A's rank is lower than person B's rank, return true
 bool rankSort(const Adult& personA, const Adult& personB){
     //TODO: is this a good system to check validity first?
-    if(personA.status != VALID){ //if personA has nan values or other errors they are set as worse than other adults (even other adults with errors)
+    if(personA.errorStatus != VALID){ //if personA has nan values or other errors they are set as worse than other adults (even other adults with errors)
         return false;
     }
     if (personA.rank < personB.rank) {
@@ -153,7 +178,7 @@ bool rankSort(const Adult& personA, const Adult& personB){
 //Sorts the whole pool from lowest to highest rank. Individuals of the same rank are sorted from highest to lowest distance
 bool rankDistanceSort(const Adult& personA, const Adult& personB) {
     //TODO: is this a good system to check validity first?
-    if (personA.status != VALID){
+    if (personA.errorStatus != VALID){
         return false;
     }
     if(personA.rank < personB.rank){
@@ -179,5 +204,57 @@ bool rankDistanceSort(const Adult& personA, const Adult& personB) {
 
 }
 
+bool dominationCheckTest(Adult& personA, Adult& personB) {
+    
+    //Is true if A is at least equally as good as B for all objectives
+    bool AisEqual = false;
+    //Is true if A is better than B for at least one objective
+    bool AisBetter = false;
+    //TODO: Might want to consider modifying tolerances 
+    //tolerances used to determine the range of values considered equal
+    //these are both currently set to 1e-14 AU, I don't think these need to be modified 
+    //this tolerance is about 0.0015m, and I don't think we can go lower?
 
+    //double posTolerance = cConstants->posDominationTolerance;
+    //double speedTolerance = cConstants->speedDominationTolerance;
+    double posTolerance = 5;
+    double speedTolerance = 5;
+    //true if A posDiff "equals" B posDiff
+    bool APosEqualsB = false;
+    //true if A speedDiff "equals" B speedDiff
+    bool ASpeedEqualsB = false;
 
+    //True is A posdiff is equal to B posDiff +- posTolerance
+    if ((personA.posDiff < personB.posDiff + posTolerance) && (personA.posDiff > personB.posDiff - posTolerance)){
+        APosEqualsB = true;
+    }
+    //True is A speeddiff is equal to B speedDiff +- speedTolerance
+    if ((personA.speedDiff < personB.speedDiff + speedTolerance) && (personA.speedDiff > personB.speedDiff - speedTolerance)){
+        ASpeedEqualsB = true;
+    }
+    //If A.posDiff is approximately/better than B.posDiff, and A.speedDiff is approximately/better than B.speedDiff, then A is equal to B.
+    if ((personA.posDiff < personB.posDiff || APosEqualsB) && (personA.speedDiff < personB.speedDiff || ASpeedEqualsB)) {
+        AisEqual = true;
+    }
+    //If A has a better posDiff or speedDiff than B, then A is better than B
+    if (personA.posDiff < personB.posDiff || personA.speedDiff < personB.speedDiff){
+        AisBetter = true;
+    }
+
+    //A Dominates B
+    //A only dominates B if:
+        //A.posDiff - posTolerance < B.posDiff <= A.posDiff, and A.speedDiff < B.speedDiff
+        //A.posDiff < B.posDiff, and A.speedDiff - speedTolerance < B.speedDiff <= A.speedDiff
+        //A.posDiff < B.posDiff and A.speedDiff < B.speedDiff (better in every way)
+    if (AisEqual && AisBetter){
+        return true;
+    }
+    //A and B are codominant if:
+        //A.posDiff < B.posDiff & A.speedDiff > B.speedDiff
+        //A.posDiff > B.posDiff & A.speedDiff < B.speedDiff
+        //A.posDiff = B.posDiff & A.speedDiff = B.speedDiff (Unlikely since they're doubles, unless A & B are clones or genetically similar)
+    //B dominates A if any of the conditions for "A dominates B", when reversed, are true.
+    else {
+        return false;
+    }
+}

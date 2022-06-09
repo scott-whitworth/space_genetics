@@ -3,12 +3,13 @@
 //TODO: Clarify complexities of the include paths
 //TODO: What / why we are including
 #include "../Earth_calculations/earthInfo.h"  // For launchCon and EarthInfo()
-#include "../Genetic_Algorithm/individuals.h" // For individual structs, paths to rkParameters for randomParameters()
-#include "../Genetic_Algorithm/adults.h" // For adult structs, paths to rkParameters for randomParameters()
-#include "../Genetic_Algorithm/children.h" // For child structs, paths to rkParameters for randomParameters()
+//#include "../Genetic_Algorithm/individuals.h" // For individual structs, paths to rkParameters for randomParameters()
+#include "../Genetic_Algorithm/adult.h" // For adult structs, paths to rkParameters for randomParameters()
+#include "../Genetic_Algorithm/child.h" // For child structs, paths to rkParameters for randomParameters()
 #include "../Output_Funcs/output.h" // For terminalDisplay(), recordGenerationPerformance(), and finalRecord()
 #include "../Runge_Kutta/runge_kuttaCUDA.cuh" // for testing rk4simple
 #include "../Genetic_Algorithm/ga_crossover.h" // for selectSurvivors() and newGeneration()
+#include "../Unit_Testing/testing_sorts.cpp"
 
 #include <iostream> // cout
 #include <iomanip>  // used for setw(), sets spaces between values output
@@ -20,7 +21,7 @@
 //Assigns suitability rank to all adults.
 //Input: pool - this generation of adults, defined/initilized in optimimize
 //       cConstants
-void giveRank(std::vector<Adult> pool, const cudaConstants* cConstants);
+void giveRank(std::vector<Adult> & allAdults, const cudaConstants* cConstants);
 
 //----------------------------------------------------------------------------------------------------------------------------
 // Gives a distance value to each adult. A higher distance indicates that it is more diverse from other adults
@@ -92,15 +93,18 @@ double optimize(const cudaConstants* cConstants);
 
 //-----------------------------------------------------------------------------------------------------------------------------
 int main () {
+    
     // display GPU properties and ensure we are using the right one
     cudaDeviceProp prop;
     cudaGetDeviceProperties(&prop, 0);
     std::cout << "\n\nDevice Number: 0 \n";
     std::cout << "- Device name: " << prop.name << std::endl << std::endl;
     cudaSetDevice(0);
-    
+
     // Declare the genetic constants used, with file path being used to receive initial values
     cudaConstants * cConstants = new cudaConstants("../Config_Constants/genetic.config"); 
+
+    //test_main(cConstants);
 
     // Sets run0 seed, used to change seed between runs
     // Seed is set in cudaConstants: current time or passed in via config
@@ -136,42 +140,57 @@ int main () {
 
 //TODO: unit test to make sure every individual is given NEW rank
 
-//gives each adult in the pool a rank
-void giveRank(std::vector<Adult> pool, const cudaConstants* cConstants) {
+//gives each adult in the allAdults vector a rank
+void giveRank(std::vector<Adult> & allAdults, const cudaConstants* cConstants) {
     //non-denominated sorting method
     //https://www.iitk.ac.in/kangal/Deb_NSGA-II.pdf
 
-    //Used to store the current front of individuals. first filled with the first front individuals(best out of all population)
-    // filled with index of individuals in pool
+    //Used to store the current front of adults. first filled with the first front adults(best out of all population)
+    // filled with index of adults in allAdults
     std::vector<int> front;
 
     //TODO: Pull Adult::dominates and Adult::dominatedByCount into this function
     // probably a 2D vector, or an array of vectors
-    
-    //loop through each individual
-    for (int i = 0; i < pool.size(); i++){
-        
-        //number of times pool[i] has been dominated
-        pool[i].dominatedByCount = 0;
+    //This 2D vector will store which other adults each adult has dominated
+    //1st dimension will be a spot for each adult in allAdults
+    //2nd dimension will store the indexes of adults in allAdults that the adult in the 1st dimension has dominated
+    std::vector<std::vector<int>> domination; 
 
-        //set of solutions that pool[i] dominates. Need to empty for each generation
-        std::vector<int>().swap(pool[i].dominates);
+    //This vector will keep track of how many times each adult in oldAdults has been dominated by another adult
+    //Each index in this vector will correspond to the same index within allAdults
+    //Note: fill the vector with 0s to make sure the count is accurate
+    //TODO: unit test to make sure the whole vector is actually initially filled with 0's and not just the first index or the original vector size
+    std::vector<int> dominatedByCount(0); 
 
-        for(int j = 0; j < pool.size(); j++){
-            
-            //if i dominates j, put the j index in the set of individuals dominated by i.
-            if (dominates(pool[i], pool[j], cConstants)){
-                pool[i].dominates.push_back(j);
+    //loop through each individual within the allAdults vector
+    for (int i = 0; i < allAdults.size(); i++){
+
+        //For each individual within allAdults, compare them to each other adult
+        for(int j = 0; j < allAdults.size(); j++){
+
+            //Check to see if i dominates j
+            if (dominationCheck(allAdults[i], allAdults[j], cConstants)){
+                //Put the jth index in the set of individuals dominated by i
+                domination[i].push_back(j);
+
+                //TODO: will this add too many to j's domination count? When it i's current value reaches j's current value it will have already recorded the dominaton here, but it will be recorded again 
+                //Add one to j's dominated by count
+                //dominatedByCount[j]++; 
             }
-            //if j dominates i, increase the number of times that i has been dominated
-            else if (dominates(pool[j], pool[i], cConstants)) {
-                pool[i].dominatedByCount++;
+            //Check to see if j dominates i
+            else if (dominationCheck(allAdults[j], allAdults[i], cConstants)) {
+                //TODO: this may have the same redundancy that was mentioned above with things being added to this vector too many times
+                //Put the ith index in the set of individuals dominated by j
+                //domination[j].push_back(i);
+
+                //Add one to i's dominated by count
+                dominatedByCount[i]++; 
             }
         }
         
         //if i was never dominated, add it's index to the best front, front1. Making its ranking = 1.
-        if (pool[i].dominatedByCount == 0){
-            pool[i].rank = 1;
+        if (dominatedByCount[i] == 0){
+            allAdults[i].rank = 1;
             front.push_back(i);
         }
     }
@@ -187,27 +206,33 @@ void giveRank(std::vector<Adult> pool, const cudaConstants* cConstants) {
         std::vector<int>().swap(newFront);
 
         //loop through all individuals in old front
+        //These individuals already have their rank set
         for(int k = 0; k < front.size(); k++){
 
             //loop through all the individuals that the individual in the old front dominated
-            for(int l = 0; l < pool[front[k]].dominates.size(); l++){
+            for(int l = 0; l < domination[k].size(); l++){
 
                 //subtract 1 from the dominated individuals' dominatedCount.
                 //if an individual was dominated only once for example, it would be on the second front of individuals.
-                pool[pool[front[k]].dominates[l]].dominatedByCount--;
+                dominatedByCount[domination[k][l]]--;
 
                 //if the dominated count is at 0, add the individual to the next front and make its rank equal to the next front number.
-                if (pool[pool[front[k]].dominates[l]].dominatedByCount == 0){
-                    pool[pool[front[k]].dominates[l]].rank = rankNum + 1;
-                    newFront.push_back(pool[front[k]].dominates[l]);                        
+                if (dominatedByCount[domination[k][l]] == 0){
+                    //Assign a rank to the new most dominating adult left
+                    allAdults[domination[k][l]].rank = rankNum + 1;
+
+                    //Add the index of the this adult to newFront
+                    newFront.push_back(l);                        
                 }
             }
         }
         //increment the rank number
         rankNum++;
+        
         //empty the current front
         std::vector<int>().swap(front);
-        //go to next front
+
+        //Equate the current (now empty) front to the new front to transfer the indexes of the adults in newFront to front
         front = newFront;
     }
 }
@@ -229,7 +254,6 @@ void giveDistance(std::vector<Adult> pool, const cudaConstants* cConstants, int 
     pool[0].distance = cConstants->MAX_DISTANCE;
     pool[poolSize - 1].distance = cConstants->MAX_DISTANCE;
 
-    //TODO:: Constant set for these numbers MAX_DISTANCE
 
     //For each individual besides the upper and lower bounds, make their distance equal to
     //the current distance + the absolute normalized difference in the function values of two adjacent individuals.
@@ -392,13 +416,13 @@ void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& 
 
     for (int i = 0; i < newAdults.size(); i++){ //copies all the elements of newAdults into allAdults
         allAdults.push_back(newAdults[i]);
-        if(newAdults[i].status != VALID){ //tallies the number of nans in allAdults by checking if the adult being passed into newAdult is a Nan or not
+        if(newAdults[i].errorStatus != VALID){ //tallies the number of nans in allAdults by checking if the adult being passed into newAdult is a Nan or not
             numNans++;
         }
     }
     for (int i = 0; i < oldAdults.size(); i++){ //copies over all the elements of oldAdults into allAdults
         allAdults.push_back(oldAdults[i]);
-        if(oldAdults[i].status != VALID){//tallies the number of nans in allAdults by checking if the adult being passed into newAdult is a Nan or not
+        if(oldAdults[i].errorStatus != VALID){//tallies the number of nans in allAdults by checking if the adult being passed into newAdult is a Nan or not
             numNans++;
         }
     }
@@ -539,11 +563,13 @@ double optimize(const cudaConstants* cConstants) {
     std::mt19937_64 rng(timeSeed); // This rng object is used for generating all random numbers in the genetic algorithm, passed in to functions that need it
     
     std::cout << "----------------------------------------------------------------------------------------------------" << std::endl;
-       
+
     // Initialize the recording files if in record mode
     if (cConstants->record_mode == true) {
         initializeRecord(cConstants);
     }
+
+    std::cout << "\n\n_-_-_-_-_-_-_-_-TEST: POST INITIALIZE_-_-_-_-_-_-_-_-\n\n";
      
     // input parameters for Runge Kutta process
     // Each parameter is the same for each thread on the GPU
@@ -608,6 +634,8 @@ double optimize(const cudaConstants* cConstants) {
     //Need to make children, then callRK, then make into adults (not currently doing that)
     createFirstGeneration(oldAdults, cConstants, rng); 
 
+    std::cout << "\n\n_-_-_-_-_-_-_-_-TEST: POST FIRST GENERATION_-_-_-_-_-_-_-_-\n\n";
+
     // main gentic algorithm loop
     // - continues until allWithinTolerance returns true (specific number of individuals are within threshold)
     do {        
@@ -615,8 +643,12 @@ double optimize(const cudaConstants* cConstants) {
         //takes in oldAdults (the potential parents) and fills newAdults with descendants of the old adults
         newGeneration(oldAdults, newAdults, currentAnneal, generation, rng, cConstants);
 
+        std::cout << "\n\n_-_-_-_-_-_-_-_-TEST: POST NEW GENERATION_-_-_-_-_-_-_-_-\n\n";
+
         //fill oldAdults with the best adults from this generation and the previous generation so that the best parents can be selected (numNans is for all adults in the generation - the oldAdults and the newAdults)
         preparePotentialParents(allAdults, newAdults, oldAdults, numNans, cConstants);
+
+        std::cout << "\n\n_-_-_-_-_-_-_-_-TEST: POST PREP PARENTS_-_-_-_-_-_-_-_-\n\n";
 
         //TODO:: Major space for efficeincy change
         /*

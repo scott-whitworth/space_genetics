@@ -1,23 +1,28 @@
 #include <math.h>
-#include "children.h"
+#include "child.h"
 #define _USE_MATH_DEFINES // for use of M_PI
 
 
 // Default constructor
+//this is never called, and if it is we will know because of the func status
 Child::Child() {
     //TODO: all we do is set status to DEFAULT_CHILD (which is essentially an error if we ever try to process)
     //TODO: get rid of posDiff/speedDiff
     posDiff = 1.0;
     speedDiff = 0.0; //TODO: This is ok for impact, but an issue for soft landing
+
+    funcStatus = DEFAULT_CHILD;//not ready to be an adult
+
+    errorStatus = VALID; //no nans that we know of yet
 }
 
 // Set the initial position of the spacecraft according to the newly generated parameters
 // Input: cConstants - to access c3energy value used in getCost()
-//        newInd - struct returned by generateNewIndividual()
+//        childParameters - struct returned by generateNewIndividual()
 // Output: this individual's startParams.y0 is set to the initial position and velocity of the spacecraft
-Child::Child(rkParameters<double> & newChild, const cudaConstants* cConstants) {
+Child::Child(rkParameters<double> & childParameters, const cudaConstants* cConstants) {
 
-    startParams = newChild;
+    startParams = childParameters;
     elements<double> earth = launchCon->getCondition(startParams.tripTime); //get Earth's position and velocity at launch
 
     startParams.y0 = elements<double>( // calculate the starting position and velocity of the spacecraft from Earth's position and velocity and spacecraft launch angles
@@ -28,7 +33,8 @@ Child::Child(rkParameters<double> & newChild, const cudaConstants* cConstants) {
         earth.vtheta+cos(startParams.zeta)*cos(startParams.beta)*cConstants->v_escape,
         earth.vz+sin(startParams.zeta)*cConstants->v_escape);
 
-        //TODO: set status to something (like FUNCTIONAL_CHILD)
+    funcStatus = FUNCTIONAL_CHILD;//ready to be an adult
+    errorStatus = VALID; //no nans that we know of yet
 }
 
 // Copy constructor
@@ -40,7 +46,7 @@ Child:: Child(const Child& other){
     finalPos = other.finalPos;
     posDiff = other.posDiff; 
     speedDiff = other.speedDiff;
-    status = other.status;
+    funcStatus = other.funcStatus;
 }
 
 //!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

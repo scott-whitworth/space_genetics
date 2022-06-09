@@ -113,8 +113,9 @@ __global__ void rk4SimpleCUDA(Child *children, double *timeInitial, double *star
             // if the spacecraft is within 0.5 au of the sun, the radial position of the spacecraft artificially increases to 1000, to force that path to not be used in the optimization.
             if ( sqrt(pow(curPos.r,2) + pow(curPos.z,2)) < cConstant->sun_r_min) {
                 //This is a bad result, needs to be set to be removed
+                //children[threadId].finalPos.r = nan(""); //TODO: do we need this or not?
                 //Setting the child's status to be a sun error
-                children[threadId].status = SUN_ERROR;
+                children[threadId].errorStatus = SUN_ERROR;
 
                 //Set the child's diffs to undesirable values
                 //First, set posDiff to a high value to make the sorting algorithim think it ended up far from the asteroid
@@ -124,12 +125,12 @@ __global__ void rk4SimpleCUDA(Child *children, double *timeInitial, double *star
                 //Different depending on the mission type, so we need to check and see what type of mission this is
                 if (cConstant-> missionType == Impact) {
                     //Set a low speed diff so this individual is less likely to be selected for future generations
-                    children[threadId].speedDiff = BAD_HARD_SPEEDDIFF; 
+                    children[threadId].speedDiff = BAD_IMPACT_SPEEDDIFF; 
                 }  
                 else {
                     //Set a high speed diff, which is bad for rendezvous missions
                     //This makes it unlikely to be selected as a parent
-                    children[threadId].speedDiff = BAD_SOFT_SPEEDDIFF;
+                    children[threadId].speedDiff = BAD_RENDEV_SPEEDDIFF;
                 }
 
                 return;
@@ -137,7 +138,7 @@ __global__ void rk4SimpleCUDA(Child *children, double *timeInitial, double *star
         }
 
         //Setting the status of the child to be valid
-        children[threadId].status = VALID; 
+        children[threadId].errorStatus = VALID; 
          // output to this thread's index
         children[threadId].finalPos = curPos;
 

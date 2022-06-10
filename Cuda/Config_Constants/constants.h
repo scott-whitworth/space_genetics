@@ -56,6 +56,7 @@ enum ERROR_STATUS{
     SUN_ERROR = 1,   //flew too close to the sun, the posDiff and speedDiff are set to bad values during callRK
     OTHER_ERROR = 2,   //any nans not caught during callRk are set to this error status in optimization
     NOT_RUN = 3, //child has not been run through callRK (this is the default when created)
+    NAN_ERROR = 4, //there was an issue during the simulation of the child, causing its final pos to be nan
 };
 //Error values for nans to be changed to, used in callRK and optimization when finding nans
 #define BAD_POSDIFF          10 //a bad posDiff for either mission to have (10 AU)

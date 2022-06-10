@@ -1,4 +1,4 @@
-#define UNITTEST //should toggle unit testing functions throughout the code
+/*#define UNITTEST //should toggle unit testing functions throughout the code
 #include "../Genetic_Algorithm/adult.h"
 #include <iostream>
 #include <vector>
@@ -15,19 +15,19 @@ bool compareTwoAdults();
 // This function uses a combination of std::sort with rankSort and rankDistance sort
 // Starts with two identical copies of a vector of adults and sorts them using rankSort and rankDistanceSort
 // Prints cout statements to the terminal that show you what is going on with the sort
+// Input: the bool printStuff will allow the user to either see all the individuals as they are organized (true) or it will keep it from displaying all the cout statements (false)
 // Returns a bool that says whether or not it passed all the tests
 bool sortAdultVec(bool printStuff);
 
 // This function is just here to keep sortAdultVec from being to insanely long - it initializes a different vector of adults based on which test we are trying to perform
-// Input: which test is being accomplished
+// Input: which test is being accomplished, the vector to be filled, and whether or not it should print information about the vector to the terminal
 // Output: all the current values are cleared from a and it is filled with adults corresponding to which test we are performing
 void differentTestsSetUp(int testNum, std::vector<Adult>& a, bool print);
 
 //prints the rank, distance, and status of every element in the vector using unitTestingRankDistanceStatusPrint()
 // Input: a vector of adults
 // Output: prints the ranks, distances, and error statuses of each adult
-void vecPrinting(std::vector<Adult>& a);
-
+void vecPrinting(std::vector<Adult>& a);*/
 
 bool compareTwoAdults(){
     //creates two adults to compare using the adult 
@@ -93,7 +93,7 @@ bool sortAdultVec(bool printStuff){
     
     //goes through this process for all the different vectors of Adults that are created by differentTestsSetUp
     for (int i = 1; i <= testTypes; i++) {
-        if (printStuff){
+        if (printStuff){ 
             cout << "\nTest " << i << ": " << endl;
         }
         differentTestsSetUp(i, forRankSort, printStuff); //depending on which time through the loop this is, sets up fills forRankSort with values 

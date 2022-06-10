@@ -66,7 +66,7 @@ struct Adult: public Child {
 
     //TODO: Comments on where these ^^^^ constructors should be called (i.e. at the end of newGeneration, after callRK)
 
-    //#ifdef UNITTEST //this should be defined in unit testing
+    #ifdef UNITTEST //this should be defined in unit testing
 
     // Constructor used ONLY FOR UNIT TESTING!!!
     // This constructor uses the default rkParameters, elements, posDiff and speedDiff, the only things that are defined are the rank and distance because that is all rankDistance sort cares about
@@ -83,7 +83,7 @@ struct Adult: public Child {
     //getters used exclusively in unit testing
     int getRank();
     double getDistance();
-    //#endif //unit testing endif
+    #endif //unit testing endif
 
 };
 

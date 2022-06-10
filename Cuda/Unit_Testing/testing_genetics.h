@@ -1,7 +1,45 @@
-#ifndef GA_CROSSOVER_H
-#define GA_CROSSOVER_H
-
+#define UNITTEST
+#include "../Genetic_Algorithm/adult.h"
 #include <random>
+
+const int genSize = 10;
+
+//returns true if the first generation of parents is generated from a set of "random" children
+//these parents cannot actually be used to create the next generation I realized after the fact because their rkParameters and elements are the defaults 
+//I made a child constructor that allowed me to set the speedDiff and posDiff so it doesn't correspond to their rkParameters or elements
+//The logic for the above decision was that it would make it easier to tell if the individuals were properly becoming adults by rankDistanceSorting them
+//Additionally, I just was not paying enough attention to the way generate children worked and figured these parents could generate children
+bool firstParentsTest();
+
+//Makes a set of parents and creates children from these parents
+bool firstFullGen();
+
+//Simpified unit test version of first generation -> does not callRK, instead I preset posDiff and speedDiff to make calculations easier (selected semi-random multiples of 10)
+// Creates the first generation of adults by taking in an array of children with randomly generated parameters
+// Input: initialChildren - children with randomly generated parameters whose runge kutta values have not yet been computed 
+//        oldAdults - a vector that will be filled with the children once they've gone through callRK and are converted into adults
+// Output: oldAdults is full of the children that have been converted into adults - this allows us to have a bunch of random adults to create a new generation
+void UTfirstGeneration(Child* initialChildren, std::vector<Adult>& oldAdults);
+
+//Simplified unit test version of convert to adults
+// Converts children previously simulated by callRK into adults and inserts the new adults into the submitted adult vector
+// Input: newAdults - the vector of adults the converted adults will be inserted into
+//        newChildren - the array of simulated children that will be tranformed into adults
+// Output: newAdults will be filled with the children that are converted into adults 
+//this happens after teh first generation is created and then after every new child generation is made 
+void UTconvertToAdults(std::vector<Adult> & newAdults, Child* newChildren);
+
+
+//TODO: once giveRankTest and giveDistanceTest are complete, use these instead, rather than using my weird versions of these
+//giveRank was broken so I threw together an inefficient giveRank type function 
+//Not sure it does the same thing, but works well enough for me to be able to verify if the results seems reasonable
+void wrongWayToRank(std::vector<Adult> & newAdults);
+//copied giveDistance from optimization.cu and updated it as necessary to work with my other testing functions
+void sortaGiveDistance(std::vector<Adult> & pool);
+
+//Simplified unit test version of newGeneration
+void UTnewGen(std::vector<Adult> & oldAdults, std::vector<Adult> & newAdults, const double & annealing, const int & generation, std::mt19937_64 & rng);
+
 
 ///////////////////////////////////////////////////////////////
 // Crossover Functions                                       //
@@ -27,47 +65,47 @@
 // Creates a random bifurcation mask
 // ** currently not in use - replaced with bundleVars / average **
 // Randomly picks one index to be the start of the '2's from mask
-void crossOver_randHalf(std::vector<int> & mask, std::mt19937_64 & rng);
+void UTcrossOver_randHalf(std::vector<int> & mask, std::mt19937_64 & rng);
 
 
 // Creates a mask where no mixing occurs
 // ** currently not in use **
 // Sets the mask to be entirely PARTNER1, use flipMask() to have PARTNER2
-void crossOver_oneParent(std::vector<int> & mask);
+void UTcrossOver_oneParent(std::vector<int> & mask);
 
 // Creates a mask that is contains randomly chosen values in each index
 // Each element in a mask is randomly set to either PARTNER1 or PARTNER2
-void crossOver_wholeRandom(std::vector<int> & mask, std::mt19937_64 & rng);
+void UTcrossOver_wholeRandom(std::vector<int> & mask, std::mt19937_64 & rng);
 
 // Generates crossover mask that maintains paramter relationships (gamma, tau, coast values grouped)
 // Similar to crossOver_wholeRandom, but with parameter grouping
 // Input: mask - set, size OPTIM_VARS, 
 //        rng - managed from optimize()
 // Output: mask contains values either 1 or 2 (equivalent to PARTNER1 or PARTNER2)
-void crossOver_bundleVars(std::vector<int> & mask, std::mt19937_64 & rng);
+void UTcrossOver_bundleVars(std::vector<int> & mask, std::mt19937_64 & rng);
 
 // Sets the entire mask to be AVG for length OPTIM_VARS
 // Input: mask - pointer integer array of length OPTIM_VARS
 // Output: mask is set to contain all AVG values
-void crossOver_average(std::vector<int> & mask);
+void UTcrossOver_average(std::vector<int> & mask);
 
 // Utility to flip the polarity of a mask
 // Input:  mask should have already be set from other crossover functions
 // Output: each PARTNER1 in mask will be reassigned to be a PARTNER2
 //         each PARTNER2 will be reassigned PARTNER1
 //         AVG is left unchanged
-void flipMask(std::vector<int> & mask);
+void UTflipMask(std::vector<int> & mask);
 
 // Copy contents of maskIn into maskOut of size OPTIM_VARS
 // Output: maskIn remains unchanged, maskOut will have same contents as maskIn
-void copyMask(int * maskIn, int * maskOut);
+void UTcopyMask(int * maskIn, int * maskOut);
 
 ///////////////////////////////////////////////////////////////////////////////
 
 // Utility function for mutate() to get a random double with high resolution
 // Input: max - the absolute value of the min and max(min = -max) of the range
 // Output: A double value that is between -max and +max
-double getRand(double max, std::mt19937_64 & rng);
+double UTgetRand(double max, std::mt19937_64 & rng);
 
 // Creates a new rkParameters individual by combining properties of two parent Individuals using a crossover mask
 // Input: two rkParameter from individuals (p1 and p2) - source of genes for new individual
@@ -76,7 +114,7 @@ double getRand(double max, std::mt19937_64 & rng);
 //        cConstants, annealing, rng, generation - passed through to mutate()
 // Output: Returns rkParameter object that is new individual
 // Called from generateChildrenPair, calls mutate
-rkParameters<double> generateNewChild(const rkParameters<double> & p1, const rkParameters<double> & p2, const std::vector<int> & mask, const cudaConstants * cConstants, const double & annealing, std::mt19937_64 & rng, const double & generation);
+rkParameters<double> UTgenerateNewChild(const rkParameters<double> & p1, const rkParameters<double> & p2, const std::vector<int> & mask, const cudaConstants * cConstants, const double & annealing, std::mt19937_64 & rng, const double & generation);
 
 // Utility function, generates a boolean mask for which paramters to mutate (1: mutate, 0: not mutated)
 // Number of genes mutated is a compound probability of n-1 genes before it
@@ -89,7 +127,7 @@ rkParameters<double> generateNewChild(const rkParameters<double> & p1, const rkP
 //                      - called iteratively to mutate more genes
 // output: mutateMask contains false for genes that are not mutating, true for genes that are to be mutated
 // Called by mutate()
-void mutateMask(std::mt19937_64 & rng, bool * mutateMask, double mutation_rate);
+void UTmutateMask(std::mt19937_64 & rng, bool * mutateMask, double mutation_rate);
 
 // Handles potential mutation of individual 
 // Calls mutateMask, then applied mutations as necessary
@@ -100,7 +138,7 @@ void mutateMask(std::mt19937_64 & rng, bool * mutateMask, double mutation_rate);
 //        cConstants - holds properties to use such as mutation rates and mutation scales for specific parameter property types
 // Output: Returns rkParameter object that is the mutated version of p1
 // Called by generateNewIndividual
-rkParameters<double> mutate(const rkParameters<double> & p1, std::mt19937_64 & rng, const double & annealing, const cudaConstants* cConstants, const double & generation);
+rkParameters<double> UTmutate(const rkParameters<double> & p1, std::mt19937_64 & rng, const double & annealing, const cudaConstants* cConstants, const double & generation);
 
 
 //TODO: Update this header (things have changed)
@@ -119,7 +157,7 @@ rkParameters<double> mutate(const rkParameters<double> & p1, std::mt19937_64 & r
 //         mask is flipped in polarity between each (refer to flipMask method) 
 //         newIndCount is incremented by +2
 // Called by newGeneration()
-void generateChildrenPair(const Adult & parent1, const Adult & parent2, Child * newChildren, std::vector<int> & mask, const double & annealing, std::mt19937_64 & rng, int & numNewChildren, const int & generation, const cudaConstants* cConstants);
+void UTgenerateChildrenPair(const Adult & parent1, const Adult & parent2, Child * newChildren, std::vector<int> & mask, const double & annealing, std::mt19937_64 & rng, int & numNewChildren, const int & generation, const cudaConstants* cConstants);
 
 //TODO: Update this header (things have changed)
 // Creates the next pool to be used in the optimize function in optimization.cu
@@ -134,30 +172,6 @@ void generateChildrenPair(const Adult & parent1, const Adult & parent2, Child * 
 //         Each parent pair produces 8 new children (4 masks, two children per mask)
 //         Returns number of new individuals created (newIndCount)
 //TODO: Const references that should not be changing
-void newGeneration(std::vector<Adult> & oldAdults, std::vector<Adult> & newAdults, const double & annealing, const int & generation, const std::mt19937_64 & rng, const cudaConstants* cConstants);
+void UTnewGeneration(std::vector<Adult> & oldAdults, std::vector<Adult> & newAdults, const double & annealing, const int & generation, const std::mt19937_64 & rng, const cudaConstants* cConstants);
 
-// Converts children previously simulated by callRK into adults and inserts the new adults into the submitted adult vector
-// Input: newAdults - the vector of adults the converted adults will be inserted into
-//        newChildren - the array of simulated children that will be tranformed into adults
-//        cConstants - needed for the number of individuals
-// Output: newAdults will be filled with the children that are converted into adults 
-//this happens after teh first generation is created and then after every new child generation is made 
-void convertToAdults(std::vector<Adult> & newAdults, Child* newChildren, const cudaConstants* cConstants);
-
-// Creates the first generation of adults by taking in an array of children with randomly generated parameters
-// Input: initialChildren - children with randomly generated parameters whose runge kutta values have not yet been computed 
-//        oldAdults - a vector that will be filled with the children once they've gone through callRK and are converted into adults
-//        cConstants - passed on into callRK and convertToAdults
-// Output: oldAdults is full of the children that have been converted into adults - this allows us to have a bunch of random adults to create a new generation
-//
-void firstGeneration(Child* initialChildren, std::vector<Adult>& oldAdults, const cudaConstants* cConstants);
-
-// Go through a children array that has just been simulated and will determine their error_status, posDiff, and speedDiff
-// Input: newChildren - this is the array (specifically pointer) of the children that has just been generated
-//        cConstants - constants used for the getPosDiff and getSpeedDiff functions
-// Output: This function will iterate through the inputted children array and fill in the children's error_status, posDiff, and speedDiff
-// NOTE: This function needs to (and should only) be called directly after using callRK()
-void setStatusAndDiffs(Child* newChildren, const cudaConstants* cConstants);
-
-#include "ga_crossover.cpp"
-#endif
+#include "../Unit_Testing/testing_genetics.cpp"

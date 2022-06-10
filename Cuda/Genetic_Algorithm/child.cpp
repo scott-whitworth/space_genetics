@@ -1,5 +1,4 @@
 #include <math.h>
-#include "child.h"
 #define _USE_MATH_DEFINES // for use of M_PI
 
 
@@ -55,8 +54,16 @@ Child:: Child(const Child& other){
 // Input: cConstants in accessing properties such as r_fin_ast, theta_fin_ast, and z_fin_ast
 // Output: Assigns and returns this individual's posDiff value
 __host__ __device__ double Child::getPosDiff(const cudaConstants* cConstants) {
-   posDiff = sqrt(pow(cConstants->r_fin_ast - finalPos.r, 2) + pow( (cConstants->r_fin_ast * cConstants->theta_fin_ast) - (finalPos.r * fmod(finalPos.theta, 2 * M_PI)), 2) + pow(cConstants->z_fin_ast - finalPos.z, 2));
-   return posDiff;
+    //Check to see if the posDiff should be calculated or set to the bad value
+    //Will mean only valid children will be likely to be considered for future generations
+    if (errorStatus == VALID) {
+        posDiff = sqrt(pow(cConstants->r_fin_ast - finalPos.r, 2) + pow( (cConstants->r_fin_ast * cConstants->theta_fin_ast) - (finalPos.r * fmod(finalPos.theta, 2 * M_PI)), 2) + pow(cConstants->z_fin_ast - finalPos.z, 2));
+    }
+    else {
+        posDiff = BAD_POSDIFF;
+    }
+
+    return posDiff;
 }
 
 //!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -64,7 +71,22 @@ __host__ __device__ double Child::getPosDiff(const cudaConstants* cConstants) {
 // Input: cConstants in accessing properties such as vr_fin_ast, vtheta_fin_ast, and vz_fin_ast
 // Output: Assigns and returns this child's speedDiff value
 __host__ __device__ double Child::getSpeedDiff(const cudaConstants* cConstants) {
-    speedDiff = sqrt(pow(cConstants->vr_fin_ast - finalPos.vr, 2) + pow(cConstants->vtheta_fin_ast - finalPos.vtheta, 2) + pow(cConstants->vz_fin_ast - finalPos.vz, 2)); 
+    //Check to see if the speedDiff should be calculated or set to the bad value
+    //Will mean only valid children will be likely to be considered for future generations
+    if (errorStatus == VALID) {
+        speedDiff = sqrt(pow(cConstants->vr_fin_ast - finalPos.vr, 2) + pow(cConstants->vtheta_fin_ast - finalPos.vtheta, 2) + pow(cConstants->vz_fin_ast - finalPos.vz, 2)); 
+    }
+    else {
+        //The bad speedDiff is dependent on the type of mission; a high speedDiff is bad for rendezvous missions and a low speedDiff is bad for impact missions
+        if (cConstants -> missionType == Impact)
+        {
+            speedDiff = BAD_IMPACT_SPEEDDIFF;
+        }
+        else {
+            speedDiff = BAD_RENDEV_SPEEDDIFF;
+        }
+        
+    }
     return speedDiff;
 }
 

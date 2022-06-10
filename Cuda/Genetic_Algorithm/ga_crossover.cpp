@@ -40,7 +40,6 @@ void crossOver_oneParent(std::vector<int> & mask) {
 
 // Creates a random mask
 void crossOver_wholeRandom(std::vector<int> & mask, std::mt19937_64 & rng) {
-    std::cout << "\n\n_-_-_-_-_-_-_-_-TEST: PRE RAND FOR_-_-_-_-_-_-_-_-\n\n";
     for (int i = 0; i < OPTIM_VARS; i++ ) {
         if (rng() % 2) { //Coin flip, either 1/0
             mask[i] = PARTNER2;
@@ -49,7 +48,6 @@ void crossOver_wholeRandom(std::vector<int> & mask, std::mt19937_64 & rng) {
             mask[i] = PARTNER1;
         }
     }
-    std::cout << "\n\n_-_-_-_-_-_-_-_-TEST: POST RAND FOR_-_-_-_-_-_-_-_-\n\n";
     return;
 }
 
@@ -130,13 +128,9 @@ double getRand(double max, std::mt19937_64 & rng) {
 //!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Creates a new rkParameters individual by combining properties of two parent Individuals using a mask to determine which
 rkParameters<double> generateNewChild(const rkParameters<double> & p1, const rkParameters<double> & p2, const std::vector<int> & mask, const cudaConstants * cConstants, const double & annealing, std::mt19937_64 & rng, const double & generation) {
-    std::cout << "\n\n_-_-_-_-_-_-_-_-TEST: PRE SET P1_-_-_-_-_-_-_-_-\n\n";
     
     // Set the new individual to hold traits from parent 1 
     rkParameters<double> childParameters = p1;
-
-    std::cout << "\n\n_-_-_-_-_-_-_-_-TEST: PRE SET PARAMETERS_-_-_-_-_-_-_-_-\n\n";
-
 
     // Based on mask values, set parameters value is to be set to parent 2 or average of parent 1 and 2
     // Only calculate values pertaining to thrust if a thruster is being used
@@ -200,8 +194,6 @@ rkParameters<double> generateNewChild(const rkParameters<double> & p1, const rkP
         childParameters.alpha = p1.alpha/2.0 + p2.alpha/2.0;
     }
 
-    std::cout << "\n\n_-_-_-_-_-_-_-_-TEST: PRE MUTATE_-_-_-_-_-_-_-_-\n\n";
-    
     // Crossover complete, determine mutation
     childParameters = mutate(childParameters, rng, annealing, cConstants, generation);
 
@@ -332,31 +324,21 @@ rkParameters<double> mutate(const rkParameters<double> & p1, std::mt19937_64 & r
 //!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Method that creates a pair of new Individuals from a pair of other individuals and a mask
 void generateChildrenPair (const Adult & parent1, const Adult & parent2, Child * newChildren, std::vector<int> & mask, const double & annealing, std::mt19937_64 & rng, int & numNewChildren, const int & generation, const cudaConstants* cConstants) {
-    std::cout << "\n\n_-_-_-_-_-_-_-_-TEST: PRE GENERATE 1 CHILD_-_-_-_-_-_-_-_-\n\n";
 
     //TODO: There is inherently an issue here that you may over-write newChildren if you don't know the size
     //      It is possible you can do this externally, but here in this function, there is no check on the size of numNewChildren
     
-    //TODO: Is temp for testing? Why not just newChildren[numNewChildren] = Child(generateNewChild(...))?
-    Child temp(generateNewChild(parent1.startParams, parent2.startParams, mask,  cConstants, annealing, rng, generation), cConstants);
-
-    std::cout << "\n\n_-_-_-_-_-_-_-_-TEST: PRE CHILD ASSIGN_-_-_-_-_-_-_-_-\n\n";
-
     //Generate a new individual based on the two parents
-    newChildren[numNewChildren] = temp;
+    newChildren[numNewChildren] = Child(generateNewChild(parent1.startParams, parent2.startParams, mask,  cConstants, annealing, rng, generation), cConstants);;
 
     //Add one to numNewChildren to signify that a new child has been added to the newChildren vector
     //Will also ensure that no children are overwritten
     numNewChildren++;
 
-    std::cout << "\n\n_-_-_-_-_-_-_-_-TEST: PRE MASK FLIP_-_-_-_-_-_-_-_-\n\n";
-
     //TODO: For efficiency, we might want to check if the mask is an averaging mask (if it is, we probably don't need to make the 'flip')
     //      On the other hand, even numbers are nice, so we may want to take the hit anyway just to keep things even
     //Flip the mask to generate a mirrored individual
     flipMask(mask); 
-
-    std::cout << "\n\n_-_-_-_-_-_-_-_-TEST: PRE GENERATE 2 CHILD_-_-_-_-_-_-_-_-\n\n";
 
     //Generate a mirrored child
     newChildren[numNewChildren] = Child(generateNewChild(parent1.startParams, parent2.startParams, mask,  cConstants, annealing, rng, generation), cConstants); 
@@ -393,18 +375,19 @@ void newGeneration (std::vector<Adult> & oldAdults, std::vector<Adult> & newAdul
     //it will contain indexes of adults that are deemed to be parents
     //it will be shuffled to generate random parent pairings
     //NOTE: this will only be effective after oldAdults has been sorted (with the best Adults at the front)
-    int* parentPairs = new int [cConstants->survivor_count];
+    //int parentPool [(cConstants->survivor_count)] = {0};
+    std::vector<int> parentPool;
 
-    //Fill the parentPairs index with the number of indexes desired for survivors
+    //Fill the parentPool index with the number of indexes desired for survivors
     for (int i = 0; i < cConstants->survivor_count; i++)
     {
-        parentPairs[i] = i; 
+        parentPool.push_back(i);
     }
 
-    //Shuffle the parentPairs mapping array
+    //Shuffle the parentPool mapping array
     //This will generate a random list of indicies, which can then be used to map to random Adults within oldAdult's survivor range to pair parents
     //This will effectively generate random parent pairs
-    std::shuffle(parentPairs, parentPairs + cConstants->survivor_count, rng); 
+    std::shuffle(parentPool.begin(), parentPool.end(), rng); 
 
     //Int that tracks the number of new individuals that have been generated
     //Used primarily to make sure that no children are overwritten in newChildren; indexing in generatechildrenPair, should equal N when finished
@@ -428,26 +411,24 @@ void newGeneration (std::vector<Adult> & oldAdults, std::vector<Adult> & newAdul
         //Generate the base mask
         crossOver_wholeRandom(mask, rng);
 
-        std::cout << "\n\n_-_-_-_-_-_-_-_-TEST: PRE PAIR GENERATION 1_-_-_-_-_-_-_-_-\n\n";
-
         //TODO: Clean up these comments. If you ever copy/paste anything you are probably doing it wrong
 
         //Generate a pair of children based on the mask
-        generateChildrenPair(oldAdults[parentPairs[parentIndex]], oldAdults[parentPairs[parentIndex+1]], newChildren, mask, annealing, rng, numNewChildren, generation, cConstants);
+        generateChildrenPair(oldAdults[parentPool[parentIndex]], oldAdults[parentPool[parentIndex+1]], newChildren, mask, annealing, rng, numNewChildren, generation, cConstants);
 
         //Generate a pair of children from a pair of parents based on the average mask method
         //Generate the base mask
         crossOver_average(mask);
 
         //Generate a pair of children based on the mask
-        generateChildrenPair(oldAdults[parentPairs[parentIndex]], oldAdults[parentPairs[parentIndex+1]], newChildren, mask, annealing, rng, numNewChildren, generation, cConstants);
+        generateChildrenPair(oldAdults[parentPool[parentIndex]], oldAdults[parentPool[parentIndex+1]], newChildren, mask, annealing, rng, numNewChildren, generation, cConstants);
 
         //Generate a pair of children from a pair of parents based on the bundled random mask method
         //Generate the base mask
         crossOver_bundleVars(mask, rng);
 
         //Generate a pair of children based on the mask
-        generateChildrenPair(oldAdults[parentPairs[parentIndex]], oldAdults[parentPairs[parentIndex+1]], newChildren, mask, annealing, rng, numNewChildren, generation, cConstants);
+        generateChildrenPair(oldAdults[parentPool[parentIndex]], oldAdults[parentPool[parentIndex+1]], newChildren, mask, annealing, rng, numNewChildren, generation, cConstants);
 
         //TODO: My main interest is in getting rid of this second bundleVars crossover. If you feel you are ready, I would remove it
         //For a second time, generate a pair of children feom a pair of parents based on the bundled random mask method
@@ -455,7 +436,7 @@ void newGeneration (std::vector<Adult> & oldAdults, std::vector<Adult> & newAdul
         crossOver_bundleVars(mask, rng);
 
         //Generate a pair of children based on the mask
-        generateChildrenPair(oldAdults[parentPairs[parentIndex]], oldAdults[parentPairs[parentIndex+1]], newChildren, mask, annealing, rng, numNewChildren, generation, cConstants);
+        generateChildrenPair(oldAdults[parentPool[parentIndex]], oldAdults[parentPool[parentIndex+1]], newChildren, mask, annealing, rng, numNewChildren, generation, cConstants);
 
         //Iterate through the shuffled section of the oldAdults array
         //Add two to parentIndex to account for the variable tracking pairs of parents, not just one parent's index
@@ -469,7 +450,7 @@ void newGeneration (std::vector<Adult> & oldAdults, std::vector<Adult> & newAdul
 
             //Re-shuffle the best/survivor section of oldAdults to make sure there are new pairs of parents
             //This will ideally not harm genetic diversity too much, even with the same set of parents
-            std::shuffle(parentPairs, parentPairs + cConstants->survivor_count, rng);
+            std::shuffle(parentPool.begin(), parentPool.end(), rng);
 
             //TODO: Kind of weird, but I like it.
             //      Ok, so the rationale is that you only want to pull from the 'best' individuals
@@ -481,7 +462,7 @@ void newGeneration (std::vector<Adult> & oldAdults, std::vector<Adult> & newAdul
         }
     }
 
-    std::cout << "\n\n_-_-_-_-_-_-_-_-TEST: POST CHILDREN GENERATION_-_-_-_-_-_-_-_-\n\n";
+    std::cout << "\n\n_-_-_-_-_-_-_-_-TEST: POST CHILDREN CREATION_-_-_-_-_-_-_-_-\n\n";
 
     double timeInitial = 0;
     double calcPerS = 0;
@@ -493,6 +474,9 @@ void newGeneration (std::vector<Adult> & oldAdults, std::vector<Adult> & newAdul
         //Perhaps we should just import cCOnstants and newChildren into callRk, since most of the arguments come from cConstants regardless
     callRK(cConstants->num_individuals, cConstants->thread_block_size, newChildren, timeInitial, (cConstants->orbitalPeriod / cConstants->GuessMaxPossibleSteps), cConstants->rk_tol, calcPerS, cConstants); 
 
+    //Determine the status and diffs of the simulated children
+    setStatusAndDiffs(newChildren, cConstants); 
+
     std::cout << "\n\n_-_-_-_-_-_-_-_-TEST: POST RK_-_-_-_-_-_-_-_-\n\n";
 
     //Now that the children have been simulated, convert the children into adults
@@ -503,7 +487,6 @@ void newGeneration (std::vector<Adult> & oldAdults, std::vector<Adult> & newAdul
 
     //Free the pointer's memory
     delete[] newChildren; 
-    delete[] parentPairs;
 }
 
 //Function that will convert the generated children into adults
@@ -522,6 +505,86 @@ void convertToAdults(std::vector<Adult> & newAdults, Child* newChildren, const c
 void firstGeneration(Child* initialChildren, std::vector<Adult>& oldAdults, const cudaConstants* cConstants){
     const double timeIntial = 0;
     double calcPerS  = 0;
+
+    //TESTS:
+
+    std::cout << "\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~PRE SIM TESTS~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n";
+    
+    double itlAlpha, itlBeta, itlZeta, itlTTime, itlR, itlTheta, itlZ, itlCoast;
+
+    //Test to make sure that parameters are okay
+    //Calculate the average of each generated parameter is within an accepted range
+    for (int i = 0; i < cConstants->num_individuals; i++)
+    {
+        itlAlpha += initialChildren[i].startParams.alpha;
+        itlBeta += initialChildren[i].startParams.beta;
+        itlZeta += initialChildren[i].startParams.zeta;
+        itlTTime += initialChildren[i].startParams.tripTime;
+        itlR += initialChildren[i].startParams.y0.r;
+        itlTheta += initialChildren[i].startParams.y0.theta;
+        itlZ += initialChildren[i].startParams.y0.z;
+        itlCoast += initialChildren[i].startParams.coeff.coastThreshold; 
+    }
+    
+    //Reporting the average generated input parameters
+    std::cout << "\nAverage itl alpha: " << itlAlpha/cConstants->num_individuals <<
+                 "\nAverage itl beta: " << itlBeta/cConstants->num_individuals <<
+                 "\nAverage itl zeta: " << itlZeta/cConstants->num_individuals <<
+                 "\nAverage itl time: " << itlTTime/cConstants->num_individuals <<
+                 "\nAverage itl r: " << itlR/cConstants->num_individuals <<
+                 "\nAverage itl theta: " << itlTheta/cConstants->num_individuals <<
+                 "\nAverage itl z: " << itlZ/cConstants->num_individuals <<
+                 "\nAverage itl coast: " << itlCoast/cConstants->num_individuals;
+
+    //Check for error statuses
+    int validCount, sunCount, otherCount, notRunCount;
+    validCount = sunCount = otherCount = notRunCount = 0;
+
+    //Reporting the number of each status
+    //All should have a status of not_run
+    for (int i = 0; i < cConstants->num_individuals; i++)
+    {
+        if (initialChildren[i].errorStatus == VALID) {
+            validCount++;
+        }
+        else if (initialChildren[i].errorStatus == SUN_ERROR) {
+            sunCount++;
+        }
+        else if (initialChildren[i].errorStatus == NOT_RUN) {
+            notRunCount++;
+        }
+        else {
+            otherCount++;
+        }
+    }
+
+    //Reporting the statuses
+    std::cout << "\n\nPRE SIM ERROR COUNTS:" <<
+                 "\n\tValid: " << validCount <<
+                 "\n\tSun: " << sunCount <<
+                 "\n\tNot Run: " << notRunCount <<
+                 "\n\tOther: " << otherCount;
+    
+    //Check to make sure that finalPos is okay
+    bool finalPosCheck = true;
+
+    for (int i = 0; i < cConstants->num_individuals; i++)
+    {
+        if (initialChildren[i].finalPos.r != 0) {
+            std::cout << "\nCHILDREN FINAL POS GENERATION ERROR\n\t(triggering r value: " << initialChildren[i].finalPos.r << ")\n";
+            finalPosCheck = false;
+            break;
+        }
+    }
+
+    //Assuming that all finalPos's have values of 0, will report if so, or not
+    if (finalPosCheck) {
+        std::cout << "\n\nPASSED INITIAL FINAL POS CHECK\t(all children start with final pos values of 0)\n";
+    }
+    else {
+        finalPosCheck = true; 
+    }
+
      // Each child represents an individual set of starting parameters 
         // GPU based runge kutta process determines final position and velocity based on parameters
     //Will fill in the final variables (final position & speed, posDiff, speedDiff) for each child
@@ -529,7 +592,114 @@ void firstGeneration(Child* initialChildren, std::vector<Adult>& oldAdults, cons
         //Perhaps we should just import cCOnstants and newChildren into callRk, since most of the arguments come from cConstants regardless
     callRK(cConstants->num_individuals, cConstants->thread_block_size, initialChildren, timeIntial, (cConstants->orbitalPeriod / cConstants->GuessMaxPossibleSteps), cConstants->rk_tol, calcPerS, cConstants); 
 
+    //Determine the status and diffs of the now simulated children
+    setStatusAndDiffs(initialChildren, cConstants);
+    
+
+    std::cout << "\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~POST SIM TESTS~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n";
+
+    //Resetting values
+    itlAlpha = itlBeta = itlZeta = itlTTime = itlR = itlTheta = itlZ = itlCoast = 0;
+
+    //Test to make sure that parameters are okay
+    //Find the averages of the parameters to make sure they are within expected ranges
+    for (int i = 0; i < cConstants->num_individuals; i++)
+    {
+        itlAlpha += initialChildren[i].startParams.alpha;
+        itlBeta += initialChildren[i].startParams.beta;
+        itlZeta += initialChildren[i].startParams.zeta;
+        itlTTime += initialChildren[i].startParams.tripTime;
+        itlR += initialChildren[i].startParams.y0.r;
+        itlTheta += initialChildren[i].startParams.y0.theta;
+        itlZ += initialChildren[i].startParams.y0.z;
+        itlCoast += initialChildren[i].startParams.coeff.coastThreshold; 
+    }
+    
+    //Report parameter averages
+    std::cout << "\nAverage final alpha: " << itlAlpha/cConstants->num_individuals <<
+                 "\nAverage final beta: " << itlBeta/cConstants->num_individuals <<
+                 "\nAverage final zeta: " << itlZeta/cConstants->num_individuals <<
+                 "\nAverage final time: " << itlTTime/cConstants->num_individuals <<
+                 "\nAverage final r: " << itlR/cConstants->num_individuals <<
+                 "\nAverage final theta: " << itlTheta/cConstants->num_individuals <<
+                 "\nAverage final z: " << itlZ/cConstants->num_individuals <<
+                 "\nAverage final coast: " << itlCoast/cConstants->num_individuals;
+
+    //Check for error statuses
+    validCount = sunCount = otherCount = notRunCount = 0;
+
+    //See which statuses each child has
+    for (int i = 0; i < cConstants->num_individuals; i++)
+    {
+        if (initialChildren[i].errorStatus == VALID) {
+            validCount++;
+        }
+        else if (initialChildren[i].errorStatus == SUN_ERROR) {
+            sunCount++;
+        }
+        else if (initialChildren[i].errorStatus == NOT_RUN) {
+            notRunCount++;
+        }
+        else {
+            otherCount++;
+        }
+    }
+
+    //Reporting the error counts
+    std::cout << "\n\nPOST SIM ERROR COUNTS:" <<
+                 "\n\tValid: " << validCount <<
+                 "\n\tSun: " << sunCount <<
+                 "\n\tNot Run: " << notRunCount <<
+                 "\n\tOther: " << otherCount;
+
+
+    //Check to make sure that finalPos is okay
+    for (int i = 0; i < cConstants->num_individuals; i++)
+    {
+        if (initialChildren[i].finalPos.r != 0) {
+            std::cout << "\n\nFinal pos check pass (values not all 0)\n\t(triggering r value: " << initialChildren[i].finalPos.r << ")\n";
+            finalPosCheck = false;
+            break;
+        }
+    }
+
+    //Assuming that after the simulation at least one of the final pos's != 0, if not it will report the error
+    if (finalPosCheck) {
+        std::cout << "\n\nFAILED FINAL POS CHECK\t(all children end with final pos values of 0)\n";
+    }
+    
+    
+    std::cout <<"\n0th CHILD status: " << initialChildren[0].errorStatus <<
+                "\n0th CHILD final pos: " << initialChildren[0].finalPos << 
+                "\n0th CHILD posDiff: " << initialChildren[0].posDiff << "\n";
+
+    std::cout << "\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~END TESTS~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n";
+
     //Now that the children have been simulated, convert the children into adults
     //This will also put the converted children into the newAdults vector
     convertToAdults(oldAdults, initialChildren, cConstants); 
+
+    std::cout << "\nADULT posDiff: " << oldAdults[0].posDiff << "\n";
+}
+
+// Go through a children array that has just been simulated and will determine their error_status, posDiff, and speedDiff
+void setStatusAndDiffs(Child* newChildren, const cudaConstants* cConstants) {
+    //Iterate through the simulated children to determine their error status (if it hasn't been set by callRK already) and calculate their pos and speed differences
+    for (int i = 0; i < cConstants->num_individuals; i++)
+    {
+        //Check to see if nans are generated in the finalPos elements
+        if (isnan(newChildren[i].finalPos.r) || isnan(newChildren[i].finalPos.theta) || isnan(newChildren[i].finalPos.z) || isnan(newChildren[i].finalPos.vr) || isnan(newChildren[i].finalPos.vtheta) || isnan(newChildren[i].finalPos.vz)) {
+            //Mark the child with the nan variables with the nan_error flag
+            newChildren[i].errorStatus = NAN_ERROR;
+        }
+        else if (newChildren[i].errorStatus != SUN_ERROR) {
+            //Since nan and sun errors would have already been set, it is safe to set this child's status as valid
+            newChildren[i].errorStatus = VALID;
+        }
+
+        //Now that the status has been determined, there is enough information to set pos and speed diffs
+        //The two functions will look at the child's errorStatus and set the diffs based on that
+        newChildren[i].getPosDiff(cConstants);
+        newChildren[i].getSpeedDiff(cConstants); 
+    }
 }

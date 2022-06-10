@@ -1,6 +1,5 @@
 #include <math.h>
 #define _USE_MATH_DEFINES // for use of M_PI
-#include "adult.h"
 
 // Default constructor
 Adult::Adult(){
@@ -98,6 +97,9 @@ bool dominationCheck(Adult& personA, Adult& personB, const cudaConstants* cConst
     //true if A speedDiff "equals" B speedDiff
     bool ASpeedEqualsB = false;
 
+    //std::cout << "\n\nPERSON A TEST: posDiff = " << personA.posDiff << ", speedDiff = " << personA.speedDiff; 
+    //std::cout << "\n\nPERSON B TEST: posDiff = " << personB.posDiff << ", speedDiff = " << personB.speedDiff; 
+
     //True is A posdiff is equal to B posDiff +- posTolerance
     if ((personA.posDiff < personB.posDiff + posTolerance) && (personA.posDiff > personB.posDiff - posTolerance)){
         APosEqualsB = true;
@@ -121,6 +123,7 @@ bool dominationCheck(Adult& personA, Adult& personB, const cudaConstants* cConst
         //A.posDiff < B.posDiff, and A.speedDiff - speedTolerance < B.speedDiff <= A.speedDiff
         //A.posDiff < B.posDiff and A.speedDiff < B.speedDiff (better in every way)
     if (AisEqual && AisBetter){
+        //std::cout << "\n\nDomination check returns TRUE";
         return true;
     }
     //A and B are codominant if:
@@ -129,6 +132,7 @@ bool dominationCheck(Adult& personA, Adult& personB, const cudaConstants* cConst
         //A.posDiff = B.posDiff & A.speedDiff = B.speedDiff (Unlikely since they're doubles, unless A & B are clones or genetically similar)
     //B dominates A if any of the conditions for "A dominates B", when reversed, are true.
     else {
+        //std::cout << "\n\nDomination check returns FALSE";
         return false;
     }
 }

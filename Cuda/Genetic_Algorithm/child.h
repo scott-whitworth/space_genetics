@@ -45,12 +45,17 @@ struct Child {
     //TODO: See if we need this defined (the default might work?)
     Child(const Child& other);
 
-    //#ifdef UNITTEST //set up in unit_testing_main.cpp
+    #ifdef UNITTEST //set up in unit_testing_main.cpp
     // Child constructor only with status - ONLY USED FOR UNIT TESTING!!!
-    // Input: status - this is the only thing set in Child by this constructor
+    // Input: errorStatus - this is the only thing set in Child by this constructor
     // Output: A child with only its errorStatus set
     // ONLY USED FOR UNIT TESTING!!! DO NOT USE ELSEWHERE
     Child(ERROR_STATUS status): errorStatus(status){}
+
+    // Child constructor for testing_genetics so we don't have to callRK on a child
+    // Input: errorStatus, posDiff, and speedDiff
+    // Output: a child that can be converted into an adult and be given a rank and distance without going through callRK
+    Child(double posD, double speedD): errorStatus(VALID), posDiff(posD), speedDiff(speedD), funcStatus(FUNCTIONAL_CHILD){}
     #endif //unit testing end if
 
     //Child(rkParameters<double> & childParams, elements<double> posFinal,  double posD,  double speedD, STATUS s, int errStat): startParams(childParams), finalPos(posFinal), posDiff(posD), speedDiff(speedD), funcStatus(s), errorStatus(errorStatus){}

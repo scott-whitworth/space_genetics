@@ -53,7 +53,7 @@ bool allWithinTolerance(double posTolerance, double speedTolerance, std::vector<
 //Function that will create the first generation of individuals within inputParamaeters
 //Input: N set of adults as inputParameters, cConstants
 //Output: new Adults of the first generation based on random parameters
-void createFirstGeneration(std::vector<Adult> oldAdults, const cudaConstants* cConstants, std::mt19937_64 rng);
+void createFirstGeneration(std::vector<Adult>& oldAdults, const cudaConstants* cConstants, std::mt19937_64 rng);
 
 //----------------------------------------------------------------------------------------------------------------------------
 //Function that fill the allIndividuals array
@@ -105,7 +105,7 @@ int main () {
     // Declare the genetic constants used, with file path being used to receive initial values
     cudaConstants * cConstants = new cudaConstants("../Config_Constants/genetic.config"); 
 
-    test_main();
+    //test_main();
 
     // Sets run0 seed, used to change seed between runs
     // Seed is set in cudaConstants: current time or passed in via config
@@ -161,7 +161,15 @@ void giveRank(std::vector<Adult> & allAdults, const cudaConstants* cConstants) {
     //Each index in this vector will correspond to the same index within allAdults
     //Note: fill the vector with 0s to make sure the count is accurate
     //TODO: unit test to make sure the whole vector is actually initially filled with 0's and not just the first index or the original vector size
-    std::vector<int> dominatedByCount(0); 
+    std::vector<int> dominatedByCount;
+
+    for (int i = 0; i < cConstants->num_individuals; i++)
+    {
+        dominatedByCount.push_back(0);
+    }
+     
+
+    std::cout << "\n\n_-_-_-_-_-_-_-_-TEST: PRE DOMINATION CALC-_-_-_-_-_-_-_-\n\n";
 
     //loop through each individual within the allAdults vector
     for (int i = 0; i < allAdults.size(); i++){
@@ -172,6 +180,7 @@ void giveRank(std::vector<Adult> & allAdults, const cudaConstants* cConstants) {
             //Check to see if i dominates j
             if (dominationCheck(allAdults[i], allAdults[j], cConstants)){
                 //Put the jth index in the set of individuals dominated by i
+                //std::cout << "\n" << i << "th (i) Adult dominates " << j << "th (j) Adult!\n";
                 domination[i].push_back(j);
 
                 //TODO: will this add too many to j's domination count? When it i's current value reaches j's current value it will have already recorded the dominaton here, but it will be recorded again 
@@ -184,6 +193,7 @@ void giveRank(std::vector<Adult> & allAdults, const cudaConstants* cConstants) {
                 //Put the ith index in the set of individuals dominated by j
                 //domination[j].push_back(i);
 
+                //std::cout << "\n" << j << "th (j) Adult dominates " << i << "th (i) Adult!\n";
                 //Add one to i's dominated by count
                 dominatedByCount[i]++; 
             }
@@ -200,6 +210,8 @@ void giveRank(std::vector<Adult> & allAdults, const cudaConstants* cConstants) {
     int rankNum = 1;
     //vector to store individuals' indexes in next front
     std::vector<int> newFront;
+
+    std::cout << "\n\n_-_-_-_-_-_-_-_-TEST: PRE RANK ASSIGN-_-_-_-_-_-_-_-\n\n";
 
     //go until all individuals have been put in better ranks and none are left to give a ranking
     while(!front.empty()) {
@@ -331,7 +343,7 @@ bool allWithinTolerance(double posTolerance, double speedTolerance, std::vector<
 }
 
 //Creating a generation either randomly or based on values from a file
-void createFirstGeneration(std::vector<Adult>oldAdults, const cudaConstants* cConstants, std::mt19937_64 rng){
+void createFirstGeneration(std::vector<Adult>& oldAdults, const cudaConstants* cConstants, std::mt19937_64 rng){
     Child* initialChildren = new Child[cConstants->num_individuals]; 
     // Initilize individuals randomly or from a file
     if (cConstants->random_start) {
@@ -404,8 +416,11 @@ void callSorts (std::vector<Adult>allAdults, const int & numNans, const cudaCons
         //give a rank to each adult based on domination sort
         //* Ignore any nans at the end of allAdults
         //must be called after checking for nans and before giveDistance
+        std::cout << "\n\n_-_-_-_-_-_-_-_-TEST: PRE GIVE RANK-_-_-_-_-_-_-_-\n\n";
         giveRank(allAdults, cConstants); //gives a rank to each adult
+        std::cout << "\n\n_-_-_-_-_-_-_-_-TEST: PRE GIVE DIST-_-_-_-_-_-_-_-\n\n";
         giveDistance(allAdults, cConstants, allAdults.size() - numNans); //gives a distance to each adult
+        std::cout << "\n\n_-_-_-_-_-_-_-_-TEST: PRE R-D SORT-_-_-_-_-_-_-_-\n\n";
         std::sort(allAdults.begin(), allAdults.end(), rankDistanceSort); //sorts allAdults using rankDistance sort
     } 
 }
@@ -428,6 +443,8 @@ void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& 
         }
     }
 
+    std::cout << "\n\n_-_-_-_-_-_-_-_-TEST: PRE CALL SORTS-_-_-_-_-_-_-_-\n\n";
+
     //Sort the set of adults
     callSorts(allAdults, numNans, cConstants);
 
@@ -435,6 +452,9 @@ void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& 
     int counter = 0; //a variable that ensures we put the correct number of adults in oldAdults
     //copies the best adults from allAdults into oldAdults (should be half of allAdults that are copied over)
     //TODO:: Make sure dividing num_individuals / 2 is correct or if we should divide by something else
+
+    std::cout << "\n\n_-_-_-_-_-_-_-_-TEST: PRE OLD ADULTS FILL_-_-_-_-_-_-_-_-\n\n";
+
     while (counter < (cConstants->num_individuals)/2 && counter < allAdults.size()){
         oldAdults.push_back(allAdults[counter]);
         counter++;

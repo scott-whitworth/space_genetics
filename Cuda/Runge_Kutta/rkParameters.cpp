@@ -110,8 +110,12 @@ rkParameters<double> randomParameters(std::mt19937_64 & rng, const cudaConstants
         testcoeff.coast[j] = cConstants->coast_random_start_range * 2 * ((static_cast<double>(rng()) / rng.max()) - 0.5);
     }
 
+    rkParameters<double> test(tripTime, alpha, beta, zeta, testcoeff);
+
+    //std::cout << "\n" << test.tripTime << "\n";
+
     //Initialize the output parameter
-    return rkParameters<double>(tripTime, alpha, beta, zeta, testcoeff); 
+    return test; 
 }
 
 

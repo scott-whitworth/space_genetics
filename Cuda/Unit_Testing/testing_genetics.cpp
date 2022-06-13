@@ -13,6 +13,8 @@ bool firstParentsTest(){
     theChildren[8] = Child(20, 120);
     theChildren[9] = Child (340, 90);
 
+    //TODO: I assme the following VVV is a 'key' to the above, but it might be reasonable to have a rationale for the layout of the above ^^^
+
     //Ranks based on my net dominations (times it dominates others - times it is dominated by others) -> dominations based on output of dominationCheckTest
     //Rank 1: (20, 70) [NET DOMINATIONS: 6]
     //Rank 2: (150, 20); (110, 40); (30, 90) [NET DOMINATIONS: 3]

@@ -16,8 +16,8 @@
 // adult inherits the genes from child to avoid calling RK when we dont need to
 struct Adult: public Child {
     // double cost;    // cost value of the individual, something that the genetic algorithm is attempting to minimize
-    //TODO: probably don't need isParent, this also could be STATUS
-    //bool isParent; //Indicates if this adult is already chosen as a survivor, not in use
+    
+    //TODO: Add the isParent statuis to replace the bool that was used previously
 
     //rank measures how good this adult is compared to other adults in it's generation. The lower the rank, the better.
     //     NOTE: ranks are not exclusive to one individual (e.g. multiple individuals can have rank 1); it may be helpful to think of ranks as tiers instead
@@ -35,25 +35,16 @@ struct Adult: public Child {
 
 //!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     // Default constructor
+    // Input: none
+    // Output: an adult with a maximum rank and a distance of -1
+    // NOTE: This should not be used, it is here as a guardrail for if we are unintentionally generating adults
     Adult();
-
-    // Set the initial position of the spacecraft according to the newly generated parameters
-    // Input: cConstants - to access c3energy value used in param calculations
-    //        childParameters - struct returned by generateNewIndividual()
-    // Output: this adult's startParams.y0 is set to the initial position and velocity of the spacecraft
-    Adult(rkParameters<double> & childParameters, const cudaConstants* cConstants): Child(childParameters, cConstants), rank(INT_MAX), distance(-1){} 
 
     // Constructor to create an adult from a child
     // Input: A child - this has cConstants, a set of rkParameters, and elements in it already, as well as the speedDiff and posDiff
     // Output: a child is turned into an adult
+    // NOTE: This will be called by convertToAdults within newGeneration & ga_crossover.cu. Children that have just been simulated will be converted from a child into an adult
     Adult(const Child& c): Child(c), rank(INT_MAX), distance(-1){}
-
-    // Constructor that will create an adult from another adult
-    // Input: an adult; the variables for the adult passed in will be copied over to the new adult
-    // Output: a new adult, which is a copy of the passed-in adult
-    //      NOTE: this is needed for the function of shuffling the oldAdult vector within the newGeneration function of ga_crossover.cpp.
-    //            This is needed to create the temp Adult needed to do the swap
-    Adult(const Adult& a): Child(a), rank(a.rank), distance(a.distance){}
 
     //TODO: Consider deleting this -> it is weird sorting from best to worst and calling best less than worst (unless we want to be very specific we mean LESS WRONG or something?)
     //Compare two adults by their rank and distance
@@ -86,8 +77,6 @@ struct Adult: public Child {
     #endif //unit testing endif
 
 };
-
-//TODO: document style: where are these being used? They are pretty major, we should help clarify
 
 //TODO: We need to Refactor the below if we are going to change the optimized parameters (velocity direction)
 
@@ -123,9 +112,11 @@ bool rankSort(const Adult& personA, const Adult& personB);
 //Compare two individuals by their rank and distance
 //input: two individuals
 //TODO: consider status (this goes for the above ones)
-//TODO: Where is this called ? Used?
 //output: if person A's rank is lower than person B's rank, return true
 //        if person A and person B have the same rank and person A has a greater distance than person B, return true
+//NOTE: This is used within selectParents (specifically callSorts) and reportGeneration of optimization.cu 
+//      It is used in via callSorts to put the best adults into oldAdults
+//      It is used in reportGeneration to print the best performing individual 
 bool rankDistanceSort(const Adult& personA, const Adult& personB);
 
 //!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

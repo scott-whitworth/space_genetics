@@ -26,7 +26,9 @@ struct Child {
 
 //!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     // Default constructor
-    //TODO: what does the default do?
+    // Input: None
+    // Outputs: A child with a funcStatus of DEFAULT_CHILD and an errorStatus of NOT_RUN
+    // NOTE: Ideally, this should not be used. It serves as a guardrail if for some reason there is a child generated without parameters
     Child();
 
     // Set the initial position of the spacecraft according to the newly generated parameters
@@ -35,7 +37,6 @@ struct Child {
     //        newChild - struct returned by generateNewChild()
     // Output: this individual's startParams.y0 is set to the initial position and velocity of the spacecraft
     //         Child is ready to be passed into callRK
-    //TODO: newChild probably needs a new name (like childParameters)
     Child(rkParameters<double> & childParameters, const cudaConstants* cConstants);
 
     // Copy constructor

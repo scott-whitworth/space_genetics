@@ -89,25 +89,16 @@ bool sortAdultVec(bool printStuff){
     std::vector<Adult> forRankSort;
     std::vector<Adult> forRDSort; 
     
-    int testTypes = 6; //a number to represent how many different tests you want to perform (should correspond to the number of available options in differentTestSetUps)
-    //TODO: This is a little weird to set this here, just because it is easy to miss / forget to change
-    //      I might suggest either having differentTestSetUp return false if the entered index is not valid 
-    //          That way you can have a while(differentTestsSetUp) loop without needing to 'export' the number of test types
-    //      or make testTypes a const global var inside testing_rank (right above the function prototype) TEST_TYPE_NUM
-    //          I don't love this, just because it is a kind of unnecessary variable given the above pattern
-    //
-    // Also, this comment could use some work:
-    // int testTypes = 6; // Total number of tests to be performed (should correspond to actual options in differentTestsSetUp)
-    // to pull apart what is there: 'a number to represent' is kind of obvious, all int variables are numbers that represent something
-    //                              long comments are hard to read, you can either 1) make them more concise
-    //                                                                          or 2) use more than one line
-    
+    //sortAdultVec tests sorting 6 different vectors of adults using rankSort and rankDistanceSort
+    //these tests are set up in differentTestsSetUp and testNum allows it to start on the first test (test 1)
+    int testNum = 1;
+
+    bool noErrors = true;
+
     //goes through this process for all the different vectors of Adults that are created by differentTestsSetUp
-    for (int i = 1; i <= testTypes; i++) {
-        if (printStuff){ 
-            cout << "\nTest " << i << ": " << endl;
-        }
-        differentTestsSetUp(i, forRankSort, printStuff); //depending on which time through the loop this is, sets up fills forRankSort with values 
+    //differentTestsSetUp will fill forRankSort with the correct values for each run (when a valid testNum is entered)
+    //if the testNum is too large or too small it will return false and exit the while loop
+    while (differentTestsSetUp(testNum, forRankSort, printStuff)) {
         forRDSort = forRankSort;
         
         if (printStuff){
@@ -118,60 +109,72 @@ bool sortAdultVec(bool printStuff){
             }
             cout << endl; 
         }
-        
-    
 
         //sorts the two vectors using their corresponding sorts
         std::sort(forRankSort.begin(), forRankSort.end(), rankSort);
         std::sort(forRDSort.begin(), forRDSort.end(), rankDistanceSort);
 
         if (printStuff){
-            //Prints the results of the sorts
-            cout << "After Sorting (rankSort): " << endl;
+            std::vector<Adult> goodRS;
+            std::vector<Adult> goodRDS;
+            loadCorrectOrders(testNum, goodRS, goodRDS);
+
+            //Prints the results vs the correct version for rankSort
+            cout << "rankSort (After Sorting): " << endl;
             vecPrinting(forRankSort);
-            cout << "After Sorting (rankDistanceSort): " << endl;
+            cout << "rankSort (Correct Version): " << endl;
+            vecPrinting(goodRS);
+            //Prints the results vs the correct version for rankDistanceSort
+            cout << "rankDistanceSort (After Sorting): " << endl;
             vecPrinting(forRDSort);
+            cout << "rankDistanceSort (Correct Version): " << endl;
+            vecPrinting(goodRDS);
         }
         
+        if (!differentTestsCheck(testNum,forRankSort,forRDSort)){
+            noErrors = false;
+        }
+
+        //Scott had a problem with this because the check is pretty much the same as the rankSort function
+        //Either delete this or leave it to "make sure getRank is working"
         //Checks to make sure that every element was organized correctly by rankSort
         for (int j = 0; j < forRankSort.size()-1; j++){
             if (forRankSort[j+1].errorStatus == VALID){ //if the next one is an error type, based on the way this is currently laid out, its rank might not actually be worse
                 //If the rank of the last thing is lower/better than that of the first, there is definitely something going wrong
-                //TODO: There is a bit of a tautology going on here, rankSort is functionally using getRank
-                //      This is a hard one to get around as it is such a basic part of the class
-                //      I might suggest having a verified order (like hand calculate what the order should be), then check against that
                 if (forRankSort[j].getRank() > forRankSort[j+1].getRank()){
-                    cout << "There was a problem with rankSort on test " << i << endl;
-                    return false;
+                    cout << "There was a problem with rankSort on test " << testNum << endl;
+                    noErrors = false;
                 }
             }
         }
-
-        //TODO: Same issue as outlined above
-        //      You are using the same methods to confirm this is working as the methods used in the thing you are testing
-        //      A different way to address this would be to methodically check the underlying methods before running this code (which you might already be doing)
-
         //Checks to make sure every element was organized correctly by rankDistanceSort
         for (int k = 0; k < forRDSort.size()-1; k++){
             if (forRDSort[k+1].errorStatus == VALID){//if the next one is an error type, based on the way this is currently laid out, its rank might not actually be worse
                 //If the rank of the last thing is lower/better than that of the first, there is definitely something going wrong
                 if (forRDSort[k].getRank() > forRDSort[k+1].getRank()){
-                    cout << "There was a problem with rankDistanceSort on test " << i << endl;
-                    return false;
+                    cout << "There was a problem with rankDistanceSort on test " << testNum << endl;
+                    noErrors = false;
                 }
                 //If the first and last have the same rank, but the smaller distance comes first, that is an issue
                 else if (forRDSort[k].getRank() == forRDSort[k+1].getRank() && forRDSort[k].getDistance() < forRDSort[k+1].getDistance()){
-                    cout << "There was a problem with rankDistanceSort on test " << i << endl;
-                    return false;
+                    cout << "There was a problem with rankDistanceSort on test " << testNum << endl;
+                    noErrors = false;
                 }
             }
         }
+        testNum++; //increments testNum to prevent an infinite loop -> also moves on to the next test
     }
     //if it makes it through all the tests successfully, it passes and returns true
-    return true;
+    return noErrors;
 }
 
-void differentTestsSetUp(int testNum, std::vector<Adult>& a, bool print){
+bool differentTestsSetUp(int testNum, std::vector<Adult>& a, bool print){
+    if (testNum < 1 || testNum > 6){
+        return false;
+    }
+    if (print){ 
+        cout << "\nTest " << testNum << ": " << endl;
+    }
     a.clear(); //starts by emptying the vector
     if(a.size() != 0){
         cout << "Clear did not work as expected " << endl;
@@ -212,7 +215,7 @@ void differentTestsSetUp(int testNum, std::vector<Adult>& a, bool print){
     }
     //The fourth test looks at adults who have a randp, ranks and distances (with some crossover in each rank and distance)
     else if (testNum == 4){
-        //Makes 7 Adults with a variety of ranks and distances
+        //Makes 8 Adults with a variety of ranks and distances
         a.push_back(Adult(8,5, VALID));
         a.push_back(Adult(3,11, VALID));
         a.push_back(Adult(11,9, VALID));
@@ -220,6 +223,7 @@ void differentTestsSetUp(int testNum, std::vector<Adult>& a, bool print){
         a.push_back(Adult(6,11, VALID));
         a.push_back(Adult(3,3, VALID));
         a.push_back(Adult(1,7, VALID));
+        a.push_back(Adult(3,27, VALID));
     }
     //The fifth test examines duplicates and errors
     else if (testNum == 5){
@@ -232,7 +236,7 @@ void differentTestsSetUp(int testNum, std::vector<Adult>& a, bool print){
     }
     //The sixth test random ranks and distances with a combination of values with and without errors
     else if(testNum == 6){
-        //Makes 9 Adults with a variety of ranks and distances, 4 have errors and 5 are valid
+        //Makes 10 Adults with a variety of ranks and distances, 4 have errors and 5 are valid
         a.push_back(Adult(8,5,VALID));
         a.push_back(Adult(3,11, SUN_ERROR));
         a.push_back(Adult(8,9,VALID));
@@ -242,10 +246,203 @@ void differentTestsSetUp(int testNum, std::vector<Adult>& a, bool print){
         a.push_back(Adult(1,7, OTHER_ERROR));
         a.push_back(Adult(1,29, VALID));
         a.push_back(Adult(2,9, SUN_ERROR));
+        a.push_back(Adult(3,3,VALID));
     }
     if (print){
         cout << "Before Sorting: ";
         vecPrinting(a);
+    }
+
+    return true;
+}
+
+//used to verify that the adults from each test were sorted correctly
+bool differentTestsCheck(int testNum, std::vector<Adult> & rs, std::vector<Adult>& rDS){
+    if (testNum < 1 || testNum > 6){ //if the testNum that gets passed in here cannot be evaluated, returns false
+        cout << "testNum is invalid - exiting differentTestsCheck..." << endl;
+        return false;
+    }
+    bool noErrorsInOrder = true;
+    std::vector<Adult> correctRS;
+    std::vector<Adult> correctRDS;
+    loadCorrectOrders(testNum, correctRS, correctRDS); //loads vectors full adults in the order rankSort and rankDistanceSort should sort the adults
+    if (rs.size() != rDS.size()){
+        cout << "A major issue occured and the vectors sorted using rankSort and rankDistanceSort are no longer the same lengths" << endl;
+        return false;
+    }
+    for (int i = 0; i < rs.size(); i++){
+        if (rs[i].rank != correctRS[i].rank || rs[i].distance != correctRS[i].distance || rs[i].errorStatus != correctRS[i].errorStatus){
+            cout << "On test " << testNum << ", the vector sorted using rankSort has an incorrect value at index " << i << " of " << rs.size()-1;
+            cout <<  ". \nThe values should be (" << correctRS[i].rank << "," << correctRS[i].distance << ",";
+            if (correctRS[i].errorStatus == VALID){
+                cout << "VALID) ";
+            }
+            else {
+                cout << "invalid - error status) ";
+            }
+            cout << " but are (" << rs[i].rank << "," << rs[i].distance << ",";
+            if (rs[i].errorStatus == VALID){
+                cout << "VALID)." << endl;
+            }
+            else {
+                cout << "invalid - error status)." << endl;
+            }
+            noErrorsInOrder = false;
+        }
+        if (rDS[i].rank != correctRDS[i].rank || rDS[i].distance != correctRDS[i].distance || rDS[i].errorStatus != correctRDS[i].errorStatus){
+            cout << "On test " << testNum << ", the vector sorted using rankDistanceSort has an incorrect value at index " << i << " of " << rDS.size()-1;
+            cout <<  ". \nThe values should be (" << correctRDS[i].rank << "," << correctRDS[i].distance << ",";
+            if (correctRDS[i].errorStatus == VALID){
+                cout << "VALID) ";
+            }
+            else {
+                cout << "invalid - error status) ";
+            }
+            cout << " but are (" << rDS[i].rank << "," << rDS[i].distance << ",";
+            if (rDS[i].errorStatus == VALID){
+                cout << "VALID)." << endl;
+            }
+            else {
+                cout << "invalid - error status)." << endl;
+            }
+            noErrorsInOrder = false;
+        }
+    }
+    return noErrorsInOrder;
+}
+
+void loadCorrectOrders(int testNum, std::vector<Adult> & correctRS, std::vector<Adult> & correctRDS){
+    correctRS.clear();
+    correctRDS.clear();
+    if (testNum < 1 || testNum > 6){
+        cout << "testNum is invalid - cannot load the correct orders for the different vectors..." << endl;
+        return;
+    }
+    else if (testNum == 1){
+        //Fills correctRS with Adults in the order they should be after rankSort 
+        //Should be sorted least to greatest rank
+        correctRS.push_back(Adult(1,27, VALID));
+        correctRS.push_back(Adult(2,3, VALID));
+        correctRS.push_back(Adult(3,27, VALID));
+        correctRS.push_back(Adult(4,1, VALID));
+        correctRS.push_back(Adult(5,50, VALID));
+        correctRS.push_back(Adult(6,2,VALID));
+        correctRS.push_back(Adult(7,9, VALID));
+
+        //Fills correctRDS with the Adults in the order they should be in after rankDistanceSort
+        //because every Adult has a different rank, rankSort and rankDistanceSort should be in the same order
+        correctRDS = correctRS;
+    }
+    else if (testNum == 2){
+        //Fills correctRS with Adults in the order they should be in after rankSort
+        //they all have the same rank and are all valid, so they should remain in the order they were entered in
+        correctRS.push_back(Adult(1,2, VALID));
+        correctRS.push_back(Adult(1,27, VALID));
+        correctRS.push_back(Adult(1,1, VALID));
+        correctRS.push_back(Adult(1,4, VALID));
+        correctRS.push_back(Adult(1,9, VALID));
+        correctRS.push_back(Adult(1,50, VALID));
+        correctRS.push_back(Adult(1,3, VALID));
+
+        //Fills correctRDS with Adults in the order they should be in after rankDistanceSort
+        //because every individual has the same rank, their order is soley dependent on their distances (greatest to least)
+        correctRDS.push_back(Adult(1,50, VALID));
+        correctRDS.push_back(Adult(1,27, VALID));
+        correctRDS.push_back(Adult(1,9, VALID));
+        correctRDS.push_back(Adult(1,4, VALID));
+        correctRDS.push_back(Adult(1,3, VALID));
+        correctRDS.push_back(Adult(1,2, VALID));
+        correctRDS.push_back(Adult(1,1, VALID));
+    }
+    else if (testNum == 3){
+        //Fills correctRS with Adults in the order they should be in after rankSort
+        //Much like test 1, these should only be sorted based on rank because there are no repeated ranks and all the ranks vary 
+        //(only distances are the same)
+        correctRS.push_back(Adult(1,11, VALID));
+        correctRS.push_back(Adult(2,11, VALID));
+        correctRS.push_back(Adult(3,11, VALID));
+        correctRS.push_back(Adult(5,11,VALID));
+        correctRS.push_back(Adult(6,11, VALID));
+        correctRS.push_back(Adult(8,11, VALID));
+        correctRS.push_back(Adult(11,11, VALID));
+
+        //Fills correctRDS with Adults in the order they should be in after rankDistanceSort
+        //Much like test 1, these should only be sorted based on rank because there are no repeated ranks and all the ranks vary 
+        //Thus, the order of correctRS and correctRDS should be the same
+        correctRDS.push_back(Adult(1,11, VALID));
+        correctRDS.push_back(Adult(2,11, VALID));
+        correctRDS.push_back(Adult(3,11, VALID));
+        correctRDS.push_back(Adult(5,11,VALID));
+        correctRDS.push_back(Adult(6,11, VALID));
+        correctRDS.push_back(Adult(8,11, VALID));
+        correctRDS.push_back(Adult(11,11, VALID));
+    }
+    else if (testNum == 4){
+        //Fills correctRS with Adults in the order they should be in after rankSort
+        //There is a variety of ranks and distances, so Adults who have the same rank will appear in the order they were entered
+        correctRS.push_back(Adult(1,7, VALID));
+        correctRS.push_back(Adult(2,22, VALID));
+        correctRS.push_back(Adult(3,11, VALID));
+        correctRS.push_back(Adult(3,3, VALID));
+        correctRS.push_back(Adult(3,27, VALID));
+        correctRS.push_back(Adult(6,11, VALID));
+        correctRS.push_back(Adult(8,5, VALID));
+        correctRS.push_back(Adult(11,9, VALID));
+
+        //Fills correctRDS with Adults in the order they should be in after rankDistanceSort
+        //This will be similar to the order for rankSort, but not the same because Adults that share a rank will also be sorted by distance
+        correctRDS.push_back(Adult(1,7, VALID));
+        correctRDS.push_back(Adult(2,22, VALID));
+        correctRDS.push_back(Adult(3,27, VALID));
+        correctRDS.push_back(Adult(3,11, VALID));
+        correctRDS.push_back(Adult(3,3, VALID));
+        correctRDS.push_back(Adult(6,11, VALID));
+        correctRDS.push_back(Adult(8,5, VALID));
+        correctRDS.push_back(Adult(11,9, VALID));
+    }
+    else if (testNum == 5){ //Test 5 deals with copies of an Adult, including one whose status is set to invalid
+        //Fills correctRS with Adults in the order they should be in after rankSort
+        //The individual with an invalid status should be put at the end of the vector, and the others will be sorted solely based on rank
+        correctRS.push_back(Adult(1,5, VALID));
+        correctRS.push_back(Adult(1,3, VALID));
+        correctRS.push_back(Adult(1,3, VALID));
+        correctRS.push_back(Adult(12,4, VALID));
+        correctRS.push_back(Adult(1,3, SUN_ERROR));
+
+        //Fills correctRDS with Adults in the order they should be in after rankDistanceSort
+        //Thanks to the order the Adults were entered into the vector in, rankDistanceSort and rankSort happen to have the same values
+        //If one of the Adults with a VALID errorStatus and rank 1 distance 3 was entered before the rank 1 distance 5 individual
+        //then correctRDS would be different than correctRS
+        correctRDS = correctRS;
+    }
+    else if (testNum == 6){ //10 Adults with a variety of ranks, distances, and errorStatuses (also some duplicates)
+        //Fills correctRS with Adults in the order they should be in after rankSort
+        //The Adults should be ordered based on their validity, then their rank
+        //Those that are invalid are not sorted by rank, but appear in the order they were entered in
+        correctRS.push_back(Adult(1,29, VALID));
+        correctRS.push_back(Adult(2,22,VALID));
+        correctRS.push_back(Adult(3,3,VALID));
+        correctRS.push_back(Adult(3,3,VALID));
+        correctRS.push_back(Adult(8,5,VALID));
+        correctRS.push_back(Adult(8,9,VALID));
+        correctRS.push_back(Adult(3,11, SUN_ERROR));
+        correctRS.push_back(Adult(6,11, OTHER_ERROR));
+        correctRS.push_back(Adult(1,7, OTHER_ERROR));
+        correctRS.push_back(Adult(2,9, SUN_ERROR));
+
+        //Fills correctRDS with Adults in the order they should be in after rankDistanceSort
+        //The Adults should be ordered based on their validity, then their rank, then their distance (greatest to least)
+        //Those that are invalid are not sorted by rank or distance, but appear in the order they were entered in
+        correctRDS.push_back(Adult(1,29, VALID));
+        correctRDS.push_back(Adult(2,22,VALID));
+        correctRDS.push_back(Adult(3,3,VALID));
+        correctRDS.push_back(Adult(3,3,VALID));
+        correctRDS.push_back(Adult(8,9,VALID));
+        correctRDS.push_back(Adult(8,5,VALID));
+        correctRDS.push_back(Adult(3,11, SUN_ERROR));
+        correctRDS.push_back(Adult(6,11, OTHER_ERROR));
+        correctRDS.push_back(Adult(1,7, OTHER_ERROR));
+        correctRDS.push_back(Adult(2,9, SUN_ERROR));
     }
 }
 

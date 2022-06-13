@@ -72,7 +72,7 @@ void callSorts (std::vector<Adult>& allAdults, const int & numNans, const cudaCo
 // Function that will sort the adults from oldAdults and newAdults into allAdults
 // Input: allAdults, oldAdults, and newAdults
 // Output: oldAdults is filled with the adults that are potential parents for the next generation
-void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& newAdults, std::vector<Adult>& oldAdults, int& numNans, const cudaConstants* cConstants);
+void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& newAdults, std::vector<Adult>& oldAdults, int& numNans, const cudaConstants* cConstants, const int & generation);
 
 //----------------------------------------------------------------------------------------------------------------------------
 //Input: current anneal and dRate
@@ -92,6 +92,47 @@ void reportGeneration (std::vector<Adult>& newAdults, const cudaConstants* cCons
 // - deals with processing calls to CUDA callRK
 // - exits when individuals converge on tolerance defined in Constants
 double optimize(const cudaConstants* cConstants);
+
+
+//Temp function that adds up the number of each status in an adults array and outputs the result
+void countStatuses (const std::vector<Adult> & adultVec, const int & generation) {
+    //Create ints for each status
+    int numSuns, numNans, numValid, numOther;
+
+    //Make them equal 0
+    numSuns = numNans = numValid = numOther = 0;
+
+    //Go thru the vector and add up the statuses
+    for (int i = 0; i < adultVec.size(); i++)
+    {
+        if (adultVec[i].errorStatus == SUN_ERROR)
+        {
+            numSuns++;
+        }
+        else if (adultVec[i].errorStatus == NAN_ERROR)
+        {
+            numNans ++;
+        }
+        else if (adultVec[i].errorStatus == VALID)
+        {
+            numValid++;
+        }
+        else {
+            numOther++;
+        }
+    }
+
+    //Print the results
+    std::cout << "\n\n_-_-_-_-_-_-_-_-_-_GENERATION #" << generation << " ERROR COUNTS_-_-_-_-_-_-_-_-_-_\n\n";
+
+    std::cout << "\tSun Errors: " << numSuns;
+    std::cout << "\n\tNan Errors: " << numNans;
+    std::cout << "\n\tValids: " << numValid;
+    std::cout << "\n\tOther: " << numOther;
+
+    std::cout << "\n_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_\n\n";
+    
+}
 
 //-----------------------------------------------------------------------------------------------------------------------------
 int main () {
@@ -284,8 +325,8 @@ void giveDistance(std::vector<Adult> & allAdults, const cudaConstants* cConstant
     //Sort by the first objective function, posDiff
     std::sort(allAdults.begin(), allAdults.begin() + allAdults.size(), LowerPosDiff);
     //Set the boundaries
-    allAdults[0].distance = cConstants->MAX_DISTANCE;
-    allAdults[allAdults.size() - 1].distance = cConstants->MAX_DISTANCE;
+    allAdults[0].distance = MAX_DISTANCE;
+    allAdults[allAdults.size() - 1].distance = MAX_DISTANCE;
 
 
     //For each individual besides the upper and lower bounds, make their distance equal to
@@ -303,8 +344,8 @@ void giveDistance(std::vector<Adult> & allAdults, const cudaConstants* cConstant
     //Repeat above process for speedDiff    
     std::sort(allAdults.begin(), allAdults.begin() + allAdults.size(), LowerSpeedDiff);
     //Set the boundaries
-    allAdults[0].distance = cConstants->MAX_DISTANCE;
-    allAdults[allAdults.size() - 1].distance = cConstants->MAX_DISTANCE;
+    allAdults[0].distance = MAX_DISTANCE;
+    allAdults[allAdults.size() - 1].distance = MAX_DISTANCE;
 
     
     //For each individual besides the upper and lower bounds, make their distance equal to
@@ -443,11 +484,14 @@ void callSorts (std::vector<Adult>&allAdults, const int & numNans, const cudaCon
 }
 
 //fills oldAdults with the best adults from this generation and the previous generation so that the best parents can be selected
-void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& newAdults, std::vector<Adult>& oldAdults, int& numNans, const cudaConstants* cConstants){
+void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& newAdults, std::vector<Adult>& oldAdults, int& numNans, const cudaConstants* cConstants, const int & generation){
     std::vector<Adult>().swap(allAdults); //ensures this vector is empty and ready for new inputs
     numNans = 0;
 
     //TODO: Making sure there are no errors within allAdults is temporary, eventually we need to make sure they are at the end of the rankDistanceSort but still include them within allAdults
+
+    countStatuses(newAdults, generation);
+    countStatuses(oldAdults, generation);
 
     for (int i = 0; i < newAdults.size(); i++){ //copies all the elements of newAdults into allAdults
         if(newAdults[i].errorStatus != VALID){ //tallies the number of nans in allAdults by checking if the adult being passed into newAdult is a Nan or not
@@ -467,6 +511,8 @@ void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& 
         }
     }
 
+    countStatuses(allAdults, generation);
+
     //Sort the set of adults
     callSorts(allAdults, numNans, cConstants);
 
@@ -485,6 +531,10 @@ void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& 
         std::cout << "There are not enough adults to fill a oldIndividuals properly" << std::endl;
     }
 
+    //Clear the newAdult vector so that it is ready to recive new children
+    newAdults.clear(); 
+
+    countStatuses(oldAdults, generation);
 }
 
 //TODO: Figure out what to replace posDiff (what used to be cost)
@@ -693,7 +743,7 @@ double optimize(const cudaConstants* cConstants) {
         */
 
         //fill oldAdults with the best adults from this generation and the previous generation so that the best parents can be selected (numNans is for all adults in the generation - the oldAdults and the newAdults)
-        preparePotentialParents(allAdults, newAdults, oldAdults, numNans, cConstants);
+        preparePotentialParents(allAdults, newAdults, oldAdults, numNans, cConstants, generation);
 
         //TODO:: Major space for efficeincy change
         /*

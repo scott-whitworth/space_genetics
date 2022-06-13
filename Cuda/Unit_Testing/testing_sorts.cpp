@@ -90,6 +90,17 @@ bool sortAdultVec(bool printStuff){
     std::vector<Adult> forRDSort; 
     
     int testTypes = 6; //a number to represent how many different tests you want to perform (should correspond to the number of available options in differentTestSetUps)
+    //TODO: This is a little weird to set this here, just because it is easy to miss / forget to change
+    //      I might suggest either having differentTestSetUp return false if the entered index is not valid 
+    //          That way you can have a while(differentTestsSetUp) loop without needing to 'export' the number of test types
+    //      or make testTypes a const global var inside testing_rank (right above the function prototype) TEST_TYPE_NUM
+    //          I don't love this, just because it is a kind of unnecessary variable given the above pattern
+    //
+    // Also, this comment could use some work:
+    // int testTypes = 6; // Total number of tests to be performed (should correspond to actual options in differentTestsSetUp)
+    // to pull apart what is there: 'a number to represent' is kind of obvious, all int variables are numbers that represent something
+    //                              long comments are hard to read, you can either 1) make them more concise
+    //                                                                          or 2) use more than one line
     
     //goes through this process for all the different vectors of Adults that are created by differentTestsSetUp
     for (int i = 1; i <= testTypes; i++) {
@@ -126,12 +137,20 @@ bool sortAdultVec(bool printStuff){
         for (int j = 0; j < forRankSort.size()-1; j++){
             if (forRankSort[j+1].errorStatus == VALID){ //if the next one is an error type, based on the way this is currently laid out, its rank might not actually be worse
                 //If the rank of the last thing is lower/better than that of the first, there is definitely something going wrong
+                //TODO: There is a bit of a tautology going on here, rankSort is functionally using getRank
+                //      This is a hard one to get around as it is such a basic part of the class
+                //      I might suggest having a verified order (like hand calculate what the order should be), then check against that
                 if (forRankSort[j].getRank() > forRankSort[j+1].getRank()){
                     cout << "There was a problem with rankSort on test " << i << endl;
                     return false;
                 }
             }
         }
+
+        //TODO: Same issue as outlined above
+        //      You are using the same methods to confirm this is working as the methods used in the thing you are testing
+        //      A different way to address this would be to methodically check the underlying methods before running this code (which you might already be doing)
+
         //Checks to make sure every element was organized correctly by rankDistanceSort
         for (int k = 0; k < forRDSort.size()-1; k++){
             if (forRDSort[k+1].errorStatus == VALID){//if the next one is an error type, based on the way this is currently laid out, its rank might not actually be worse

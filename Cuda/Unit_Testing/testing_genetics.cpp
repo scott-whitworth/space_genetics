@@ -192,6 +192,35 @@ void sortaGiveDistance(std::vector<Adult> & pool){
 }
 
 bool firstFullGen(){
+    vector<rkParameters<double>> paramsForIndividuals;
+    //Just so rankDistance sort works, assigning these arbitrary ranks and distances
+    paramsForIndividuals.push_back(rkParameters(40000000,elements<double> elems(), coefficients<double> coeffs())); //about 1.27 years - going to call rank 3, distance 3000
+    paramsForIndividuals.push_back(rkParameters(35000000,elements<double> elems(), coefficients<double> coeffs())); //about 1.12 years - going to call rank 2, distance 2700
+    paramsForIndividuals.push_back(rkParameters(41000000,elements<double> elems(), coefficients<double> coeffs())); //about 1.30 years - going to call rank 3, distance 3200
+    paramsForIndividuals.push_back(rkParameters(32000000,elements<double> elems(), coefficients<double> coeffs())); //about 1.01 years - going to call rank 1, distance 1000
+    paramsForIndividuals.push_back(rkParameters(47000000,elements<double> elems(), coefficients<double> coeffs())); //about 1.49 years - going to call rank 4, distance 10000
+    paramsForIndividuals.push_back(rkParameters(43000000,elements<double> elems(), coefficients<double> coeffs())); //about 1.36 years - going to call rank 3, distance 5000
+    paramsForIndividuals.push_back(rkParameters(37000000,elements<double> elems(), coefficients<double> coeffs())); //about 1.17 years - going to call rank 2, distance 2400
+    paramsForIndividuals.push_back(rkParameters(38000000,elements<double> elems(), coefficients<double> coeffs())); //about 1.20 years - going to call rank 2, distance 2300
+    paramsForIndividuals.push_back(rkParameters(44000000,elements<double> elems(), coefficients<double> coeffs())); //about 1.40 years - going to call rank 4, distance 4000
+    paramsForIndividuals.push_back(rkParameters(45000000,elements<double> elems(), coefficients<double> coeffs())); //about 1.43 years - going to call rank 4, distance 4500
+    Child* genZero = new Child[genSize];
+    for (int i = 0; i < genSize; i++){
+        genZero[i] = Child(paramsForIndividuals[i]);
+    }
+    vector<Adult> parents;
+    UTconvertToAdult(parents, genZero);
+    int ranks[genSize] = {3,2,3,1,4,3,2,2,4,4};
+    int distances[genSize] = {3000,2700,3200,1000,10000,5000,2400,2300,4000,4500};
+    for (int i = 0; i < genSize; i++){
+        parents[i].rank = ranks[i];
+        parents[i].distance = distances[i];
+    }
+    std::sort(parents.begin(), parents.end(), rankDistanceSort);
+    vector<Adult> youngGen;
+
+
+    delete genZero[];
     
 }
 
@@ -216,7 +245,7 @@ void UTnewGen(std::vector<Adult> & oldAdults, std::vector<Adult> & newAdults, co
     std::vector<int> parentPool;
 
     //Fill the parentPool index with the number of indexes desired for survivors
-    for (int i = 0; i < cConstants->survivor_count; i++)
+    for (int i = 0; i < 4; i++)
     {
         parentPool.push_back(i);
     }
@@ -299,8 +328,6 @@ void UTnewGen(std::vector<Adult> & oldAdults, std::vector<Adult> & newAdults, co
         }
     }
 
-    std::cout << "\n\n_-_-_-_-_-_-_-_-TEST: POST CHILDREN CREATION_-_-_-_-_-_-_-_-\n\n";
-
     double timeInitial = 0;
     double calcPerS = 0;
 
@@ -314,13 +341,10 @@ void UTnewGen(std::vector<Adult> & oldAdults, std::vector<Adult> & newAdults, co
     //Determine the status and diffs of the simulated children
     setStatusAndDiffs(newChildren, cConstants); 
 
-    std::cout << "\n\n_-_-_-_-_-_-_-_-TEST: POST RK_-_-_-_-_-_-_-_-\n\n";
-
     //Now that the children have been simulated, convert the children into adults
     //This will also put the converted children into the newAdults vector
     convertToAdults(newAdults, newChildren, cConstants); 
-
-    std::cout << "\n\n_-_-_-_-_-_-_-_-TEST: POST CONVERSION_-_-_-_-_-_-_-_-\n\n";
+    
 
     //Free the pointer's memory
     delete[] newChildren; 

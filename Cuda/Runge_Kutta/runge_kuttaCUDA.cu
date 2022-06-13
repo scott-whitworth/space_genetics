@@ -32,28 +32,29 @@ void callRK(const int numThreads, const int blockThreads, Child *generation, dou
     cudaMemcpy(devAbsTol, &absTol, sizeof(double), cudaMemcpyHostToDevice);
     cudaMemcpy(devCConstant, cConstant, sizeof(cudaConstants), cudaMemcpyHostToDevice);
     
-    std::cout << "\n~~~~~~~~~~~~~~~~~~~~~~\nTEST CHILD (0th):\n\tStart Status: " << generation[0].errorStatus << 
-                 "\n\tStart r: " << generation[0].startParams.y0.r << 
-                 "\n\tStart TT: " << generation[0].startParams.tripTime <<
-                 "\n\tFinal r: " << generation[0].finalPos.r;
+    //std::cout << "\n~~~~~~~~~~~~~~~~~~~~~~\nTEST CHILD (0th):\n\tStart Status: " << generation[0].errorStatus << 
+    //             "\n\tStart r: " << generation[0].startParams.y0.r << 
+    //             "\n\tStart TT: " << generation[0].startParams.tripTime <<
+    //             "\n\tFinal r: " << generation[0].finalPos.r;
+    //std::cout << "\nSun-min test: " << cConstant->sun_r_min; 
 
     // GPU version of rk4Simple()
     cudaEventRecord(kernelStart);
     rk4SimpleCUDA<<<(numThreads+blockThreads-1)/blockThreads,blockThreads>>>(devGeneration, devTimeInitial, devStepSize, devAbsTol, numThreads, devCConstant);
     cudaEventRecord(kernelEnd);
 
-    std::cout << "\n~~~~~~~~~~~~~~~~~~~~~~\nTEST CHILD (0th):\n\tMid Status: " << generation[0].errorStatus << 
-                 "\n\tStart r: " << generation[0].startParams.y0.r << 
-                 "\n\tStart TT: " << generation[0].startParams.tripTime <<
-                 "\n\tFinal r: " << generation[0].finalPos.r;
+    //std::cout << "\n~~~~~~~~~~~~~~~~~~~~~~\nTEST CHILD (0th):\n\tMid Status: " << generation[0].errorStatus << 
+    //             "\n\tStart r: " << generation[0].startParams.y0.r << 
+    //             "\n\tStart TT: " << generation[0].startParams.tripTime <<
+    //             "\n\tFinal r: " << generation[0].finalPos.r;
 
     // copy the result of the kernel onto the host
     cudaMemcpy(generation, devGeneration, numThreads * sizeof(Child), cudaMemcpyDeviceToHost);
 
-    std::cout << "\n~~~~~~~~~~~~~~~~~~~~~~\nTEST CHILD (0th):\n\tEnd Status: " << generation[0].errorStatus << 
-                 "\n\tStart r: " << generation[0].startParams.y0.r << 
-                 "\n\tStart TT: " << generation[0].startParams.tripTime <<
-                 "\n\tFinal r: " << generation[0].finalPos.r;
+    //std::cout << "\n~~~~~~~~~~~~~~~~~~~~~~\nTEST CHILD (0th):\n\tEnd Status: " << generation[0].errorStatus << 
+    //             "\n\tStart r: " << generation[0].startParams.y0.r << 
+    //             "\n\tStart TT: " << generation[0].startParams.tripTime <<
+    //             "\n\tFinal r: " << generation[0].finalPos.r;
     
     // free memory from device
     cudaFree(devGeneration);

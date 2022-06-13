@@ -56,6 +56,10 @@ struct Child {
     // Input: errorStatus, posDiff, and speedDiff
     // Output: a child that can be converted into an adult and be given a rank and distance without going through callRK
     Child(double posD, double speedD): errorStatus(VALID), posDiff(posD), speedDiff(speedD), funcStatus(FUNCTIONAL_CHILD){}
+
+    // Child constructor for testing_genetics that doesn't take cConstants as a parameter because we're not using cConstants in testing_genetics
+    // If I need to have elements for some reason, this is easy to modify to shadow the other Child constructor with rkParameters, I just need the actual v_escape value
+    Child(rkParameters<double> & childParameters): startParams(childParameters){}
     #endif //unit testing end if
 
     //Child(rkParameters<double> & childParams, elements<double> posFinal,  double posD,  double speedD, STATUS s, int errStat): startParams(childParams), finalPos(posFinal), posDiff(posD), speedDiff(speedD), funcStatus(s), errorStatus(errorStatus){}

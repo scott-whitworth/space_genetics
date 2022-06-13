@@ -261,7 +261,7 @@ void cudaConstants::FileRead(std::string fileName) {
                     this->sun_r_min = std::stod(variableValue);
                 }
                 else if (variableName == "MAX_DISTANCE") {
-                    this->sun_r_min = std::stod(variableValue);
+                    this->MAX_DISTANCE = std::stod(variableValue);
                 }
                 else if (variableName == "best_count") {
                     this->best_count = std::stoi(variableValue);

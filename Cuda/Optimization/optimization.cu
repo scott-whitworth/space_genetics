@@ -29,7 +29,7 @@ void giveRank(std::vector<Adult> & allAdults, const cudaConstants* cConstants);
 // The distance is how different an adult is from the two adults closest to it for each objective function.
 // Input: pool - the full pool of 2N adults excluding NaNs
 //        poolSize - the poolSize of all the adults excluding NaNs
-void giveDistance(std::vector<Adult> pool, const cudaConstants* cConstants, int poolSize);
+void giveDistance(std::vector<Adult> & allAdults, const cudaConstants* cConstants);
 
 //----------------------------------------------------------------------------------------------------------------------------
 // Used to identify if the best adult has changed
@@ -59,13 +59,14 @@ void createFirstGeneration(std::vector<Adult>& oldAdults, const cudaConstants* c
 //Function that fill the allIndividuals array
 //Input: allAdults, newAdults, oldAdults 
 //Output: filled allAdults with the new and old
-void fillAllAdults (std::vector<Adult> allAdults, std::vector<Adult> newAdults, std::vector<Adult> oldAdults, const cudaConstants* cConstants, const int& generation);
+//TODO: Is the necessary?
+//void fillAllAdults (std::vector<Adult> allAdults, std::vector<Adult> newAdults, std::vector<Adult> oldAdults, const cudaConstants* cConstants, const int& generation);
 
 //----------------------------------------------------------------------------------------------------------------------------
 //Function that will call the right sorting methods for the allIndividuals array
 //Input: allAdults, numNans, cConstants 
 //Output: impact sorted by posDiff, rendezvous sorted by rank and distance
-void callSorts (std::vector<Adult> allAdults, const int & numNans, const cudaConstants* cConstants);
+void callSorts (std::vector<Adult>& allAdults, const int & numNans, const cudaConstants* cConstants);
 
 //----------------------------------------------------------------------------------------------------------------------------
 // Function that will sort the adults from oldAdults and newAdults into allAdults
@@ -77,13 +78,13 @@ void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& 
 //Input: current anneal and dRate
 //Output: an update of the anneal and dRate based on the tolerance and changeInBest
 //Function that adjusts the anneal based on the current circumstances
-void changeAnneal (std::vector<Adult> newAdults, const cudaConstants* cConstants, double & new_anneal, double & currentAnneal, double & anneal_min,  double & previousBestPosDiff, double & generation, const double & posTolerance, double & dRate);
+void changeAnneal (const std::vector<Adult>& newAdults, const cudaConstants* cConstants, double & new_anneal, double & currentAnneal, double & anneal_min,  double & previousBestPosDiff, double & generation, const double & posTolerance, double & dRate);
 
 //----------------------------------------------------------------------------------------------------------------------------
 //Input: all the updated parameters of the current generation
 //Output: calls the various terminal display functions when needed
 //Function that handles the reporting of a generation's performance
-void reportGeneration (std::vector<Adult> newAdults, const cudaConstants* cConstants, const double & new_anneal, const double & anneal_min, const int & generation, int & numNans);
+void reportGeneration (std::vector<Adult>& newAdults, const cudaConstants* cConstants, const double & new_anneal, const double & anneal_min, const int & generation, int & numNans);
 
 //----------------------------------------------------------------------------------------------------------------------------
 // Main processing function for Genetic Algorithm
@@ -156,6 +157,19 @@ void giveRank(std::vector<Adult> & allAdults, const cudaConstants* cConstants) {
     //1st dimension will be a spot for each adult in allAdults
     //2nd dimension will store the indexes of adults in allAdults that the adult in the 1st dimension has dominated
     std::vector<std::vector<int>> domination; 
+    domination.resize(allAdults.size(), std::vector<int>(allAdults.size()));
+
+    /*
+    for (int i = 0; i < allAdults.size(); i++)
+    {
+        for (int j = 0; j < allAdults.size(); i++)
+        {
+            domination[i][j] = allAdults.size();
+        }
+        
+    }
+    */
+    
 
     //This vector will keep track of how many times each adult in oldAdults has been dominated by another adult
     //Each index in this vector will correspond to the same index within allAdults
@@ -163,14 +177,14 @@ void giveRank(std::vector<Adult> & allAdults, const cudaConstants* cConstants) {
     //TODO: unit test to make sure the whole vector is actually initially filled with 0's and not just the first index or the original vector size
     std::vector<int> dominatedByCount;
 
-    for (int i = 0; i < cConstants->num_individuals; i++)
+    dominatedByCount.resize(allAdults.size(), 0);
+    /*
+    for (int i = 0; i < cConstants->num_individuals*2; i++)
     {
         dominatedByCount.push_back(0);
     }
-     
-
-    std::cout << "\n\n_-_-_-_-_-_-_-_-TEST: PRE DOMINATION CALC-_-_-_-_-_-_-_-\n\n";
-
+    */
+    
     //loop through each individual within the allAdults vector
     for (int i = 0; i < allAdults.size(); i++){
 
@@ -181,7 +195,7 @@ void giveRank(std::vector<Adult> & allAdults, const cudaConstants* cConstants) {
             if (dominationCheck(allAdults[i], allAdults[j], cConstants)){
                 //Put the jth index in the set of individuals dominated by i
                 //std::cout << "\n" << i << "th (i) Adult dominates " << j << "th (j) Adult!\n";
-                domination[i].push_back(j);
+                domination[i][j] = j;
 
                 //TODO: will this add too many to j's domination count? When it i's current value reaches j's current value it will have already recorded the dominaton here, but it will be recorded again 
                 //Add one to j's dominated by count
@@ -203,6 +217,8 @@ void giveRank(std::vector<Adult> & allAdults, const cudaConstants* cConstants) {
         if (dominatedByCount[i] == 0){
             allAdults[i].rank = 1;
             front.push_back(i);
+
+            //std::cout << "\n\nAdult #" << i << " ranked " << 1;
         }
     }
 
@@ -210,8 +226,6 @@ void giveRank(std::vector<Adult> & allAdults, const cudaConstants* cConstants) {
     int rankNum = 1;
     //vector to store individuals' indexes in next front
     std::vector<int> newFront;
-
-    std::cout << "\n\n_-_-_-_-_-_-_-_-TEST: PRE RANK ASSIGN-_-_-_-_-_-_-_-\n\n";
 
     //go until all individuals have been put in better ranks and none are left to give a ranking
     while(!front.empty()) {
@@ -223,16 +237,20 @@ void giveRank(std::vector<Adult> & allAdults, const cudaConstants* cConstants) {
         for(int k = 0; k < front.size(); k++){
 
             //loop through all the individuals that the individual in the old front dominated
-            for(int l = 0; l < domination[k].size(); l++){
+            for(int l = 0; l < domination[front[k]].size(); l++){
 
-                //subtract 1 from the dominated individuals' dominatedCount.
-                //if an individual was dominated only once for example, it would be on the second front of individuals.
-                dominatedByCount[domination[k][l]]--;
+                //if (domination[front[k]][l] < allAdults.size()) {
+                    //subtract 1 from the dominated individuals' dominatedCount.
+                    //if an individual was dominated only once for example, it would be on the second front of individuals.
+                    dominatedByCount[domination[front[k]][l]]--;
+                //}
 
                 //if the dominated count is at 0, add the individual to the next front and make its rank equal to the next front number.
-                if (dominatedByCount[domination[k][l]] == 0){
+                if (dominatedByCount[domination[front[k]][l]] == 0){
                     //Assign a rank to the new most dominating adult left
-                    allAdults[domination[k][l]].rank = rankNum + 1;
+                    allAdults[domination[front[k]][l]].rank = rankNum + 1;
+
+                    //std::cout << "\n\nAdult #" << domination[front[k]][l] << " ranked " << rankNum+1;
 
                     //Add the index of the this adult to newFront
                     newFront.push_back(l);                        
@@ -248,55 +266,57 @@ void giveRank(std::vector<Adult> & allAdults, const cudaConstants* cConstants) {
         //Equate the current (now empty) front to the new front to transfer the indexes of the adults in newFront to front
         front = newFront;
     }
+    //std::cout << "\n~~~~~~~~~~~~~~~~~~~~~~~~FINISHED RANKING~~~~~~~~~~~~~~~~~~~~~~~~\n";
 }
 
-//gives each adult in the pool a distance representing how different it is from other individuals
-void giveDistance(std::vector<Adult> pool, const cudaConstants* cConstants, int poolSize){
+//gives each adult in the allAdults a distance representing how different it is from other individuals
+void giveDistance(std::vector<Adult> & allAdults, const cudaConstants* cConstants){
 
     //starting rankSort to make sure nans are at the end of the array.
-    std::sort(pool.begin(), pool.begin() + cConstants->num_individuals*2, rankSort);
+    //std::sort(allAdults.begin(), allAdults.begin() + allAdults.size(), rankSort);
 
-    for (int i = 0; i < poolSize; i++ ){
+    
+    for (int i = 0; i < allAdults.size(); i++ ){
         //reset each individual's distance
-        pool[i].distance = 0.0;
+        allAdults[i].distance = 0.0;
     }
     
     //Sort by the first objective function, posDiff
-    std::sort(pool.begin(), pool.begin() + poolSize, LowerPosDiff);
+    std::sort(allAdults.begin(), allAdults.begin() + allAdults.size(), LowerPosDiff);
     //Set the boundaries
-    pool[0].distance = cConstants->MAX_DISTANCE;
-    pool[poolSize - 1].distance = cConstants->MAX_DISTANCE;
+    allAdults[0].distance = cConstants->MAX_DISTANCE;
+    allAdults[allAdults.size() - 1].distance = cConstants->MAX_DISTANCE;
 
 
     //For each individual besides the upper and lower bounds, make their distance equal to
     //the current distance + the absolute normalized difference in the function values of two adjacent individuals.
     double normalPosDiffLeft;
     double normalPosDiffRight;
-    for(int i = 1; i < poolSize - 1; i++){
+    for(int i = 1; i < allAdults.size() - 1; i++){
         //Divide left and right individuals by the worst individual to normalize
-        normalPosDiffLeft = pool[i+1].posDiff/pool[poolSize - 1].posDiff;
-        normalPosDiffRight = pool[i-1].posDiff/pool[poolSize - 1].posDiff;
+        normalPosDiffLeft = allAdults[i+1].posDiff/allAdults[allAdults.size() - 1].posDiff;
+        normalPosDiffRight = allAdults[i-1].posDiff/allAdults[allAdults.size() - 1].posDiff;
         //distance = distance + abs((i+1) - (i-1))
-        pool[i].distance = pool[i].distance + abs((normalPosDiffLeft - normalPosDiffRight));// /(pool[poolSize - 1].posDiff - pool[0].posDiff));
+        allAdults[i].distance = allAdults[i].distance + abs((normalPosDiffLeft - normalPosDiffRight));// /(allAdults[allAdults.size() - 1].posDiff - allAdults[0].posDiff));
     }
 
     //Repeat above process for speedDiff    
-    std::sort(pool.begin(), pool.begin() + poolSize, LowerSpeedDiff);
+    std::sort(allAdults.begin(), allAdults.begin() + allAdults.size(), LowerSpeedDiff);
     //Set the boundaries
-    pool[0].distance = cConstants->MAX_DISTANCE;
-    pool[poolSize - 1].distance = cConstants->MAX_DISTANCE;
+    allAdults[0].distance = cConstants->MAX_DISTANCE;
+    allAdults[allAdults.size() - 1].distance = cConstants->MAX_DISTANCE;
 
     
     //For each individual besides the upper and lower bounds, make their distance equal to
     //the current distance + the absolute normalized difference in the function values of two adjacent individuals.
     double normalSpeedDiffLeft;
     double normalSpeedDiffRight;
-    for(int i = 1; i < poolSize - 1; i++){
+    for(int i = 1; i < allAdults.size() - 1; i++){
         //Divide left and right individuals by the worst individual to normalize
-        normalSpeedDiffLeft = pool[i+1].speedDiff/pool[poolSize - 1].speedDiff;
-        normalSpeedDiffRight = pool[i-1].speedDiff/pool[poolSize - 1].speedDiff;
+        normalSpeedDiffLeft = allAdults[i+1].speedDiff/allAdults[allAdults.size() - 1].speedDiff;
+        normalSpeedDiffRight = allAdults[i-1].speedDiff/allAdults[allAdults.size() - 1].speedDiff;
         //distance = distance + abs((i+1) - (i-1))
-        pool[i].distance = pool[i].distance + abs((normalSpeedDiffLeft - normalSpeedDiffRight));// /(pool[poolSize - 1].speedDiff - pool[0].speedDiff));
+        allAdults[i].distance = allAdults[i].distance + abs((normalSpeedDiffLeft - normalSpeedDiffRight));// /(allAdults[allAdults.size() - 1].speedDiff - allAdults[0].speedDiff));
     }
 }
 
@@ -407,7 +427,7 @@ void createFirstGeneration(std::vector<Adult>& oldAdults, const cudaConstants* c
 }
 
 //Function that calls the sorting algorithims, depending on the selected mission
-void callSorts (std::vector<Adult>allAdults, const int & numNans, const cudaConstants* cConstants){
+void callSorts (std::vector<Adult>&allAdults, const int & numNans, const cudaConstants* cConstants){
     if (cConstants->missionType == Impact) {
         //Decide the next generation of potential parents based on posDiff? was cost
         std::sort(allAdults.begin(), allAdults.end());
@@ -416,34 +436,36 @@ void callSorts (std::vector<Adult>allAdults, const int & numNans, const cudaCons
         //give a rank to each adult based on domination sort
         //* Ignore any nans at the end of allAdults
         //must be called after checking for nans and before giveDistance
-        std::cout << "\n\n_-_-_-_-_-_-_-_-TEST: PRE GIVE RANK-_-_-_-_-_-_-_-\n\n";
         giveRank(allAdults, cConstants); //gives a rank to each adult
-        std::cout << "\n\n_-_-_-_-_-_-_-_-TEST: PRE GIVE DIST-_-_-_-_-_-_-_-\n\n";
-        giveDistance(allAdults, cConstants, allAdults.size() - numNans); //gives a distance to each adult
-        std::cout << "\n\n_-_-_-_-_-_-_-_-TEST: PRE R-D SORT-_-_-_-_-_-_-_-\n\n";
+        giveDistance(allAdults, cConstants); //gives a distance to each adult
         std::sort(allAdults.begin(), allAdults.end(), rankDistanceSort); //sorts allAdults using rankDistance sort
     } 
 }
 
 //fills oldAdults with the best adults from this generation and the previous generation so that the best parents can be selected
 void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& newAdults, std::vector<Adult>& oldAdults, int& numNans, const cudaConstants* cConstants){
-    allAdults.clear(); //ensures this vector is empty and ready for new inputs
+    std::vector<Adult>().swap(allAdults); //ensures this vector is empty and ready for new inputs
     numNans = 0;
 
+    //TODO: Making sure there are no errors within allAdults is temporary, eventually we need to make sure they are at the end of the rankDistanceSort but still include them within allAdults
+
     for (int i = 0; i < newAdults.size(); i++){ //copies all the elements of newAdults into allAdults
-        allAdults.push_back(newAdults[i]);
         if(newAdults[i].errorStatus != VALID){ //tallies the number of nans in allAdults by checking if the adult being passed into newAdult is a Nan or not
             numNans++;
         }
+        else {
+            allAdults.push_back(newAdults[i]);
+        }
     }
+    
     for (int i = 0; i < oldAdults.size(); i++){ //copies over all the elements of oldAdults into allAdults
-        allAdults.push_back(oldAdults[i]);
         if(oldAdults[i].errorStatus != VALID){//tallies the number of nans in allAdults by checking if the adult being passed into newAdult is a Nan or not
             numNans++;
         }
+        else {
+            allAdults.push_back(oldAdults[i]);
+        }
     }
-
-    std::cout << "\n\n_-_-_-_-_-_-_-_-TEST: PRE CALL SORTS-_-_-_-_-_-_-_-\n\n";
 
     //Sort the set of adults
     callSorts(allAdults, numNans, cConstants);
@@ -452,8 +474,6 @@ void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& 
     int counter = 0; //a variable that ensures we put the correct number of adults in oldAdults
     //copies the best adults from allAdults into oldAdults (should be half of allAdults that are copied over)
     //TODO:: Make sure dividing num_individuals / 2 is correct or if we should divide by something else
-
-    std::cout << "\n\n_-_-_-_-_-_-_-_-TEST: PRE OLD ADULTS FILL_-_-_-_-_-_-_-_-\n\n";
 
     while (counter < (cConstants->num_individuals)/2 && counter < allAdults.size()){
         oldAdults.push_back(allAdults[counter]);
@@ -469,7 +489,7 @@ void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& 
 
 //TODO: Figure out what to replace posDiff (what used to be cost)
 //Function that will adjust the annneal based on the previous anneal and if there was a change in the best individual
-void changeAnneal (std::vector<Adult> newAdults, const cudaConstants* cConstants, double & new_anneal, double & currentAnneal, double & anneal_min,  double & previousBestPosDiff, double & generation, const double & posTolerance, double & dRate){
+void changeAnneal (const std::vector<Adult>& newAdults, const cudaConstants* cConstants, double & new_anneal, double & currentAnneal, double & anneal_min,  double & previousBestPosDiff, double & generation, const double & posTolerance, double & dRate){
     // Scaling anneal based on proximity to tolerance
     // Far away: larger anneal scale, close: smaller anneal
     if (cConstants->missionType == Impact) {
@@ -527,7 +547,7 @@ void changeAnneal (std::vector<Adult> newAdults, const cudaConstants* cConstants
 }
 
 //Function that writes the results of the inserted generation
-void reportGeneration (std::vector<Adult> newAdults, const cudaConstants* cConstants, const double & new_anneal, const double & anneal_min, const int & generation, int & numNans){
+void reportGeneration (std::vector<Adult> & newAdults, const cudaConstants* cConstants, const double & new_anneal, const double & anneal_min, const int & generation, int & numNans){
     // If in recording mode and write_freq reached, call the record method
     if (static_cast<int>(generation) % cConstants->write_freq == 0 && cConstants->record_mode == true) {
         recordGenerationPerformance(cConstants, newAdults, generation, new_anneal, cConstants->num_individuals, anneal_min);
@@ -590,8 +610,6 @@ double optimize(const cudaConstants* cConstants) {
         initializeRecord(cConstants);
     }
 
-    std::cout << "\n\n_-_-_-_-_-_-_-_-TEST: POST INITIALIZE_-_-_-_-_-_-_-_-\n\n";
-     
     // input parameters for Runge Kutta process
     // Each parameter is the same for each thread on the GPU
     double timeInitial = 0; // the starting time of the trip is always defined as zero   
@@ -655,8 +673,6 @@ double optimize(const cudaConstants* cConstants) {
     //Need to make children, then callRK, then make into adults (not currently doing that)
     createFirstGeneration(oldAdults, cConstants, rng); 
 
-    std::cout << "\n\n_-_-_-_-_-_-_-_-TEST: POST FIRST GENERATION_-_-_-_-_-_-_-_-\n\n";
-
     // main gentic algorithm loop
     // - continues until allWithinTolerance returns true (specific number of individuals are within threshold)
     do {        
@@ -664,12 +680,20 @@ double optimize(const cudaConstants* cConstants) {
         //takes in oldAdults (the potential parents) and fills newAdults with descendants of the old adults
         newGeneration(oldAdults, newAdults, currentAnneal, generation, rng, cConstants);
 
-        std::cout << "\n\n_-_-_-_-_-_-_-_-TEST: POST NEW GENERATION_-_-_-_-_-_-_-_-\n\n";
+        /*
+        TEST 
+        for (int i = 0; i < 10; i++)
+        {
+            int randIndex = rng() % (cConstants -> num_individuals);
+
+            std::cout << "Rand Adult (adult #" << randIndex << ") pos and speed diffs: \n";
+            std::cout << "\tposDiff: " << newAdults[i].posDiff << "\n";
+            std::cout << "\tspeedDiff: " << newAdults[i].speedDiff << "\n\n";
+        }
+        */
 
         //fill oldAdults with the best adults from this generation and the previous generation so that the best parents can be selected (numNans is for all adults in the generation - the oldAdults and the newAdults)
         preparePotentialParents(allAdults, newAdults, oldAdults, numNans, cConstants);
-
-        std::cout << "\n\n_-_-_-_-_-_-_-_-TEST: POST PREP PARENTS_-_-_-_-_-_-_-_-\n\n";
 
         //TODO:: Major space for efficeincy change
         /*

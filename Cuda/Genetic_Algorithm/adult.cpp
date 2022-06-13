@@ -88,10 +88,10 @@ bool dominationCheck(Adult& personA, Adult& personB, const cudaConstants* cConst
     //these are both currently set to 1e-14 AU, I don't think these need to be modified 
     //this tolerance is about 0.0015m, and I don't think we can go lower?
 
-    //double posTolerance = cConstants->posDominationTolerance;
-    //double speedTolerance = cConstants->speedDominationTolerance;
-    double posTolerance = 1e-14;
-    double speedTolerance = 1e-14;
+    double posTolerance = cConstants->posDominationTolerance;
+    double speedTolerance = cConstants->speedDominationTolerance;
+    //double posTolerance = 1e-14;
+    //double speedTolerance = 1e-14;
     //true if A posDiff "equals" B posDiff
     bool APosEqualsB = false;
     //true if A speedDiff "equals" B speedDiff

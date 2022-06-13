@@ -12,6 +12,8 @@ const int genSize = 10;
 bool firstParentsTest();
 
 //Makes a set of parents and creates children from these parents
+//Only going to be really tracking tripTime so that we don't have to worry about callRK if possible
+//Creates a generation of parents
 bool firstFullGen();
 
 //Simpified unit test version of first generation -> does not callRK, instead I preset posDiff and speedDiff to make calculations easier (selected semi-random multiples of 10)

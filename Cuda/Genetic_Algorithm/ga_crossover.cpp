@@ -462,8 +462,6 @@ void newGeneration (std::vector<Adult> & oldAdults, std::vector<Adult> & newAdul
         }
     }
 
-    std::cout << "\n\n_-_-_-_-_-_-_-_-TEST: POST CHILDREN CREATION_-_-_-_-_-_-_-_-\n\n";
-
     double timeInitial = 0;
     double calcPerS = 0;
 
@@ -477,13 +475,9 @@ void newGeneration (std::vector<Adult> & oldAdults, std::vector<Adult> & newAdul
     //Determine the status and diffs of the simulated children
     setStatusAndDiffs(newChildren, cConstants); 
 
-    std::cout << "\n\n_-_-_-_-_-_-_-_-TEST: POST RK_-_-_-_-_-_-_-_-\n\n";
-
     //Now that the children have been simulated, convert the children into adults
     //This will also put the converted children into the newAdults vector
     convertToAdults(newAdults, newChildren, cConstants); 
-
-    std::cout << "\n\n_-_-_-_-_-_-_-_-TEST: POST CONVERSION_-_-_-_-_-_-_-_-\n\n";
 
     //Free the pointer's memory
     delete[] newChildren; 
@@ -506,85 +500,6 @@ void firstGeneration(Child* initialChildren, std::vector<Adult>& oldAdults, cons
     const double timeIntial = 0;
     double calcPerS  = 0;
 
-    //TESTS:
-
-    std::cout << "\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~PRE SIM TESTS~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n";
-    
-    double itlAlpha, itlBeta, itlZeta, itlTTime, itlR, itlTheta, itlZ, itlCoast;
-
-    //Test to make sure that parameters are okay
-    //Calculate the average of each generated parameter is within an accepted range
-    for (int i = 0; i < cConstants->num_individuals; i++)
-    {
-        itlAlpha += initialChildren[i].startParams.alpha;
-        itlBeta += initialChildren[i].startParams.beta;
-        itlZeta += initialChildren[i].startParams.zeta;
-        itlTTime += initialChildren[i].startParams.tripTime;
-        itlR += initialChildren[i].startParams.y0.r;
-        itlTheta += initialChildren[i].startParams.y0.theta;
-        itlZ += initialChildren[i].startParams.y0.z;
-        itlCoast += initialChildren[i].startParams.coeff.coastThreshold; 
-    }
-    
-    //Reporting the average generated input parameters
-    std::cout << "\nAverage itl alpha: " << itlAlpha/cConstants->num_individuals <<
-                 "\nAverage itl beta: " << itlBeta/cConstants->num_individuals <<
-                 "\nAverage itl zeta: " << itlZeta/cConstants->num_individuals <<
-                 "\nAverage itl time: " << itlTTime/cConstants->num_individuals <<
-                 "\nAverage itl r: " << itlR/cConstants->num_individuals <<
-                 "\nAverage itl theta: " << itlTheta/cConstants->num_individuals <<
-                 "\nAverage itl z: " << itlZ/cConstants->num_individuals <<
-                 "\nAverage itl coast: " << itlCoast/cConstants->num_individuals;
-
-    //Check for error statuses
-    int validCount, sunCount, otherCount, notRunCount;
-    validCount = sunCount = otherCount = notRunCount = 0;
-
-    //Reporting the number of each status
-    //All should have a status of not_run
-    for (int i = 0; i < cConstants->num_individuals; i++)
-    {
-        if (initialChildren[i].errorStatus == VALID) {
-            validCount++;
-        }
-        else if (initialChildren[i].errorStatus == SUN_ERROR) {
-            sunCount++;
-        }
-        else if (initialChildren[i].errorStatus == NOT_RUN) {
-            notRunCount++;
-        }
-        else {
-            otherCount++;
-        }
-    }
-
-    //Reporting the statuses
-    std::cout << "\n\nPRE SIM ERROR COUNTS:" <<
-                 "\n\tValid: " << validCount <<
-                 "\n\tSun: " << sunCount <<
-                 "\n\tNot Run: " << notRunCount <<
-                 "\n\tOther: " << otherCount;
-    
-    //Check to make sure that finalPos is okay
-    bool finalPosCheck = true;
-
-    for (int i = 0; i < cConstants->num_individuals; i++)
-    {
-        if (initialChildren[i].finalPos.r != 0) {
-            std::cout << "\nCHILDREN FINAL POS GENERATION ERROR\n\t(triggering r value: " << initialChildren[i].finalPos.r << ")\n";
-            finalPosCheck = false;
-            break;
-        }
-    }
-
-    //Assuming that all finalPos's have values of 0, will report if so, or not
-    if (finalPosCheck) {
-        std::cout << "\n\nPASSED INITIAL FINAL POS CHECK\t(all children start with final pos values of 0)\n";
-    }
-    else {
-        finalPosCheck = true; 
-    }
-
      // Each child represents an individual set of starting parameters 
         // GPU based runge kutta process determines final position and velocity based on parameters
     //Will fill in the final variables (final position & speed, posDiff, speedDiff) for each child
@@ -594,95 +509,14 @@ void firstGeneration(Child* initialChildren, std::vector<Adult>& oldAdults, cons
 
     //Determine the status and diffs of the now simulated children
     setStatusAndDiffs(initialChildren, cConstants);
-    
-
-    std::cout << "\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~POST SIM TESTS~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n";
-
-    //Resetting values
-    itlAlpha = itlBeta = itlZeta = itlTTime = itlR = itlTheta = itlZ = itlCoast = 0;
-
-    //Test to make sure that parameters are okay
-    //Find the averages of the parameters to make sure they are within expected ranges
-    for (int i = 0; i < cConstants->num_individuals; i++)
-    {
-        itlAlpha += initialChildren[i].startParams.alpha;
-        itlBeta += initialChildren[i].startParams.beta;
-        itlZeta += initialChildren[i].startParams.zeta;
-        itlTTime += initialChildren[i].startParams.tripTime;
-        itlR += initialChildren[i].startParams.y0.r;
-        itlTheta += initialChildren[i].startParams.y0.theta;
-        itlZ += initialChildren[i].startParams.y0.z;
-        itlCoast += initialChildren[i].startParams.coeff.coastThreshold; 
-    }
-    
-    //Report parameter averages
-    std::cout << "\nAverage final alpha: " << itlAlpha/cConstants->num_individuals <<
-                 "\nAverage final beta: " << itlBeta/cConstants->num_individuals <<
-                 "\nAverage final zeta: " << itlZeta/cConstants->num_individuals <<
-                 "\nAverage final time: " << itlTTime/cConstants->num_individuals <<
-                 "\nAverage final r: " << itlR/cConstants->num_individuals <<
-                 "\nAverage final theta: " << itlTheta/cConstants->num_individuals <<
-                 "\nAverage final z: " << itlZ/cConstants->num_individuals <<
-                 "\nAverage final coast: " << itlCoast/cConstants->num_individuals;
-
-    //Check for error statuses
-    validCount = sunCount = otherCount = notRunCount = 0;
-
-    //See which statuses each child has
-    for (int i = 0; i < cConstants->num_individuals; i++)
-    {
-        if (initialChildren[i].errorStatus == VALID) {
-            validCount++;
-        }
-        else if (initialChildren[i].errorStatus == SUN_ERROR) {
-            sunCount++;
-        }
-        else if (initialChildren[i].errorStatus == NOT_RUN) {
-            notRunCount++;
-        }
-        else {
-            otherCount++;
-        }
-    }
-
-    //Reporting the error counts
-    std::cout << "\n\nPOST SIM ERROR COUNTS:" <<
-                 "\n\tValid: " << validCount <<
-                 "\n\tSun: " << sunCount <<
-                 "\n\tNot Run: " << notRunCount <<
-                 "\n\tOther: " << otherCount;
-
-
-    //Check to make sure that finalPos is okay
-    for (int i = 0; i < cConstants->num_individuals; i++)
-    {
-        if (initialChildren[i].finalPos.r != 0) {
-            std::cout << "\n\nFinal pos check pass (values not all 0)\n\t(triggering r value: " << initialChildren[i].finalPos.r << ")\n";
-            finalPosCheck = false;
-            break;
-        }
-    }
-
-    //Assuming that after the simulation at least one of the final pos's != 0, if not it will report the error
-    if (finalPosCheck) {
-        std::cout << "\n\nFAILED FINAL POS CHECK\t(all children end with final pos values of 0)\n";
-    }
-    
-    
-    std::cout <<"\n0th CHILD status: " << initialChildren[0].errorStatus <<
-                "\n0th CHILD final pos: " << initialChildren[0].finalPos << 
-                "\n0th CHILD posDiff: " << initialChildren[0].posDiff << "\n";
-
-    std::cout << "\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~END TESTS~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n";
 
     //Now that the children have been simulated, convert the children into adults
     //This will also put the converted children into the newAdults vector
     convertToAdults(oldAdults, initialChildren, cConstants); 
-
-    std::cout << "\nADULT posDiff: " << oldAdults[0].posDiff << "\n";
 }
 
 // Go through a children array that has just been simulated and will determine their error_status, posDiff, and speedDiff
+//TODO: COnsider combining this with convertToAdults
 void setStatusAndDiffs(Child* newChildren, const cudaConstants* cConstants) {
     //Iterate through the simulated children to determine their error status (if it hasn't been set by callRK already) and calculate their pos and speed differences
     for (int i = 0; i < cConstants->num_individuals; i++)
@@ -694,6 +528,7 @@ void setStatusAndDiffs(Child* newChildren, const cudaConstants* cConstants) {
         }
         else if (newChildren[i].errorStatus != SUN_ERROR) {
             //Since nan and sun errors would have already been set, it is safe to set this child's status as valid
+            //TODO: Consider moving this to RKSimple
             newChildren[i].errorStatus = VALID;
         }
 

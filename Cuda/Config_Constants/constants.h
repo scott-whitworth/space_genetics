@@ -63,5 +63,7 @@ enum ERROR_STATUS{
 #define BAD_RENDEV_SPEEDDIFF 10 //a bad speedDiff for a rendezvous mission to have (10 AU/s)
 #define BAD_IMPACT_SPEEDDIFF 0  //a bad speedDiff for an impact mission to have (0 AU/s)
 
+//TODO: Consider moving MAX_DISTANCE here instead of within coefficients
+
 
 #endif

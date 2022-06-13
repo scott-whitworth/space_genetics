@@ -198,19 +198,7 @@ void giveRank(std::vector<Adult> & allAdults, const cudaConstants* cConstants) {
     //1st dimension will be a spot for each adult in allAdults
     //2nd dimension will store the indexes of adults in allAdults that the adult in the 1st dimension has dominated
     std::vector<std::vector<int>> domination; 
-    domination.resize(allAdults.size(), std::vector<int>(allAdults.size()));
-
-    /*
-    for (int i = 0; i < allAdults.size(); i++)
-    {
-        for (int j = 0; j < allAdults.size(); i++)
-        {
-            domination[i][j] = allAdults.size();
-        }
-        
-    }
-    */
-    
+    domination.resize(allAdults.size());
 
     //This vector will keep track of how many times each adult in oldAdults has been dominated by another adult
     //Each index in this vector will correspond to the same index within allAdults
@@ -219,13 +207,7 @@ void giveRank(std::vector<Adult> & allAdults, const cudaConstants* cConstants) {
     std::vector<int> dominatedByCount;
 
     dominatedByCount.resize(allAdults.size(), 0);
-    /*
-    for (int i = 0; i < cConstants->num_individuals*2; i++)
-    {
-        dominatedByCount.push_back(0);
-    }
-    */
-    
+
     //loop through each individual within the allAdults vector
     for (int i = 0; i < allAdults.size(); i++){
 
@@ -236,7 +218,7 @@ void giveRank(std::vector<Adult> & allAdults, const cudaConstants* cConstants) {
             if (dominationCheck(allAdults[i], allAdults[j], cConstants)){
                 //Put the jth index in the set of individuals dominated by i
                 //std::cout << "\n" << i << "th (i) Adult dominates " << j << "th (j) Adult!\n";
-                domination[i][j] = j;
+                domination[i].push_back(j);
 
                 //TODO: will this add too many to j's domination count? When it i's current value reaches j's current value it will have already recorded the dominaton here, but it will be recorded again 
                 //Add one to j's dominated by count
@@ -280,12 +262,10 @@ void giveRank(std::vector<Adult> & allAdults, const cudaConstants* cConstants) {
             //loop through all the individuals that the individual in the old front dominated
             for(int l = 0; l < domination[front[k]].size(); l++){
 
-                //if (domination[front[k]][l] < allAdults.size()) {
-                    //subtract 1 from the dominated individuals' dominatedCount.
-                    //if an individual was dominated only once for example, it would be on the second front of individuals.
-                    dominatedByCount[domination[front[k]][l]]--;
-                //}
-
+                //subtract 1 from the dominated individuals' dominatedCount.
+                //if an individual was dominated only once for example, it would be on the second front of individuals.
+                dominatedByCount[domination[front[k]][l]]--;
+                
                 //if the dominated count is at 0, add the individual to the next front and make its rank equal to the next front number.
                 if (dominatedByCount[domination[front[k]][l]] == 0){
                     //Assign a rank to the new most dominating adult left
@@ -294,7 +274,7 @@ void giveRank(std::vector<Adult> & allAdults, const cudaConstants* cConstants) {
                     //std::cout << "\n\nAdult #" << domination[front[k]][l] << " ranked " << rankNum+1;
 
                     //Add the index of the this adult to newFront
-                    newFront.push_back(l);                        
+                    newFront.push_back(domination[front[k]][l]);                        
                 }
             }
         }

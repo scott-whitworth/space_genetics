@@ -84,7 +84,7 @@ void changeAnneal (const std::vector<Adult>& newAdults, const cudaConstants* cCo
 //Input: all the updated parameters of the current generation
 //Output: calls the various terminal display functions when needed
 //Function that handles the reporting of a generation's performance
-void reportGeneration (std::vector<Adult>& newAdults, const cudaConstants* cConstants, const double & new_anneal, const double & anneal_min, const int & generation, int & numNans);
+void reportGeneration (std::vector<Adult>& oldAdults, const cudaConstants* cConstants, const double & new_anneal, const double & anneal_min, const int & generation, int & numNans);
 
 //----------------------------------------------------------------------------------------------------------------------------
 // Main processing function for Genetic Algorithm
@@ -582,10 +582,10 @@ void changeAnneal (const std::vector<Adult>& newAdults, const cudaConstants* cCo
 }
 
 //Function that writes the results of the inserted generation
-void reportGeneration (std::vector<Adult> & newAdults, const cudaConstants* cConstants, const double & new_anneal, const double & anneal_min, const int & generation, int & numNans){
+void reportGeneration (std::vector<Adult> & oldAdults, const cudaConstants* cConstants, const double & new_anneal, const double & anneal_min, const int & generation, int & numNans){
     // If in recording mode and write_freq reached, call the record method
     if (static_cast<int>(generation) % cConstants->write_freq == 0 && cConstants->record_mode == true) {
-        recordGenerationPerformance(cConstants, newAdults, generation, new_anneal, cConstants->num_individuals, anneal_min);
+        recordGenerationPerformance(cConstants, oldAdults, generation, new_anneal, cConstants->num_individuals, anneal_min);
     }
 
     // Only call terminalDisplay every DISP_FREQ, not every single generation
@@ -594,30 +594,30 @@ void reportGeneration (std::vector<Adult> & newAdults, const cudaConstants* cCon
 
         //best position individual
         std::cout << "\n\nBest Position Individual:";
-        std::sort(newAdults.begin(), newAdults.end(), LowerPosDiff);
-        terminalDisplay(newAdults[0], generation);
+        std::sort(oldAdults.begin(), oldAdults.end(), LowerPosDiff);
+        terminalDisplay(oldAdults[0], generation);
 
         if(cConstants->missionType == Rendezvous){
             //Best lower speed individual
             std::cout << "\nBest Speed Individual:";
-            std::sort(newAdults.begin(), newAdults.end(), LowerSpeedDiff);
-            terminalDisplay(newAdults[0], generation);
+            std::sort(oldAdults.begin(), oldAdults.end(), LowerSpeedDiff);
+            terminalDisplay(oldAdults[0], generation);
         }
         else if(cConstants->missionType == Impact){
             //Best higher speed individual
             std::cout << "\nBest Speed Individual:";
-            std::sort(newAdults.begin(), newAdults.end(), HigherSpeedDiff);
-            terminalDisplay(newAdults[0], generation);
+            std::sort(oldAdults.begin(), oldAdults.end(), HigherSpeedDiff);
+            terminalDisplay(oldAdults[0], generation);
         }
         //display to the terminal the best individual based on cost
-        std::cout << "\nBest PosDiff Individual:";
-        std::sort(newAdults.begin(), newAdults.end(), rankDistanceSort);
-        terminalDisplay(newAdults[0], generation);
+        std::cout << "\nBest Rank Distance Individual:";
+        std::sort(oldAdults.begin(), oldAdults.end(), rankDistanceSort);
+        terminalDisplay(oldAdults[0], generation);
         std::cout << "\n# of Nans this generation: " << numNans << "\n" << std::endl;
         
         //re-sort by rankDistance for rendezvous mission
         if(cConstants->missionType == Rendezvous) {
-            std::sort(newAdults.begin(), newAdults.end(), rankDistanceSort);
+            std::sort(oldAdults.begin(), oldAdults.end(), rankDistanceSort);
         }
         
         //Reset the tally of nans.
@@ -626,7 +626,7 @@ void reportGeneration (std::vector<Adult> & newAdults, const cudaConstants* cCon
 
     //Record the parent pool for the next generation
     if (static_cast<int>(generation) % cConstants->all_write_freq == 0 && cConstants->record_mode == true) {
-        recordAllIndividuals("NextParents", cConstants, newAdults, cConstants->num_individuals, generation);
+        recordAllIndividuals("NextParents", cConstants, oldAdults, cConstants->num_individuals, generation);
     }
 }
 
@@ -756,7 +756,7 @@ double optimize(const cudaConstants* cConstants) {
         changeAnneal (newAdults, cConstants, new_anneal, currentAnneal, anneal_min, previousBestPosDiff, generation, posTolerance, dRate);
 
         //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE RECORD-_-_-_-_-_-_-_-_-_\n\n";
-        reportGeneration (newAdults, cConstants, new_anneal, anneal_min, generation, numNans);
+        reportGeneration (oldAdults, cConstants, new_anneal, anneal_min, generation, numNans);
 
         // Before replacing new adults, determine whether all are within tolerance
         // Determines when loop is finished

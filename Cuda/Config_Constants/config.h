@@ -110,7 +110,7 @@ struct cudaConstants {
     int missionType;
 
     // Default constructor, sets the config file path to be "genetic.config" for geneticFileRead()
-    cudaConstants();
+    cudaConstants(){}
 
     // Constructor, accepts a string argument for the config file path
     cudaConstants(std::string configFile);

@@ -248,12 +248,12 @@ bool dominationCheckTest(Adult& personA, Adult& personB) {
 #ifdef UNITTEST //this should be defined in unit testing
 
 const std::string Adult::unitTestingRankDistanceStatusPrint(){
-    std::string allInfo = "Rank: " + std::to_string(rank) + "- Distance: " + std::to_string(static_cast<int>(distance));
+    std::string allInfo = "(" + std::to_string(rank) + "," + std::to_string(static_cast<int>(distance));
     if (errorStatus == VALID){
-        allInfo += "- VALID";
+        allInfo += ", VALID)";
     }
     else {
-        allInfo += "- Invalid (error type)";
+        allInfo += ", Invalid - error type)";
     }
     return allInfo;
 }

@@ -47,7 +47,7 @@ bool changeInBest(double previousBestPosDiff, const Adult & currentBest, double 
 //        pool - this generation of Adults, defined/initilized in optimimize
 //        cConstants - struct holding config values, used for accessing best_count value
 // Output: Returns true if top best_count adults within the pool are within the tolerance
-bool allWithinTolerance(double posTolerance, double speedTolerance, std::vector<Adult> pool, const cudaConstants* cConstants);
+bool allWithinTolerance(double posTolerance, double speedTolerance, const std::vector<Adult> & oldAdults, const cudaConstants* cConstants);
 
 //----------------------------------------------------------------------------------------------------------------------------
 //Function that will create the first generation of individuals within inputParamaeters
@@ -215,7 +215,7 @@ void giveRank(std::vector<Adult> & allAdults, const cudaConstants* cConstants) {
         for(int j = 0; j < allAdults.size(); j++){
 
             //Check to see if i dominates j
-            if (dominationCheck(allAdults[i], allAdults[j], cConstants)){
+            if (dominationCheck(allAdults[i], allAdults[j], cConstants) || allAdults[j].errorStatus != VALID){
                 //Put the jth index in the set of individuals dominated by i
                 //std::cout << "\n" << i << "th (i) Adult dominates " << j << "th (j) Adult!\n";
                 domination[i].push_back(j);
@@ -225,7 +225,7 @@ void giveRank(std::vector<Adult> & allAdults, const cudaConstants* cConstants) {
                 //dominatedByCount[j]++; 
             }
             //Check to see if j dominates i
-            else if (dominationCheck(allAdults[j], allAdults[i], cConstants)) {
+            else if (dominationCheck(allAdults[j], allAdults[i], cConstants) || allAdults[i].errorStatus != VALID) {
                 //TODO: this may have the same redundancy that was mentioned above with things being added to this vector too many times
                 //Put the ith index in the set of individuals dominated by j
                 //domination[j].push_back(i);
@@ -294,7 +294,7 @@ void giveRank(std::vector<Adult> & allAdults, const cudaConstants* cConstants) {
 void giveDistance(std::vector<Adult> & allAdults, const cudaConstants* cConstants){
 
     //starting rankSort to make sure nans are at the end of the array.
-    //std::sort(allAdults.begin(), allAdults.begin() + allAdults.size(), rankSort);
+    std::sort(allAdults.begin(), allAdults.begin() + allAdults.size(), rankSort);
 
     
     for (int i = 0; i < allAdults.size(); i++ ){
@@ -352,18 +352,20 @@ bool changeInBest(double previousBestPosDiff, const Adult & currentBest, double 
         }
 }
 
-//Returns true if top best_count adults within the pool are within the tolerance
-bool allWithinTolerance(double posTolerance, double speedTolerance, std::vector<Adult>pool, const cudaConstants* cConstants) {
+//Returns true if top best_count adults within the oldAdults vector are within the tolerance
+bool allWithinTolerance(double posTolerance, double speedTolerance, const std::vector<Adult>& oldAdults, const cudaConstants* cConstants) {
 
     //Check what type of mission is running to use the correct posDiff function
     if (cConstants->missionType == Rendezvous){
         // Iterate to check best_count number of 'top' individuals
         for (int i = 0; i < cConstants->best_count; i++) {
             //both objectives need to be within tolerance
-            if (pool[i].posDiff >= posTolerance){
+            //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE CON POS CHECK-_-_-_-_-_-_-_-_-_\n\n";
+            if (oldAdults[i].posDiff >= posTolerance){
                 return false;
             }
-            if (pool[i].speedDiff >= speedTolerance){
+            //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE CON SPEED CHECK-_-_-_-_-_-_-_-_-_\n\n";
+            if (oldAdults[i].speedDiff >= speedTolerance){
                 return false;
             }
         }
@@ -372,7 +374,7 @@ bool allWithinTolerance(double posTolerance, double speedTolerance, std::vector<
         // Iterate to check best_count number of 'top' individuals
         for (int i = 0; i < cConstants->best_count; i++) {
             
-            if(pool[i].posDiff >= posTolerance) {
+            if(oldAdults[i].posDiff >= posTolerance) {
                 //One was not within 
                 return false;
             }
@@ -457,8 +459,11 @@ void callSorts (std::vector<Adult>&allAdults, const int & numNans, const cudaCon
         //give a rank to each adult based on domination sort
         //* Ignore any nans at the end of allAdults
         //must be called after checking for nans and before giveDistance
+        //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE GIVE RANK-_-_-_-_-_-_-_-_-_\n\n";
         giveRank(allAdults, cConstants); //gives a rank to each adult
+        //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE GIVE DISTANCE-_-_-_-_-_-_-_-_-_\n\n";
         giveDistance(allAdults, cConstants); //gives a distance to each adult
+        //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE GIVE SORT-_-_-_-_-_-_-_-_-_\n\n";
         std::sort(allAdults.begin(), allAdults.end(), rankDistanceSort); //sorts allAdults using rankDistance sort
     } 
 }
@@ -470,8 +475,8 @@ void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& 
 
     //TODO: Making sure there are no errors within allAdults is temporary, eventually we need to make sure they are at the end of the rankDistanceSort but still include them within allAdults
 
-    countStatuses(newAdults, generation);
-    countStatuses(oldAdults, generation);
+    //countStatuses(newAdults, generation);
+    //countStatuses(oldAdults, generation);
 
     for (int i = 0; i < newAdults.size(); i++){ //copies all the elements of newAdults into allAdults
         if(newAdults[i].errorStatus != VALID){ //tallies the number of nans in allAdults by checking if the adult being passed into newAdult is a Nan or not
@@ -491,7 +496,7 @@ void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& 
         }
     }
 
-    countStatuses(allAdults, generation);
+    //countStatuses(allAdults, generation);
 
     //Sort the set of adults
     callSorts(allAdults, numNans, cConstants);
@@ -508,13 +513,13 @@ void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& 
 
     //error message prints if somehow there are not enough adults to fill oldIndividuals to the size it should be  
     if(counter == allAdults.size() && counter < (cConstants->num_individuals)/2){ //TODO: May or may not want this. If used before oldAdults and newAdults were both filled once, delete error message
-        std::cout << "There are not enough adults to fill a oldIndividuals properly" << std::endl;
+        std::cout << "There are not enough adults to fill oldIndividuals properly" << std::endl;
     }
 
     //Clear the newAdult vector so that it is ready to recive new children
     newAdults.clear(); 
 
-    countStatuses(oldAdults, generation);
+    //countStatuses(oldAdults, generation);
 }
 
 //TODO: Figure out what to replace posDiff (what used to be cost)
@@ -701,6 +706,7 @@ double optimize(const cudaConstants* cConstants) {
 
     //Creates the individuals needed for the 0th generation
     //Need to make children, then callRK, then make into adults (not currently doing that)
+    //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE FIRST GEN-_-_-_-_-_-_-_-_-_\n\n";
     createFirstGeneration(oldAdults, cConstants, rng); 
 
     // main gentic algorithm loop
@@ -708,6 +714,7 @@ double optimize(const cudaConstants* cConstants) {
     do {        
         // Genetic Crossover and mutation occur here
         //takes in oldAdults (the potential parents) and fills newAdults with descendants of the old adults
+        //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE NEW GEN-_-_-_-_-_-_-_-_-_\n\n";
         newGeneration(oldAdults, newAdults, currentAnneal, generation, rng, cConstants);
 
         /*
@@ -721,7 +728,7 @@ double optimize(const cudaConstants* cConstants) {
             std::cout << "\tspeedDiff: " << newAdults[i].speedDiff << "\n\n";
         }
         */
-
+        //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE PREP PARENTS-_-_-_-_-_-_-_-_-_\n\n";
         //fill oldAdults with the best adults from this generation and the previous generation so that the best parents can be selected (numNans is for all adults in the generation - the oldAdults and the newAdults)
         preparePotentialParents(allAdults, newAdults, oldAdults, numNans, cConstants, generation);
 
@@ -735,7 +742,6 @@ double optimize(const cudaConstants* cConstants) {
             Possible direction: just put callRK inside newGeneration() (ga_crossover.cpp)
         */
         //UPDATE (6/7/22): callRK moved into ga_crossover, the effect on the efficiency of the code is not known yet
-        
         //Output survivors for the current generation if write_freq is reached
         if (static_cast<int>(generation) % cConstants->all_write_freq == 0 && cConstants->record_mode == true) {
             recordAllIndividuals("Survivors", cConstants, oldAdults, cConstants->survivor_count, generation);
@@ -745,13 +751,17 @@ double optimize(const cudaConstants* cConstants) {
         // This also serves to visually seperate the terminalDisplay() calls across generations 
         std::cout << '.';
 
+        //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE ANNEAL STFF-_-_-_-_-_-_-_-_-_\n\n";
         //Perform utitlity tasks (adjusting anneal and reporting data)
         changeAnneal (newAdults, cConstants, new_anneal, currentAnneal, anneal_min, previousBestPosDiff, generation, posTolerance, dRate);
+
+        //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE RECORD-_-_-_-_-_-_-_-_-_\n\n";
         reportGeneration (newAdults, cConstants, new_anneal, anneal_min, generation, numNans);
 
         // Before replacing new adults, determine whether all are within tolerance
         // Determines when loop is finished
-        convergence = allWithinTolerance(posTolerance, speedTolerance, newAdults, cConstants);
+        //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE CONVERGENCE CHECK-_-_-_-_-_-_-_-_-_\n\n";
+        convergence = allWithinTolerance(posTolerance, speedTolerance, oldAdults, cConstants);
         
         //Increment the generation counter
         ++generation;

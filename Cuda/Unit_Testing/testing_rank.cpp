@@ -1,5 +1,5 @@
 #include "../Genetic_Algorithm/adult.h"
-#include "../Genetic_Algorithm/individuals.h"
+//#include "../Genetic_Algorithm/individuals.h"
 //#include UNITTEST
 #include <iostream>
 #include <iomanip>
@@ -28,7 +28,7 @@ void giveDistanceTest(std::vector<Adult> & pool, int poolSize);
 //giveRank fucntion that worked using arrays from individual, does not use cConstants
 //Input: a set of individuals and its size
 //Output: ranks for each individual
-void oldGiveRankTest(Individual * pool, int poolSize);
+//void oldGiveRankTest(Individual * pool, int poolSize);
 
 //for testing the changeAnneal and changeInBest functions
 //Input: None, but uses the same adult class setup as domination test and manually sets posDiff and speedDiff
@@ -59,14 +59,15 @@ bool dominationTest(){
     int r = 0;//rank
     double d = 1.0;//distance
     int test = 3;// 1: set of 6 different posDiffs and speedDiffs that leads to a normal expected outcome
-                 // 2: set of 6 different posDiffs and speedDiffs with a pair of nans, this messes up giveDistanceTest
+                 // 2: set of 6 different posDiffs and speedDiffs for the new version of dominationCheckTest that accounts for mission type
                  // 3: set of 1000 random posDiffs and speedDiffs of values 1-1000, meant to show giveRank works for large sets
                  // 4: set of 6 meant for testing the giveDistanceTest and seeing of it is giving the correct distances
+                 // 5: error status test of 6 adults
 
     //creating the vector and filling it with adults
     //test 1 is used for showing a good example of how giveRank works well with kind values
     //test 1 is also meant for showing an area where giveDistance doesn't quite work well
-    if(test == 4){
+    if(test == 1){
         int vectSize = 6;//size of the vector for the test
         //fill a vector with the adults
         for(int i = 0; i < vectSize; i++){
@@ -92,45 +93,49 @@ bool dominationTest(){
         GRtest[5].posDiff = 3;
         GRtest[5].speedDiff = 3;
 
-    }else if (test == 2){//nans are used in this test to show how both giveRank and giveDistance fail
+    }else if (test == 2){//this test is for the new version of dominationCheckTest that accounts for mission type
         int vectSize = 6;//size of the vector for the test
         //fill a vector with the adults
         for(int i = 0; i < vectSize; i++){
             GRtest.push_back(Adult(r, d)); 
         }
-
+        //higher speedDiffs will be better
         //Rank: 1
         GRtest[0].posDiff = 2;
         GRtest[0].speedDiff = 4;
-        //Rank: 1
+        //Rank: 3
         GRtest[1].posDiff = 4;
         GRtest[1].speedDiff = 1;
-        //Rank: 1?
-        GRtest[2].posDiff = nan("");
-        GRtest[2].speedDiff = nan("");
-        //Rank: 3
+        //Rank: 1
+        GRtest[2].posDiff = 5;
+        GRtest[2].speedDiff = 7;
+        //Rank: 1
         GRtest[3].posDiff = 9.72;
         GRtest[3].speedDiff = 9.72;
-        //Rank: 2
+        //Rank: 4
         GRtest[4].posDiff = 11;
         GRtest[4].speedDiff = 2;
-        //Rank: 1
+        //Rank: 2
         GRtest[5].posDiff = 3;
         GRtest[5].speedDiff = 3;
+
+
     }else if(test == 3){//larger test with random values
         int vectSize = 1000;//size of the vector for the test
         srand(time(NULL));//random seed
         //fill a vector with the adults
         for(int i = 0; i < vectSize; i++){
-            GRtest.push_back(Adult(r, d)); 
+            GRtest.push_back(Adult(r, d, VALID)); 
             //random values from 1 to 1000
+            //GRtest[i].posDiff = i;
+            //GRtest[i].speedDiff = i;
             GRtest[i].posDiff = 1 + (rand() % 999);
             GRtest[i].speedDiff = 1 +  (rand() % 999);
         }
-        //GRtest[100].posDiff = nan("");
-        //GRtest[100].speedDiff = nan("");
-        //GRtest[200].posDiff = nan("");
-        //GRtest[200].speedDiff = nan("");
+        GRtest[100].errorStatus = SUN_ERROR;
+        GRtest[200].errorStatus = SUN_ERROR;
+        GRtest[300].errorStatus = SUN_ERROR;
+        GRtest[400].errorStatus = SUN_ERROR;
     }else if (test == 4){
         int vectSize = 6;//size of the vector for the test
         //fill a vector with the adults
@@ -157,15 +162,49 @@ bool dominationTest(){
         //Rank: 1
         GRtest[5].posDiff = 3;
         GRtest[5].speedDiff = 3;
+    }else if(test == 5){
+        int vectSize = 8;//size of the vector for the test
+        //fill a vector with the adults
+        for(int i = 0; i < vectSize; i++){
+            GRtest.push_back(Adult(r, d, VALID)); 
+        }
+
+        //Rank: 4
+        GRtest[0].posDiff = 2;
+        GRtest[0].speedDiff = 4;
+        GRtest[0].errorStatus = SUN_ERROR;
+        //Rank: 4
+        GRtest[1].posDiff = 4;
+        GRtest[1].speedDiff = 1;
+        GRtest[1].errorStatus = NAN_ERROR;
+        //Rank: 2
+        GRtest[2].posDiff = 5;
+        GRtest[2].speedDiff = 7;
+        //Rank: 3
+        GRtest[3].posDiff = 9.72;
+        GRtest[3].speedDiff = 9.72;
+        //Rank: 2
+        GRtest[4].posDiff = 11;
+        GRtest[4].speedDiff = 2;
+        //Rank: 1
+        GRtest[5].posDiff = 3;
+        GRtest[5].speedDiff = 3;
+        //Rank: 1
+        GRtest[6].posDiff = 2;
+        GRtest[6].speedDiff = 4;
+        //Rank: 5?
+        GRtest[7].posDiff = 10;
+        GRtest[7].speedDiff = 12;
+        GRtest[7].errorStatus = NAN_ERROR;
     }
     else{
         cout << "Not a valid test" << endl;
     }
 
-    std::sort(GRtest.begin(), GRtest.end(), LowerPosDiff);
+    //std::sort(GRtest.begin(), GRtest.end());
 
     //call the giveRankTest
-    //giveRankTest(GRtest);
+    giveRankTest(GRtest);
 
     //print the results
     //std::sort(GRtest.begin(), GRtest.begin() + GRtest.size(), rankSort);
@@ -173,10 +212,10 @@ bool dominationTest(){
     for(int i = 0; i < GRtest.size(); i++){
         if(GRtest.size() > 50){//print every 50th adult for large vector
             if(i % 50 == 0){
-                cout << "r: " << GRtest[i].rank << ", p: " << GRtest[i].posDiff << ", s: " << GRtest[i].speedDiff << endl;
+                cout << "r: " << GRtest[i].rank << ", p: " << GRtest[i].posDiff << ", s: " << GRtest[i].speedDiff << ", e: " << GRtest[i].errorStatus << endl;
             }
         }else{
-           cout << "r: " << GRtest[i].rank << ", p: " << GRtest[i].posDiff << ", s: " << GRtest[i].speedDiff << endl; 
+           cout << "r: " << GRtest[i].rank << ", p: " << GRtest[i].posDiff << ", s: " << GRtest[i].speedDiff << ", e: " << GRtest[i].errorStatus << endl; 
         }
     }
 
@@ -189,13 +228,18 @@ bool dominationTest(){
     for(int i = 0; i < GRtest.size(); i++){
         if(GRtest.size() > 50){//print every 50th adult for large vector
             if(i % 50 == 0){
-                cout << "r: " << GRtest[i].rank << ", p: " << GRtest[i].posDiff << ", s: " << GRtest[i].speedDiff << " d:" << GRtest[i].distance << endl;
+                cout << "r: " << GRtest[i].rank << ", p: " << GRtest[i].posDiff << ", s: " << GRtest[i].speedDiff << " d:" << GRtest[i].distance << ", e: " << GRtest[i].errorStatus << endl;
             }
         }else{
-            cout << "r: " << GRtest[i].rank << ", p: " << GRtest[i].posDiff << ", s: " << GRtest[i].speedDiff << " d:" << GRtest[i].distance << endl;
+            cout << "r: " << GRtest[i].rank << ", p: " << GRtest[i].posDiff << ", s: " << GRtest[i].speedDiff << " d:" << GRtest[i].distance << ", e: " << GRtest[i].errorStatus << endl;
         }
     }
-    
+    std::sort(GRtest.begin(), GRtest.begin() + GRtest.size(), rankSort);
+    cout << "Best-> Rank: " << GRtest[0].rank << ", p: " << GRtest[0].posDiff << ", s: " << GRtest[0].speedDiff << ", d: " << GRtest[0].distance << endl;
+    cout << "2nd Worst-> Rank: " << GRtest[GRtest.size() - 2].rank << ", p: " << GRtest[GRtest.size() - 2].posDiff << ", s: " << GRtest[GRtest.size() - 2].speedDiff << ", d: " << GRtest[GRtest.size() -2].distance << endl;
+    cout << "Worst-> Rank: " << GRtest[GRtest.size() - 1].rank << ", p: " << GRtest[GRtest.size() - 1].posDiff << ", s: " << GRtest[GRtest.size() - 1].speedDiff << ", d: " << GRtest[GRtest.size() -1].distance << endl;
+
+    /*
     //same size as whatever test is running
     int vectSize = GRtest.size();
     //edited individual class
@@ -234,11 +278,7 @@ bool dominationTest(){
         }
     }
 
-    //do this sort after so the correct indexes are copied to testPool
-    std::sort(GRtest.begin(), GRtest.begin() + GRtest.size(), rankSort);
-    cout << "Best-> Rank: " << GRtest[0].rank << ", p: " << GRtest[0].posDiff << ", s: " << GRtest[0].speedDiff << ", d: " << GRtest[0].distance << endl;
-    cout << "2nd Worst-> Rank: " << GRtest[GRtest.size() - 2].rank << ", p: " << GRtest[GRtest.size() - 2].posDiff << ", s: " << GRtest[GRtest.size() - 2].speedDiff << ", d: " << GRtest[GRtest.size() -2].distance << endl;
-    cout << "Worst-> Rank: " << GRtest[GRtest.size() - 1].rank << ", p: " << GRtest[GRtest.size() - 1].posDiff << ", s: " << GRtest[GRtest.size() - 1].speedDiff << ", d: " << GRtest[GRtest.size() -1].distance << endl;
+    
 
     //call the old giveRank function that uses arrays
     oldGiveRankTest(testPool, vectSize);
@@ -254,11 +294,14 @@ bool dominationTest(){
         }
         
     }
-    //compare the best and worst and how they were ranked
-    std::sort(testPool, testPool + vectSize, rankSortInd);
     cout << "Best-> Rank: " << testPool[0].rank << ", p: " << testPool[0].posDiff << ", s: " << testPool[0].speedDiff << endl;
     cout << "2nd Worst-> Rank: " << testPool[GRtest.size() - 2].rank << ", p: " << testPool[GRtest.size() - 2].posDiff << ", s: " << testPool[GRtest.size() - 2].speedDiff << endl;
     cout << "Worst-> Rank: " << testPool[GRtest.size() - 1].rank << ", p: " << testPool[GRtest.size() - 1].posDiff << ", s: " << testPool[GRtest.size() - 1].speedDiff << endl;
+    */
+    //compare the best and worst and how they were ranked
+    //std::sort(testPool, testPool + vectSize, rankSortInd);
+    //do this sort after so the correct indexes are copied to testPool
+        
     return true;
     
 }
@@ -293,9 +336,15 @@ void giveRankTest(std::vector<Adult> & allAdults) {
 
         //For each individual within allAdults, compare them to each other adult
         for(int j = 0; j < allAdults.size(); j++){
+            
+            if(allAdults[i].errorStatus != VALID && allAdults[j].errorStatus == VALID){
+                dominatedByCount[i]++;//tried it with this in the first if statement and it does not work, leads to a miscount
 
-            //Check to see if i dominates j
-            if (dominationCheckTest(allAdults[i], allAdults[j]) || isnan(allAdults[j].posDiff) || isnan(allAdults[j].speedDiff)){
+            }
+            else if(allAdults[j].errorStatus != VALID && allAdults[i].errorStatus == VALID){
+                domination[i].push_back(j);
+                
+            }else if (dominationCheckTest(allAdults[i], allAdults[j])){//Check to see if i dominates j
                 //Put the jth index in the set of individuals dominated by i
 
                 domination[i].push_back(j);
@@ -305,7 +354,7 @@ void giveRankTest(std::vector<Adult> & allAdults) {
                 //domination[i][j] = j;//this does not work
             }
             //Check to see if j dominates i
-            else if (dominationCheckTest(allAdults[j], allAdults[i])  || isnan(allAdults[i].posDiff) || isnan(allAdults[i].speedDiff)){
+            else if (dominationCheckTest(allAdults[j], allAdults[i])){
                 
                 dominatedByCount[i]++;//tried it with this in the first if statement and it does not work, leads to a miscount
                 
@@ -417,29 +466,47 @@ void giveRankTest(std::vector<Adult> & allAdults) {
 //gives each adult in the pool a distance representing how different it is from other individuals
 void giveDistanceTest(std::vector<Adult> & pool, int poolSize){
 
+    std::vector<int> validPool;
+
     //starting rankSort to make sure nans are at the end of the array.
     std::sort(pool.begin(), pool.begin() + poolSize, rankSort);
+
+    for(int i = 0; i < pool.size(); i++){
+        if(pool[i].errorStatus == VALID){
+            validPool.push_back(i);
+        }
+    }
+    
 
     for (int i = 0; i < poolSize; i++ ){
         //reset each individual's distance
         pool[i].distance = 0.0;
     }
-    
+    int newPoolSize;
+    newPoolSize = validPool.size();
     //Sort by the first objective function, posDiff
-    std::sort(pool.begin(), pool.begin() + poolSize, LowerPosDiff);
+    std::sort(pool.begin(), pool.begin() + newPoolSize, LowerPosDiff);
     //Set the boundaries
     pool[0].distance = 1e+12;
-    pool[poolSize - 1].distance = 1e+12;
+    pool[newPoolSize - 1].distance = 1e+12;
+    /*
+    cout << endl << "Post lowerPosDiff sort:" << endl;
+    for(int i = 0; i < pool.size(); i++){
+        if(i % 1 == 0){
+           cout << "r: " << pool[i].rank << ", p: " << pool[i].posDiff << ", s: " << pool[i].speedDiff << " d:" << pool[i].distance << ", e: " << pool[i].errorStatus << endl; 
+        }  
+    }
+    */
 
     //For each individual besides the upper and lower bounds, make their distance equal to
     //the current distance + the absolute normalized difference in the function values of two adjacent individuals.
     double normalPosDiffLeft;
     double normalPosDiffRight;
     //could we instead have it find the distance from i = 0 and i = 1
-    for(int i = 1; i < poolSize-1; i++){
+    for(int i = 1; i < newPoolSize-1; i++){
         //Divide left and right individuals by the worst individual to normalize
-        normalPosDiffRight = pool[i-1].posDiff/pool[poolSize - 1].posDiff;
-        normalPosDiffLeft = pool[i+1].posDiff/pool[poolSize - 1].posDiff;
+        normalPosDiffRight = pool[i-1].posDiff/pool[newPoolSize - 1].posDiff;
+        normalPosDiffLeft = pool[i+1].posDiff/pool[newPoolSize - 1].posDiff;
         
         //distance = distance + abs((i+1) - (i-1))
         pool[i].distance = pool[i].distance + abs((normalPosDiffLeft - normalPosDiffRight));// /(pool[poolSize - 1].posDiff - pool[0].posDiff));
@@ -447,27 +514,28 @@ void giveDistanceTest(std::vector<Adult> & pool, int poolSize){
     }
 
     //Repeat above process for speedDiff    
-    std::sort(pool.begin(), pool.begin() + poolSize, LowerSpeedDiff);
+    std::sort(pool.begin(), pool.begin() + newPoolSize, LowerSpeedDiff);
     //Set the boundaries
     pool[0].distance = 1e+12;
-    pool[poolSize - 1].distance = 1e+12;
-    //cout << endl << "Post lowerSpeedDiff sort:" << endl;
+    pool[newPoolSize - 1].distance = 1e+12;
+    /*
+    cout << endl << "Post lowerSpeedDiff sort:" << endl;
     for(int i = 0; i < pool.size(); i++){
         if(i % 1 == 0){
-           //cout << "r: " << pool[i].rank << ", p: " << pool[i].posDiff << ", s: " << pool[i].speedDiff << " d:" << pool[i].distance << endl; 
+           cout << "r: " << pool[i].rank << ", p: " << pool[i].posDiff << ", s: " << pool[i].speedDiff << " d:" << pool[i].distance << ", e: " << pool[i].errorStatus << endl; 
         }
           
     }
-
+    */
     
     //For each individual besides the upper and lower bounds, make their distance equal to
     //the current distance + the absolute normalized difference in the function values of two adjacent individuals.
     double normalSpeedDiffLeft;
     double normalSpeedDiffRight;
-    for(int i = 1; i < poolSize-1; i++){
+    for(int i = 1; i < newPoolSize-1; i++){
         //Divide left and right individuals by the worst individual to normalize
-        normalSpeedDiffRight = pool[i-1].speedDiff/pool[poolSize - 1].speedDiff;
-        normalSpeedDiffLeft = pool[i+1].speedDiff/pool[poolSize - 1].speedDiff;
+        normalSpeedDiffRight = pool[i-1].speedDiff/pool[newPoolSize - 1].speedDiff;
+        normalSpeedDiffLeft = pool[i+1].speedDiff/pool[newPoolSize - 1].speedDiff;
         //distance = distance + abs((i+1) - (i-1))
         pool[i].distance = pool[i].distance + abs((normalSpeedDiffLeft - normalSpeedDiffRight));// /(pool[poolSize - 1].speedDiff - pool[0].speedDiff));
 
@@ -476,6 +544,7 @@ void giveDistanceTest(std::vector<Adult> & pool, int poolSize){
     
 }
 
+/*
 void oldGiveRankTest(Individual * pool, int poolSize) {
     //non-denominated sorting method
     //https://www.iitk.ac.in/kangal/Deb_NSGA-II.pdf
@@ -539,6 +608,7 @@ void oldGiveRankTest(Individual * pool, int poolSize) {
     }
     cout << endl << "Index 0 dominated count (old): " << pool[0].dominatedCount << endl;
 }
+*/
 
 bool CAtest(){
     std::vector<Adult> CAtest;
@@ -625,6 +695,8 @@ void changeAnnealTest(std::vector<Adult> newAdults, double & new_anneal, double 
     // Far away: larger anneal scale, close: smaller anneal
     if (missionType == Impact) {
         //Impact is only based on posDiff, so proximity-based annealing only relies on how close posDiff is to tolerance.
+    //  new_anneal =    0.10       * (1 - (    1e-7     /         1e-6      ))
+    //             =    0.09
         new_anneal = currentAnneal * (1 - (posTolerance / newAdults[0].posDiff));
     }
 
@@ -633,6 +705,9 @@ void changeAnnealTest(std::vector<Adult> newAdults, double & new_anneal, double 
             //TO DO: decide what we want to do with this annealing   
             //Exponentially changing annealing, as oppose to what?
             // this may be where the anneal is jumping?
+            //on first run:
+        //  new_anneal =    0.10       * (1 - pow(    1e-7     /        1e-6      )^2)
+        //             =    0.099
             new_anneal = currentAnneal * (1 - pow(posTolerance / newAdults[0].posDiff,2.0));
             if (new_anneal < anneal_final){
                 new_anneal = anneal_final; //Set a true minimum for annealing
@@ -645,12 +720,14 @@ void changeAnnealTest(std::vector<Adult> newAdults, double & new_anneal, double 
     Adult currentBest;
     // Compare current best individual to that from CHANGE_CHECK (50) many generations ago.
     // If they are the same, change size of mutations
+    //change_check for the test here is 1
     if (static_cast<int>(generation) % (change_check) == 0) { 
         currentBest = newAdults[0];
         // checks for anneal to change
         // previousBest starts at 0 to ensure changeInBest = true on generation 0
         if ( !(changeInBestTest(previousBestPosDiff, currentBest, dRate)) ) { 
             //this ensures that changeInBest never compares two zeros, thus keeping dRate in relevance as the posDiff lowers
+            //on the first run through this, this requires the posDiff to be 1e-8
             if (trunc(currentBest.posDiff/dRate) == 0) { //posDiff here used to be cost
                 while (trunc(currentBest.posDiff/dRate) == 0) { //posDiff here used to be cost
                     dRate = dRate/10; 

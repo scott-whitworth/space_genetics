@@ -130,11 +130,11 @@ bool dominationCheck(Adult& personA, Adult& personB, const cudaConstants* cConst
     else {
         //If A.posDiff is approximately/better than B.posDiff, and A.speedDiff is approximately/better than B.speedDiff, then A is equal to B.
         if ((personA.posDiff < personB.posDiff || APosEqualsB) && (personA.speedDiff < personB.speedDiff || ASpeedEqualsB)) {
-        AisEqual = true;
+            AisEqual = true;
         }
         //If A has a better posDiff or speedDiff than B, then A is better than B
         if (personA.posDiff < personB.posDiff || personA.speedDiff < personB.speedDiff){
-        AisBetter = true;
+            AisBetter = true;
         }
         
     }
@@ -278,7 +278,7 @@ bool dominationCheckTest(Adult& personA, Adult& personB) {
 #ifdef UNITTEST //this should be defined in unit testing
 
 const std::string Adult::unitTestingRankDistanceStatusPrint(){
-    std::string allInfo = "(" + std::to_string(rank) + "," + std::to_string(static_cast<int>(distance));
+    std::string allInfo = "(" + std::to_string(rank) + "," + std::to_string(distance);
     if (errorStatus == VALID){
         allInfo += ", VALID)";
     }

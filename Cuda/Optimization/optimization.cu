@@ -214,8 +214,17 @@ void giveRank(std::vector<Adult> & allAdults, const cudaConstants* cConstants) {
         //For each individual within allAdults, compare them to each other adult
         for(int j = 0; j < allAdults.size(); j++){
 
+            //check the status of both i and j and see if i is automatically dominated
+            if(allAdults[i].errorStatus != VALID && allAdults[j].errorStatus == VALID){
+                dominatedByCount[i]++;
+
+            }//check the status of both i and j and see if j is automatically dominated
+            else if(allAdults[j].errorStatus != VALID && allAdults[i].errorStatus == VALID){
+                domination[i].push_back(j);
+                
+            }//if either both are valid or both are not valid, it will rank them normally
             //Check to see if i dominates j
-            if (dominationCheck(allAdults[i], allAdults[j], cConstants) || allAdults[j].errorStatus != VALID){
+            else if (dominationCheck(allAdults[i], allAdults[j], cConstants)){
                 //Put the jth index in the set of individuals dominated by i
                 //std::cout << "\n" << i << "th (i) Adult dominates " << j << "th (j) Adult!\n";
                 domination[i].push_back(j);
@@ -225,7 +234,7 @@ void giveRank(std::vector<Adult> & allAdults, const cudaConstants* cConstants) {
                 //dominatedByCount[j]++; 
             }
             //Check to see if j dominates i
-            else if (dominationCheck(allAdults[j], allAdults[i], cConstants) || allAdults[i].errorStatus != VALID) {
+            else if (dominationCheck(allAdults[j], allAdults[i], cConstants)) {
                 //TODO: this may have the same redundancy that was mentioned above with things being added to this vector too many times
                 //Put the ith index in the set of individuals dominated by j
                 //domination[j].push_back(i);
@@ -499,7 +508,16 @@ void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& 
     //countStatuses(allAdults, generation);
 
     //Sort the set of adults
-    callSorts(allAdults, numNans, cConstants);
+    //callSorts(allAdults, numNans, cConstants);
+    //give a rank to each adult based on domination sort
+    //* Ignore any nans at the end of allAdults
+    //must be called after checking for nans and before giveDistance
+    //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE GIVE RANK-_-_-_-_-_-_-_-_-_\n\n";
+    giveRank(allAdults, cConstants); //gives a rank to each adult
+    //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE GIVE DISTANCE-_-_-_-_-_-_-_-_-_\n\n";
+    giveDistance(allAdults, cConstants); //gives a distance to each adult
+    //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE GIVE SORT-_-_-_-_-_-_-_-_-_\n\n";
+    std::sort(allAdults.begin(), allAdults.end(), rankDistanceSort); //sorts allAdults using rankDistance sort
 
     oldAdults.clear(); //empties oldAdults so new values can be put in it
     int counter = 0; //a variable that ensures we put the correct number of adults in oldAdults
@@ -647,7 +665,7 @@ double optimize(const cudaConstants* cConstants) {
 
     // input parameters for Runge Kutta process
     // Each parameter is the same for each thread on the GPU
-    double timeInitial = 0; // the starting time of the trip is always defined as zero   
+    //double timeInitial = 0; // the starting time of the trip is always defined as zero   
 
     // Runge Kutta adaptive time step error tolerance
     // Not used now that callRK has been moved to ga_crossover
@@ -656,7 +674,7 @@ double optimize(const cudaConstants* cConstants) {
     // the starting step size for RK run
     // - note that the current step size varies throughout each run
     //TODO: Should this be based on max_numsteps?
-    double stepSize = ((cConstants->orbitalPeriod) - timeInitial) / cConstants->GuessMaxPossibleSteps; 
+    //double stepSize = ((cConstants->orbitalPeriod) - timeInitial) / cConstants->GuessMaxPossibleSteps; 
 
     // Initial genetic anneal scalar
     double currentAnneal = cConstants->anneal_initial;
@@ -765,6 +783,10 @@ double optimize(const cudaConstants* cConstants) {
         
         //Increment the generation counter
         ++generation;
+
+        //sorts oldAdults using rankDistance sort
+        //This will prep the oldAdults array to be used to generate new children; this makes sure any sorts from the record/report functions are undone
+        std::sort(oldAdults.begin(), oldAdults.end(), rankDistanceSort); 
     
         //Loop exits based on result of allWithinTolerance and if max_generations has been hit
     } while ( !convergence && generation < cConstants->max_generations);

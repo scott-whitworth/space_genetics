@@ -329,7 +329,7 @@ void generateChildrenPair (const Adult & parent1, const Adult & parent2, Child *
     //      It is possible you can do this externally, but here in this function, there is no check on the size of numNewChildren
     
     //Generate a new individual based on the two parents
-    newChildren[numNewChildren] = Child(generateNewChild(parent1.startParams, parent2.startParams, mask,  cConstants, annealing, rng, generation), cConstants);;
+    newChildren[numNewChildren] = Child(generateNewChild(parent1.startParams, parent2.startParams, mask, cConstants, annealing, rng, generation), cConstants);
 
     //Add one to numNewChildren to signify that a new child has been added to the newChildren vector
     //Will also ensure that no children are overwritten

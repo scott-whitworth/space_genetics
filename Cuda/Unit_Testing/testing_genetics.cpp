@@ -27,9 +27,15 @@ bool runGeneticsUnitTests(){
     utcConstants->beta_mutate_scale = 1.570795;
     utcConstants->alpha_mutate_scale = 3.14159;
 
+    utcConstants->triptime_max=2.0
+    utcConstants->triptime_min=1.0
+    utcConstants->timeRes=3600 // Earth Calculations Time Resolution Value
+
     // 0 is for no thruster, 1 is for NEXT ion thruster
     // starts with no thruster to test that, then will be changed to have a thruster later on when necessary
     utcConstants->thruster_type = 0; 
+
+    utcConstants->v_escape = 2162.4/AU; //sqrt of DART Mission c3energy
 
     // Number of individuals in the pool -> chose to make this 10 so a generation size is managable
     // Additionally a size of 10 shows what happens if a the number of children generated is not a factor of the needed generation size
@@ -50,6 +56,8 @@ bool runGeneticsUnitTests(){
 // SETTING A RANDOM NUMBER GENERATOR (rng) TO BE USED BY FUNCTIONS
     // This rng object is used for generating all random numbers in the genetic algorithm, passed in to functions that need it
     std::mt19937_64 rng(utcConstants->time_seed);
+
+    //launchCon = new EarthInfo(cConstants); 
 
 // CALLING THE DIFFERENT UNIT TESTING ALGORITHMS
     bool allWorking = true;
@@ -76,6 +84,7 @@ bool runGeneticsUnitTests(){
     }
 
     delete[] utcConstants;
+    //delete launchCon;
     return allWorking;
 }
 
@@ -330,6 +339,7 @@ bool createMasks(std::mt19937_64& rng, bool printMask){
 }
 
 bool makeChildrenWithDifferentMethods(std::mt19937_64& rng, cudaConstants * utcConstants){
+
     const int expectedNumChildren = 6; //pairs of children should be generated 3 times, so the expected number of children that should be created are 6
     int childrenCreated = 0;
     //selected values for alpha (indices 0 & 1), beta (2 & 3), zeta (4 & 5), and tripTime that are within the acceptable range for rkParameters
@@ -341,12 +351,13 @@ bool makeChildrenWithDifferentMethods(std::mt19937_64& rng, cudaConstants * utcC
     Child par2(p2);
     Adult parent1(par1);
     Adult parent2(par2);
+    Child* children = new Child[expectedNumChildren]; 
 
     //sets the generation to 1 because generateChildPair takes in a generation
     // 1 was chosen because this is the first generation and the generation number should not have a major impact on the code
     int gen = 1; 
 
-    //while there have not been any errors detected in the codel this is set to true
+    //while there have not been any errors detected in the code this is set to true
     bool noErrors = true;
 
     for (int i = 0; i < 4; i++){
@@ -360,7 +371,6 @@ bool makeChildrenWithDifferentMethods(std::mt19937_64& rng, cudaConstants * utcC
         else{
             utcConstants->mutation_rate = 0.0;
         }
-        Child* children = new Child[expectedNumChildren]; 
         childrenCreated = 0;
 
         //Create a mask to determine which of the child's parameters will be inherited from which parents
@@ -404,7 +414,7 @@ bool makeChildrenWithDifferentMethods(std::mt19937_64& rng, cudaConstants * utcC
             noErrors = false;
         }
 
-        if((childrenCreated != expectedNumChildren && i == 0) || !noErrors){
+        if((childrenCreated != expectedNumChildren && i < 2) || !noErrors){
             cout << "Could not even generate children correctly with no thrust" << endl;
             return false;
         }
@@ -538,3 +548,42 @@ bool firstFullGen(){
     
 }
 */
+
+bool checkUTMutateMask(){
+    std::vector<bool> mutateMask;
+    std::mt19937_64 rng(0);
+    double mutation_rate = 0.75;
+    UTmutateMask(rng, mutateMask, mutation_rate);
+
+    for(int i = 0; i < OPTIM_VARS; i++){
+        cout << 
+    }
+
+}
+
+void UTmutateMask(std::mt19937_64 & rng, bool * mutateMask, double mutation_rate){
+    
+    for (int i = 0; i < OPTIM_VARS; i++) {
+        //Reset mask
+        mutateMask[i] = false;
+    }
+    
+    // counter to make sure in the unlikely event that all genes are being mutated the code doesn't
+    // get stuck in infinite loop looking for a false spot in the array
+    int geneCount = 0; //How many gene's have we changed
+    // Set a gene to mutate if a randomized values is less than mutation_rate, repeating everytime this is true
+    while ((static_cast<double>(rng()) / rng.max()) < mutation_rate && geneCount < OPTIM_VARS) {
+        bool geneSet = false; // boolean to flag if a gene was successfully selected to be set as true
+        int index; // index value that will be assigned randomly to select a gene
+        while (geneSet != true) {
+            index = rng() % OPTIM_VARS;
+            // If the randomly selected gene hasn't been already set to mutate, set it and flag the geneSet to true to break out of the loop
+            if (mutateMask[index] == false) {
+                mutateMask[index] = true;
+                geneSet = true;
+                geneCount++;
+            }
+        }
+
+    }
+}

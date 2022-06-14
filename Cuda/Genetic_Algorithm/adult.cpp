@@ -39,6 +39,12 @@ bool Adult::operator<(const Adult &other) {
 // input: two individuals
 // output: returns true if personB has a higher positional difference than personA
 bool LowerPosDiff(Adult& personA, Adult& personB) {
+    if(personA.errorStatus !=  VALID){
+        return false;
+    }
+    if(personB.errorStatus !=  VALID){
+        return true;
+    }
     if (personA.posDiff < personB.posDiff) {
         return true;
     }

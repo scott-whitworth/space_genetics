@@ -58,7 +58,7 @@ bool dominationTest(){
 
     int r = 0;//rank
     double d = 1.0;//distance
-    int test = 4;// 1: set of 6 different posDiffs and speedDiffs that leads to a normal expected outcome
+    int test = 3;// 1: set of 6 different posDiffs and speedDiffs that leads to a normal expected outcome
                  // 2: set of 6 different posDiffs and speedDiffs with a pair of nans, this messes up giveDistanceTest
                  // 3: set of 1000 random posDiffs and speedDiffs of values 1-1000, meant to show giveRank works for large sets
                  // 4: set of 6 meant for testing the giveDistanceTest and seeing of it is giving the correct distances
@@ -162,11 +162,13 @@ bool dominationTest(){
         cout << "Not a valid test" << endl;
     }
 
+    std::sort(GRtest.begin(), GRtest.end(), LowerPosDiff);
+
     //call the giveRankTest
-    giveRankTest(GRtest);
+    //giveRankTest(GRtest);
 
     //print the results
-    std::sort(GRtest.begin(), GRtest.begin() + GRtest.size(), rankSort);
+    //std::sort(GRtest.begin(), GRtest.begin() + GRtest.size(), rankSort);
     cout << "Ranks:" << endl;
     for(int i = 0; i < GRtest.size(); i++){
         if(GRtest.size() > 50){//print every 50th adult for large vector

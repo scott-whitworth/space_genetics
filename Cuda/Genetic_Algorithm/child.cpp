@@ -7,8 +7,8 @@
 Child::Child() {
     //TODO: all we do is set status to DEFAULT_CHILD (which is essentially an error if we ever try to process)
     //TODO: get rid of posDiff/speedDiff
-    posDiff = 1.0;
-    speedDiff = 0.0; //TODO: This is ok for impact, but an issue for soft landing
+    //posDiff = 1.0;
+    //speedDiff = 0.0; //TODO: This is ok for impact, but an issue for soft landing
 
     funcStatus = DEFAULT_CHILD;//not ready to be an adult
 

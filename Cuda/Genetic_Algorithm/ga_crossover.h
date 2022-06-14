@@ -64,11 +64,6 @@ void copyMask(int * maskIn, int * maskOut);
 
 ///////////////////////////////////////////////////////////////////////////////
 
-// Utility function for mutate() to get a random double with high resolution
-// Input: max - the absolute value of the min and max(min = -max) of the range
-// Output: A double value that is between -max and +max
-double getRand(double max, std::mt19937_64 & rng);
-
 // Creates a new rkParameters individual by combining properties of two parent Individuals using a crossover mask
 // Input: two rkParameter from individuals (p1 and p2) - source of genes for new individual
 //        mask - Contains maskValue values and length of OPTIM_VARS,
@@ -102,39 +97,41 @@ void mutateMask(std::mt19937_64 & rng, bool * mutateMask, double mutation_rate);
 // Called by generateNewIndividual
 rkParameters<double> mutate(const rkParameters<double> & p1, std::mt19937_64 & rng, const double & annealing, const cudaConstants* cConstants, const double & generation);
 
+// Utility function for mutate() to get a random double with high resolution
+// Input: max - the absolute value of the min and max(min = -max) of the range
+// Output: A double value that is between -max and +max
+double getRand(double max, std::mt19937_64 & rng);
 
-//TODO: Update this header (things have changed)
-// Method that creates a pair of new Individuals from a pair of parent individuals and a mask
-// Input: pool - (output) pointer array to Individuals that is where the new pair of individuals are stored
-//        survivors - (parents) pointer array to Individuals to access the two parents from
-//        mask - pointer array of maskValues used to decide on which property from which parent is acquired (or average of the two)
-//        newIndCount - value that tracks number of newly created indiviudals in the pool so far in the newGeneration process
-//                    - also impacts where to put the new individuals in the pool
-//        parentsIndex - value determining where the pair of parent survivors are selected (parent 1 is at parentsIndex, parent 2 is offset by +1)
-//        annealing - double variable passed onto mutateNewIndividual
-//        poolSize - length of the pool array
-//        rng - random number generator passed on to generateNewIndividual
-//        cConstants - passed on to generateNewIndividual
-// Output: pool contains two newly created individuals at (poolSize - 1 - newIndCount) and (poolSize - 2 - newIndCount)
-//         mask is flipped in polarity between each (refer to flipMask method) 
-//         newIndCount is incremented by +2
-// Called by newGeneration()
+// Method that creates a pair of new Children from a pair of parent Adults and a mask
+// Input:  parent1 - the first parent that the children will draw parameters from
+//         parent2 - the second parent that the children will draw parameters from
+//         newChildren - a pointer to the newChildren array that is used to add the newly generated children to
+//         mask - pointer array of maskValues used to decide on which property from which parent is acquired (or average of the two)
+//         annealing - double variable passed onto mutateNewIndividual
+//         rng - random number generator passed on to generateNewChild
+//         numNewChildren - Used within newGeneration to keep track of how many children have been generated; added to whenever a new child is generated
+//         generation - passed on to GenerateNewChild... Will eventually be used in reporting mutations
+//         cConstants - passed on to generateNewChildren... Used for calculating mutations and constructing children
+// Output: The newChildren array will contain two newly generated children
+//         mask is flipped in polarity (refer to flipMask method) 
+//         numNewChildren is incremented by +2
+// Called by newGeneration() each time a new mask is generated 
 void generateChildrenPair(const Adult & parent1, const Adult & parent2, Child * newChildren, std::vector<int> & mask, const double & annealing, std::mt19937_64 & rng, int & numNewChildren, const int & generation, const cudaConstants* cConstants);
 
-//TODO: Update this header (things have changed)
-// Creates the next pool to be used in the optimize function in optimization.cu
-// Input: survivors - (parents) Individual pointer array of Individuals to be used in creating new individuals
-//        pool - Sorted Individual pointer array that contains current generation and is modified for next generation
-//        survivorSize - length of survivors array
-//        poolSize - length of pool array
-//        annealing - passed onto generateChildrenPair
-//        rng - Random number generator to use for making random number values
-//        cConstants - passed onto generateChildrenPair
-// Output: lower (survivorSize * 4) portion of pool is replaced with new individuals
-//         Each parent pair produces 8 new children (4 masks, two children per mask)
-//         Returns number of new individuals created (newIndCount)
-//TODO: Const references that should not be changing
-void newGeneration(std::vector<Adult> & oldAdults, std::vector<Adult> & newAdults, const double & annealing, const int & generation, const std::mt19937_64 & rng, const cudaConstants* cConstants);
+// newGeneration will generate a mask and use random adults from oldAdults to generate new children
+//      It will then simulate the newChildren.
+//      Finally, it will convert the new children into adults and insert them into the newAdults vector
+//      Note: the number of new children generated should ideally equal the number of threads on the gpu
+//          this is set in the config file
+// Inputs:  oldAdults - a vector of adults that will be used to pull random parents to generate children
+//          newAdults - a vector of adults that will be filled by children that have been simulated and converted into adults
+//          annealing - a double that will be passed on to other functions; it determines how much a child's parameters are mutated
+//          generation - the generation that the algorithim is on; this will be passed on to other functions and is used for reporting
+//          rng - a random number generator that is both passed on to other functions and used to pull random parents
+//          cConstants - the config constants; it is passed on to other functions and is used for constructing children and mutating their parameters
+// Outputs: newAdults will be filled with newly generated adults; it will be ready to be sorted and compared to other generations
+// NOTE: This function is called at the beginning of each generation within optimize() 
+void newGeneration(const std::vector<Adult> & oldAdults, std::vector<Adult> & newAdults, const double & annealing, const int & generation, const std::mt19937_64 & rng, const cudaConstants* cConstants);
 
 // Converts children previously simulated by callRK into adults and inserts the new adults into the submitted adult vector
 // Input: newAdults - the vector of adults the converted adults will be inserted into

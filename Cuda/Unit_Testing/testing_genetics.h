@@ -1,21 +1,40 @@
 #define UNITTEST
 #include "../Genetic_Algorithm/adult.h"
+#include "../Runge_Kutta/runge_kuttaCUDA.cuh" // ONLY in here so I don't get errors when compiling since I am including ga_crossover.h which needs this
+#include "../Genetic_Algorithm/ga_crossover.h"
 #include <random>
 
 const int genSize = 10;
+
+// Makes a set of cudaConstants that so ga_crossover functions could be used directly and calls all the unit test functions
+// Input: NA
+// Output: Makes a default set of cudaConstants
+bool runGeneticsUnitTests();
+
+// A function that determines if masks are being generated correctly
+// Input: rng - a psuedorandom number generator used by to create masks
+//        printMask - whether or not you want the numeric values contained in the mask printed
+// Output: Outputs true if the masks were all created as expected or false if they weren't
+//         If printMask is true, it will also print all the numeric values contained in each mask
+bool createMasks(std::mt19937_64& rng, bool printMask);
 
 //returns true if the first generation of parents is generated from a set of "random" children
 //these parents cannot actually be used to create the next generation I realized after the fact because their rkParameters and elements are the defaults 
 //I made a child constructor that allowed me to set the speedDiff and posDiff so it doesn't correspond to their rkParameters or elements
 //The logic for the above decision was that it would make it easier to tell if the individuals were properly becoming adults by rankDistanceSorting them
-//Additionally, I just was not paying enough attention to the way generate children worked and figured these parents could generate children
-bool firstParentsTest();
+bool firstParentsTest(const cudaConstants * utcConstants);
+
+//makes children using the different method -> not to populate a generation or anything, just to check each child creation method works as expected
+//starts with two known parents with know 
+bool makeChildrenWithDifferentMethods(std::mt19937_64& rng, cudaConstants * utcConstants);
+
+//Are the tripTimes, alphas, betas, and zetas reasonable for the different children
+bool checkReasonability(const Child& c1, const Child& c2, std::vector<int> & mask, double parentsValues[], int whichMethod);
 
 //Makes a set of parents and creates children from these parents
-//Only going to be really tracking tripTime so that we don't have to worry about callRK if possible
-//Creates a generation of parents
-bool firstFullGen();
+bool firstFullGen(const cudaConstants * utcConstants);
 
+/*
 //Simpified unit test version of first generation -> does not callRK, instead I preset posDiff and speedDiff to make calculations easier (selected semi-random multiples of 10)
 // Creates the first generation of adults by taking in an array of children with randomly generated parameters
 // Input: initialChildren - children with randomly generated parameters whose runge kutta values have not yet been computed 
@@ -30,7 +49,7 @@ void UTfirstGeneration(Child* initialChildren, std::vector<Adult>& oldAdults);
 // Output: newAdults will be filled with the children that are converted into adults 
 //this happens after teh first generation is created and then after every new child generation is made 
 void UTconvertToAdults(std::vector<Adult> & newAdults, Child* newChildren);
-
+*/
 
 //TODO: once giveRankTest and giveDistanceTest are complete, use these instead, rather than using my weird versions of these
 //giveRank was broken so I threw together an inefficient giveRank type function 
@@ -38,6 +57,23 @@ void UTconvertToAdults(std::vector<Adult> & newAdults, Child* newChildren);
 void wrongWayToRank(std::vector<Adult> & newAdults);
 //copied giveDistance from optimization.cu and updated it as necessary to work with my other testing functions
 void sortaGiveDistance(std::vector<Adult> & pool);
+
+/*
+void UTgenerateChildrenPair(const Adult & parent1, const Adult & parent2, Child * newChildren, int& numNewChildren, std::vector<int> & mask, const double & annealing, std::mt19937_64 & rng, const bool mutationOccurs, const bool thrust);
+
+rkParameters<double> UTgenerateNewChildNoThruster(const rkParameters<double> & p1, const rkParameters<double> & p2, const std::vector<int> & mask, const double & annealing, std::mt19937_64 & rng, bool mutationOccurs);
+rkParameters<double> UTgenerateNewChildThruster(const rkParameters<double> & p1, const rkParameters<double> & p2, const std::vector<int> & mask, const double & annealing, std::mt19937_64 & rng, bool mutationOccurs);
+
+// Handles potential mutation of individual 
+// Calls mutateMask, then applied mutations as necessary
+// mutate a gene by adding or subtracting a small, random value on a parameter property
+// Input: p1 - rkParameter that is taken to be the mutation base
+//        rng - random number generator to use
+//        annealing - a scalar value on the max random number when mutating
+//        cConstants - holds properties to use such as mutation rates and mutation scales for specific parameter property types
+// Output: Returns rkParameter object that is the mutated version of p1
+// Called by generateNewIndividual
+rkParameters<double> UTmutate(const rkParameters<double> & p1, std::mt19937_64 & rng, const double & annealing);
 
 //Simplified unit test version of newGeneration
 void UTnewGen(std::vector<Adult> & oldAdults, std::vector<Adult> & newAdults, const double & annealing, const int & generation, std::mt19937_64 & rng);
@@ -131,17 +167,6 @@ rkParameters<double> UTgenerateNewChild(const rkParameters<double> & p1, const r
 // Called by mutate()
 void UTmutateMask(std::mt19937_64 & rng, bool * mutateMask, double mutation_rate);
 
-// Handles potential mutation of individual 
-// Calls mutateMask, then applied mutations as necessary
-// mutate a gene by adding or subtracting a small, random value on a parameter property
-// Input: p1 - rkParameter that is taken to be the mutation base
-//        rng - random number generator to use
-//        annealing - a scalar value on the max random number when mutating
-//        cConstants - holds properties to use such as mutation rates and mutation scales for specific parameter property types
-// Output: Returns rkParameter object that is the mutated version of p1
-// Called by generateNewIndividual
-rkParameters<double> UTmutate(const rkParameters<double> & p1, std::mt19937_64 & rng, const double & annealing, const cudaConstants* cConstants, const double & generation);
-
 
 //TODO: Update this header (things have changed)
 // Method that creates a pair of new Individuals from a pair of parent individuals and a mask
@@ -175,5 +200,5 @@ void UTgenerateChildrenPair(const Adult & parent1, const Adult & parent2, Child 
 //         Returns number of new individuals created (newIndCount)
 //TODO: Const references that should not be changing
 void UTnewGeneration(std::vector<Adult> & oldAdults, std::vector<Adult> & newAdults, const double & annealing, const int & generation, const std::mt19937_64 & rng, const cudaConstants* cConstants);
-
+*/
 #include "../Unit_Testing/testing_genetics.cpp"

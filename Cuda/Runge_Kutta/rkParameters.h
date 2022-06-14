@@ -41,6 +41,13 @@ template <class T> struct rkParameters {
     // constructor which sets everything to zero
     __host__ __device__ rkParameters<T>();
     
+    
+    #ifdef UNITTEST //set up in unit_testing_main.cpp
+    //Won't actually work for any calculations, but allows you to compare tripTime, alpha, beta, and zeta to ensure they behave as expected
+    __host__ __device__ rkParameters<T>(T tripTime0, T alpha0, T beta0, T zeta0): tripTime(tripTime0), alpha(alpha0), beta(beta0), zeta(zeta0){}
+    #endif
+
+
     /////////////
     // Members //
     /////////////

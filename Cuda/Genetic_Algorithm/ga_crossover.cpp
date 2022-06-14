@@ -349,7 +349,7 @@ void generateChildrenPair (const Adult & parent1, const Adult & parent2, Child *
 
 //!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Creates the next pool to be used in the optimize function in opimization.cu
-void newGeneration (std::vector<Adult> & oldAdults, std::vector<Adult> & newAdults, const double & annealing, const int & generation, std::mt19937_64 & rng, const cudaConstants* cConstants) {
+void newGeneration (const std::vector<Adult> & oldAdults, std::vector<Adult> & newAdults, const double & annealing, const int & generation, std::mt19937_64 & rng, const cudaConstants* cConstants) {
     //TODO: This is a good start, I like it
     //      Next step: think about how we can dynamically change based on available crossover methods.
     //                 why are we doing 8? :shrug:
@@ -366,9 +366,12 @@ void newGeneration (std::vector<Adult> & oldAdults, std::vector<Adult> & newAdul
     //Create a mask to determine which of the child's parameters will be inherited from which parents
     std::vector<int> mask;
 
+    //Make a basic mask with it set to avg at first
+    //Setting the mask to average is due to the reasoning that if the mask isn't changed, it is best that what is generated is not just a copy of one adult (hence, not setting it to Parent 1 or 2)
     for (int i = 0; i < OPTIM_VARS; i++)
     {
-        mask.push_back(AVG); //TODO: Why are we setting this to AVG?
+        //TODO: is this the best initial setting? Does this even matter?
+        mask.push_back(AVG); 
     }
 
     //Array that determines which parents will be paired up to generate children
@@ -408,23 +411,30 @@ void newGeneration (std::vector<Adult> & oldAdults, std::vector<Adult> & newAdul
         //      I like the start, but think deeply about how each of these elements are going to be moving around
 
         //Generate a pair of children based on the random cross over mask method from a pair of parents
-        //Generate the base mask
+        //This will generate a set of parameters with variables randomly selected from each parent
+        
+        //Generate the base mask, with each variable being assigned to a random parent
         crossOver_wholeRandom(mask, rng);
-
-        //TODO: Clean up these comments. If you ever copy/paste anything you are probably doing it wrong
 
         //Generate a pair of children based on the mask
         generateChildrenPair(oldAdults[parentPool[parentIndex]], oldAdults[parentPool[parentIndex+1]], newChildren, mask, annealing, rng, numNewChildren, generation, cConstants);
 
+
         //Generate a pair of children from a pair of parents based on the average mask method
-        //Generate the base mask
+        //This mask method will generate a set of parameters based on the average of parameters from each parent
+
+        //Set the mask to be be average
         crossOver_average(mask);
 
         //Generate a pair of children based on the mask
         generateChildrenPair(oldAdults[parentPool[parentIndex]], oldAdults[parentPool[parentIndex+1]], newChildren, mask, annealing, rng, numNewChildren, generation, cConstants);
 
+
         //Generate a pair of children from a pair of parents based on the bundled random mask method
-        //Generate the base mask
+        //This mask method will generate parameters with variables pulled from random parents
+        //This is different from the wholeRandom method in that the thrust variables (gamma, tau, and coast) is taken from the same parent
+
+        //Generate the base mask, each variable (or set of variables) is set to a random parent
         crossOver_bundleVars(mask, rng);
 
         //Generate a pair of children based on the mask
@@ -468,8 +478,7 @@ void newGeneration (std::vector<Adult> & oldAdults, std::vector<Adult> & newAdul
     // Each child represents an individual set of starting parameters 
         // GPU based runge kutta process determines final position and velocity based on parameters
     //Will fill in the final variables (final position & speed, posDiff, speedDiff) for each child
-    //TODO: get rid of magic numbers, first 0 is timeInitial, second 0 is calcPerS, the are both set as 0 before being passed in to callRK within optimize.cu
-        //Perhaps we should just import cCOnstants and newChildren into callRk, since most of the arguments come from cConstants regardless
+    //TODO: Perhaps we should just import cCOnstants and newChildren into callRk, since most of the arguments come from cConstants regardless
     callRK(cConstants->num_individuals, cConstants->thread_block_size, newChildren, timeInitial, (cConstants->orbitalPeriod / cConstants->GuessMaxPossibleSteps), cConstants->rk_tol, calcPerS, cConstants); 
 
     //Determine the status and diffs of the simulated children
@@ -503,8 +512,7 @@ void firstGeneration(Child* initialChildren, std::vector<Adult>& oldAdults, cons
      // Each child represents an individual set of starting parameters 
         // GPU based runge kutta process determines final position and velocity based on parameters
     //Will fill in the final variables (final position & speed, posDiff, speedDiff) for each child
-    //TODO: get rid of magic numbers, first 0 is timeInitial, second 0 is calcPerS, the are both set as 0 before being passed in to callRK within optimize.cu
-        //Perhaps we should just import cCOnstants and newChildren into callRk, since most of the arguments come from cConstants regardless
+    //TODO: Perhaps we should just import cCOnstants and newChildren into callRk, since most of the arguments come from cConstants regardless
     callRK(cConstants->num_individuals, cConstants->thread_block_size, initialChildren, timeIntial, (cConstants->orbitalPeriod / cConstants->GuessMaxPossibleSteps), cConstants->rk_tol, calcPerS, cConstants); 
 
     //Determine the status and diffs of the now simulated children
@@ -516,7 +524,7 @@ void firstGeneration(Child* initialChildren, std::vector<Adult>& oldAdults, cons
 }
 
 // Go through a children array that has just been simulated and will determine their error_status, posDiff, and speedDiff
-//TODO: COnsider combining this with convertToAdults
+//TODO: Consider combining this with convertToAdults
 void setStatusAndDiffs(Child* newChildren, const cudaConstants* cConstants) {
     //Iterate through the simulated children to determine their error status (if it hasn't been set by callRK already) and calculate their pos and speed differences
     for (int i = 0; i < cConstants->num_individuals; i++)

@@ -154,6 +154,9 @@ bool rankSort(const Adult& personA, const Adult& personB){
     if(personA.errorStatus != VALID){ //if personA has nan values or other errors they are set as worse than other adults (even other adults with errors)
         return false;
     }
+    else if (personB.errorStatus != VALID){ //if personA is not a nan, but personB is, personA is better
+        return true;
+    }
     if (personA.rank < personB.rank) {
         return true;
     }
@@ -172,6 +175,9 @@ bool rankDistanceSort(const Adult& personA, const Adult& personB) {
     //TODO: is this a good system to check validity first?
     if (personA.errorStatus != VALID){
         return false;
+    }
+    else if (personB.errorStatus != VALID){ //if personA is not a nan, but personB is, personA is better
+        return true;
     }
     if(personA.rank < personB.rank){
         return true;
@@ -254,12 +260,12 @@ bool dominationCheckTest(Adult& personA, Adult& personB) {
 #ifdef UNITTEST //this should be defined in unit testing
 
 const std::string Adult::unitTestingRankDistanceStatusPrint(){
-    std::string allInfo = "Rank: " + std::to_string(rank) + "- Distance: " + std::to_string(static_cast<int>(distance));
+    std::string allInfo = "(" + std::to_string(rank) + "," + std::to_string(static_cast<int>(distance));
     if (errorStatus == VALID){
-        allInfo += "- VALID";
+        allInfo += ", VALID)";
     }
     else {
-        allInfo += "- Invalid (error type)";
+        allInfo += ", Invalid - error type)";
     }
     return allInfo;
 }

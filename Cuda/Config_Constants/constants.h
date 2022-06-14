@@ -62,8 +62,7 @@ enum ERROR_STATUS{
 #define BAD_POSDIFF          10 //a bad posDiff for either mission to have (10 AU)
 #define BAD_RENDEV_SPEEDDIFF 10 //a bad speedDiff for a rendezvous mission to have (10 AU/s)
 #define BAD_IMPACT_SPEEDDIFF 0  //a bad speedDiff for an impact mission to have (0 AU/s)
-
-//TODO: Consider moving MAX_DISTANCE here instead of within coefficients
+#define MAX_DISTANCE         1.0e+12 //max distance for giveDistance, assigned to adults on the boundaries (AKA best and worst adults)
 
 
 #endif

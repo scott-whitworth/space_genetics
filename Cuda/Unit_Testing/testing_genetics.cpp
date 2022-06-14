@@ -352,7 +352,6 @@ bool createMasks(std::mt19937_64& rng, bool printMask){
 }
 
 bool makeChildrenWithDifferentMethods(std::mt19937_64& rng, cudaConstants * utcConstants){
-
     const int expectedNumChildren = 6; //pairs of children should be generated 3 times, so the expected number of children that should be created are 6
     int childrenCreated = 0;
     //selected values for alpha (indices 0 & 1), beta (2 & 3), zeta (4 & 5), and tripTime that are within the acceptable range for rkParameters
@@ -364,26 +363,23 @@ bool makeChildrenWithDifferentMethods(std::mt19937_64& rng, cudaConstants * utcC
     Child par2(p2);
     Adult parent1(par1);
     Adult parent2(par2);
-    Child* children = new Child[expectedNumChildren]; 
+
+    Child* children = new Child[expectedNumChildren];
 
     //sets the generation to 1 because generateChildPair takes in a generation
     // 1 was chosen because this is the first generation and the generation number should not have a major impact on the code
     int gen = 1; 
 
-    //while there have not been any errors detected in the code this is set to true
+    //while there have not been any errors detected in the codel this is set to true
     bool noErrors = true;
 
-    for (int i = 0; i < 4; i++){
-        cout << "i = " << i << endl;
+    for (int i = 0; i < 2; i++){
         if (i == 2){
             utcConstants->thruster_type = 1;
         }
-        if(i %2 == 1){
-            utcConstants->mutation_rate = 1.0;
-        }
         else{
             utcConstants->mutation_rate = 0.0;
-        }
+        } 
         childrenCreated = 0;
 
         //Create a mask to determine which of the child's parameters will be inherited from which parents
@@ -427,19 +423,20 @@ bool makeChildrenWithDifferentMethods(std::mt19937_64& rng, cudaConstants * utcC
             noErrors = false;
         }
 
-        if((childrenCreated != expectedNumChildren && i < 2) || !noErrors){
+        if((childrenCreated != expectedNumChildren && i == 0) || !noErrors){
             cout << "Could not even generate children correctly with no thrust" << endl;
+            delete[] children;
             return false;
         }
-
-        delete[] children;
     }
 
     if(childrenCreated == expectedNumChildren && noErrors){
+        delete[] children;
         return true;
     }
     else{
         cout << "Could not generate children correctly when there was thrust" << endl;
+        delete[] children;
         return false;
     }
 
@@ -448,76 +445,83 @@ bool makeChildrenWithDifferentMethods(std::mt19937_64& rng, cudaConstants * utcC
 //1 stands for crossOver_wholeRandom, 2 stands for crossOver_average, 3 stands for crossOver_bundleVars
 bool checkReasonability(const Child& c1, const Child& c2, std::vector<int> & mask, double parentsValues[], int whichMethod){
     bool noErrors = true;
+    bool notFirstSwitch = false;
     bool skipPrint = false;
     int parValIndex = 0;
     for (int i = ALPHA_OFFSET; i <= TRIPTIME_OFFSET; i++){
-        if (mask[i] == PARTNER1 && whichMethod != 2){ //the mask was lipped, so compare the second child to it first, and the other child should have the other parent's parameters
-            if (c2.startParams.tripTime != parentsValues[parValIndex] || c1.startParams.tripTime != parentsValues[parValIndex+1]){
-                cout << parentsValues[parValIndex] << " should equal c2 " << c2.startParams.tripTime << endl;
+        if (mask[i] == PARTNER1 && whichMethod != 2){ //the mask was flipped, so compare the second child to it first, and the other child should have the other parent's parameters
+            if (getParamStuff(i,c2) != parentsValues[parValIndex] || getParamStuff(i,c1) != parentsValues[parValIndex+1]){
+                cout << parentsValues[parValIndex] << " should equal c2 " << getParamStuff(i,c2) << endl;
                 cout << "Error with ";
                 noErrors = false;
             }
             else{
-                cout << "Expected values for ";
+                //cout << "Expected values for ";
+                skipPrint = true;
             }
         }
         else if (mask[i] == PARTNER2 && whichMethod != 2){
-            if (c2.startParams.tripTime != parentsValues[parValIndex+1] || c1.startParams.tripTime != parentsValues[parValIndex]){
-                cout << parentsValues[parValIndex+1] << " should equal c2 " << c2.startParams.tripTime << endl;
+            if (getParamStuff(i,c2) != parentsValues[parValIndex+1] || getParamStuff(i,c1) != parentsValues[parValIndex]){
+                cout << parentsValues[parValIndex+1] << " should equal c2 " << getParamStuff(i,c2) << endl;
                 cout << "Error with ";
                 noErrors = false;
             }
             else{
-                cout << "Expected values for ";
+                //cout << "Expected values for ";
+                skipPrint = true;
             }
         }
         else if (mask[i] == AVG && whichMethod != 1){
-            if (c2.startParams.tripTime != (parentsValues[parValIndex]+parentsValues[parValIndex+1])/2 || c1.startParams.tripTime != (parentsValues[parValIndex]+parentsValues[parValIndex+1])/2){
+            if (getParamStuff(i,c2) != (parentsValues[parValIndex]+parentsValues[parValIndex+1])/2 || getParamStuff(i,c1) != (parentsValues[parValIndex]+parentsValues[parValIndex+1])/2){
                 cout << "Error with ";
                 noErrors = false;
             }
             else{
-                cout << "Expected values for ";
+                //cout << "Expected values for ";
+                skipPrint = true;
             }
         }
         else{
             cout << "Error with mask for ";
             skipPrint = true;
+            notFirstSwitch = true;
         }
         if (!skipPrint){
-            switch (i)
-            {
-            case ALPHA_OFFSET:
-                cout << "alpha for ";
+            if (!notFirstSwitch){
+                switch (i)
+                {
+                case ALPHA_OFFSET:
+                    cout << "alpha corresponded with the actual values for ";
+                    break;
+                case BETA_OFFSET:
+                    cout << "beta corresponded with the actual values for ";
+                    break;
+                case ZETA_OFFSET:
+                    cout << "zeta corresponded with the actual values for ";
+                    break;
+                case TRIPTIME_OFFSET:
+                    cout << "trip time corresponded with the actual values for ";
+                    break;
+                default:
+                    noErrors = false;
+                    break;
+                }
+            }
+            switch (whichMethod){
+            case 1:
+                cout << "crossOver_wholeRandom" << endl;
                 break;
-            case BETA_OFFSET:
-                cout << "beta for ";
+            case 2:
+                cout << "crossOver_average" << endl;
                 break;
-            case ZETA_OFFSET:
-                cout << "zeta for ";
-                break;
-            case TRIPTIME_OFFSET:
-                cout << "trip time for ";
+            case 3:
+                cout << "crossOver_bundleVars" << endl;
                 break;
             default:
+                cout << "Error with many things including this function..." << endl;
                 noErrors = false;
                 break;
             }
-        }
-        switch (whichMethod){
-        case 1:
-            cout << "crossOver_wholeRandom" << endl;
-            break;
-        case 2:
-            cout << "crossOver_average" << endl;
-            break;
-        case 3:
-            cout << "crossOver_bundleVars" << endl;
-            break;
-        default:
-            cout << "Error with many things including this function..." << endl;
-            noErrors = false;
-            break;
         }
         if (!noErrors){
             return false;
@@ -525,6 +529,25 @@ bool checkReasonability(const Child& c1, const Child& c2, std::vector<int> & mas
         parValIndex += 2; //must increase this at the end of each time through the loop so it's comparing to the correct numbers
     }
     return true;
+}
+
+double getParamStuff(const int correspondingOffset, const Child& aChild){
+    if (correspondingOffset == ALPHA_OFFSET){
+        return aChild.startParams.alpha;
+    }
+    else if (correspondingOffset == BETA_OFFSET){
+        return aChild.startParams.beta;
+    }
+    else if (correspondingOffset == ZETA_OFFSET){
+        return aChild.startParams.zeta;
+    }
+    else if (correspondingOffset == TRIPTIME_OFFSET){
+        return aChild.startParams.tripTime;
+    }
+    else {
+        cout << "ERROR: undefined offset" << endl;
+        return -1e-06;
+    }
 }
 
 /*

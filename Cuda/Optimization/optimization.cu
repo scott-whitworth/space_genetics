@@ -78,7 +78,7 @@ void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& 
 //Input: current anneal and dRate
 //Output: an update of the anneal and dRate based on the tolerance and changeInBest
 //Function that adjusts the anneal based on the current circumstances
-void changeAnneal (const std::vector<Adult>& newAdults, const cudaConstants* cConstants, double & new_anneal, double & currentAnneal, double & anneal_min,  double & previousBestPosDiff, double & generation, const double & posTolerance, double & dRate);
+void changeAnneal (const std::vector<Adult>& oldAdults, const cudaConstants* cConstants, double & new_anneal, double & currentAnneal, double & anneal_min,  double & previousBestPosDiff, double & generation, const double & posTolerance, double & dRate);
 
 //----------------------------------------------------------------------------------------------------------------------------
 //Input: all the updated parameters of the current generation
@@ -524,13 +524,13 @@ void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& 
     //copies the best adults from allAdults into oldAdults (should be half of allAdults that are copied over)
     //TODO:: Make sure dividing num_individuals / 2 is correct or if we should divide by something else
 
-    while (counter < (cConstants->num_individuals)/2 && counter < allAdults.size()){
+    while (counter < cConstants->num_individuals && counter < allAdults.size()){
         oldAdults.push_back(allAdults[counter]);
         counter++;
     }
 
     //error message prints if somehow there are not enough adults to fill oldIndividuals to the size it should be  
-    if(counter == allAdults.size() && counter < (cConstants->num_individuals)/2){ //TODO: May or may not want this. If used before oldAdults and newAdults were both filled once, delete error message
+    if(counter == allAdults.size() && counter < cConstants->num_individuals){ //TODO: May or may not want this. If used before oldAdults and newAdults were both filled once, delete error message
         std::cout << "There are not enough adults to fill oldIndividuals properly" << std::endl;
     }
 
@@ -542,19 +542,19 @@ void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& 
 
 //TODO: Figure out what to replace posDiff (what used to be cost)
 //Function that will adjust the annneal based on the previous anneal and if there was a change in the best individual
-void changeAnneal (const std::vector<Adult>& newAdults, const cudaConstants* cConstants, double & new_anneal, double & currentAnneal, double & anneal_min,  double & previousBestPosDiff, double & generation, const double & posTolerance, double & dRate){
+void changeAnneal (const std::vector<Adult>& oldAdults, const cudaConstants* cConstants, double & new_anneal, double & currentAnneal, double & anneal_min,  double & previousBestPosDiff, double & generation, const double & posTolerance, double & dRate){
     // Scaling anneal based on proximity to tolerance
     // Far away: larger anneal scale, close: smaller anneal
     if (cConstants->missionType == Impact) {
         //Impact is only based on posDiff, so proximity-based annealing only relies on how close posDiff is to tolerance.
-        new_anneal = currentAnneal * (1 - (posTolerance / newAdults[0].posDiff));
+        new_anneal = currentAnneal * (1 - (posTolerance / oldAdults[0].posDiff));
     }
 
     else if (cConstants->missionType == Rendezvous) {
-        if (posTolerance < newAdults[0].posDiff){ 
+        if (posTolerance < oldAdults[0].posDiff){ 
             //TO DO: decide what we want to do with this annealing   
             //Exponentially changing annealing, as oppose to what?
-            new_anneal = currentAnneal * (1 - pow(posTolerance / newAdults[0].posDiff,2.0));
+            new_anneal = currentAnneal * (1 - pow(posTolerance / oldAdults[0].posDiff,2.0));
             if (new_anneal < cConstants->anneal_final){
                 new_anneal = cConstants->anneal_final; //Set a true minimum for annealing
             }
@@ -567,7 +567,7 @@ void changeAnneal (const std::vector<Adult>& newAdults, const cudaConstants* cCo
     // Compare current best individual to that from CHANGE_CHECK (50) many generations ago.
     // If they are the same, change size of mutations
     if (static_cast<int>(generation) % (cConstants->change_check) == 0) { 
-        currentBest = newAdults[0];
+        currentBest = oldAdults[0];
         // checks for anneal to change
         // previousBest starts at 0 to ensure changeInBest = true on generation 0
         if ( !(changeInBest(previousBestPosDiff, currentBest, dRate)) ) { 
@@ -580,7 +580,7 @@ void changeAnneal (const std::vector<Adult>& newAdults, const cudaConstants* cCo
             }
             // If no change in BestIndividual across generations, reduce currentAnneal by anneal_factor while staying above anneal_min
             //reduce anneal_min
-            anneal_min = cConstants->anneal_initial*exp(-sqrt(posTolerance/newAdults[0].posDiff)*generation);
+            anneal_min = cConstants->anneal_initial*exp(-sqrt(posTolerance/oldAdults[0].posDiff)*generation);
             if (anneal_min < cConstants->anneal_final){
                 anneal_min = cConstants->anneal_final;//Set a true minimum for annealing
             }
@@ -773,7 +773,7 @@ double optimize(const cudaConstants* cConstants) {
 
         //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE ANNEAL STFF-_-_-_-_-_-_-_-_-_\n\n";
         //Perform utitlity tasks (adjusting anneal and reporting data)
-        changeAnneal (newAdults, cConstants, new_anneal, currentAnneal, anneal_min, previousBestPosDiff, generation, posTolerance, dRate);
+        changeAnneal (oldAdults, cConstants, new_anneal, currentAnneal, anneal_min, previousBestPosDiff, generation, posTolerance, dRate);
 
         //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE RECORD-_-_-_-_-_-_-_-_-_\n\n";
         reportGeneration (oldAdults, cConstants, new_anneal, anneal_min, generation, numNans);

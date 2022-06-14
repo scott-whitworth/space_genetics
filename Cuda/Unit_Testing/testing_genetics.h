@@ -33,6 +33,9 @@ bool makeChildrenWithDifferentMethods(std::mt19937_64& rng, cudaConstants * utcC
 //Are the tripTimes, alphas, betas, and zetas reasonable for the different children
 bool checkReasonability(const Child& c1, const Child& c2, std::vector<int> & mask, double parentsValues[], int whichMethod);
 
+//helper function for check reasonability
+double getParamStuff(const int correspondingOffset, const Child& aChild);
+
 //Makes a set of parents and creates children from these parents
 bool firstFullGen(const cudaConstants * utcConstants);
 

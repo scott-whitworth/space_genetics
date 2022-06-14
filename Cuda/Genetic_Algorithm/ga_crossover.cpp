@@ -473,10 +473,8 @@ void newGeneration (const std::vector<Adult> & oldAdults, std::vector<Adult> & n
     //TODO: Perhaps we should just import cCOnstants and newChildren into callRk, since most of the arguments come from cConstants regardless
     callRK(cConstants->num_individuals, cConstants->thread_block_size, newChildren, timeInitial, (cConstants->orbitalPeriod / cConstants->GuessMaxPossibleSteps), cConstants->rk_tol, calcPerS, cConstants); 
 
-    //Determine the status and diffs of the simulated children
-    setStatusAndDiffs(newChildren, cConstants); 
-
     //Now that the children have been simulated, convert the children into adults
+    //First, it will calculate the right pos and speed diffs for the children
     //This will also put the converted children into the newAdults vector
     convertToAdults(newAdults, newChildren, cConstants); 
 
@@ -487,6 +485,26 @@ void newGeneration (const std::vector<Adult> & oldAdults, std::vector<Adult> & n
 //Function that will convert the generated children into adults
 //Will also transfer the created adults into the newAdult vector
 void convertToAdults(std::vector<Adult> & newAdults, Child* newChildren, const cudaConstants* cConstants) {
+    //Iterate through the simulated children to determine their error status (if it hasn't been set by callRK already) and calculate their pos and speed differences
+    for (int i = 0; i < cConstants->num_individuals; i++)
+    {
+        //Check to see if nans are generated in the finalPos elements
+        if (isnan(newChildren[i].finalPos.r) || isnan(newChildren[i].finalPos.theta) || isnan(newChildren[i].finalPos.z) || isnan(newChildren[i].finalPos.vr) || isnan(newChildren[i].finalPos.vtheta) || isnan(newChildren[i].finalPos.vz)) {
+            //Mark the child with the nan variables with the nan_error flag
+            newChildren[i].errorStatus = NAN_ERROR;
+        }
+        else if (newChildren[i].errorStatus != SUN_ERROR) {
+            //Since nan and sun errors would have already been set, it is safe to set this child's status as valid
+            //TODO: Consider moving this to RKSimple
+            newChildren[i].errorStatus = VALID;
+        }
+
+        //Now that the status has been determined, there is enough information to set pos and speed diffs
+        //The two functions will look at the child's errorStatus and set the diffs based on that
+        newChildren[i].getPosDiff(cConstants);
+        newChildren[i].getSpeedDiff(cConstants); 
+    }
+    
     //Iterate through the newChildren vector to add them to the newAdult vector
     //iterates until num_individuals as that is the number of new children needed to generate
     //      This accounts for the potential that the number of children in newChildren is slightly larger than num_individuals
@@ -508,34 +526,8 @@ void firstGeneration(Child* initialChildren, std::vector<Adult>& oldAdults, cons
     //TODO: Perhaps we should just import cCOnstants and newChildren into callRk, since most of the arguments come from cConstants regardless
     callRK(cConstants->num_individuals, cConstants->thread_block_size, initialChildren, timeIntial, (cConstants->orbitalPeriod / cConstants->max_numsteps), cConstants->rk_tol, calcPerS, cConstants); 
 
-    //Determine the status and diffs of the now simulated children
-    setStatusAndDiffs(initialChildren, cConstants);
-
     //Now that the children have been simulated, convert the children into adults
-    //This will also put the converted children into the newAdults vector
+    //This will calc the posDiff and speedDiff for each child
+    //It will also put the converted children into the newAdults vector
     convertToAdults(oldAdults, initialChildren, cConstants); 
-}
-
-// Go through a children array that has just been simulated and will determine their error_status, posDiff, and speedDiff
-//TODO: Consider combining this with convertToAdults
-void setStatusAndDiffs(Child* newChildren, const cudaConstants* cConstants) {
-    //Iterate through the simulated children to determine their error status (if it hasn't been set by callRK already) and calculate their pos and speed differences
-    for (int i = 0; i < cConstants->num_individuals; i++)
-    {
-        //Check to see if nans are generated in the finalPos elements
-        if (isnan(newChildren[i].finalPos.r) || isnan(newChildren[i].finalPos.theta) || isnan(newChildren[i].finalPos.z) || isnan(newChildren[i].finalPos.vr) || isnan(newChildren[i].finalPos.vtheta) || isnan(newChildren[i].finalPos.vz)) {
-            //Mark the child with the nan variables with the nan_error flag
-            newChildren[i].errorStatus = NAN_ERROR;
-        }
-        else if (newChildren[i].errorStatus != SUN_ERROR) {
-            //Since nan and sun errors would have already been set, it is safe to set this child's status as valid
-            //TODO: Consider moving this to RKSimple
-            newChildren[i].errorStatus = VALID;
-        }
-
-        //Now that the status has been determined, there is enough information to set pos and speed diffs
-        //The two functions will look at the child's errorStatus and set the diffs based on that
-        newChildren[i].getPosDiff(cConstants);
-        newChildren[i].getSpeedDiff(cConstants); 
-    }
 }

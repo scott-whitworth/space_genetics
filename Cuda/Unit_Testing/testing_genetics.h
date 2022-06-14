@@ -1,9 +1,10 @@
 #define UNITTEST
-//#include "../Earth_calculations/earthInfo.h"  // For launchCon and EarthInfo()
+#include "../Earth_calculations/earthInfo.h"  // For launchCon and EarthInfo()
 #include "../Genetic_Algorithm/adult.h"
 #include "../Runge_Kutta/runge_kuttaCUDA.cuh" // ONLY in here so I don't get errors when compiling since I am including ga_crossover.h which needs this
 #include "../Genetic_Algorithm/ga_crossover.h"
 #include <random>
+#include <time.h>
 
 const int genSize = 10;
 

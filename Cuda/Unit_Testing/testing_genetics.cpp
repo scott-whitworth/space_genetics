@@ -22,20 +22,14 @@ bool runGeneticsUnitTests(){
     utcConstants->gamma_mutate_scale = 3.14159; 
     utcConstants->tau_mutate_scale = 1.570795; 
     utcConstants->coast_mutate_scale = 3.14159;
-    utcConstants->triptime_mutate_scale = 1.0;
+    utcConstants->triptime_mutate_scale = 1.0* SECONDS_IN_YEAR;
     utcConstants->zeta_mutate_scale = 1.570795;
     utcConstants->beta_mutate_scale = 1.570795;
     utcConstants->alpha_mutate_scale = 3.14159;
 
-    utcConstants->triptime_max=2.0
-    utcConstants->triptime_min=1.0
-    utcConstants->timeRes=3600 // Earth Calculations Time Resolution Value
-
     // 0 is for no thruster, 1 is for NEXT ion thruster
     // starts with no thruster to test that, then will be changed to have a thruster later on when necessary
     utcConstants->thruster_type = 0; 
-
-    utcConstants->v_escape = 2162.4/AU; //sqrt of DART Mission c3energy
 
     // Number of individuals in the pool -> chose to make this 10 so a generation size is managable
     // Additionally a size of 10 shows what happens if a the number of children generated is not a factor of the needed generation size
@@ -53,11 +47,30 @@ bool runGeneticsUnitTests(){
     //additionally, mission type should have little impact on the genetics algorithms
     utcConstants->missionType = 1; 
 
+    //ALL THE STUFF SO EARTH'S INITIAL POSITION CAN BE CALCULATED
+    utcConstants->triptime_max=2.0* SECONDS_IN_YEAR;
+    utcConstants->triptime_min=1.0* SECONDS_IN_YEAR;
+    utcConstants->timeRes=3600; // Earth Calculations Time Resolution Value
+    utcConstants->v_escape = 2162.4/AU; //sqrt of DART Mission c3energy
+    //Bennu config values
+    utcConstants->r_fin_earth=9.857045197029908E-01;
+    utcConstants->theta_fin_earth=1.242975503287042;
+    utcConstants->z_fin_earth=-4.332189909686674E-05;
+    utcConstants->vr_fin_earth=-1.755004992027024E-09;
+    utcConstants->vtheta_fin_earth=2.019592304815492E-07;
+    utcConstants->vz_fin_earth=-2.312712519131594E-12;
+    // Various values that impact runge kutta
+    utcConstants->rk_tol=1e-12;
+    utcConstants->doublePrecThresh=1e-12;
+    utcConstants->GuessMaxPossibleSteps=1000000; //TODO: Long term, I think we need to get rid of this, we use max_numsteps instead
+    utcConstants->max_numsteps=2500;
+    utcConstants->min_numsteps=400;
+
 // SETTING A RANDOM NUMBER GENERATOR (rng) TO BE USED BY FUNCTIONS
     // This rng object is used for generating all random numbers in the genetic algorithm, passed in to functions that need it
     std::mt19937_64 rng(utcConstants->time_seed);
 
-    //launchCon = new EarthInfo(cConstants); 
+    launchCon = new EarthInfo(utcConstants); //VERY complicated part of the code with some possibility of errors -> just needed for 
 
 // CALLING THE DIFFERENT UNIT TESTING ALGORITHMS
     bool allWorking = true;
@@ -84,7 +97,7 @@ bool runGeneticsUnitTests(){
     }
 
     delete[] utcConstants;
-    //delete launchCon;
+    delete launchCon;
     return allWorking;
 }
 
@@ -550,15 +563,23 @@ bool firstFullGen(){
 */
 
 bool checkUTMutateMask(){
-    std::vector<bool> mutateMask;
-    std::mt19937_64 rng(0);
+    //set up the mask to be mutated
+    bool * mutateMask= new bool[OPTIM_VARS];
+    //rng based on time seed
+    std::mt19937_64 rng(time(NULL));
+    //mutation rate from config
     double mutation_rate = 0.75;
+    //call the UT fuction
     UTmutateMask(rng, mutateMask, mutation_rate);
 
+    //print the results
+    cout << "Mask: " << endl;
     for(int i = 0; i < OPTIM_VARS; i++){
-        cout << 
+        cout << i << " M: " << mutateMask[i] << endl;
     }
 
+    return true;
+    
 }
 
 void UTmutateMask(std::mt19937_64 & rng, bool * mutateMask, double mutation_rate){
@@ -586,4 +607,6 @@ void UTmutateMask(std::mt19937_64 & rng, bool * mutateMask, double mutation_rate
         }
 
     }
+    //make sure this matched how many are set to true
+    cout << "Final geneCount: " << geneCount << endl;
 }

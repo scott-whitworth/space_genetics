@@ -361,7 +361,10 @@ void newGeneration (const std::vector<Adult> & oldAdults, std::vector<Adult> & n
 
     //Import number of new individuals the GPU needs to fill its threads
     //Create a newChildren function to fill in with children generated from oldAdults
-    Child* newChildren = new Child[cConstants->num_individuals]; 
+    //Add the survivorCount to the size of the array to account for the potential that the number of children that the crossover methods generate doesn't evenly divide num_individuals
+    //      This extra space will allow for some breathing room within the array
+    //      Despite the extra space, it is intended that we only generate num_individuals of children
+    Child* newChildren = new Child[cConstants->num_individuals + cConstants->survivor_count]; 
 
     //Create a mask to determine which of the child's parameters will be inherited from which parents
     std::vector<int> mask;
@@ -440,14 +443,6 @@ void newGeneration (const std::vector<Adult> & oldAdults, std::vector<Adult> & n
         //Generate a pair of children based on the mask
         generateChildrenPair(oldAdults[parentPool[parentIndex]], oldAdults[parentPool[parentIndex+1]], newChildren, mask, annealing, rng, numNewChildren, generation, cConstants);
 
-        //TODO: My main interest is in getting rid of this second bundleVars crossover. If you feel you are ready, I would remove it
-        //For a second time, generate a pair of children feom a pair of parents based on the bundled random mask method
-        //Generate the base mask
-        crossOver_bundleVars(mask, rng);
-
-        //Generate a pair of children based on the mask
-        generateChildrenPair(oldAdults[parentPool[parentIndex]], oldAdults[parentPool[parentIndex+1]], newChildren, mask, annealing, rng, numNewChildren, generation, cConstants);
-
         //Iterate through the shuffled section of the oldAdults array
         //Add two to parentIndex to account for the variable tracking pairs of parents, not just one parent's index
         parentIndex += 2;
@@ -466,9 +461,6 @@ void newGeneration (const std::vector<Adult> & oldAdults, std::vector<Adult> & n
             //      Ok, so the rationale is that you only want to pull from the 'best' individuals
             //      You don't want to pull from anywhere in oldAdults, because the bottom 3/4 of oldAdults is deemed to be 'bad'
             //      Thus you will only ever consider the 'top' 1/4 of oldAdults, enforced by parentNum
-
-            //TODO: It sounds like we need to make parentNum a configured value. I could see us playing around with modifying the size of the parent pool
-            //      1/4 is kind of arbitrary, it might be interesting to see what happens if we kept 1/8 or some fixed number / percent
         }
     }
 
@@ -496,7 +488,8 @@ void newGeneration (const std::vector<Adult> & oldAdults, std::vector<Adult> & n
 //Will also transfer the created adults into the newAdult vector
 void convertToAdults(std::vector<Adult> & newAdults, Child* newChildren, const cudaConstants* cConstants) {
     //Iterate through the newChildren vector to add them to the newAdult vector
-    //iterates until num_individuals as that is the size of newChildren
+    //iterates until num_individuals as that is the number of new children needed to generate
+    //      This accounts for the potential that the number of children in newChildren is slightly larger than num_individuals
     for (int i = 0; i < cConstants->num_individuals; i++)
     {
         //Fill in the newAdults vector with a new adult generated with a completed child

@@ -513,7 +513,7 @@ void firstGeneration(Child* initialChildren, std::vector<Adult>& oldAdults, cons
         // GPU based runge kutta process determines final position and velocity based on parameters
     //Will fill in the final variables (final position & speed, posDiff, speedDiff) for each child
     //TODO: Perhaps we should just import cCOnstants and newChildren into callRk, since most of the arguments come from cConstants regardless
-    callRK(cConstants->num_individuals, cConstants->thread_block_size, initialChildren, timeIntial, (cConstants->orbitalPeriod / cConstants->GuessMaxPossibleSteps), cConstants->rk_tol, calcPerS, cConstants); 
+    callRK(cConstants->num_individuals, cConstants->thread_block_size, initialChildren, timeIntial, (cConstants->orbitalPeriod / cConstants->max_numsteps), cConstants->rk_tol, calcPerS, cConstants); 
 
     //Determine the status and diffs of the now simulated children
     setStatusAndDiffs(initialChildren, cConstants);

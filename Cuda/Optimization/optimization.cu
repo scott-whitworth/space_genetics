@@ -673,8 +673,15 @@ double optimize(const cudaConstants* cConstants) {
 
     // the starting step size for RK run
     // - note that the current step size varies throughout each run
+<<<<<<< HEAD
     //TODO: Should this be based on max_numsteps?
     //double stepSize = ((cConstants->orbitalPeriod) - timeInitial) / cConstants->GuessMaxPossibleSteps; 
+=======
+    // - the inital stepSize greatly influences the number of steps the RK calculation will take
+    // - previously, in place of max_numsteps we used a very large divisor GuessMaxPossibleSteps (resulting in very small step size) 
+    //   this resulted in most, if not all of the rk calculations taking max_numsteps loops always
+    double stepSize = ((cConstants->orbitalPeriod) - timeInitial) / cConstants->max_numsteps; 
+>>>>>>> d3eef0f014606f333eb13de73cb850137345e710
 
     // Initial genetic anneal scalar
     double currentAnneal = cConstants->anneal_initial;

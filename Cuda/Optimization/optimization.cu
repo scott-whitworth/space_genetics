@@ -451,11 +451,11 @@ void createFirstGeneration(std::vector<Adult>& oldAdults, const cudaConstants* c
 
 //Function that calls the sorting algorithims, depending on the selected mission
 void callSorts (std::vector<Adult>&allAdults, const int & numNans, const cudaConstants* cConstants){
-    if (cConstants->missionType == Impact) {
+    /*if (cConstants->missionType == Impact) {
         //Decide the next generation of potential parents based on posDiff? was cost
         std::sort(allAdults.begin(), allAdults.end());
     }
-    else if (cConstants->missionType == Rendezvous) {
+    else if (cConstants->missionType == Rendezvous) {*/
         //give a rank to each adult based on domination sort
         //* Ignore any nans at the end of allAdults
         //must be called after checking for nans and before giveDistance
@@ -465,7 +465,7 @@ void callSorts (std::vector<Adult>&allAdults, const int & numNans, const cudaCon
         giveDistance(allAdults, cConstants); //gives a distance to each adult
         //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE GIVE SORT-_-_-_-_-_-_-_-_-_\n\n";
         std::sort(allAdults.begin(), allAdults.end(), rankDistanceSort); //sorts allAdults using rankDistance sort
-    } 
+    //} 
 }
 
 //fills oldAdults with the best adults from this generation and the previous generation so that the best parents can be selected

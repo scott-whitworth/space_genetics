@@ -2,6 +2,8 @@
 #define COEFFICIENTS_H
 
 #include "../Config_Constants/config.h"
+#include "..\Thrust_Files\coefficients.h"
+
 #include <iostream>
 
 //Utility to calculate the coefficients vector

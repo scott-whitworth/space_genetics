@@ -4,7 +4,6 @@
     //Created calc_coast()
 
 #include <math.h> // used for sine and cosine functions
-#include <iostream> // used for cout
 
 template <class T> __host__ __device__ T calc_Series(const T series[], const int series_size, const T & curTime, const T & timeFinal) {
     T coeff = series[0];

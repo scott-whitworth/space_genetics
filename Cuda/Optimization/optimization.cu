@@ -226,7 +226,7 @@ void giveRank(std::vector<Adult> & allAdults, const cudaConstants* cConstants) {
                 domination[i].push_back(j);
             }
             //Check to see if j dominates i
-            else if (dominationCheck(allAdults[j], allAdults[i], cConstants)){
+            else if ( dominationCheck( allAdults[j], allAdults[i], cConstants) ){
                 //std::cout << "\n" << j << "th (j) Adult dominates " << i << "th (i) Adult!\n";
                 //Add one to i's dominated by count
                 dominatedByCount[i]++; 
@@ -766,6 +766,7 @@ double optimize(const cudaConstants* cConstants) {
 
         //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE ANNEAL STFF-_-_-_-_-_-_-_-_-_\n\n";
         //Perform utitlity tasks (adjusting anneal and reporting data)
+        //Assumes oldAdults is in some order
         changeAnneal (oldAdults, cConstants, new_anneal, currentAnneal, anneal_min, previousBestPosDiff, generation, posTolerance, dRate);
 
         //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE RECORD-_-_-_-_-_-_-_-_-_\n\n";

@@ -1,9 +1,5 @@
-#include <iostream>
-#include <chrono>
-#include <vector>
 #include <algorithm>
-
-#include "..\Genetic_Algorithm\adult.h"
+#include <iostream>
 
 // Global enumeration for the different mask values instead of 1,2,3 for better readibility and clarity of value meaning
 enum maskValue {
@@ -352,7 +348,7 @@ void generateChildrenPair (const Adult & parent1, const Adult & parent2, Child *
     flipMask(mask); 
 
     //Generate a mirrored child
-    newChildren[numNewChildren] = Child(generateNewChild(parent1.startParams, parent2.startParams, mask,  cConstants, annealing, rng, generation), cConstants); 
+    newChildren[numNewChildren] = Child(generateNewChild(parent1.startParams, parent2.startParams, mask, cConstants, annealing, rng, generation), cConstants); 
 
     //Add one to numNewChildren since a new child was generated
     numNewChildren++; 
@@ -500,7 +496,12 @@ void convertToAdults(std::vector<Adult> & newAdults, Child* newChildren, const c
     for (int i = 0; i < cConstants->num_individuals; i++)
     {
         //Check to see if nans are generated in the finalPos elements
-        if (isnan(newChildren[i].finalPos.r) || isnan(newChildren[i].finalPos.theta) || isnan(newChildren[i].finalPos.z) || isnan(newChildren[i].finalPos.vr) || isnan(newChildren[i].finalPos.vtheta) || isnan(newChildren[i].finalPos.vz)) {
+        if (  isnan(newChildren[i].finalPos.r) ||
+              isnan(newChildren[i].finalPos.theta) ||
+              isnan(newChildren[i].finalPos.z) ||
+              isnan(newChildren[i].finalPos.vr) ||
+              isnan(newChildren[i].finalPos.vtheta) ||
+              isnan(newChildren[i].finalPos.vz)  ) {
             //Mark the child with the nan variables with the nan_error flag
             newChildren[i].errorStatus = NAN_ERROR;
         }//if it is not a nan, the status has already been made valid or sun_error in rk4SimpleCuda

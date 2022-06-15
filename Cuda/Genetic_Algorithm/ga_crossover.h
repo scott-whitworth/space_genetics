@@ -2,6 +2,12 @@
 #define GA_CROSSOVER_H
 
 #include <random>
+#include <chrono>
+#include <vector>
+
+#include "..\Config_Constants\constants.h"
+#include "..\Genetic_Algorithm\adult.h"
+#include "..\Genetic_Algorithm\child.h"
 
 ///////////////////////////////////////////////////////////////
 // Crossover Functions                                       //
@@ -93,6 +99,7 @@ void mutateMask(std::mt19937_64 & rng, bool * mutateMask, double mutation_rate);
 //        rng - random number generator to use
 //        annealing - a scalar value on the max random number when mutating
 //        cConstants - holds properties to use such as mutation rates and mutation scales for specific parameter property types
+//TODO: generation?
 // Output: Returns rkParameter object that is the mutated version of p1
 // Called by generateNewIndividual
 rkParameters<double> mutate(const rkParameters<double> & p1, std::mt19937_64 & rng, const double & annealing, const cudaConstants* cConstants, const double & generation);
@@ -106,7 +113,7 @@ double getRand(double max, std::mt19937_64 & rng);
 // Input:  parent1 - the first parent that the children will draw parameters from
 //         parent2 - the second parent that the children will draw parameters from
 //         newChildren - a pointer to the newChildren array that is used to add the newly generated children to
-//         mask - pointer array of maskValues used to decide on which property from which parent is acquired (or average of the two)
+//         mask - pointer vector of maskValues used to decide on which property from which parent is acquired (or average of the two)
 //         annealing - double variable passed onto mutateNewIndividual
 //         rng - random number generator passed on to generateNewChild
 //         numNewChildren - Used within newGeneration to keep track of how many children have been generated; added to whenever a new child is generated
@@ -151,4 +158,5 @@ void convertToAdults(std::vector<Adult> & newAdults, Child* newChildren, const c
 void firstGeneration(Child* initialChildren, std::vector<Adult>& oldAdults, const cudaConstants* cConstants);
 
 #include "ga_crossover.cpp"
+
 #endif

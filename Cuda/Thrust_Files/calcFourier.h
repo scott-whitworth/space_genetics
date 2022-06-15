@@ -1,6 +1,9 @@
 #ifndef CALCFOURIER_H
 #define CALCFOURIER_H
 
+#include "..\Thrust_Files\coefficients.h"
+#include "..\Thrust_Files\thruster.h"
+
 // General fourier series function which can be called for specific parameters (gamma,tau,and coast)
 // Parameters:
 //         series[]: input array, the coefficients of the series

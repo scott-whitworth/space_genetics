@@ -226,7 +226,6 @@ bool dominationCheckTest(Adult& personA, Adult& personB) {
     bool AisEqual = false;
     //Is true if A is better than B for at least one objective
     bool AisBetter = false;
-    //TODO: Might want to consider modifying tolerances 
     //tolerances used to determine the range of values considered equal
     //these are both currently set to 1e-14 AU, I don't think these need to be modified 
     //this tolerance is about 0.0015m, and I don't think we can go lower?

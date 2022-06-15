@@ -57,6 +57,7 @@ __host__ __device__ double Child::getPosDiff(const cudaConstants* cConstants) {
     //Check to see if the posDiff should be calculated or set to the bad value
     //Will mean only valid children will be likely to be considered for future generations
     if (errorStatus == VALID) {
+        //posDiff = sqrt(delta(r)^2 + delta(theta)^2 - r*fmod(theta, 2pi) + delta(z)^2 ) -> magnitude of delta(position)
         posDiff = sqrt(pow(cConstants->r_fin_ast - finalPos.r, 2) + pow( (cConstants->r_fin_ast * cConstants->theta_fin_ast) - (finalPos.r * fmod(finalPos.theta, 2 * M_PI)), 2) + pow(cConstants->z_fin_ast - finalPos.z, 2));
     }
     else {
@@ -74,6 +75,11 @@ __host__ __device__ double Child::getSpeedDiff(const cudaConstants* cConstants) 
     //Check to see if the speedDiff should be calculated or set to the bad value
     //Will mean only valid children will be likely to be considered for future generations
     if (errorStatus == VALID) {
+        //TODO: Check if this is accurate:
+        //speedDiff = sqrt(delta(vr)^2 + delta(vtheta)^2 + delta(vz)^2 ) -> magnitude of delta(position)
+        //we want to include: v_ast = sqrt(pow(cConstants->vr_fin_ast, 2) + pow(cConstants->vtheta_fin_ast, 2) + pow(cConstants->vz_fin_ast, 2))?
+        //                    v_pos = sqrt(pow(finalPos.vr, 2) + pow(finalPos.vtheta, 2) + pow(finalPos.vz, 2))?
+        //                    vDiff = abs(v_ast - v_pos)?
         speedDiff = sqrt(pow(cConstants->vr_fin_ast - finalPos.vr, 2) + pow(cConstants->vtheta_fin_ast - finalPos.vtheta, 2) + pow(cConstants->vz_fin_ast - finalPos.vz, 2)); 
     }
     else {

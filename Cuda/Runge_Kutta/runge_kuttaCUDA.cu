@@ -132,10 +132,12 @@ __global__ void rk4SimpleCUDA(Child *children, double *timeInitial, double *star
                 children[threadId].errorStatus = SUN_ERROR;//Are all the children's errorStatus set to SUN_ERROR?
 
                 return;
-            }
         }
         //Give the child its final calculated position
         children[threadId].finalPos = curPos;
+
+        //if it is not a SUN_ERROR then it is valid
+        children[threadId].errorStatus = VALID;
 
         return;
     }

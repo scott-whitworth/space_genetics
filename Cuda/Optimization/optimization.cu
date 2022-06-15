@@ -181,8 +181,6 @@ int main () {
     return 0;
 }
 
-//TODO: unit test to make sure every individual is given NEW rank
-
 //gives each adult in the allAdults vector a rank
 void giveRank(std::vector<Adult> & allAdults, const cudaConstants* cConstants) {
     //non-denominated sorting method
@@ -192,7 +190,6 @@ void giveRank(std::vector<Adult> & allAdults, const cudaConstants* cConstants) {
     // filled with index of adults in allAdults
     std::vector<int> front;
 
-    //TODO: Pull Adult::dominates and Adult::dominatedByCount into this function
     // probably a 2D vector, or an array of vectors
     //This 2D vector will store which other adults each adult has dominated
     //1st dimension will be a spot for each adult in allAdults
@@ -202,10 +199,9 @@ void giveRank(std::vector<Adult> & allAdults, const cudaConstants* cConstants) {
 
     //This vector will keep track of how many times each adult in oldAdults has been dominated by another adult
     //Each index in this vector will correspond to the same index within allAdults
-    //Note: fill the vector with 0s to make sure the count is accurate
-    //TODO: unit test to make sure the whole vector is actually initially filled with 0's and not just the first index or the original vector size
     std::vector<int> dominatedByCount;
-
+    
+    //fill the vector with 0s to make sure the count is accurate
     dominatedByCount.resize(allAdults.size(), 0);
 
     //loop through each individual within the allAdults vector
@@ -228,17 +224,9 @@ void giveRank(std::vector<Adult> & allAdults, const cudaConstants* cConstants) {
                 //Put the jth index in the set of individuals dominated by i
                 //std::cout << "\n" << i << "th (i) Adult dominates " << j << "th (j) Adult!\n";
                 domination[i].push_back(j);
-
-                //TODO: will this add too many to j's domination count? When it i's current value reaches j's current value it will have already recorded the dominaton here, but it will be recorded again 
-                //Add one to j's dominated by count
-                //dominatedByCount[j]++; 
             }
             //Check to see if j dominates i
-            else if (dominationCheck(allAdults[j], allAdults[i], cConstants)) {
-                //TODO: this may have the same redundancy that was mentioned above with things being added to this vector too many times
-                //Put the ith index in the set of individuals dominated by j
-                //domination[j].push_back(i);
-
+            else if (dominationCheck(allAdults[j], allAdults[i], cConstants)){
                 //std::cout << "\n" << j << "th (j) Adult dominates " << i << "th (i) Adult!\n";
                 //Add one to i's dominated by count
                 dominatedByCount[i]++; 
@@ -301,52 +289,62 @@ void giveRank(std::vector<Adult> & allAdults, const cudaConstants* cConstants) {
 
 //gives each adult in the allAdults a distance representing how different it is from other individuals
 void giveDistance(std::vector<Adult> & allAdults, const cudaConstants* cConstants){
+    //pool that holds the indexes of the valid adults
+    std::vector<int> validAdults;
 
     //starting rankSort to make sure nans are at the end of the array.
     std::sort(allAdults.begin(), allAdults.begin() + allAdults.size(), rankSort);
 
-    
+    //checks if the adult is valid and then adds that index to the vector
+    //the size of this vector will be used to find the distance for valid adults only
+    for(int i = 0; i < allAdults.size(); i++){
+        if(allAdults[i].errorStatus == VALID){
+            validAdults.push_back(i);
+        }
+    }
+
+    //set all to zero including the invalid adults
     for (int i = 0; i < allAdults.size(); i++ ){
         //reset each individual's distance
         allAdults[i].distance = 0.0;
     }
     
     //Sort by the first objective function, posDiff
-    std::sort(allAdults.begin(), allAdults.begin() + allAdults.size(), LowerPosDiff);
+    std::sort(allAdults.begin(), allAdults.begin() + validAdults.size(), LowerPosDiff);
     //Set the boundaries
     allAdults[0].distance = MAX_DISTANCE;
-    allAdults[allAdults.size() - 1].distance = MAX_DISTANCE;
+    allAdults[validAdults.size() - 1].distance = MAX_DISTANCE;
 
 
     //For each individual besides the upper and lower bounds, make their distance equal to
     //the current distance + the absolute normalized difference in the function values of two adjacent individuals.
     double normalPosDiffLeft;
     double normalPosDiffRight;
-    for(int i = 1; i < allAdults.size() - 1; i++){
+    for(int i = 1; i < validAdults.size() - 1; i++){
         //Divide left and right individuals by the worst individual to normalize
-        normalPosDiffLeft = allAdults[i+1].posDiff/allAdults[allAdults.size() - 1].posDiff;
-        normalPosDiffRight = allAdults[i-1].posDiff/allAdults[allAdults.size() - 1].posDiff;
+        normalPosDiffLeft = allAdults[i+1].posDiff/allAdults[validAdults.size() - 1].posDiff;
+        normalPosDiffRight = allAdults[i-1].posDiff/allAdults[validAdults.size() - 1].posDiff;
         //distance = distance + abs((i+1) - (i-1))
-        allAdults[i].distance = allAdults[i].distance + abs((normalPosDiffLeft - normalPosDiffRight));// /(allAdults[allAdults.size() - 1].posDiff - allAdults[0].posDiff));
+        allAdults[i].distance = allAdults[i].distance + abs((normalPosDiffLeft - normalPosDiffRight));// /(allAdults[validAdults.size() - 1].posDiff - allAdults[0].posDiff));
     }
 
     //Repeat above process for speedDiff    
-    std::sort(allAdults.begin(), allAdults.begin() + allAdults.size(), LowerSpeedDiff);
+    std::sort(allAdults.begin(), allAdults.begin() + validAdults.size(), LowerSpeedDiff);
     //Set the boundaries
     allAdults[0].distance = MAX_DISTANCE;
-    allAdults[allAdults.size() - 1].distance = MAX_DISTANCE;
+    allAdults[validAdults.size() - 1].distance = MAX_DISTANCE;
 
     
     //For each individual besides the upper and lower bounds, make their distance equal to
     //the current distance + the absolute normalized difference in the function values of two adjacent individuals.
     double normalSpeedDiffLeft;
     double normalSpeedDiffRight;
-    for(int i = 1; i < allAdults.size() - 1; i++){
+    for(int i = 1; i < validAdults.size() - 1; i++){
         //Divide left and right individuals by the worst individual to normalize
-        normalSpeedDiffLeft = allAdults[i+1].speedDiff/allAdults[allAdults.size() - 1].speedDiff;
-        normalSpeedDiffRight = allAdults[i-1].speedDiff/allAdults[allAdults.size() - 1].speedDiff;
+        normalSpeedDiffLeft = allAdults[i+1].speedDiff/allAdults[validAdults.size() - 1].speedDiff;
+        normalSpeedDiffRight = allAdults[i-1].speedDiff/allAdults[validAdults.size() - 1].speedDiff;
         //distance = distance + abs((i+1) - (i-1))
-        allAdults[i].distance = allAdults[i].distance + abs((normalSpeedDiffLeft - normalSpeedDiffRight));// /(allAdults[allAdults.size() - 1].speedDiff - allAdults[0].speedDiff));
+        allAdults[i].distance = allAdults[i].distance + abs((normalSpeedDiffLeft - normalSpeedDiffRight));// /(allAdults[validAdults.size() - 1].speedDiff - allAdults[0].speedDiff));
     }
 }
 
@@ -552,8 +550,8 @@ void changeAnneal (const std::vector<Adult>& oldAdults, const cudaConstants* cCo
 
     else if (cConstants->missionType == Rendezvous) {
         if (posTolerance < oldAdults[0].posDiff){ 
-            //TO DO: decide what we want to do with this annealing   
-            //Exponentially changing annealing, as oppose to what?
+            //TODO: decide what we want to do with this annealing   
+            //Exponentially changing annealing TODO: this annealing and the impact annealing are hardly getting adjusted
             new_anneal = currentAnneal * (1 - pow(posTolerance / oldAdults[0].posDiff,2.0));
             if (new_anneal < cConstants->anneal_final){
                 new_anneal = cConstants->anneal_final; //Set a true minimum for annealing
@@ -631,12 +629,7 @@ void reportGeneration (std::vector<Adult> & oldAdults, const cudaConstants* cCon
         std::cout << "\nBest Rank Distance Individual:";
         std::sort(oldAdults.begin(), oldAdults.end(), rankDistanceSort);
         terminalDisplay(oldAdults[0], generation);
-        std::cout << "\n# of Nans this generation: " << numNans << "\n" << std::endl;
-        
-        //re-sort by rankDistance for rendezvous mission
-        if(cConstants->missionType == Rendezvous) {
-            std::sort(oldAdults.begin(), oldAdults.end(), rankDistanceSort);
-        }
+        std::cout << "\n# of errors this generation: " << numNans << "\n" << std::endl;
         
         //Reset the tally of nans.
         numNans = 0;

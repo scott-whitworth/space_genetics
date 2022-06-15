@@ -31,13 +31,13 @@ bool firstParentsTest(const cudaConstants * utcConstants);
 bool makeChildrenWithDifferentMethods(std::mt19937_64& rng, cudaConstants * utcConstants);
 
 //Are the tripTimes, alphas, betas, and zetas reasonable for the different children
-bool checkReasonability(const Child& c1, const Child& c2, std::vector<int> & mask, double parentsValues[], int whichMethod);
+bool checkReasonability(const Child& c1, const Child& c2, std::vector<int> & mask, double parentsValues[], int whichMethod, cudaConstants * utcConstants);
 
-//helper function for check reasonability
+//helper for checkReasonability
 double getParamStuff(const int correspondingOffset, const Child& aChild);
 
-//Makes a set of parents and creates children from these parents
-bool firstFullGen(const cudaConstants * utcConstants);
+//Makes a set of parents and creates children from these parents -> uses callRK
+bool firstFullGen(std::mt19937_64& rng, const cudaConstants * utcConstants);
 
 //TODO: once giveRankTest and giveDistanceTest are complete, use these instead, rather than using my weird versions of these
 //giveRank was broken so I threw together an inefficient giveRank type function 
@@ -51,6 +51,12 @@ bool checkUTMutateMask();
 
 //unit test version of the mutateMask function from ga_crossover
 void UTmutateMask(std::mt19937_64 & rng, bool * mutateMask, double mutation_rate);
+
+
+//took this directly from optimization.cu on 6/14/22 near the end of the day - will become out of date if changes made to version in optimization.cu
+void stolenGiveRank(std::vector<Adult> & allAdults, const cudaConstants* cConstants);
+//took this directly from optimization.cu on 6/14/22 near the end of the day - will become out of date if changes made to version in optimization.cu
+void stolenGiveDistance(std::vector<Adult> & allAdults, const cudaConstants* cConstants);
 
 
 #include "../Unit_Testing/testing_genetics.cpp"

@@ -324,16 +324,27 @@ rkParameters<double> mutate(const rkParameters<double> & p1, std::mt19937_64 & r
 //!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Method that creates a pair of new Individuals from a pair of other individuals and a mask
 void generateChildrenPair (const Adult & parent1, const Adult & parent2, Child * newChildren, std::vector<int> & mask, const double & annealing, std::mt19937_64 & rng, int & numNewChildren, const int & generation, const cudaConstants* cConstants) {
+    
+    //checks to make sure that more children are needed in the newChildren array before generating new children
+    //if there are already enough children, it just returns and exits this function
+    if(numNewChildren >= cConstants->num_individuals){ 
+        return;
+    }
 
     //TODO: There is inherently an issue here that you may over-write newChildren if you don't know the size
     //      It is possible you can do this externally, but here in this function, there is no check on the size of numNewChildren
-    
     //Generate a new individual based on the two parents
     newChildren[numNewChildren] = Child(generateNewChild(parent1.startParams, parent2.startParams, mask, cConstants, annealing, rng, generation), cConstants);
 
     //Add one to numNewChildren to signify that a new child has been added to the newChildren vector
     //Will also ensure that no children are overwritten
     numNewChildren++;
+
+    //checks to make sure that more children are needed in the newChildren array before generating new children
+    //if there are already enough children, it just returns and exits this function
+    if(numNewChildren >= cConstants->num_individuals){
+        return;
+    }
 
     //TODO: For efficiency, we might want to check if the mask is an averaging mask (if it is, we probably don't need to make the 'flip')
     //      On the other hand, even numbers are nice, so we may want to take the hit anyway just to keep things even
@@ -364,15 +375,15 @@ void newGeneration (const std::vector<Adult> & oldAdults, std::vector<Adult> & n
     //Add the survivorCount to the size of the array to account for the potential that the number of children that the crossover methods generate doesn't evenly divide num_individuals
     //      This extra space will allow for some breathing room within the array
     //      Despite the extra space, it is intended that we only generate num_individuals of children
-    Child* newChildren = new Child[cConstants->num_individuals + cConstants->survivor_count]; 
+    //Child* newChildren = new Child[cConstants->num_individuals + cConstants->survivor_count]; 
+    Child* newChildren = new Child[cConstants->num_individuals]; 
 
     //Create a mask to determine which of the child's parameters will be inherited from which parents
     std::vector<int> mask;
 
     //Make a basic mask with it set to avg at first
     //Setting the mask to average is due to the reasoning that if the mask isn't changed, it is best that what is generated is not just a copy of one adult (hence, not setting it to Parent 1 or 2)
-    for (int i = 0; i < OPTIM_VARS; i++)
-    {
+    for (int i = 0; i < OPTIM_VARS; i++){
         //TODO: is this the best initial setting? Does this even matter?
         mask.push_back(AVG); 
     }
@@ -492,12 +503,7 @@ void convertToAdults(std::vector<Adult> & newAdults, Child* newChildren, const c
         if (isnan(newChildren[i].finalPos.r) || isnan(newChildren[i].finalPos.theta) || isnan(newChildren[i].finalPos.z) || isnan(newChildren[i].finalPos.vr) || isnan(newChildren[i].finalPos.vtheta) || isnan(newChildren[i].finalPos.vz)) {
             //Mark the child with the nan variables with the nan_error flag
             newChildren[i].errorStatus = NAN_ERROR;
-        }
-        else if (newChildren[i].errorStatus != SUN_ERROR) {
-            //Since nan and sun errors would have already been set, it is safe to set this child's status as valid
-            //TODO: Consider moving this to RKSimple
-            newChildren[i].errorStatus = VALID;
-        }
+        }//if it is not a nan, the status has already been made valid or sun_error in rk4SimpleCuda
 
         //Now that the status has been determined, there is enough information to set pos and speed diffs
         //The two functions will look at the child's errorStatus and set the diffs based on that

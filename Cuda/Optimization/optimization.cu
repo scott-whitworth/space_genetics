@@ -81,6 +81,14 @@ void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& 
 void changeAnneal (const std::vector<Adult>& oldAdults, const cudaConstants* cConstants, double & new_anneal, double & currentAnneal, double & anneal_min,  double & previousBestPosDiff, double & generation, const double & posTolerance, double & dRate);
 
 //----------------------------------------------------------------------------------------------------------------------------
+//This function will calculate the cost based on the mission type and the current best individual
+//      This function should only be used within changeAnneal 
+//Inputs: oldAdults - A vector of adults that will pull the individual whose final position will be used to calculate the cost
+//              NOTE: This function assumes that oldAdults is already sorted by rankDistance and will pull the first adult from the vector
+//Ooutput: A cost double that will be used to change anneal              
+double calculateCost(const std::vector<Adult> & oldAdults, const cudaConstants* cConstants);
+
+//----------------------------------------------------------------------------------------------------------------------------
 //Input: all the updated parameters of the current generation
 //Output: calls the various terminal display functions when needed
 //Function that handles the reporting of a generation's performance
@@ -541,6 +549,15 @@ void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& 
 //TODO: Figure out what to replace posDiff (what used to be cost)
 //Function that will adjust the annneal based on the previous anneal and if there was a change in the best individual
 void changeAnneal (const std::vector<Adult>& oldAdults, const cudaConstants* cConstants, double & new_anneal, double & currentAnneal, double & anneal_min,  double & previousBestPosDiff, double & generation, const double & posTolerance, double & dRate){
+    
+    //Calculate the current cost for this generation
+    int curCost = calculateCost(oldAdults, cConstants);
+    
+    //Caluclate the new current anneal
+    //It will be a linear decrease from the initial/max anneal based on how well the current cost is compared to the cost threshold
+    currentAnneal = cConstants->anneal_initial * (1 - (cConstants->costThreshold / curCost));
+
+    /*
     // Scaling anneal based on proximity to tolerance
     // Far away: larger anneal scale, close: smaller anneal
     if (cConstants->missionType == Impact) {
@@ -559,6 +576,7 @@ void changeAnneal (const std::vector<Adult>& oldAdults, const cudaConstants* cCo
         }
     }
     
+    /*
     //Process to see if anneal needs to be adjusted
     // If generations are stale, anneal drops
     Adult currentBest;
@@ -595,6 +613,33 @@ void changeAnneal (const std::vector<Adult>& oldAdults, const cudaConstants* cCo
 
         previousBestPosDiff = currentBest.posDiff; //posDiff here used to be cost
     }
+    */
+}
+
+//Function that will calculate this generation's best adult's cost
+double calculateCost(const std::vector<Adult> & oldAdults, const cudaConstants* cConstants){
+    //Create the cost double that will be returned
+    double cost; 
+
+    //How to calculate the cost will depend on the mission type
+    //In general, cost will be (for each mission parameter, the difference/the goal) - the number of mission parameters
+    //This will mean a cost of 0 or below signifies that the individual has hit the mission goals
+
+    //For impacts, the cost only depends on posDiff
+    //  NOTE: While the RD sorting favors high speed for impacts, convergence ultimately comes down to posDiff
+    if (cConstants -> missionType == Impact) {
+        //Calculate the cost based only on position
+        //The goal is position threshold and the current status is the best individual's posDiff
+        cost = (oldAdults[0].posDiff / cConstants->pos_threshold) - IMPACT_MISSION_PARAMETER_COUNT;
+    }
+    //For rendezvous, the cost depends on both posDiff and speedDiff
+    else {
+        //Similarly to impact, calculate how far the best adult's speed and position diffs are away from the goal and subtract by the number of mission goals
+        cost = ((oldAdults[0].posDiff / cConstants->pos_threshold) + (oldAdults[0].speedDiff / cConstants->speed_threshold)) - RENDEZVOUS_MISSION_PARAMETER_COUNT;
+    }
+    
+    //Return the calculated cost
+    return cost; 
 }
 
 //Function that writes the results of the inserted generation
@@ -770,7 +815,7 @@ double optimize(const cudaConstants* cConstants) {
         changeAnneal (oldAdults, cConstants, new_anneal, currentAnneal, anneal_min, previousBestPosDiff, generation, posTolerance, dRate);
 
         //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE RECORD-_-_-_-_-_-_-_-_-_\n\n";
-        reportGeneration (oldAdults, cConstants, new_anneal, anneal_min, generation, numNans);
+        reportGeneration (oldAdults, cConstants, currentAnneal, anneal_min, generation, numNans);
 
         // Before replacing new adults, determine whether all are within tolerance
         // Determines when loop is finished

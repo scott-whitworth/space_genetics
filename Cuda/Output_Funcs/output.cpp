@@ -335,7 +335,7 @@ void initializeRecord(const cudaConstants * cConstants) {
   std::string fileId = std::to_string(seed);
   excelFile.open("genPerformance-" + fileId + ".csv", std::ios_base::app);
 
-  excelFile << "gen,lowerPosDiff,bestSpeedDiff,bestCost,alpha,beta,zeta,tripTime,";
+  excelFile << "gen,lowerPosDiff,bestSpeedDiff,alpha,beta,zeta,tripTime,";
   
   for (int i = 0; i < GAMMA_ARRAY_SIZE; i++) {
     excelFile << "gamma"; 
@@ -438,7 +438,7 @@ void recordAllIndividuals(std::string name, const cudaConstants * cConstants, co
   for (int i = 0; i < COAST_ARRAY_SIZE; i++) {
     entirePool << "coast" << i << ",";
   }
-  entirePool << "cost,";
+  //entirePool << "cost,";
   entirePool << "posDiff,";
   entirePool << "speedDiff,";
   entirePool << "rank,distance,";

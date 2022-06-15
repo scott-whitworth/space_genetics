@@ -153,7 +153,7 @@ bool firstParentsTest(const cudaConstants * utcConstants){
 
     delete[] theChildren;
 
-    if (parents.size() == genSize){
+    if (parents.size() == utcConstants->num_individuals){
         return true;
     }
     else{
@@ -165,6 +165,7 @@ bool firstParentsTest(const cudaConstants * utcConstants){
 
 
 void wrongWayToRank(std::vector<Adult> & newAdults){
+    int genSize = 10;
     std::vector<std::vector<int>> arrayOfDominations(genSize);  //a 2D vector that is genSize long
     for (int i = 0; i < genSize; i++){ //if there are any inputs in it so far, gives an error message
         if (arrayOfDominations[i].size() != 0){

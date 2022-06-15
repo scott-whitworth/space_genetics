@@ -133,7 +133,8 @@ void generateChildrenPair(const Adult & parent1, const Adult & parent2, Child * 
 // NOTE: This function is called at the beginning of each generation within optimize() 
 void newGeneration(const std::vector<Adult> & oldAdults, std::vector<Adult> & newAdults, const double & annealing, const int & generation, const std::mt19937_64 & rng, const cudaConstants* cConstants);
 
-// Converts children previously simulated by callRK into adults and inserts the new adults into the submitted adult vector
+// Converts children previously simulated by callRK into adults
+//        It calculates the pos and speed diffs of the children and inserts the new children into the submitted adult vector
 // Input: newAdults - the vector of adults the converted adults will be inserted into
 //        newChildren - the array of simulated children that will be tranformed into adults
 //        cConstants - needed for the number of individuals
@@ -148,13 +149,6 @@ void convertToAdults(std::vector<Adult> & newAdults, Child* newChildren, const c
 // Output: oldAdults is full of the children that have been converted into adults - this allows us to have a bunch of random adults to create a new generation
 //
 void firstGeneration(Child* initialChildren, std::vector<Adult>& oldAdults, const cudaConstants* cConstants);
-
-// Go through a children array that has just been simulated and will determine their error_status, posDiff, and speedDiff
-// Input: newChildren - this is the array (specifically pointer) of the children that has just been generated
-//        cConstants - constants used for the getPosDiff and getSpeedDiff functions
-// Output: This function will iterate through the inputted children array and fill in the children's error_status, posDiff, and speedDiff
-// NOTE: This function needs to (and should only) be called directly after using callRK()
-void setStatusAndDiffs(Child* newChildren, const cudaConstants* cConstants);
 
 #include "ga_crossover.cpp"
 #endif

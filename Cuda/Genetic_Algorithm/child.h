@@ -8,8 +8,8 @@
 //TODO: Big step: think about where in the code we rely on numeric data to determine errors (like checking for NAN)
 //      Change to interface with STATUS instead
 
-//TODO: Clarify this header
-// Individual is a structure member of the genetic algorithm's population and has set of parameters and the resulting position and velocity
+// Child is a structure member of the genetic algorithm's population and has set of parameters and the resulting position and velocity
+//once a child is created it will then be copied to an adult with some added parameters
 struct Child {
     rkParameters<double> startParams; // input parameters for the run- the unique identifiers of this individual
 

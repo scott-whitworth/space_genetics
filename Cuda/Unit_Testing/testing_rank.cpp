@@ -314,7 +314,7 @@ void giveRankTest(std::vector<Adult> & allAdults) {
     // filled with index of adults in allAdults
     std::vector<int> front;
 
-    //TODO: Pull Adult::dominates and Adult::dominatedByCount into this function
+
     // probably a 2D vector, or an array of vectors
     //This 2D vector will store which other adults each adult has dominated
     //1st dimension will be a spot for each adult in allAdults
@@ -326,7 +326,6 @@ void giveRankTest(std::vector<Adult> & allAdults) {
     //This vector will keep track of how many times each adult in oldAdults has been dominated by another adult
     //Each index in this vector will correspond to the same index within allAdults
     //Note: fill the vector with 0s to make sure the count is accurate
-    //TODO: unit test to make sure the whole vector is actually initially filled with 0's and not just the first index or the original vector size
     std::vector<int> dominatedByCount; 
     //crashed when this was not resized and filled with zeros (cant add 1 to an index that doesn't exist)
     dominatedByCount.resize(allAdults.size(), 0);
@@ -421,7 +420,7 @@ void giveRankTest(std::vector<Adult> & allAdults) {
                     //Assign a rank to the new most dominating adult left
                     allAdults[domination[front[k]][l]].rank = rankNum + 1;
                     //Add the index of the this adult to newFront
-                    //TODO: these counts are still getting into the negatives
+                    //TODO: these counts are still getting into the negatives for smaller tests
                     newFront.push_back(domination[front[k]][l]);
                 }
                 

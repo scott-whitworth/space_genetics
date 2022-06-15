@@ -114,13 +114,29 @@ bool dominationCheck(Adult& personA, Adult& personB, const cudaConstants* cConst
     if ((personA.speedDiff < personB.speedDiff + speedTolerance) && (personA.speedDiff > personB.speedDiff - speedTolerance)){
         ASpeedEqualsB = true;
     }
-    //If A.posDiff is approximately/better than B.posDiff, and A.speedDiff is approximately/better than B.speedDiff, then A is equal to B.
-    if ((personA.posDiff < personB.posDiff || APosEqualsB) && (personA.speedDiff < personB.speedDiff || ASpeedEqualsB)) {
-        AisEqual = true;
+    //If the mission type is a rendezvous, A's speed diff needs to be lower for it to be equal or better
+    if (cConstants -> missionType == Impact) {
+        //Check if A's posDiff is approximately/better than B's posDiff and check the same for speed
+        //If so, A is equal to B
+        if ((personA.posDiff < personB.posDiff || APosEqualsB) && (personA.speedDiff > personB.speedDiff || ASpeedEqualsB)) {
+            AisEqual = true; 
+        }  
+        //If A has a better posDiff or speedDiff than B, then A is better than B
+        if (personA.posDiff < personB.posDiff || personA.speedDiff > personB.speedDiff) {
+            AisBetter = true;
+        }
     }
-    //If A has a better posDiff or speedDiff than B, then A is better than B
-    if (personA.posDiff < personB.posDiff || personA.speedDiff < personB.speedDiff){
-        AisBetter = true;
+    //If the mission type is a impact, A's speed diff needs to be higher than B's for it to be equal or better
+    else {
+        //If A.posDiff is approximately/better than B.posDiff, and A.speedDiff is approximately/better than B.speedDiff, then A is equal to B.
+        if ((personA.posDiff < personB.posDiff || APosEqualsB) && (personA.speedDiff < personB.speedDiff || ASpeedEqualsB)) {
+            AisEqual = true;
+        }
+        //If A has a better posDiff or speedDiff than B, then A is better than B
+        if (personA.posDiff < personB.posDiff || personA.speedDiff < personB.speedDiff){
+            AisBetter = true;
+        }
+        
     }
 
     //A Dominates B
@@ -141,6 +157,8 @@ bool dominationCheck(Adult& personA, Adult& personB, const cudaConstants* cConst
         //std::cout << "\n\nDomination check returns FALSE";
         return false;
     }
+    /*
+    */
 }
 
 //!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -209,7 +227,6 @@ bool dominationCheckTest(Adult& personA, Adult& personB){
     bool AisEqual = false;
     //Is true if A is better than B for at least one objective
     bool AisBetter = false;
-    //TODO: Might want to consider modifying tolerances 
     //tolerances used to determine the range of values considered equal
     //these are both currently set to 1e-14 AU, I don't think these need to be modified 
     //this tolerance is about 0.0015m, and I don't think we can go lower?
@@ -281,7 +298,7 @@ bool dominationCheckTest(Adult& personA, Adult& personB){
 #ifdef UNITTEST //this should be defined in unit testing
 
 const std::string Adult::unitTestingRankDistanceStatusPrint(){
-    std::string allInfo = "(" + std::to_string(rank) + "," + std::to_string(static_cast<int>(distance));
+    std::string allInfo = "(" + std::to_string(rank) + "," + std::to_string(distance);
     if (errorStatus == VALID){
         allInfo += ", VALID)";
     }

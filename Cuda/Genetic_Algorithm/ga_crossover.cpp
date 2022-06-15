@@ -324,16 +324,27 @@ rkParameters<double> mutate(const rkParameters<double> & p1, std::mt19937_64 & r
 //!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Method that creates a pair of new Individuals from a pair of other individuals and a mask
 void generateChildrenPair (const Adult & parent1, const Adult & parent2, Child * newChildren, std::vector<int> & mask, const double & annealing, std::mt19937_64 & rng, int & numNewChildren, const int & generation, const cudaConstants* cConstants) {
+    
+    //checks to make sure that more children are needed in the newChildren array before generating new children
+    //if there are already enough children, it just returns and exits this function
+    if(numNewChildren >= cConstants->num_individuals){ 
+        return;
+    }
 
     //TODO: There is inherently an issue here that you may over-write newChildren if you don't know the size
     //      It is possible you can do this externally, but here in this function, there is no check on the size of numNewChildren
-    
     //Generate a new individual based on the two parents
-    newChildren[numNewChildren] = Child(generateNewChild(parent1.startParams, parent2.startParams, mask,  cConstants, annealing, rng, generation), cConstants);;
+    newChildren[numNewChildren] = Child(generateNewChild(parent1.startParams, parent2.startParams, mask, cConstants, annealing, rng, generation), cConstants);
 
     //Add one to numNewChildren to signify that a new child has been added to the newChildren vector
     //Will also ensure that no children are overwritten
     numNewChildren++;
+
+    //checks to make sure that more children are needed in the newChildren array before generating new children
+    //if there are already enough children, it just returns and exits this function
+    if(numNewChildren >= cConstants->num_individuals){
+        return;
+    }
 
     //TODO: For efficiency, we might want to check if the mask is an averaging mask (if it is, we probably don't need to make the 'flip')
     //      On the other hand, even numbers are nice, so we may want to take the hit anyway just to keep things even
@@ -361,6 +372,10 @@ void newGeneration (const std::vector<Adult> & oldAdults, std::vector<Adult> & n
 
     //Import number of new individuals the GPU needs to fill its threads
     //Create a newChildren function to fill in with children generated from oldAdults
+    //Add the survivorCount to the size of the array to account for the potential that the number of children that the crossover methods generate doesn't evenly divide num_individuals
+    //      This extra space will allow for some breathing room within the array
+    //      Despite the extra space, it is intended that we only generate num_individuals of children
+    //Child* newChildren = new Child[cConstants->num_individuals + cConstants->survivor_count]; 
     Child* newChildren = new Child[cConstants->num_individuals]; 
 
     //Create a mask to determine which of the child's parameters will be inherited from which parents
@@ -368,8 +383,7 @@ void newGeneration (const std::vector<Adult> & oldAdults, std::vector<Adult> & n
 
     //Make a basic mask with it set to avg at first
     //Setting the mask to average is due to the reasoning that if the mask isn't changed, it is best that what is generated is not just a copy of one adult (hence, not setting it to Parent 1 or 2)
-    for (int i = 0; i < OPTIM_VARS; i++)
-    {
+    for (int i = 0; i < OPTIM_VARS; i++){
         //TODO: is this the best initial setting? Does this even matter?
         mask.push_back(AVG); 
     }
@@ -440,14 +454,6 @@ void newGeneration (const std::vector<Adult> & oldAdults, std::vector<Adult> & n
         //Generate a pair of children based on the mask
         generateChildrenPair(oldAdults[parentPool[parentIndex]], oldAdults[parentPool[parentIndex+1]], newChildren, mask, annealing, rng, numNewChildren, generation, cConstants);
 
-        //TODO: My main interest is in getting rid of this second bundleVars crossover. If you feel you are ready, I would remove it
-        //For a second time, generate a pair of children feom a pair of parents based on the bundled random mask method
-        //Generate the base mask
-        crossOver_bundleVars(mask, rng);
-
-        //Generate a pair of children based on the mask
-        generateChildrenPair(oldAdults[parentPool[parentIndex]], oldAdults[parentPool[parentIndex+1]], newChildren, mask, annealing, rng, numNewChildren, generation, cConstants);
-
         //Iterate through the shuffled section of the oldAdults array
         //Add two to parentIndex to account for the variable tracking pairs of parents, not just one parent's index
         parentIndex += 2;
@@ -466,9 +472,6 @@ void newGeneration (const std::vector<Adult> & oldAdults, std::vector<Adult> & n
             //      Ok, so the rationale is that you only want to pull from the 'best' individuals
             //      You don't want to pull from anywhere in oldAdults, because the bottom 3/4 of oldAdults is deemed to be 'bad'
             //      Thus you will only ever consider the 'top' 1/4 of oldAdults, enforced by parentNum
-
-            //TODO: It sounds like we need to make parentNum a configured value. I could see us playing around with modifying the size of the parent pool
-            //      1/4 is kind of arbitrary, it might be interesting to see what happens if we kept 1/8 or some fixed number / percent
         }
     }
 
@@ -481,10 +484,8 @@ void newGeneration (const std::vector<Adult> & oldAdults, std::vector<Adult> & n
     //TODO: Perhaps we should just import cCOnstants and newChildren into callRk, since most of the arguments come from cConstants regardless
     callRK(cConstants->num_individuals, cConstants->thread_block_size, newChildren, timeInitial, (cConstants->orbitalPeriod / cConstants->GuessMaxPossibleSteps), cConstants->rk_tol, calcPerS, cConstants); 
 
-    //Determine the status and diffs of the simulated children
-    setStatusAndDiffs(newChildren, cConstants); 
-
     //Now that the children have been simulated, convert the children into adults
+    //First, it will calculate the right pos and speed diffs for the children
     //This will also put the converted children into the newAdults vector
     convertToAdults(newAdults, newChildren, cConstants); 
 
@@ -495,8 +496,24 @@ void newGeneration (const std::vector<Adult> & oldAdults, std::vector<Adult> & n
 //Function that will convert the generated children into adults
 //Will also transfer the created adults into the newAdult vector
 void convertToAdults(std::vector<Adult> & newAdults, Child* newChildren, const cudaConstants* cConstants) {
+    //Iterate through the simulated children to determine their error status (if it hasn't been set by callRK already) and calculate their pos and speed differences
+    for (int i = 0; i < cConstants->num_individuals; i++)
+    {
+        //Check to see if nans are generated in the finalPos elements
+        if (isnan(newChildren[i].finalPos.r) || isnan(newChildren[i].finalPos.theta) || isnan(newChildren[i].finalPos.z) || isnan(newChildren[i].finalPos.vr) || isnan(newChildren[i].finalPos.vtheta) || isnan(newChildren[i].finalPos.vz)) {
+            //Mark the child with the nan variables with the nan_error flag
+            newChildren[i].errorStatus = NAN_ERROR;
+        }//if it is not a nan, the status has already been made valid or sun_error in rk4SimpleCuda
+
+        //Now that the status has been determined, there is enough information to set pos and speed diffs
+        //The two functions will look at the child's errorStatus and set the diffs based on that
+        newChildren[i].getPosDiff(cConstants);
+        newChildren[i].getSpeedDiff(cConstants); 
+    }
+    
     //Iterate through the newChildren vector to add them to the newAdult vector
-    //iterates until num_individuals as that is the size of newChildren
+    //iterates until num_individuals as that is the number of new children needed to generate
+    //      This accounts for the potential that the number of children in newChildren is slightly larger than num_individuals
     for (int i = 0; i < cConstants->num_individuals; i++)
     {
         //Fill in the newAdults vector with a new adult generated with a completed child
@@ -513,36 +530,10 @@ void firstGeneration(Child* initialChildren, std::vector<Adult>& oldAdults, cons
         // GPU based runge kutta process determines final position and velocity based on parameters
     //Will fill in the final variables (final position & speed, posDiff, speedDiff) for each child
     //TODO: Perhaps we should just import cCOnstants and newChildren into callRk, since most of the arguments come from cConstants regardless
-    callRK(cConstants->num_individuals, cConstants->thread_block_size, initialChildren, timeIntial, (cConstants->orbitalPeriod / cConstants->GuessMaxPossibleSteps), cConstants->rk_tol, calcPerS, cConstants); 
-
-    //Determine the status and diffs of the now simulated children
-    setStatusAndDiffs(initialChildren, cConstants);
+    callRK(cConstants->num_individuals, cConstants->thread_block_size, initialChildren, timeIntial, (cConstants->orbitalPeriod / cConstants->max_numsteps), cConstants->rk_tol, calcPerS, cConstants); 
 
     //Now that the children have been simulated, convert the children into adults
-    //This will also put the converted children into the newAdults vector
+    //This will calc the posDiff and speedDiff for each child
+    //It will also put the converted children into the newAdults vector
     convertToAdults(oldAdults, initialChildren, cConstants); 
-}
-
-// Go through a children array that has just been simulated and will determine their error_status, posDiff, and speedDiff
-//TODO: Consider combining this with convertToAdults
-void setStatusAndDiffs(Child* newChildren, const cudaConstants* cConstants) {
-    //Iterate through the simulated children to determine their error status (if it hasn't been set by callRK already) and calculate their pos and speed differences
-    for (int i = 0; i < cConstants->num_individuals; i++)
-    {
-        //Check to see if nans are generated in the finalPos elements
-        if (isnan(newChildren[i].finalPos.r) || isnan(newChildren[i].finalPos.theta) || isnan(newChildren[i].finalPos.z) || isnan(newChildren[i].finalPos.vr) || isnan(newChildren[i].finalPos.vtheta) || isnan(newChildren[i].finalPos.vz)) {
-            //Mark the child with the nan variables with the nan_error flag
-            newChildren[i].errorStatus = NAN_ERROR;
-        }
-        else if (newChildren[i].errorStatus != SUN_ERROR) {
-            //Since nan and sun errors would have already been set, it is safe to set this child's status as valid
-            //TODO: Consider moving this to RKSimple
-            newChildren[i].errorStatus = VALID;
-        }
-
-        //Now that the status has been determined, there is enough information to set pos and speed diffs
-        //The two functions will look at the child's errorStatus and set the diffs based on that
-        newChildren[i].getPosDiff(cConstants);
-        newChildren[i].getSpeedDiff(cConstants); 
-    }
 }

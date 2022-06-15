@@ -22,7 +22,7 @@ bool runGeneticsUnitTests(){
     utcConstants->gamma_mutate_scale = 3.14159; 
     utcConstants->tau_mutate_scale = 1.570795; 
     utcConstants->coast_mutate_scale = 3.14159;
-    utcConstants->triptime_mutate_scale = 1.0;
+    utcConstants->triptime_mutate_scale = 1.0* SECONDS_IN_YEAR;
     utcConstants->zeta_mutate_scale = 1.570795;
     utcConstants->beta_mutate_scale = 1.570795;
     utcConstants->alpha_mutate_scale = 3.14159;
@@ -47,9 +47,35 @@ bool runGeneticsUnitTests(){
     //additionally, mission type should have little impact on the genetics algorithms
     utcConstants->missionType = 1; 
 
+    //STUFF SO RUNGE_KUTTACUDA.CU CAN RUN
+    utcConstants->thread_block_size =32;
+    utcConstants->orbitalPeriod = 3.772645011085093e+07; // orbital period time of 1999RQ36 Bennu (s) 
+    utcConstants->GuessMaxPossibleSteps = 1000000;
+
+    //ALL THE STUFF SO EARTH'S INITIAL POSITION CAN BE CALCULATED
+    utcConstants->triptime_max=2.0* SECONDS_IN_YEAR;
+    utcConstants->triptime_min=1.0* SECONDS_IN_YEAR;
+    utcConstants->timeRes=3600; // Earth Calculations Time Resolution Value
+    utcConstants->v_escape = 2162.4/AU; //sqrt of DART Mission c3energy
+    //Bennu config values
+    utcConstants->r_fin_earth=9.857045197029908E-01;
+    utcConstants->theta_fin_earth=1.242975503287042;
+    utcConstants->z_fin_earth=-4.332189909686674E-05;
+    utcConstants->vr_fin_earth=-1.755004992027024E-09;
+    utcConstants->vtheta_fin_earth=2.019592304815492E-07;
+    utcConstants->vz_fin_earth=-2.312712519131594E-12;
+    // Various values that impact runge kutta
+    utcConstants->rk_tol=1e-12;
+    utcConstants->doublePrecThresh=1e-12;
+    utcConstants->GuessMaxPossibleSteps=1000000; //TODO: Long term, I think we need to get rid of this, we use max_numsteps instead
+    utcConstants->max_numsteps=2500;
+    utcConstants->min_numsteps=400;
+
 // SETTING A RANDOM NUMBER GENERATOR (rng) TO BE USED BY FUNCTIONS
     // This rng object is used for generating all random numbers in the genetic algorithm, passed in to functions that need it
     std::mt19937_64 rng(utcConstants->time_seed);
+
+    launchCon = new EarthInfo(utcConstants); //VERY complicated part of the code with some possibility of errors -> just needed for 
 
 // CALLING THE DIFFERENT UNIT TESTING ALGORITHMS
     bool allWorking = true;
@@ -76,6 +102,7 @@ bool runGeneticsUnitTests(){
     }
 
     delete[] utcConstants;
+    delete launchCon;
     return allWorking;
 }
 
@@ -109,14 +136,13 @@ bool firstParentsTest(const cudaConstants * utcConstants){
     //Rank 6: (340, 90) [NET DOMINATIONS: -6]
     //Rank 7: (220, 970) [NET DOMINATIONS-7]
 
-    convertToAdults(parents, theChildren, utcConstants);
-    wrongWayToRank(parents);
-    for (int i = 0; i < parents.size(); i++){
-        cout << "(" << parents[i].posDiff << "," << parents[i].speedDiff <<"): " << parents[i].unitTestingRankDistanceStatusPrint() << " / ";
-    }
+    stolenGiveRank(parents, utcConstants);
+    //wrongWayToRank(parents);
     cout << endl;
 
-    sortaGiveDistance(parents);
+    //sortaGiveDistance(parents);
+    std::sort(parents.begin(), parents.end(), rankSort);
+    stolenGiveDistance(parents, utcConstants);
     std::sort(parents.begin(), parents.end(), rankDistanceSort);
 
     //not exactly sure what the output should be here... I'm not entirely sure how giveDistance calculates precise distances to give things
@@ -342,6 +368,8 @@ bool makeChildrenWithDifferentMethods(std::mt19937_64& rng, cudaConstants * utcC
     Adult parent1(par1);
     Adult parent2(par2);
 
+    Child* children = new Child[expectedNumChildren];
+
     //sets the generation to 1 because generateChildPair takes in a generation
     // 1 was chosen because this is the first generation and the generation number should not have a major impact on the code
     int gen = 1; 
@@ -349,18 +377,13 @@ bool makeChildrenWithDifferentMethods(std::mt19937_64& rng, cudaConstants * utcC
     //while there have not been any errors detected in the codel this is set to true
     bool noErrors = true;
 
-    for (int i = 0; i < 4; i++){
-        cout << "i = " << i << endl;
+    for (int i = 0; i < 2; i++){
         if (i == 2){
             utcConstants->thruster_type = 1;
         }
-        if(i %2 == 1){
-            utcConstants->mutation_rate = 1.0;
-        }
         else{
             utcConstants->mutation_rate = 0.0;
-        }
-        Child* children = new Child[expectedNumChildren]; 
+        } 
         childrenCreated = 0;
 
         //Create a mask to determine which of the child's parameters will be inherited from which parents
@@ -379,7 +402,7 @@ bool makeChildrenWithDifferentMethods(std::mt19937_64& rng, cudaConstants * utcC
         //Generate a pair of children based on the mask
         generateChildrenPair(parent1, parent2, children, mask, annealing, rng, childrenCreated, gen, utcConstants);
 
-        if (!checkReasonability(children[childrenCreated -2], children[childrenCreated-1], mask, parentVals, 1)){
+        if (!checkReasonability(children[childrenCreated -2], children[childrenCreated-1], mask, parentVals, 1, utcConstants)){
             noErrors = false;
         }
 
@@ -390,7 +413,7 @@ bool makeChildrenWithDifferentMethods(std::mt19937_64& rng, cudaConstants * utcC
         //Generate a pair of children based on the mask
         generateChildrenPair(parent1, parent2, children, mask, annealing, rng, childrenCreated, gen, utcConstants);
 
-       if (!checkReasonability(children[childrenCreated -2], children[childrenCreated-1], mask, parentVals, 2)){
+       if (!checkReasonability(children[childrenCreated -2], children[childrenCreated-1], mask, parentVals, 2, utcConstants)){
             noErrors = false;
         }
         //Generate a pair of children from a pair of parents based on the bundled random mask method
@@ -400,101 +423,115 @@ bool makeChildrenWithDifferentMethods(std::mt19937_64& rng, cudaConstants * utcC
         //Generate a pair of children based on the mask
         generateChildrenPair(parent1, parent2, children, mask, annealing, rng, childrenCreated, gen, utcConstants);
         
-        if (!checkReasonability(children[childrenCreated -2], children[childrenCreated-1], mask, parentVals, 3)){
+        if (!checkReasonability(children[childrenCreated -2], children[childrenCreated-1], mask, parentVals, 3, utcConstants)){
             noErrors = false;
         }
 
         if((childrenCreated != expectedNumChildren && i == 0) || !noErrors){
             cout << "Could not even generate children correctly with no thrust" << endl;
+            delete[] children;
             return false;
         }
-
-        delete[] children;
     }
 
     if(childrenCreated == expectedNumChildren && noErrors){
+        delete[] children;
         return true;
     }
     else{
         cout << "Could not generate children correctly when there was thrust" << endl;
+        delete[] children;
         return false;
     }
 
 }
 
 //1 stands for crossOver_wholeRandom, 2 stands for crossOver_average, 3 stands for crossOver_bundleVars
-bool checkReasonability(const Child& c1, const Child& c2, std::vector<int> & mask, double parentsValues[], int whichMethod){
+bool checkReasonability(const Child& c1, const Child& c2, std::vector<int> & mask, double parentsValues[], int whichMethod, cudaConstants * utcConstants){
     bool noErrors = true;
+    bool notFirstSwitch = false;
     bool skipPrint = false;
     int parValIndex = 0;
     for (int i = ALPHA_OFFSET; i <= TRIPTIME_OFFSET; i++){
-        if (mask[i] == PARTNER1 && whichMethod != 2){ //the mask was lipped, so compare the second child to it first, and the other child should have the other parent's parameters
-            if (c2.startParams.tripTime != parentsValues[parValIndex] || c1.startParams.tripTime != parentsValues[parValIndex+1]){
-                cout << parentsValues[parValIndex] << " should equal c2 " << c2.startParams.tripTime << endl;
+        if (mask[i] == PARTNER1 && whichMethod != 2){ //the mask was flipped, so compare the second child to it first, and the other child should have the other parent's parameters
+            if (getParamStuff(i,c2) != parentsValues[parValIndex] || getParamStuff(i,c1) != parentsValues[parValIndex+1]){
+                cout << parentsValues[parValIndex] << " should equal c2 " << getParamStuff(i,c2) << endl;
                 cout << "Error with ";
                 noErrors = false;
             }
             else{
-                cout << "Expected values for ";
+                //cout << "Expected values for ";
+                skipPrint = true;
             }
         }
         else if (mask[i] == PARTNER2 && whichMethod != 2){
-            if (c2.startParams.tripTime != parentsValues[parValIndex+1] || c1.startParams.tripTime != parentsValues[parValIndex]){
-                cout << parentsValues[parValIndex+1] << " should equal c2 " << c2.startParams.tripTime << endl;
+            if (getParamStuff(i,c2) != parentsValues[parValIndex+1] || getParamStuff(i,c1) != parentsValues[parValIndex]){
+                cout << parentsValues[parValIndex+1] << " should equal c2 " << getParamStuff(i,c2) << endl;
                 cout << "Error with ";
                 noErrors = false;
             }
             else{
-                cout << "Expected values for ";
+                //cout << "Expected values for ";
+                skipPrint = true;
             }
         }
         else if (mask[i] == AVG && whichMethod != 1){
-            if (c2.startParams.tripTime != (parentsValues[parValIndex]+parentsValues[parValIndex+1])/2 || c1.startParams.tripTime != (parentsValues[parValIndex]+parentsValues[parValIndex+1])/2){
+            if (getParamStuff(i,c2) != (parentsValues[parValIndex]+parentsValues[parValIndex+1])/2 || getParamStuff(i,c1) != (parentsValues[parValIndex]+parentsValues[parValIndex+1])/2){
                 cout << "Error with ";
                 noErrors = false;
             }
             else{
-                cout << "Expected values for ";
+                //cout << "Expected values for ";
+                skipPrint = true;
             }
         }
         else{
             cout << "Error with mask for ";
             skipPrint = true;
+            notFirstSwitch = true;
         }
         if (!skipPrint){
-            switch (i)
-            {
-            case ALPHA_OFFSET:
-                cout << "alpha for ";
+            if (!notFirstSwitch){
+                switch (i)
+                {
+                case ALPHA_OFFSET:
+                    cout << "alpha corresponded with the actual values for ";
+                    break;
+                case BETA_OFFSET:
+                    cout << "beta corresponded with the actual values for ";
+                    break;
+                case ZETA_OFFSET:
+                    cout << "zeta corresponded with the actual values for ";
+                    break;
+                case TRIPTIME_OFFSET:
+                    cout << "trip time corresponded with the actual values for ";
+                    break;
+                default:
+                    noErrors = false;
+                    break;
+                }
+            }
+            switch (whichMethod){
+            case 1:
+                cout << "crossOver_wholeRandom";
                 break;
-            case BETA_OFFSET:
-                cout << "beta for ";
+            case 2:
+                cout << "crossOver_average";
                 break;
-            case ZETA_OFFSET:
-                cout << "zeta for ";
-                break;
-            case TRIPTIME_OFFSET:
-                cout << "trip time for ";
+            case 3:
+                cout << "crossOver_bundleVars";
                 break;
             default:
+                cout << "Error with many things including this function...";
                 noErrors = false;
                 break;
             }
-        }
-        switch (whichMethod){
-        case 1:
-            cout << "crossOver_wholeRandom" << endl;
-            break;
-        case 2:
-            cout << "crossOver_average" << endl;
-            break;
-        case 3:
-            cout << "crossOver_bundleVars" << endl;
-            break;
-        default:
-            cout << "Error with many things including this function..." << endl;
-            noErrors = false;
-            break;
+            if (utcConstants->thruster_type == thruster<double>::NO_THRUST){
+                cout << " with no thruster" <<endl;
+            }
+            else {
+                cout << " with a thruster" << endl;
+            }
         }
         if (!noErrors){
             return false;
@@ -504,37 +541,309 @@ bool checkReasonability(const Child& c1, const Child& c2, std::vector<int> & mas
     return true;
 }
 
-/*
-bool firstFullGen(){
-    Child* genZero = new Child[genSize];
-    elements<double> elems(); 
-    coefficients<double> coeffs();
-    genZero[0] = Child(rkParameters<double>(40000000.0, elems, coeffs)); //about 1.27 years - going to call rank 3, distance 3000
-    genZero[1] = Child(rkParameters<double>(35000000.0, elems, coeffs)); //about 1.12 years - going to call rank 2, distance 2700
-    genZero[2] = Child(rkParameters<double>(41000000.0, elems, coeffs)); //about 1.30 years - going to call rank 3, distance 3200
-    genZero[3] = Child(rkParameters<double>(32000000.0, elems, coeffs)); //about 1.01 years - going to call rank 1, distance 1000
-    genZero[4] = Child(rkParameters<double>(47000000.0, elems, coeffs)); //about 1.49 years - going to call rank 4, distance 10000
-    genZero[5] = Child(rkParameters<double>(43000000.0, elems, coeffs)); //about 1.36 years - going to call rank 3, distance 5000
-    genZero[6] = Child(rkParameters<double>(37000000.0, elems, coeffs)); //about 1.17 years - going to call rank 2, distance 2400
-    genZero[7] = Child(rkParameters<double>(38000000.0, elems, coeffs)); //about 1.20 years - going to call rank 2, distance 2300
-    genZero[8] = Child(rkParameters<double>(44000000.0, elems, coeffs)); //about 1.40 years - going to call rank 4, distance 4000
-    genZero[9] = Child(rkParameters<double>(45000000.0, elems, coeffs)); //about 1.43 years - going to call rank 4, distance 4500
-    for (int i = 0; i < genSize; i++){
-        genZero[i] = Child(paramsForIndividuals[i]);
+double getParamStuff(const int correspondingOffset, const Child& aChild){
+    if (correspondingOffset == ALPHA_OFFSET){
+        return aChild.startParams.alpha;
     }
+    else if (correspondingOffset == BETA_OFFSET){
+        return aChild.startParams.beta;
+    }
+    else if (correspondingOffset == ZETA_OFFSET){
+        return aChild.startParams.zeta;
+    }
+    else if (correspondingOffset == TRIPTIME_OFFSET){
+        return aChild.startParams.tripTime;
+    }
+    else {
+        cout << "ERROR: undefined offset" << endl;
+        return -1e-06;
+    }
+}
+
+bool firstFullGen(std::mt19937_64& rng, const cudaConstants * utcConstants){
+    Child* genZero = new Child[utcConstants->num_individuals];
+    elements<double> elems; 
+    coefficients<double> coeffs = coefficients<double>();
+
+    rkParameters<double>* paramsForIndividuals = new rkParameters<double>[utcConstants->num_individuals];
+    
+    paramsForIndividuals[0] = rkParameters<double>(40000000.0, elems, coeffs); //about 1.27 years - going to call rank 3, distance 3000
+    paramsForIndividuals[1] = rkParameters<double>(35000000.0, elems, coeffs); //about 1.12 years - going to call rank 2, distance 2700
+    paramsForIndividuals[2] = rkParameters<double>(41000000.0, elems, coeffs); //about 1.30 years - going to call rank 3, distance 3200
+    paramsForIndividuals[3] = rkParameters<double>(32000000.0, elems, coeffs); //about 1.01 years - going to call rank 1, distance 1000
+    paramsForIndividuals[4] = rkParameters<double>(47000000.0, elems, coeffs); //about 1.49 years - going to call rank 4, distance 10000
+    paramsForIndividuals[5] = rkParameters<double>(43000000.0, elems, coeffs); //about 1.36 years - going to call rank 3, distance 5000
+    paramsForIndividuals[6] = rkParameters<double>(37000000.0, elems, coeffs); //about 1.17 years - going to call rank 2, distance 2400
+    paramsForIndividuals[7] = rkParameters<double>(38000000.0, elems, coeffs); //about 1.20 years - going to call rank 2, distance 2300
+    paramsForIndividuals[8] = rkParameters<double>(44000000.0, elems, coeffs); //about 1.40 years - going to call rank 4, distance 4000
+    paramsForIndividuals[9] = rkParameters<double>(45000000.0, elems, coeffs); //about 1.43 years - going to call rank 4, distance 4500
+    
+    for (int i = 0; i < genSize; i++){
+        genZero[i] = Child(paramsForIndividuals[i], utcConstants);
+    }
+
     std::vector<Adult> parents;
-    UTconvertToAdult(parents, genZero);
-    int ranks[genSize] = {3,2,3,1,4,3,2,2,4,4};
-    int distances[genSize] = {3000,2700,3200,1000,10000,5000,2400,2300,4000,4500};
-    for (int i = 0; i < genSize; i++){
-        parents[i].rank = ranks[i];
-        parents[i].distance = distances[i];
-    }
+    firstGeneration(genZero, parents, utcConstants);
+
+    stolenGiveRank(parents, utcConstants);
+    std::sort(parents.begin(), parents.end(), rankSort);
+    stolenGiveDistance(parents, utcConstants);
+
     std::sort(parents.begin(), parents.end(), rankDistanceSort);
     std::vector<Adult> youngGen;
 
+    newGeneration(parents, youngGen, 0.75, 1, rng, utcConstants);
+
+    std::vector<int> parentIndexSets;
+
+    for (int i = 0; i < utcConstants->num_individuals; i++){
+        if (i < utcConstants->survivor_count){
+            cout << "*|";
+        }
+        cout << "parents[" << i << "]'s tripTime: ";
+        cout << parents[i].startParams.tripTime;
+        if (i < utcConstants->survivor_count){
+            cout << "|*";
+        }
+        else {
+            cout << "\t";
+        }
+        cout << "\t\t";
+
+        if (i == 2){
+            if (youngGen[i].startParams.tripTime == (parents[0].startParams.tripTime + parents[1].startParams.tripTime)/2){
+                parentIndexSets.push_back(0);
+                parentIndexSets.push_back(1);
+            }
+            else if (youngGen[i].startParams.tripTime == (parents[0].startParams.tripTime + parents[2].startParams.tripTime)/2){
+                parentIndexSets.push_back(0);
+                parentIndexSets.push_back(2);
+            }
+            else if (youngGen[i].startParams.tripTime == (parents[1].startParams.tripTime + parents[2].startParams.tripTime)/2){
+                parentIndexSets.push_back(1);
+                parentIndexSets.push_back(2);
+            }
+        }
+
+        cout << "youngGen[" << i << "]'s tripTime: ";
+        cout << youngGen[i].startParams.tripTime << endl;
+    }
 
     delete[] genZero;
+    delete[] paramsForIndividuals;
+    if (youngGen.size() == parents.size() && parents.size() == utcConstants->num_individuals){
+        return true;
+    }
+    else{
+        return false;
+    }
+}
+
+bool checkUTMutateMask(){
+    //set up the mask to be mutated
+    bool * mutateMask= new bool[OPTIM_VARS];
+    //rng based on time seed
+    std::mt19937_64 rng(time(NULL));
+    //mutation rate from config
+    double mutation_rate = 0.75;
+    //call the UT fuction
+    UTmutateMask(rng, mutateMask, mutation_rate);
+
+    //print the results
+    cout << "Mask: " << endl;
+    for(int i = 0; i < OPTIM_VARS; i++){
+        cout << i << " M: " << mutateMask[i] << endl;
+    }
+
+    return true;
     
 }
-*/
+
+void UTmutateMask(std::mt19937_64 & rng, bool * mutateMask, double mutation_rate){
+    
+    for (int i = 0; i < OPTIM_VARS; i++) {
+        //Reset mask
+        mutateMask[i] = false;
+    }
+    
+    // counter to make sure in the unlikely event that all genes are being mutated the code doesn't
+    // get stuck in infinite loop looking for a false spot in the array
+    int geneCount = 0; //How many gene's have we changed
+    // Set a gene to mutate if a randomized values is less than mutation_rate, repeating everytime this is true
+    while ((static_cast<double>(rng()) / rng.max()) < mutation_rate && geneCount < OPTIM_VARS) {
+        bool geneSet = false; // boolean to flag if a gene was successfully selected to be set as true
+        int index; // index value that will be assigned randomly to select a gene
+        while (geneSet != true) {
+            index = rng() % OPTIM_VARS;
+            // If the randomly selected gene hasn't been already set to mutate, set it and flag the geneSet to true to break out of the loop
+            if (mutateMask[index] == false) {
+                mutateMask[index] = true;
+                geneSet = true;
+                geneCount++;
+            }
+        }
+
+    }
+    //make sure this matched how many are set to true
+    cout << "Final geneCount: " << geneCount << endl;
+}
+
+//took this directly from optimization.cu on 6/14/22 near the end of the day - will become out of date if changes made to version in optimization.cu
+void stolenGiveRank(std::vector<Adult> & allAdults, const cudaConstants* cConstants) {
+
+    //non-denominated sorting method
+    //https://www.iitk.ac.in/kangal/Deb_NSGA-II.pdf
+
+    //Used to store the current front of adults. first filled with the first front adults(best out of all population)
+    // filled with index of adults in allAdults
+    std::vector<int> front;
+
+    //TODO: Pull Adult::dominates and Adult::dominatedByCount into this function
+    // probably a 2D vector, or an array of vectors
+    //This 2D vector will store which other adults each adult has dominated
+    //1st dimension will be a spot for each adult in allAdults
+    //2nd dimension will store the indexes of adults in allAdults that the adult in the 1st dimension has dominated
+    std::vector<std::vector<int>> domination; 
+    domination.resize(allAdults.size());
+
+    //This vector will keep track of how many times each adult in oldAdults has been dominated by another adult
+    //Each index in this vector will correspond to the same index within allAdults
+    //Note: fill the vector with 0s to make sure the count is accurate
+    //TODO: unit test to make sure the whole vector is actually initially filled with 0's and not just the first index or the original vector size
+    std::vector<int> dominatedByCount;
+
+    dominatedByCount.resize(allAdults.size(), 0);
+
+    //loop through each individual within the allAdults vector
+    for (int i = 0; i < allAdults.size(); i++){
+
+        //For each individual within allAdults, compare them to each other adult
+        for(int j = 0; j < allAdults.size(); j++){
+
+            //Check to see if i dominates j
+            if (dominationCheck(allAdults[i], allAdults[j], cConstants) || allAdults[j].errorStatus != VALID){
+                //Put the jth index in the set of individuals dominated by i
+                //std::cout << "\n" << i << "th (i) Adult dominates " << j << "th (j) Adult!\n";
+                domination[i].push_back(j);
+
+                //TODO: will this add too many to j's domination count? When it i's current value reaches j's current value it will have already recorded the dominaton here, but it will be recorded again 
+                //Add one to j's dominated by count
+                //dominatedByCount[j]++; 
+            }
+            //Check to see if j dominates i
+            else if (dominationCheck(allAdults[j], allAdults[i], cConstants) || allAdults[i].errorStatus != VALID) {
+                //TODO: this may have the same redundancy that was mentioned above with things being added to this vector too many times
+                //Put the ith index in the set of individuals dominated by j
+                //domination[j].push_back(i);
+
+                //std::cout << "\n" << j << "th (j) Adult dominates " << i << "th (i) Adult!\n";
+                //Add one to i's dominated by count
+                dominatedByCount[i]++; 
+            }
+        }
+        
+        //if i was never dominated, add it's index to the best front, front1. Making its ranking = 1.
+        if (dominatedByCount[i] == 0){
+            allAdults[i].rank = 1;
+            front.push_back(i);
+
+            //std::cout << "\n\nAdult #" << i << " ranked " << 1;
+        }
+    }
+
+    //Used to assign rank number
+    int rankNum = 1;
+    //vector to store individuals' indexes in next front
+    std::vector<int> newFront;
+
+    //go until all individuals have been put in better ranks and none are left to give a ranking
+    while(!front.empty()) {
+        //empty the new front to put new individuals in
+        std::vector<int>().swap(newFront);
+
+        //loop through all individuals in old front
+        //These individuals already have their rank set
+        for(int k = 0; k < front.size(); k++){
+
+            //loop through all the individuals that the individual in the old front dominated
+            for(int l = 0; l < domination[front[k]].size(); l++){
+
+                //subtract 1 from the dominated individuals' dominatedCount.
+                //if an individual was dominated only once for example, it would be on the second front of individuals.
+                dominatedByCount[domination[front[k]][l]]--;
+                
+                //if the dominated count is at 0, add the individual to the next front and make its rank equal to the next front number.
+                if (dominatedByCount[domination[front[k]][l]] == 0){
+                    //Assign a rank to the new most dominating adult left
+                    allAdults[domination[front[k]][l]].rank = rankNum + 1;
+
+                    //std::cout << "\n\nAdult #" << domination[front[k]][l] << " ranked " << rankNum+1;
+
+                    //Add the index of the this adult to newFront
+                    newFront.push_back(domination[front[k]][l]);                        
+                }
+            }
+        }
+        //increment the rank number
+        rankNum++;
+        
+        //empty the current front
+        std::vector<int>().swap(front);
+
+        //Equate the current (now empty) front to the new front to transfer the indexes of the adults in newFront to front
+        front = newFront;
+    }
+    //std::cout << "\n~~~~~~~~~~~~~~~~~~~~~~~~FINISHED RANKING~~~~~~~~~~~~~~~~~~~~~~~~\n";
+}
+
+//took this directly from optimization.cu on 6/14/22 near the end of the day - will become out of date if changes made to version in optimization.cu
+void stolenGiveDistance(std::vector<Adult> & allAdults, const cudaConstants* cConstants){
+
+    //starting rankSort to make sure nans are at the end of the array.
+    std::sort(allAdults.begin(), allAdults.begin() + allAdults.size(), rankSort);
+
+    
+    for (int i = 0; i < allAdults.size(); i++ ){
+        //reset each individual's distance
+        allAdults[i].distance = 0.0;
+    }
+    
+    //Sort by the first objective function, posDiff
+    std::sort(allAdults.begin(), allAdults.begin() + allAdults.size(), LowerPosDiff);
+    //Set the boundaries
+    allAdults[0].distance = MAX_DISTANCE;
+    allAdults[allAdults.size() - 1].distance = MAX_DISTANCE;
+
+
+    //For each individual besides the upper and lower bounds, make their distance equal to
+    //the current distance + the absolute normalized difference in the function values of two adjacent individuals.
+    double normalPosDiffLeft;
+    double normalPosDiffRight;
+    for(int i = 1; i < allAdults.size() - 1; i++){
+        //Divide left and right individuals by the worst individual to normalize
+        normalPosDiffLeft = allAdults[i+1].posDiff/allAdults[allAdults.size() - 1].posDiff;
+        normalPosDiffRight = allAdults[i-1].posDiff/allAdults[allAdults.size() - 1].posDiff;
+        //distance = distance + abs((i+1) - (i-1))
+        allAdults[i].distance = allAdults[i].distance + abs((normalPosDiffLeft - normalPosDiffRight));// /(allAdults[allAdults.size() - 1].posDiff - allAdults[0].posDiff));
+    }
+
+    //Repeat above process for speedDiff    
+    std::sort(allAdults.begin(), allAdults.begin() + allAdults.size(), LowerSpeedDiff);
+    //Set the boundaries
+    allAdults[0].distance = MAX_DISTANCE;
+    allAdults[allAdults.size() - 1].distance = MAX_DISTANCE;
+
+    
+    //For each individual besides the upper and lower bounds, make their distance equal to
+    //the current distance + the absolute normalized difference in the function values of two adjacent individuals.
+    double normalSpeedDiffLeft;
+    double normalSpeedDiffRight;
+    for(int i = 1; i < allAdults.size() - 1; i++){
+        //Divide left and right individuals by the worst individual to normalize
+        normalSpeedDiffLeft = allAdults[i+1].speedDiff/allAdults[allAdults.size() - 1].speedDiff;
+        normalSpeedDiffRight = allAdults[i-1].speedDiff/allAdults[allAdults.size() - 1].speedDiff;
+        //distance = distance + abs((i+1) - (i-1))
+        allAdults[i].distance = allAdults[i].distance + abs((normalSpeedDiffLeft - normalSpeedDiffRight));// /(allAdults[allAdults.size() - 1].speedDiff - allAdults[0].speedDiff));
+    }
+}
+

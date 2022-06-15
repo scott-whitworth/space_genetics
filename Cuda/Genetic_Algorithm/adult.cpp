@@ -202,7 +202,8 @@ bool rankDistanceSort(const Adult& personA, const Adult& personB) {
 
 }
 
-bool dominationCheckTest(Adult& personA, Adult& personB) {
+bool dominationCheckTest(Adult& personA, Adult& personB){
+    int missionType = 2;//1 ren, 2 imp
     
     //Is true if A is at least equally as good as B for all objectives
     bool AisEqual = false;
@@ -213,14 +214,17 @@ bool dominationCheckTest(Adult& personA, Adult& personB) {
     //these are both currently set to 1e-14 AU, I don't think these need to be modified 
     //this tolerance is about 0.0015m, and I don't think we can go lower?
 
-    //double posTolerance = cConstants->posDominationTolerance;
-    //double speedTolerance = cConstants->speedDominationTolerance;
     double posTolerance = 5;
     double speedTolerance = 5;
+    //double posTolerance = 1e-14;
+    //double speedTolerance = 1e-14;
     //true if A posDiff "equals" B posDiff
     bool APosEqualsB = false;
     //true if A speedDiff "equals" B speedDiff
     bool ASpeedEqualsB = false;
+
+    //std::cout << "\n\nPERSON A TEST: posDiff = " << personA.posDiff << ", speedDiff = " << personA.speedDiff; 
+    //std::cout << "\n\nPERSON B TEST: posDiff = " << personB.posDiff << ", speedDiff = " << personB.speedDiff; 
 
     //True is A posdiff is equal to B posDiff +- posTolerance
     if ((personA.posDiff < personB.posDiff + posTolerance) && (personA.posDiff > personB.posDiff - posTolerance)){
@@ -230,13 +234,29 @@ bool dominationCheckTest(Adult& personA, Adult& personB) {
     if ((personA.speedDiff < personB.speedDiff + speedTolerance) && (personA.speedDiff > personB.speedDiff - speedTolerance)){
         ASpeedEqualsB = true;
     }
-    //If A.posDiff is approximately/better than B.posDiff, and A.speedDiff is approximately/better than B.speedDiff, then A is equal to B.
-    if ((personA.posDiff < personB.posDiff || APosEqualsB) && (personA.speedDiff < personB.speedDiff || ASpeedEqualsB)) {
-        AisEqual = true;
+    //If the mission type is a rendezvous, A's speed diff needs to be lower for it to be equal or better
+    if (missionType == Impact) {
+        //Check if A's posDiff is approximately/better than B's posDiff and check the same for speed
+        //If so, A is equal to B
+        if ((personA.posDiff < personB.posDiff || APosEqualsB) && (personA.speedDiff > personB.speedDiff || ASpeedEqualsB)) {
+            AisEqual = true; 
+        }  
+        //If A has a better posDiff or speedDiff than B, then A is better than B
+        if (personA.posDiff < personB.posDiff || personA.speedDiff > personB.speedDiff) {
+            AisBetter = true;
+        }
     }
-    //If A has a better posDiff or speedDiff than B, then A is better than B
-    if (personA.posDiff < personB.posDiff || personA.speedDiff < personB.speedDiff){
-        AisBetter = true;
+    //If the mission type is a impact, A's speed diff needs to be higher than B's for it to be equal or better
+    else {
+        //If A.posDiff is approximately/better than B.posDiff, and A.speedDiff is approximately/better than B.speedDiff, then A is equal to B.
+        if ((personA.posDiff < personB.posDiff || APosEqualsB) && (personA.speedDiff < personB.speedDiff || ASpeedEqualsB)) {
+            AisEqual = true;
+        }
+        //If A has a better posDiff or speedDiff than B, then A is better than B
+        if (personA.posDiff < personB.posDiff || personA.speedDiff < personB.speedDiff){
+            AisBetter = true;
+        }
+        
     }
 
     //A Dominates B
@@ -245,6 +265,7 @@ bool dominationCheckTest(Adult& personA, Adult& personB) {
         //A.posDiff < B.posDiff, and A.speedDiff - speedTolerance < B.speedDiff <= A.speedDiff
         //A.posDiff < B.posDiff and A.speedDiff < B.speedDiff (better in every way)
     if (AisEqual && AisBetter){
+        //std::cout << "\n\nDomination check returns TRUE";
         return true;
     }
     //A and B are codominant if:
@@ -253,10 +274,10 @@ bool dominationCheckTest(Adult& personA, Adult& personB) {
         //A.posDiff = B.posDiff & A.speedDiff = B.speedDiff (Unlikely since they're doubles, unless A & B are clones or genetically similar)
     //B dominates A if any of the conditions for "A dominates B", when reversed, are true.
     else {
+        //std::cout << "\n\nDomination check returns FALSE";
         return false;
     }
 }
-
 #ifdef UNITTEST //this should be defined in unit testing
 
 const std::string Adult::unitTestingRankDistanceStatusPrint(){

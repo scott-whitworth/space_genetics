@@ -243,8 +243,7 @@ bool rankDistanceSort(const Adult& personA, const Adult& personB) {
 
 }
 
-bool dominationCheckTest(Adult& personA, Adult& personB){
-    int missionType = 2;//1 ren, 2 imp
+bool dominationCheckTest(Adult& personA, Adult& personB, int missionType){
     
     //Is true if A is at least equally as good as B for all objectives
     bool AisEqual = false;

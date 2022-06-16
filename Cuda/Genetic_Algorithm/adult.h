@@ -135,7 +135,7 @@ bool rankDistanceSort(const Adult& personA, const Adult& personB);
 //returns false if personA does not dominate personB.
 //used for rendezvous mission in optimization
 //TEST VERSION
-bool dominationCheckTest(Adult& personA, Adult& personB);
+bool dominationCheckTest(Adult& personA, Adult& personB, int missionType);
 
 #include "adult.cpp"
 

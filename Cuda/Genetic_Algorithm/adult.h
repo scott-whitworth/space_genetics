@@ -109,6 +109,16 @@ bool dominationCheck(Adult& personA, Adult& personB, const cudaConstants* cConst
 //output: if person A's rank is lower than person B's rank, return true
 bool rankSort(const Adult& personA, const Adult& personB);
 
+//Compare two adults based on their distance, sorting the lowest distance sort
+//  This function will be used to detect duplicates within mutateAdults in ga_crossover
+//input:  PersonA - First adult to be compared
+//        PersonB - Second adult to be compared
+//output: True if personA's distance is less than personB's or if personB's status isn't valid
+//        Fale if personB's distance is less than personA's or if personA's status isn't valid
+//              Note: personA's status is checked before personB's, so if neither person is valid, it will return false
+//  NOTE: This function assumes that the distance for both adults have already been calculated
+bool lowerDistanceSort(const Adult& personA, const Adult& personB);
+
 //Compare two individuals by their rank and distance
 //input: two individuals
 //TODO: consider status (this goes for the above ones)

@@ -183,6 +183,29 @@ bool rankSort(const Adult& personA, const Adult& personB){
     }
 }
 
+//Compare two adults based on their distance, sorting the lowest distances first
+//  This function will be used to detect duplicates within mutateAdults in ga_crossover
+//input:  PersonA - First adult to be compared
+//        PersonB - Second adult to be compared
+//output: True if personA's distance is less than personB's or if personB's status isn't valid
+//        Fale if personB's distance is less than personA's or if personA's status isn't valid
+//              Note: personA's status is checked before personB's, so if neither person is valid, it will return false
+//  NOTE: This function assumes that the distance for both adults have already been calculated
+bool lowerDistanceSort(const Adult& personA, const Adult& personB) {
+    if(personA.errorStatus != VALID){ //if personA has nan values or other errors they are set as worse than other adults (even other adults with errors)
+        return false;
+    }
+    else if (personB.errorStatus != VALID){ //if personA is not a nan, but personB is, personA is better
+        return true;
+    }
+    if (personA.distance < personB.distance) {
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
 
 //Compare two individuals by their rank and distance
 //input: two individuals

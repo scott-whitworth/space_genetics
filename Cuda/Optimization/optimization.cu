@@ -555,7 +555,13 @@ void changeAnneal (const std::vector<Adult>& oldAdults, const cudaConstants* cCo
     
     //Caluclate the new current anneal
     //It will be a linear decrease from the initial/max anneal based on how well the current cost is compared to the cost threshold
-    currentAnneal = cConstants->anneal_initial * (1 - (cConstants->costThreshold / curCost));
+    currentAnneal = cConstants->anneal_initial * (1 - std::abs(cConstants->costThreshold/curCost));
+
+    //Check to make sure that the current anneal does not fall below the designated minimum amount
+    if (currentAnneal < cConstants->anneal_final)
+    {
+        currentAnneal = cConstants->anneal_final;
+    }
 
     /*
     // Scaling anneal based on proximity to tolerance
@@ -621,6 +627,12 @@ double calculateCost(const std::vector<Adult> & oldAdults, const cudaConstants* 
     //Create the cost double that will be returned
     double cost; 
 
+    //Variables will be used to calculate cost
+    //      They both will specifically be used to calculate the adult's diff / goal diff
+    //      This prevents a excellent speed diff causing the adult's diff / goal diff to be less than 1
+    //          If this was the case, there is the potential that the cost goal could be met even if the position diff hadn't hit it's goal
+    double rel_posDiff, rel_speedDiff;
+
     //How to calculate the cost will depend on the mission type
     //In general, cost will be (for each mission parameter, the difference/the goal) - the number of mission parameters
     //This will mean a cost of 0 or below signifies that the individual has hit the mission goals
@@ -628,14 +640,43 @@ double calculateCost(const std::vector<Adult> & oldAdults, const cudaConstants* 
     //For impacts, the cost only depends on posDiff
     //  NOTE: While the RD sorting favors high speed for impacts, convergence ultimately comes down to posDiff
     if (cConstants -> missionType == Impact) {
-        //Calculate the cost based only on position
         //The goal is position threshold and the current status is the best individual's posDiff
-        cost = (oldAdults[0].posDiff / cConstants->pos_threshold) - IMPACT_MISSION_PARAMETER_COUNT;
+
+        //Check to see if the rel_posDiff would be less than the threshold
+        if (oldAdults[0].posDiff > cConstants->pos_threshold) {
+            //If not, calculate how close the diff is to the goal
+            rel_posDiff = oldAdults[0].posDiff / cConstants->pos_threshold; 
+        }
+        else {
+            //If so, set the rel_posDiff to 1, signifying that the goal has been met
+            rel_posDiff = 1.0;
+        }
+
+        //The coast is the rel_posDiff minus the number of mission goals (1 in this case)
+        cost = rel_posDiff - IMPACT_MISSION_PARAMETER_COUNT;
     }
     //For rendezvous, the cost depends on both posDiff and speedDiff
     else {
         //Similarly to impact, calculate how far the best adult's speed and position diffs are away from the goal and subtract by the number of mission goals
-        cost = ((oldAdults[0].posDiff / cConstants->pos_threshold) + (oldAdults[0].speedDiff / cConstants->speed_threshold)) - RENDEZVOUS_MISSION_PARAMETER_COUNT;
+        
+        //First, same as above either set rel_posDiff to how close the best adult's posDiff is to the goal or to 1, depending on if the posDiff is beating the goal
+        if (oldAdults[0].posDiff > cConstants->pos_threshold) {
+            rel_posDiff = oldAdults[0].posDiff / cConstants->pos_threshold;
+        }
+        else {
+            rel_posDiff = 1.0;
+        }
+        //Repeat the same process in calculating rel_posDiff for rel_speedDiff
+        if (oldAdults[0].speedDiff > cConstants->speed_threshold) {
+            rel_speedDiff = oldAdults[0].speedDiff / cConstants->speed_threshold;
+        }
+        else { 
+            rel_speedDiff = 1.0;
+        }
+
+        //The cost the addition of each difference between the goals and pod/speed diffs minus the rendezvous mission goal count (2)
+        //This means a flight that meets all goals will have a cost of 0, since the rel pos/speed diffs would be set to 1
+        cost = (rel_posDiff + rel_speedDiff) - RENDEZVOUS_MISSION_PARAMETER_COUNT;
     }
     
     //Return the calculated cost

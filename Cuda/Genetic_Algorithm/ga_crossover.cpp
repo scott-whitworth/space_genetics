@@ -191,7 +191,7 @@ rkParameters<double> generateNewChild(const rkParameters<double> & p1, const rkP
     }
 
     // Crossover complete, determine mutation
-    childParameters = mutate(childParameters, rng, annealing, cConstants, generation);
+    childParameters = mutate(childParameters, rng, annealing, cConstants, generation, cConstants->default_mutation_factor);
 
     return childParameters;    
 }
@@ -225,7 +225,7 @@ void mutateMask(std::mt19937_64 & rng, bool * mutateMask, double mutation_rate) 
 }
 
 // In a given Individual's parameters, generate a mutate mask using mutateMask() and then adjust parameters based on the mask, mutation of at least one gene is not guranteed
-rkParameters<double> mutate(const rkParameters<double> & p1, std::mt19937_64 & rng, const double & annealing, const cudaConstants* cConstants, const double & generation) {    
+rkParameters<double> mutate(const rkParameters<double> & p1, std::mt19937_64 & rng, const double & annealing, const cudaConstants* cConstants, const double & generation, const double & mutationScale) {    
     // initially set new individual to have all parameter values from parent 1
     rkParameters<double> childParameters = p1; 
 
@@ -243,22 +243,22 @@ rkParameters<double> mutate(const rkParameters<double> & p1, std::mt19937_64 & r
         if (mutation_mask[index] == true) {
             
             if ( (index >= GAMMA_OFFSET) && (index <= (GAMMA_OFFSET + GAMMA_ARRAY_SIZE-1)) ) { // Gamma value
-                double randVar = getRand(cConstants->gamma_mutate_scale * annealing, rng);
+                double randVar = getRand(cConstants->gamma_mutate_scale * annealing * mutationScale, rng);
                 childParameters.coeff.gamma[index-GAMMA_OFFSET] += randVar;
                 // recordLog[index] = randVar;
             }
             else if ( (index >= TAU_OFFSET) && (index <= (TAU_OFFSET + TAU_ARRAY_SIZE-1))) { // Tau value 
-                double randVar = getRand(cConstants->tau_mutate_scale * annealing, rng);
+                double randVar = getRand(cConstants->tau_mutate_scale * annealing * mutationScale, rng);
                 childParameters.coeff.tau[index-TAU_OFFSET] += randVar;
                 // recordLog[index] = randVar;
             }
             else if (index >= COAST_OFFSET && index <= (COAST_OFFSET + COAST_ARRAY_SIZE-1)) { // Coast value
-                double randVar = getRand(cConstants->coast_mutate_scale * annealing, rng);
+                double randVar = getRand(cConstants->coast_mutate_scale * annealing * mutationScale, rng);
                 childParameters.coeff.coast[index-COAST_OFFSET] += randVar;
                 // recordLog[index] = randVar;
             }
             else if (index == TRIPTIME_OFFSET) { // Time final
-                double randVar = getRand(cConstants->triptime_mutate_scale * annealing, rng);
+                double randVar = getRand(cConstants->triptime_mutate_scale * annealing * mutationScale, rng);
                 childParameters.tripTime += randVar;
                 // bound checking to make sure the tripTime is set within the valid range of trip times
                 if (childParameters.tripTime < cConstants->triptime_min + cConstants->timeRes) {
@@ -271,12 +271,12 @@ rkParameters<double> mutate(const rkParameters<double> & p1, std::mt19937_64 & r
                 // recordLog[index] = randVar;
             }
             else if (index == ZETA_OFFSET) { // Zeta
-                double randVar = getRand(cConstants->zeta_mutate_scale * annealing, rng);
+                double randVar = getRand(cConstants->zeta_mutate_scale * annealing * mutationScale, rng);
                 childParameters.zeta += randVar;
                 // recordLog[index] = randVar;
             }
             else if (index == BETA_OFFSET) { // Beta
-                double randVar = getRand(cConstants->beta_mutate_scale * annealing, rng);
+                double randVar = getRand(cConstants->beta_mutate_scale * annealing * mutationScale, rng);
                 childParameters.beta += randVar;
                 // recordLog[index] = randVar;
     
@@ -291,7 +291,7 @@ rkParameters<double> mutate(const rkParameters<double> & p1, std::mt19937_64 & r
                 }
             }
             else if (index == ALPHA_OFFSET) { // Alpha
-                double randVar = getRand(cConstants->alpha_mutate_scale * annealing, rng);
+                double randVar = getRand(cConstants->alpha_mutate_scale * annealing * mutationScale, rng);
                 childParameters.alpha += randVar;                
                 // recordLog[index] = randVar;
             }
@@ -356,7 +356,7 @@ void generateChildrenPair (const Adult & parent1, const Adult & parent2, Child *
 
 //!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Creates the next pool to be used in the optimize function in opimization.cu
-void newGeneration (const std::vector<Adult> & oldAdults, std::vector<Adult> & newAdults, const double & annealing, const int & generation, std::mt19937_64 & rng, const cudaConstants* cConstants) {
+void newGeneration (std::vector<Adult> & oldAdults, std::vector<Adult> & newAdults, const double & annealing, const int & generation, std::mt19937_64 & rng, const cudaConstants* cConstants) {
     //TODO: This is a good start, I like it
     //      Next step: think about how we can dynamically change based on available crossover methods.
     //                 why are we doing 8? :shrug:
@@ -485,8 +485,100 @@ void newGeneration (const std::vector<Adult> & oldAdults, std::vector<Adult> & n
     //This will also put the converted children into the newAdults vector
     convertToAdults(newAdults, newChildren, cConstants); 
 
+    //Find the duplicate adults within oldAdults
+    //Will make sure that the generation is not 0
+    //      This is because the adults within the oldAdults vector haven't had their distances calcuated
+    if (generation != 0) {
+        //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE MUTATE ADULTS-_-_-_-_-_-_-_-_-_\n\n";
+        //Mutate duplicate adults within oldAdults
+        mutateAdults (oldAdults, rng, annealing, generation, cConstants);
+    }
+
     //Free the pointer's memory
     delete[] newChildren; 
+}
+
+//Find and mutate duplicate adults
+void mutateAdults(std::vector<Adult> & oldAdults, std::mt19937_64 & rng, const double& currentAnneal, const int & generation, const cudaConstants* cConstants) {
+
+    //variable that keeps track of how many duplicate individuals there are
+    int duplicateNum = 0; 
+
+    //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE FIND DUPLICATION NUM-_-_-_-_-_-_-_-_-_\n\n";
+    //Find the amount of adults who are duplicates
+    for (int i = 0; i < oldAdults.size(); i++){
+        //Add one to the duplicateNum variable if there is a duplicate adult found
+        if (std::abs(oldAdults[i].distance) < cConstants->distanceTolerance){
+            duplicateNum++; 
+        }
+    }
+
+    //std::cout << "\n\n_-_-_-_-_-_-_-_-_-_-DUPLICATES FOUND: " <<  duplicateNum <<  " -_-_-_-_-_-_-_-_-_-_-\n";
+
+    //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE DIST SORT-_-_-_-_-_-_-_-_-_\n\n";
+    //Sort the oldAdults vector to have the adults with distances of 0 (the duplicates) at the front
+    std::sort(oldAdults.begin(), oldAdults.end(), lowerDistanceSort);
+
+    //Create a temp Child array with the size of the number of duplicates found
+    Child* tempChildren = new Child[duplicateNum];
+
+    //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE CREATE TEMP CHILDREN-_-_-_-_-_-_-_-_-_\n\n";
+    //Go back through the oldAdults array and add any duplicates' info to the tempChildren array
+    for (int i = 0; i < duplicateNum; i++){
+        
+        if (std::abs(oldAdults[i].distance) < cConstants->distanceTolerance)
+        {
+            //Use the adult's parameters to create temp children
+            tempChildren[i] = Child(oldAdults[i].startParams, cConstants);
+        }
+    }
+    
+    //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE MUTATE TEMP CHILDREN-_-_-_-_-_-_-_-_-_\n\n";
+    //Now that there is a tempChild array, go through and mutate the paramters
+    for (int i = 0; i < duplicateNum; i++){
+        tempChildren[i].startParams = mutate(tempChildren[i].startParams, rng, currentAnneal, cConstants, generation, cConstants->duplicate_mutation_factor);
+    }
+
+    //Create variables necessary for callRK
+    double timeInitial = 0;
+    double calcPerS = 0;
+
+    //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE SIM NEW CHILDREN-_-_-_-_-_-_-_-_-_\n\n";
+    //Simulate the mutated children
+    callRK(duplicateNum, cConstants->thread_block_size, tempChildren, timeInitial, (cConstants->orbitalPeriod / cConstants->GuessMaxPossibleSteps), cConstants->rk_tol, calcPerS, cConstants);
+
+    //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE FIND TEMP CHILD INFO-_-_-_-_-_-_-_-_-_\n\n";
+    //Iterate through the simulated children to determine their error status (if it hasn't been set by callRK already) and calculate their pos and speed differences
+    for (int i = 0; i < duplicateNum; i++)
+    {
+        //Check to see if nans are generated in the finalPos elements
+        if (  isnan(tempChildren[i].finalPos.r) ||
+              isnan(tempChildren[i].finalPos.theta) ||
+              isnan(tempChildren[i].finalPos.z) ||
+              isnan(tempChildren[i].finalPos.vr) ||
+              isnan(tempChildren[i].finalPos.vtheta) ||
+              isnan(tempChildren[i].finalPos.vz)  ) {
+            //Mark the child with the nan variables with the nan_error flag
+            tempChildren[i].errorStatus = NAN_ERROR;
+        }//if it is not a nan, the status has already been made valid or sun_error in rk4SimpleCuda
+
+        //Now that the status has been determined, there is enough information to set pos and speed diffs
+        //The two functions will look at the child's errorStatus and set the diffs based on that
+        tempChildren[i].getPosDiff(cConstants);
+        tempChildren[i].getSpeedDiff(cConstants); 
+    } 
+
+    //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE CONVERT TEMP CHILDREN TO ADULTS-_-_-_-_-_-_-_-_-_\n\n";
+    //The children are completed, now we need to insert them back into the oldAdult vector
+    //Since the oldAdult vector nor the tempChildren array has not been resorted, it is okay to put the tempChildren back into the oldAdult vector the same way they were taken out
+    for (int i = 0; i < duplicateNum; i++)
+    {
+        oldAdults[i] = Adult(tempChildren[i]);
+    }
+    
+
+    //Free the memory
+    delete[] tempChildren; 
 }
 
 //Function that will convert the generated children into adults

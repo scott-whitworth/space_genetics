@@ -20,6 +20,7 @@ struct cudaConstants {
     double speed_threshold; // maximum distance for how fast the spacecraft must be going when it reaches the asteroid
     double posDominationTolerance; //Tolerance for individual posDiff equality in dominates function
     double speedDominationTolerance; //Tolerance for individual speedDiff equality in dominates function
+    double distanceTolerance; //Tolerance for how small an adult's distance has to be for it to be considered a duplicate
 
     double costThreshold; // Determines the goal for the generation's cost; it is used to to calculate anneal
 
@@ -35,6 +36,11 @@ struct cudaConstants {
 
     double mutation_rate; // The percentage for probability of mutating a gene in a new individual, called iteratively to mutate more genes until the check fails
     double sortingRatio; // A percentage for how much of selectSurvivors() chooses individuals that are bestPosDiff rather than bestSpeedDiff (0.95 = more posDiff, 0.05 = more speedDiff)
+
+    // Scalars used to modify the mutate_scales below, used to assist in making adults mutate more if needed
+    // A value of 1 will have an individual's parameters mutate at the scale of the variables below
+    double default_mutation_factor;
+    double duplicate_mutation_factor; 
     
     // Used in mutate(), affects the scale of change for the respective parameter values, in conjunction with annealing
     // Represents max bounds of mutation, mutation will never be +/- this value

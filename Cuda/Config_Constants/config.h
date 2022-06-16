@@ -21,6 +21,8 @@ struct cudaConstants {
     double posDominationTolerance; //Tolerance for individual posDiff equality in dominates function
     double speedDominationTolerance; //Tolerance for individual speedDiff equality in dominates function
 
+    double costThreshold; // Determines the goal for the generation's cost; it is used to to calculate anneal
+
     int write_freq;       // Determine how many generations between calling recordGenerationPerformance() method (defined in Output_Funcs/output.cpp)
     int all_write_freq;   // Determine how many generations between calling recordAllIndividuals() method (defined in Output_Funcs/output.cpp)
     int disp_freq;        // Determine how many generations between calling terminalDisplay() method (defined in Output_Funcs/output.cpp)

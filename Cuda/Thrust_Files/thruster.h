@@ -1,6 +1,8 @@
 #ifndef THRUSTER_H
 #define THRUSTER_H
 
+#include "..\Config_Constants\config.h"
+
 // file path for all data used in this file: \\fs1\phys\sankaranResearch\2019-Lauren-Mateo\Thruster
 
 // sets starting values as given in the 2017 data excel sheet

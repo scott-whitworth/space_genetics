@@ -5,6 +5,9 @@
 #include <algorithm> // sort(), shuffle()
 #include <random>
 
+#include "..\Runge_Kutta\rkParameters.h"
+#include "..\Config_Constants\config.h"
+
 // Called by optimize() in optimization.cu
 void callRK(const int numThreads, const int blockThreads, Child *generation, double timeInitial, double stepSize, double absTol, double & calcPerS, const cudaConstants* cConstant) {
     
@@ -132,6 +135,7 @@ __global__ void rk4SimpleCUDA(Child *children, double *timeInitial, double *star
                 children[threadId].errorStatus = SUN_ERROR;//Are all the children's errorStatus set to SUN_ERROR?
 
                 return;
+            }
         }
         //Give the child its final calculated position
         children[threadId].finalPos = curPos;

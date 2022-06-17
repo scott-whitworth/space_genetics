@@ -57,6 +57,11 @@ void crossOver_bundleVars(std::vector<int> & mask, std::mt19937_64 & rng);
 // Output: mask is set to contain all AVG values
 void crossOver_average(std::vector<int> & mask);
 
+//Sets the whole mask to be set to AVG_RATIO
+// Input: mask - pointer integer array of length OPTIM_VARS
+// Output: mask is set to contain all AVG_RATIO values
+void crossOver_averageRatio(std::vector<int> & mask);
+
 // Utility to flip the polarity of a mask
 // Input:  mask should have already be set from other crossover functions
 // Output: each PARTNER1 in mask will be reassigned to be a PARTNER2

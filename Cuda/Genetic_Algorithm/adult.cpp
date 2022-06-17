@@ -116,13 +116,21 @@ bool dominationCheck(Adult& personA, Adult& personB, const cudaConstants* cConst
     }
     //If the mission type is a rendezvous, A's speed diff needs to be lower for it to be equal or better
     if (cConstants -> missionType == Impact) {
-        //Check if A's posDiff is approximately/better than B's posDiff and check the same for speed
+        /*//Check if A's posDiff is approximately/better than B's posDiff and check the same for speed
         //If so, A is equal to B
         if ((personA.posDiff < personB.posDiff || APosEqualsB) && (personA.speedDiff > personB.speedDiff || ASpeedEqualsB)) {
             AisEqual = true; 
         }  
         //If A has a better posDiff or speedDiff than B, then A is better than B
         if (personA.posDiff < personB.posDiff || personA.speedDiff > personB.speedDiff) {
+            AisBetter = true;
+        }*/
+        //For impact, only optimizing for one opbjective
+        if ((personA.posDiff < personB.posDiff || APosEqualsB)) {
+            AisEqual = true; 
+        }  
+        //If A has a better posDiff or speedDiff than B, then A is better than B
+        if (personA.posDiff < personB.posDiff) {
             AisBetter = true;
         }
     }

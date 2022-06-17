@@ -85,14 +85,25 @@ void changeAnneal (const std::vector<Adult>& oldAdults, const cudaConstants* cCo
 //      This function should only be used within changeAnneal 
 //Inputs: oldAdults - A vector of adults that will pull the individual whose final position will be used to calculate the cost
 //              NOTE: This function assumes that oldAdults is already sorted by rankDistance and will pull the first adult from the vector
-//Ooutput: A cost double that will be used to change anneal              
+//Output: A cost double that will be used to change anneal              
 double calculateCost(const std::vector<Adult> & oldAdults, const cudaConstants* cConstants);
+
+//----------------------------------------------------------------------------------------------------------------------------
+// TEST / LIKELY TEMPORARY FUNCTION
+// This function will find the minimum, maximum, and average distance of the individuals in allAdults, which will then be used for reporting
+// 
+// Inputs:  allAdults - array of adults that will be considered
+//          minDist - minimum distance that will be calculated
+//          avgDist - the average distance that will be calculated
+//          maxDist - the maximum distance that will be calculated
+// Outputs: The min, avg, and max distance variables will be filled in with the up-to-date values for this generation
+void calculateDistValues (const std::vector<Adult> & allAdults, double & minDist, double & avgDist, double & maxDist);
 
 //----------------------------------------------------------------------------------------------------------------------------
 //Input: all the updated parameters of the current generation
 //Output: calls the various terminal display functions when needed
 //Function that handles the reporting of a generation's performance
-void reportGeneration (std::vector<Adult>& oldAdults, const cudaConstants* cConstants, const double & new_anneal, const double & anneal_min, const int & generation, int & numNans);
+void reportGeneration (std::vector<Adult>& oldAdults, const cudaConstants* cConstants, const double & currentAnneal, const double & anneal_min, const int & generation, int & numNans);
 
 //----------------------------------------------------------------------------------------------------------------------------
 // Main processing function for Genetic Algorithm
@@ -320,8 +331,8 @@ void giveDistance(std::vector<Adult> & allAdults, const cudaConstants* cConstant
     //Sort by the first objective function, posDiff
     std::sort(allAdults.begin(), allAdults.begin() + validAdults.size(), LowerPosDiff);
     //Set the boundaries
-    allAdults[0].distance = MAX_DISTANCE;
-    allAdults[validAdults.size() - 1].distance = MAX_DISTANCE;
+    allAdults[0].distance += MAX_DISTANCE; //+=1
+    allAdults[validAdults.size() - 1].distance += MAX_DISTANCE; //+=1
 
 
     //For each individual besides the upper and lower bounds, make their distance equal to
@@ -336,23 +347,25 @@ void giveDistance(std::vector<Adult> & allAdults, const cudaConstants* cConstant
         allAdults[i].distance = allAdults[i].distance + abs((normalPosDiffLeft - normalPosDiffRight));// /(allAdults[validAdults.size() - 1].posDiff - allAdults[0].posDiff));
     }
 
-    //Repeat above process for speedDiff    
-    std::sort(allAdults.begin(), allAdults.begin() + validAdults.size(), LowerSpeedDiff);
-    //Set the boundaries
-    allAdults[0].distance = MAX_DISTANCE;
-    allAdults[validAdults.size() - 1].distance = MAX_DISTANCE;
+    //Repeat above process for speedDiff
+    if(cConstants->missionType == Rendezvous){//only do this for the rendezvous mission since it has 2 objectives
+        std::sort(allAdults.begin(), allAdults.begin() + validAdults.size(), LowerSpeedDiff);
+        //Set the boundaries
+        allAdults[0].distance += MAX_DISTANCE; //+=1
+        allAdults[validAdults.size() - 1].distance += MAX_DISTANCE; //+=1
 
     
-    //For each individual besides the upper and lower bounds, make their distance equal to
-    //the current distance + the absolute normalized difference in the function values of two adjacent individuals.
-    double normalSpeedDiffLeft;
-    double normalSpeedDiffRight;
-    for(int i = 1; i < validAdults.size() - 1; i++){
-        //Divide left and right individuals by the worst individual to normalize
-        normalSpeedDiffLeft = allAdults[i+1].speedDiff/allAdults[validAdults.size() - 1].speedDiff;
-        normalSpeedDiffRight = allAdults[i-1].speedDiff/allAdults[validAdults.size() - 1].speedDiff;
-        //distance = distance + abs((i+1) - (i-1))
-        allAdults[i].distance = allAdults[i].distance + abs((normalSpeedDiffLeft - normalSpeedDiffRight));// /(allAdults[validAdults.size() - 1].speedDiff - allAdults[0].speedDiff));
+        //For each individual besides the upper and lower bounds, make their distance equal to
+        //the current distance + the absolute normalized difference in the function values of two adjacent individuals.
+        double normalSpeedDiffLeft;
+        double normalSpeedDiffRight;
+        for(int i = 1; i < validAdults.size() - 1; i++){
+            //Divide left and right individuals by the worst individual to normalize
+            normalSpeedDiffLeft = allAdults[i+1].speedDiff/allAdults[validAdults.size() - 1].speedDiff;
+            normalSpeedDiffRight = allAdults[i-1].speedDiff/allAdults[validAdults.size() - 1].speedDiff;
+            //distance = distance + abs((i+1) - (i-1))
+            allAdults[i].distance = allAdults[i].distance + abs((normalSpeedDiffLeft - normalSpeedDiffRight));// /(allAdults[validAdults.size() - 1].speedDiff - allAdults[0].speedDiff));
+        }
     }
 }
 
@@ -555,7 +568,17 @@ void changeAnneal (const std::vector<Adult>& oldAdults, const cudaConstants* cCo
     
     //Caluclate the new current anneal
     //It will be a linear decrease from the initial/max anneal based on how well the current cost is compared to the cost threshold
+    //If we happen to be close to covergence, and the cost we get is -0.0001:
+  //currentAnneal =               0.1          * (              1.000001                  )
+    //if the signs were correct, this would still be only a small decrease when very close to convergence
     currentAnneal = cConstants->anneal_initial * (1 - (cConstants->costThreshold / curCost));
+
+    //Check to make sure that the current anneal does not fall below the designated minimum amount
+    if (currentAnneal < cConstants->anneal_final)
+    {
+        currentAnneal = cConstants->anneal_final;
+    }
+    
 
     /*
     // Scaling anneal based on proximity to tolerance
@@ -630,23 +653,53 @@ double calculateCost(const std::vector<Adult> & oldAdults, const cudaConstants* 
     if (cConstants -> missionType == Impact) {
         //Calculate the cost based only on position
         //The goal is position threshold and the current status is the best individual's posDiff
-        cost = (oldAdults[0].posDiff / cConstants->pos_threshold) - IMPACT_MISSION_PARAMETER_COUNT;
+    //  cost =      bigger number    /         1e-10              -   1 = large number - 1
+    //  The run before convergence:
+    //  cost =   number <= 1e-10     /         1e-10              -   1 = smallish number - 1
+        cost = (oldAdults[0].posDiff / cConstants->pos_threshold) - Impact;
+        //this might better if we did:
+
     }
     //For rendezvous, the cost depends on both posDiff and speedDiff
     else {
         //Similarly to impact, calculate how far the best adult's speed and position diffs are away from the goal and subtract by the number of mission goals
-        cost = ((oldAdults[0].posDiff / cConstants->pos_threshold) + (oldAdults[0].speedDiff / cConstants->speed_threshold)) - RENDEZVOUS_MISSION_PARAMETER_COUNT;
+        cost = ((oldAdults[0].posDiff / cConstants->pos_threshold) + (oldAdults[0].speedDiff / cConstants->speed_threshold)) - Rendezvous;
     }
     
     //Return the calculated cost
     return cost; 
 }
 
+//Function that will calculate distance values for a generation
+void calculateDistValues (const std::vector<Adult> & allAdults, double & minDist, double & avgDist, double & maxDist){
+    //Reset the dist values
+    minDist = 2; //Set the min dist to the maximum possible value, so that it will be changed
+    avgDist = 0; 
+    maxDist = 0; //Set the max dist to the min possible value, so that it is garunteed to be changed
+    
+    //For loop will iterate through the adult array to find the values needed
+    for (int i = 0; i < allAdults.size(); i++) {
+        //Check to see if this adult's distance is a new minimum
+        if (allAdults[i].distance < minDist) {
+            minDist = allAdults[i].distance; //Set the new min distance
+        }
+
+        //Check to see if this adult's distance is the new maximum
+        if (allAdults[i].distance > maxDist) {
+            maxDist = allAdults[i].distance; //Ser the new max distance
+        }
+
+        
+        
+    }
+    
+}
+
 //Function that writes the results of the inserted generation
-void reportGeneration (std::vector<Adult> & oldAdults, const cudaConstants* cConstants, const double & new_anneal, const double & anneal_min, const int & generation, int & numNans){
+void reportGeneration (std::vector<Adult> & oldAdults, const cudaConstants* cConstants, const double & currentAnneal, const double & anneal_min, const int & generation, int & numNans){
     // If in recording mode and write_freq reached, call the record method
     if (static_cast<int>(generation) % cConstants->write_freq == 0 && cConstants->record_mode == true) {
-        recordGenerationPerformance(cConstants, oldAdults, generation, new_anneal, cConstants->num_individuals, anneal_min);
+        recordGenerationPerformance(cConstants, oldAdults, generation, currentAnneal, cConstants->num_individuals, anneal_min);
     }
 
     // Only call terminalDisplay every DISP_FREQ, not every single generation

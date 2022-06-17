@@ -16,13 +16,13 @@
 #define massSun 1.988500e30 // mass of the sun (kg)
 
 //Definitions for mission type
-#define Rendezvous 1
-#define Impact 2
+#define Rendezvous 2 //Solving for speed and position
+#define Impact 1 //Solving for just position
 
 //Definitions for the number of mission paramters per mission type
 //      NOTE: Long-term, these should be dependent on settings within each mission's parameters, this is a temportary measure
-#define RENDEZVOUS_MISSION_PARAMETER_COUNT 2 //Solving for speed and position
-#define IMPACT_MISSION_PARAMETER_COUNT 1 //Solving for just position
+//#define RENDEZVOUS_MISSION_PARAMETER_COUNT 2 
+//#define IMPACT_MISSION_PARAMETER_COUNT 1 
 
 // Starting location and sizes in the optimization array for navigation to access specific values
 // Note: array sizes must be odd, coinciding with their use in computing Fourier series
@@ -67,7 +67,7 @@ enum ERROR_STATUS{
 #define BAD_POSDIFF          10 //a bad posDiff for either mission to have (10 AU)
 #define BAD_RENDEV_SPEEDDIFF 10 //a bad speedDiff for a rendezvous mission to have (10 AU/s)
 #define BAD_IMPACT_SPEEDDIFF 0  //a bad speedDiff for an impact mission to have (0 AU/s)
-#define MAX_DISTANCE         1.0e+12 //max distance for giveDistance, assigned to adults on the boundaries (AKA best and worst adults)
+#define MAX_DISTANCE         1  //max distance for giveDistance, assigned to adults on the boundaries (AKA best and worst adults) - used to be 1.0e+12
 
 
 #endif

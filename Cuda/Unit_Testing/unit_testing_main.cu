@@ -16,7 +16,7 @@ int main(){
     else{
         cout << "Completed everything in sortAdultVec, but some of the tests FAILED" << endl;
     }
-    if (runGeneticsUnitTests()){
+    if (runGeneticsUnitTests(lotsOfCouts)){
         cout << "PASSED: All the genetics tests passed" << endl;
     }
     else{

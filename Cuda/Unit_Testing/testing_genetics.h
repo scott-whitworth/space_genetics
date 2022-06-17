@@ -77,6 +77,7 @@ bool firstFullGen(std::mt19937_64& rng, cudaConstants * utcConstants, bool print
 // A function that is used to verify that firstFullGen is working correctly
 bool verifyFullGen(std::vector<Adult>& youngGen, std::vector<Adult>& possParents, const cudaConstants * utcConstants, bool printThings);
 
+//TODO: finish commenting!
 bool makeManyChildren(std::mt19937_64& rng, std::vector<Adult>& youngGen, std::vector<Adult>& possParents, cudaConstants * utcConstants, bool printThings);
 
 //sets up the mask and mutation_rate and prints how many were set to true

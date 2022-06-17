@@ -8,20 +8,13 @@ bool runGeneticsUnitTests(bool printThings){
     utcConstants->posDominationTolerance = 1.0e-14;
     utcConstants->speedDominationTolerance = 1.0e-14;
 
-    // Seed used for randomization rng things 
-    // Says to set the time_seed to NONE so time(0), but that does not work so set it to 0
+    // Seed used for randomization rng things, using seed 0 for consistancy / tracability 
     utcConstants->time_seed = 0; 
 
-    //TODO: VVV When? Why? This is going to be a slight issue in that you are copy/pasting
-    //      I would argue that you should have an argument for each of these, not just 'pulled them from the config'
-
-    //TODO: You don't need to redefine the meaning (that is defined in detali in Config_Constants) 
-    //      you need to be commenting on why you are using the values that you are using
-
     //values taken directly from the genetic config file
-    utcConstants->anneal_initial = 0.10; // initial value for annealing, meant to replace the previously used calculation involving ANNEAL_MIN and ANNEAL_MAX with something more simple
-    utcConstants->anneal_final = 1.0e-7;   // final value for annealing, anneal cannot be reduced beyond this point
-    utcConstants->anneal_factor = 0.75;  // factor by which annealing is multiplied with when there is no change in the best individual over 100 generations
+    utcConstants->anneal_initial = 0.0; // initial value for annealing, was 0.1 in config, set to 0 because no mutations wanted at first
+    utcConstants->anneal_final = 1.0e-7;   // final value for annealing, was 1.0e-7 in config, set to 0 because no mutations wanted at first
+    utcConstants->anneal_factor = 0.75;  // factor by which annealing is multiplied with when there is no change in the best individual over 100 generations -should be tested as-is
 
     // The percentage for probability of mutating a gene in a new individual, called iteratively to mutate more genes until the check fails
     // Starting this off at 0 because to ensure that there are no mutations initially to verify that children are generated as expected
@@ -44,10 +37,8 @@ bool runGeneticsUnitTests(bool printThings){
 
     // Number of individuals in the pool -> chose to make this 10 so a generation size is managable
     // Additionally a size of 10 shows what happens if a the number of children generated is not a factor of the needed generation size
-    // (E.g. 8 does not evenly divide 10 -> two pairings of parents will each produce 8 kids, which is 16 total and 16 > 10)
+    // (E.g. 8 does not evenly divide 10 -> two pairings of parents will each produce 8 kids, which is 16 total and 16 > 10)  
     utcConstants->num_individuals = 10; 
-
-    //TODO: Isn't ^^^ 10 the const you set in const int genSize = 10; ?
 
     // Number of survivors selected, every pair of survivors creates 8 new individuals 
     // Chose 3 because that is approximately a quarter of 10
@@ -63,16 +54,13 @@ bool runGeneticsUnitTests(bool printThings){
     //STUFF SO RUNGE_KUTTACUDA.CU CAN RUN
     utcConstants->thread_block_size =32;
     utcConstants->orbitalPeriod = 3.772645011085093e+07; // orbital period time of 1999RQ36 Bennu (s) 
-    utcConstants->GuessMaxPossibleSteps = 1000000;
-
-    //TODO: GuessMaxPossibleSteps has been depreciated (and should not be 1000000) (also you set this twice, see below)
+    //utcConstants->GuessMaxPossibleSteps = 1000000;
 
     //ALL THE STUFF SO EARTH'S INITIAL POSITION CAN BE CALCULATED
     utcConstants->triptime_max=2.0* SECONDS_IN_YEAR;
     utcConstants->triptime_min=1.0* SECONDS_IN_YEAR;
     utcConstants->timeRes=3600; // Earth Calculations Time Resolution Value
-    utcConstants->v_escape = 2162.4/AU; //sqrt of DART Mission c3energy
-    // TODO: Wait... so are you doing DART or are you doing Bennu? ^^^ and VVV
+    utcConstants->v_escape = 2162.4/AU; //sqrt of DART Mission c3energy because there are no c3energy values recorded for the bennu mission
     //Bennu config values
     utcConstants->r_fin_earth=9.857045197029908E-01;
     utcConstants->theta_fin_earth=1.242975503287042;
@@ -80,27 +68,30 @@ bool runGeneticsUnitTests(bool printThings){
     utcConstants->vr_fin_earth=-1.755004992027024E-09;
     utcConstants->vtheta_fin_earth=2.019592304815492E-07;
     utcConstants->vz_fin_earth=-2.312712519131594E-12;
+
     // Various values that impact runge kutta
     utcConstants->rk_tol=1e-12;
     utcConstants->doublePrecThresh=1e-12;
-    utcConstants->GuessMaxPossibleSteps=1000000; //TODO: Long term, I think we need to get rid of this, we use max_numsteps instead
-    utcConstants->max_numsteps=2500;
+    //utcConstants->GuessMaxPossibleSteps=1000000; //TODO: Long term, I think we need to get rid of this, we use max_numsteps instead
+    utcConstants->max_numsteps=1000;
     utcConstants->min_numsteps=400;
 
-    //TODO: For testing I would set max_numsteps much lower. This puts an upper limit on the number of iterations inside the CUDA kernel
-    //      I would use 1000 or less. These unit tests cannot (and should not) test for numeric accuracy of the callRK function
+    //New ga_crossover stuff
+    //distanceTolerance=1.0e-14;
+    //default_mutation_factor=1.0         //Set at one to allow for the mutation scales below to be applied normally/to children at face value
+    //duplicate_mutation_factor=1.0;       //Set at 10; when duplicate adults are mutated, they will undergo stronger mutations
+
 
 // SETTING A RANDOM NUMBER GENERATOR (rng) TO BE USED BY FUNCTIONS
     // This rng object is used for generating all random numbers in the genetic algorithm, passed in to functions that need it
     std::mt19937_64 rng(utcConstants->time_seed);
 
-    //TODO: just needed for what?
-    launchCon = new EarthInfo(utcConstants); //VERY complicated part of the code with some possibility of errors -> just needed for 
+    //VERY complicated part of the code with some possibility of errors -> just needed for the child constructor with rkParameters and cConstants as its arguments
+    launchCon = new EarthInfo(utcConstants); 
 
 // CALLING THE DIFFERENT UNIT TESTING ALGORITHMS
-//TODO: I know you kind of have this in the .h, but I might put some documentation here (or in the functions themselves)
-//       arguing for why they are good tests i.e. what are you doing to verify correctness?
     bool allWorking = true;
+    //firstParentsTest takes in the cuda constants and will verify that children can be converted into parents and sorted using rankDistanceSort
     if (firstParentsTest(utcConstants, printThings)){
         cout << "PASSED: Children can be converted to adults that can be sorted" << endl;
     }
@@ -108,6 +99,7 @@ bool runGeneticsUnitTests(bool printThings){
         cout << "FAILED: Children cannot be converted to adults that can be sorted" << endl;
         allWorking = false;
     }
+    //createMasks uses rng to create masks and ensure that their elements are as expected -> there are not AVGs where there should not be, etc
     if (createMasks(rng, printThings)){
         cout << "PASSED: All three masks were successfully generated as expected" << endl;
     }
@@ -115,6 +107,8 @@ bool runGeneticsUnitTests(bool printThings){
         cout << "FAILED: Not all the masks were successfully generated" << endl;
         allWorking = false;
     }
+    //uses rng and cuda constants to create children using different masks
+    //these children are converted to Adults and then tested to ensure their values match the expected values
     if (makeChildrenWithDifferentMethods(rng, utcConstants, printThings)){
         cout << "PASSED: Successfully made children using the three different methods" << endl;
     }
@@ -122,6 +116,9 @@ bool runGeneticsUnitTests(bool printThings){
         cout << "FAILED: Could not successfully make children using the three different methods" << endl;
         allWorking = false;
     }
+    //creates a generation of parents and then creates children from these parents
+    //then these children are sent through a function that verifies their tripTime values 
+    //tripTime was chosen because it was the paramerter set in creating the parents and it is easiest to see if the children have the correct values for tripTime 
     if (firstFullGen(rng, utcConstants, printThings)){
         cout << "PASSED: Successfully made the first generation of adults from another set of adults" << endl;
     }
@@ -130,8 +127,7 @@ bool runGeneticsUnitTests(bool printThings){
         allWorking = false;
     }
 
-
-    delete[] utcConstants; //TODO: Why is this deleting an array of utcConstants? I am pretty sure this should just be a normal delete
+    delete utcConstants;
     delete launchCon;
     return allWorking;
 }
@@ -161,9 +157,10 @@ bool firstParentsTest(const cudaConstants * utcConstants, bool printThings){
         parents.push_back(Adult(theChildren[i]));
     }
 
-    //Ranks based on my hand calculation of ranks based on the version of giveRank from 6/14/22 in the eveing 
+    //Ranks based on my hand calculation of ranks based on the version of giveRank from 6/16/22 
     //Dominations are based on the dominations test
-    //Below is a list of the parameters of the above children and which rank they should belong to based on their position and speed differences
+    //Below is a list of the parameters of the above children and which rank they should belong to 
+    //    based on their position and speed differences
     //The work is shown in a PDF on Teams in the 2022 folder
     //Rank 1: (150, 20) distance- 1.176471; (20, 70) distance- 1.051546; (110, 40) distance - 0.247119
     //Rank 2:  (180, 30) distance - 0.226501; (30, 90) distance - 0.108854; (20, 120) distance - 0.060340 
@@ -171,7 +168,6 @@ bool firstParentsTest(const cudaConstants * utcConstants, bool printThings){
     //Rank 4: (220,970) distance - 1.470588; (340,90) distance - 1.030928
 
     stolenGiveRank(parents, utcConstants);
-    //wrongWayToRank(parents);
     std::sort(parents.begin(), parents.end(), rankSort);
     stolenGiveDistance(parents, utcConstants);
     std::sort(parents.begin(), parents.end(), rankDistanceSort);
@@ -184,13 +180,14 @@ bool firstParentsTest(const cudaConstants * utcConstants, bool printThings){
     
     if (printThings){
         for (int i = 0; i < parents.size(); i++){
-            cout << "(" << parents[i].posDiff << "," << parents[i].speedDiff <<"): " <<parents[i].unitTestingRankDistanceStatusPrint() << " / ";
+            cout << "(" << parents[i].posDiff << "," << parents[i].speedDiff <<"): " <<parents[i].unitTestingRankDistanceStatusPrint() << " | ";
         }
         cout << endl;
     }
 
     delete[] theChildren;
 
+    //Ensures the size is correct and that the parents match their expected values
     if (parents.size() == utcConstants->num_individuals && checkParentsTest(parents)){
         return true;
     }
@@ -201,6 +198,8 @@ bool firstParentsTest(const cudaConstants * utcConstants, bool printThings){
 
 }
 
+//A function that hold the expected values for parents test and that will compare the results
+//      from firstParentsTest to the correct order of the values 
 bool checkParentsTest(std::vector<Adult>& theResults){
     std::vector<Adult> theAnswers;
     theAnswers.push_back(Adult(Child(150, 20)));
@@ -214,22 +213,23 @@ bool checkParentsTest(std::vector<Adult>& theResults){
     theAnswers.push_back(Adult(Child(220,970)));
     theAnswers.push_back(Adult(Child(340,90)));
 
-
+    //if the two vectors are not the same size, we have a problem
     if (theAnswers.size() != theResults.size()){
         return false;
     }
 
+    //loops through the results and compares its values to the expected values 
     for (int i = 0; i < theResults.size(); i++){
+        //if either the posDiff or speedDiff is wrong, then the vector has been sorted wrong and it prints what the issie is
         if (theResults[i].posDiff != theAnswers[i].posDiff || theResults[i].speedDiff != theAnswers[i].speedDiff){
             cout << "The Adult here is (" << theResults[i].posDiff << "," << theResults[i].speedDiff << "), but it should be (" << theAnswers[i].posDiff << "," << theAnswers[i].speedDiff << ")" << endl;
             return false;
         }
     }
-    
     return true;
 }
 
-
+//creates masks to ensure that they are generated properly
 bool createMasks(std::mt19937_64& rng, bool printMask){
     bool wholeRandGood = true, averageGood = true, bundleVarsGood = true, allGood = true;
     //Create a mask to determine which of the child's parameters will be inherited from which parents
@@ -241,6 +241,7 @@ bool createMasks(std::mt19937_64& rng, bool printMask){
     }
 
     crossOver_wholeRandom(mask, rng);
+    //everything in crossOver_wholeRandom should be either 1s or 2s
     for (int i = 0; i < OPTIM_VARS; i++){
         if (printMask){
             cout << mask[i] << " ";
@@ -258,6 +259,7 @@ bool createMasks(std::mt19937_64& rng, bool printMask){
     }
 
     crossOver_average(mask);
+    //all the values in the indices in crossOver_average should contain threes
     for (int i = 0; i < OPTIM_VARS; i++){
         if (printMask){
             cout << mask[i] << " ";
@@ -275,14 +277,17 @@ bool createMasks(std::mt19937_64& rng, bool printMask){
     }
 
     crossOver_bundleVars(mask, rng);
+    //all the values in the indices in crossOver_bundleVars should contain sets of 1s or 2s
     for (int i = 0; i < OPTIM_VARS; i++){
         if (printMask){
             cout << mask[i] << " ";
         }
+        //if it is neither a 1 or a 2, there is definitely an error
         if (mask[i] != 1 && mask[i] != 2){
             bundleVarsGood = false;
             allGood = false;
         }
+        //gamma should all be taken from the same parent
         if(i > GAMMA_OFFSET && i < GAMMA_OFFSET + GAMMA_ARRAY_SIZE){
             if (mask[i] != mask[i-1]){
                 cout << "\n" << i << ": " << mask[i] << " vs " << i-1 << ": " << mask[i-1] << endl;
@@ -290,6 +295,7 @@ bool createMasks(std::mt19937_64& rng, bool printMask){
                 allGood = false;
             }
         }
+        //tau should all be taken from the same parent
         else if(i > TAU_OFFSET && i < TAU_OFFSET + TAU_ARRAY_SIZE){
             if (mask[i] != mask[i-1]){
                 cout << "\n" << i << ": " << mask[i] << " vs " << i-1 << ": " << mask[i-1] << endl;
@@ -297,6 +303,7 @@ bool createMasks(std::mt19937_64& rng, bool printMask){
                 allGood = false;
             }
         }
+        //coast should all be taken from the same parent
         else if(i > COAST_OFFSET && i < COAST_OFFSET + COAST_ARRAY_SIZE){
             if (mask[i] != mask[i-1]){
                 cout << "\n" << i << ": " << mask[i] << " vs " << i-1 << ": " << mask[i-1] << endl;
@@ -308,8 +315,11 @@ bool createMasks(std::mt19937_64& rng, bool printMask){
     if(!bundleVarsGood){
         cout << "crossOver_bundleVars generates the mask incorrectly" << endl;
     }
+    else if (printMask){
+        cout << endl;
+    }
 
-    return allGood;
+    return allGood; //returns whether or not there were errors deteced
 }
 
 bool makeChildrenWithDifferentMethods(std::mt19937_64& rng, cudaConstants * utcConstants, bool printThings){
@@ -347,7 +357,7 @@ bool makeChildrenWithDifferentMethods(std::mt19937_64& rng, cudaConstants * utcC
             mask.push_back(AVG); 
         }
 
-        double annealing = 0.10; //the initial annealing value from the config
+        double annealing = 0.0; //we don't want any mutations yet
 
         //Generate a pair of children based on the random cross over mask method from a pair of parents
         //Generate the base mask
@@ -565,12 +575,12 @@ bool firstFullGen(std::mt19937_64& rng, cudaConstants * utcConstants, bool print
     paramsForIndividuals[3] = rkParameters<double>(32000000.0, elems, coeffs); //about 1.01 years 
     paramsForIndividuals[4] = rkParameters<double>(47000000.0, elems, coeffs); //about 1.49 years 
     paramsForIndividuals[5] = rkParameters<double>(43000000.0, elems, coeffs); //about 1.36 years 
-    paramsForIndividuals[6] = rkParameters<double>(37400000.0, elems, coeffs); //about 1.17 years 
+    paramsForIndividuals[6] = rkParameters<double>(37400000.0, elems, coeffs); //about 1.18 years 
     paramsForIndividuals[7] = rkParameters<double>(38000000.0, elems, coeffs); //about 1.20 years 
-    paramsForIndividuals[8] = rkParameters<double>(44000000.0, elems, coeffs); //about 1.40 years 
-    paramsForIndividuals[9] = rkParameters<double>(45000000.0, elems, coeffs); //about 1.43 years 
+    paramsForIndividuals[8] = rkParameters<double>(44300000.0, elems, coeffs); //about 1.40 years 
+    paramsForIndividuals[9] = rkParameters<double>(45200000.0, elems, coeffs); //about 1.43 years 
     
-    //turns the rkParameters into children to make up genZerp
+    //turns the rkParameters into children to make up genZero
     for (int i = 0; i < utcConstants->num_individuals; i++){
         genZero[i] = Child(paramsForIndividuals[i], utcConstants);
     }
@@ -578,7 +588,7 @@ bool firstFullGen(std::mt19937_64& rng, cudaConstants * utcConstants, bool print
     std::vector<Adult> parents;
     firstGeneration(genZero, parents, utcConstants); //genZero and is turned into parents using firstGeneration which has been unit tested previously
 
-    //the parents are sprted so they can be selected to be parents for a new generation
+    //the parents are sorted so they can be selected to be parents for a new generation
     stolenGiveRank(parents, utcConstants); 
     std::sort(parents.begin(), parents.end(), rankSort); 
     stolenGiveDistance(parents, utcConstants); 
@@ -590,19 +600,23 @@ bool firstFullGen(std::mt19937_64& rng, cudaConstants * utcConstants, bool print
     //neither of these numbers should really affect the newGeneration being created, because mutation rate and annealing are both set to 0 
     newGeneration(parents, youngGen, 0.0, 1, rng, utcConstants);
 
-    //verifies 
+    //verifies the children generated are as expected
     noErrors = verifyFullGen(youngGen, parents, utcConstants, printThings);
+
+    //if the two vectors do not have the same size, there is definitely an issue
     if (youngGen.size() != parents.size() || parents.size() != utcConstants->num_individuals){
         noErrors = false;
     }
-
-    //TODO: create a function that verifies this is working correctly  
 
     //deallocates dynamic memory
     delete[] genZero;
     delete[] paramsForIndividuals;
 
-    makeManyChildren(rng, youngGen, parents, utcConstants, printThings);
+    //if the first test passed successfully, tries making a lot a children from a small number of survivors
+    if (noErrors){
+        cout << "Test successful - trying creating a large number number of children from a small number of adults " << endl;
+        noErrors = makeManyChildren(rng, youngGen, parents, utcConstants, printThings);
+    }
 
     //returns noErrors
     return noErrors;
@@ -610,41 +624,54 @@ bool firstFullGen(std::mt19937_64& rng, cudaConstants * utcConstants, bool print
 
 // A function that is used to verify that firstFullGen is working correctly
 bool verifyFullGen(std::vector<Adult>& youngGen, std::vector<Adult>& possParents, const cudaConstants * utcConstants, bool printThings){
+
+    cout << utcConstants->survivor_count << "; " << utcConstants->num_individuals << endl;
     bool noErrors = true;
 
     std::vector<int> parentIndexSets; //vector that holds the indices of sets of parents
 
     int childrenPerSet = 6;
     //int setsOfChildren = (utcConstants->num_individuals)/childrenPerSet;
-    int setNum = 0;
+    int setNum = -1; //starts at negative 1 because incremented on the first run
 
     int firstAvgInd = 2;
     int indexVecSize = 0;
+    double tripTimeTol = 10e-6;
 
     //it checks which parents are being used and prints things if printThings is set to true
     for (int i = 0; i < utcConstants->num_individuals; i++){
-        if (printThings){
-            if (i < utcConstants->survivor_count){
-                cout << "*|";
-            }
-            cout << "parents[" << i << "]'s tripTime: ";
-            cout << possParents[i].startParams.tripTime;
-            if (i < utcConstants->survivor_count){
-                cout << "|*";
-            }
-            else {
-                cout << "\t";
+        //when it has gone through a whole set generated by one set of parents, it increase setNum
+        if (i%childrenPerSet == 0){ 
+            setNum++;
+        }
+        printThings = true;
+        if (printThings){ //prints all the parents and children at each index
+            if (i < possParents.size()){
+                if (i < utcConstants->survivor_count){ //puts *| |* around any parent that has been selected to have children
+                    cout << "*|";
+                }
+                cout << "parents[" << i << "]'s tripTime: ";
+                cout << possParents[i].startParams.tripTime;
+                if (i < utcConstants->survivor_count){
+                    cout << "|*";
+                }
+                else {
+                    cout << "\t";
+                }
             }
             cout << "\t\t";
 
             cout << "youngGen[" << i << "]'s tripTime: ";
             cout << youngGen[i].startParams.tripTime << endl;
         }
+        //the averaging function is the best way to determine which two parents created a child
+        //none of the survivor count individuals should have the same average
         if (i == firstAvgInd + childrenPerSet*setNum){
-            indexVecSize += 2;
-            if (youngGen[i].startParams.tripTime == youngGen[6*setNum].startParams.tripTime){
+            indexVecSize += 2; //each time this occurs, two parents should be added to the parentIndexSets vector
+            //if the average tripTime is equal to the copied value of parent, just one parent created the child and it is a clone
+            if (youngGen[i].startParams.tripTime == youngGen[6*setNum].startParams.tripTime){ 
                 cout << "The parent did not have a partner and probably created clones" << endl;
-                noErrors = false;
+                noErrors = false; //this is an error if a parent clones itself
                 for (int j = 0; j < utcConstants->survivor_count; j++){
                     if (youngGen[i].startParams.tripTime == possParents[j].startParams.tripTime){
                         cout << "Set " << setNum << " created by parent[" << j << "] and parent[" << j << "] " << endl;
@@ -654,31 +681,34 @@ bool verifyFullGen(std::vector<Adult>& youngGen, std::vector<Adult>& possParents
                 }
             }
             else{
+                //otherwise, it searches different pairs of potentially chosen parents to determine which parents produced this offspring
                 for (int j = 0; j < utcConstants->survivor_count; j++){
                     for (int k = j+1; k < utcConstants->survivor_count; k++){
-                        if (youngGen[i].startParams.tripTime == (possParents[j].startParams.tripTime + possParents[k].startParams.tripTime)/2){
+                        //checks the two parents
+                        cout << youngGen[i].startParams.tripTime << " vs " << (possParents[j].startParams.tripTime + possParents[k].startParams.tripTime)/2.0  << endl;
+                        if (youngGen[i].startParams.tripTime <= ((possParents[j].startParams.tripTime + possParents[k].startParams.tripTime)/2.0 + tripTimeTol) && youngGen[i].startParams.tripTime >= ((possParents[j].startParams.tripTime + possParents[k].startParams.tripTime)/2.0 - tripTimeTol)){
                             cout << "Set " << setNum << " created by parent[" << j << "] and parent[" << k << "] " << endl;
                             parentIndexSets.push_back(j);
                             parentIndexSets.push_back(k);
-                            break;
                         }
                     }
                 }
             }
+            //if the two parents have not been added, this is an issue and it prints error messages, then pushes back -1s so we will be able to detect if this happens again
             if(indexVecSize != parentIndexSets.size()){
                 noErrors = false;
                 cout << indexVecSize << " vs " << parentIndexSets.size() << endl;
                 cout << "Unknown parents for set #" << setNum << " of children" << endl;
+                parentIndexSets.push_back(-1);
+                parentIndexSets.push_back(-1);
 
             }
-        }
-        if (i%childrenPerSet == 0){
-            setNum++;
         }
     }
     return noErrors;
 }
 
+//tries making children from just a couple of survivors - not currently working as far as I know...
 bool makeManyChildren(std::mt19937_64& rng, std::vector<Adult>& youngGen, std::vector<Adult>& possParents, cudaConstants * utcConstants, bool printThings){
     bool noErrors = true; 
 
@@ -692,15 +722,21 @@ bool makeManyChildren(std::mt19937_64& rng, std::vector<Adult>& youngGen, std::v
     if (!noErrors){
         cout << "Problem with 65 individuals generated from 7 parents" << endl;
     }
-
-    utcConstants->survivor_count = 5;
-    newGeneration(possParents, youngGen, 0.0, 1, rng, utcConstants);
-    //verifies 
-    noErrors = verifyFullGen(youngGen, possParents, utcConstants, false);
-
-    if (!noErrors){
-        cout << "Problem with 65 individuals generated from 5 parents" << endl;
+    else if (printThings){
+        cout << "Generated 65 individuals from 7 parents" << endl;
     }
+
+    // utcConstants->survivor_count = 5;
+    // newGeneration(possParents, youngGen, 0.0, 1, rng, utcConstants);
+    // //verifies 
+    // noErrors = verifyFullGen(youngGen, possParents, utcConstants, false);
+
+    // if (!noErrors){
+    //     cout << "Problem with 65 individuals generated from 5 parents" << endl;
+    // }
+    // else if (printThings){
+    //     cout << "Generated 65 individuals from 5 parents" << endl;
+    // }
 
     return noErrors;
 }

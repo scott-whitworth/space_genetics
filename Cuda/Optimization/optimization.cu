@@ -571,7 +571,20 @@ void changeAnneal (const std::vector<Adult>& oldAdults, const cudaConstants* cCo
     //If we happen to be close to covergence, and the cost we get is -0.0001:
   //currentAnneal =               0.1          * (              1.000001                  )
     //if the signs were correct, this would still be only a small decrease when very close to convergence
-    currentAnneal = cConstants->anneal_initial * (1 - (cConstants->costThreshold / curCost));
+
+    //How we calculate the anneal depends on the mission type
+    //  Our current formula is anneal_max * (1 - (Mission goals / cost))
+    //  The section in the parentheses should equal 0 when the cost has been met
+    //  Thus, the number of mission goals are different between the missions, so we need to check what type of mission it is to calculate the anneal
+    if (cConstants -> missionType == Impact) 
+    {
+        currentAnneal = cConstants->anneal_initial * (1 - (Impact / curCost));
+    }
+    else 
+    {
+        currentAnneal = cConstants->anneal_initial * (1 - pow((Rendezvous / curCost), 4.0)); 
+    }
+    
 
     //Check to make sure that the current anneal does not fall below the designated minimum amount
     if (currentAnneal < cConstants->anneal_final)
@@ -670,7 +683,7 @@ double calculateCost(const std::vector<Adult> & oldAdults, const cudaConstants* 
         }
 
         //The coast is the rel_posDiff minus the number of mission goals (1 in this case)
-        cost = rel_posDiff - IMPACT_MISSION_PARAMETER_COUNT;
+        cost = rel_posDiff;
     }
     //For rendezvous, the cost depends on both posDiff and speedDiff
     else {
@@ -693,7 +706,7 @@ double calculateCost(const std::vector<Adult> & oldAdults, const cudaConstants* 
 
         //The cost the addition of each difference between the goals and pod/speed diffs minus the rendezvous mission goal count (2)
         //This means a flight that meets all goals will have a cost of 0, since the rel pos/speed diffs would be set to 1
-        cost = (rel_posDiff + rel_speedDiff) - RENDEZVOUS_MISSION_PARAMETER_COUNT;
+        cost = (rel_posDiff + rel_speedDiff);
     }
     
     //Return the calculated cost

@@ -21,8 +21,8 @@
 
 //Definitions for the number of mission paramters per mission type
 //      NOTE: Long-term, these should be dependent on settings within each mission's parameters, this is a temportary measure
-//#define RENDEZVOUS_MISSION_PARAMETER_COUNT 2 
-//#define IMPACT_MISSION_PARAMETER_COUNT 1 
+#define RENDEZVOUS_MISSION_PARAMETER_COUNT 2 
+#define IMPACT_MISSION_PARAMETER_COUNT 1 
 
 // Starting location and sizes in the optimization array for navigation to access specific values
 // Note: array sizes must be odd, coinciding with their use in computing Fourier series

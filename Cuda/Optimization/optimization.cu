@@ -551,11 +551,12 @@ void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& 
 void changeAnneal (const std::vector<Adult>& oldAdults, const cudaConstants* cConstants, double & new_anneal, double & currentAnneal, double & anneal_min,  double & previousBestPosDiff, double & generation, const double & posTolerance, double & dRate){
     
     //Calculate the current cost for this generation
-    int curCost = calculateCost(oldAdults, cConstants);
+    double curCost = calculateCost(oldAdults, cConstants);
     
     //Caluclate the new current anneal
     //It will be a linear decrease from the initial/max anneal based on how well the current cost is compared to the cost threshold
-    currentAnneal = cConstants->anneal_initial * (1 - std::abs(cConstants->costThreshold/curCost));
+    //currentAnneal = cConstants->anneal_initial * (1 - std::abs(cConstants->costThreshold/curCost));
+    currentAnneal = cConstants->anneal_initial;
 
     //Check to make sure that the current anneal does not fall below the designated minimum amount
     if (currentAnneal < cConstants->anneal_final)

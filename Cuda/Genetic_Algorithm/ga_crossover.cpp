@@ -124,7 +124,7 @@ double getRand(double max, std::mt19937_64 & rng) {
 //!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Creates a new rkParameters individual by combining properties of two parent Individuals using a mask to determine which
 rkParameters<double> generateNewChild(const rkParameters<double> & p1, const rkParameters<double> & p2, const std::vector<int> & mask, const cudaConstants * cConstants, const double & annealing, std::mt19937_64 & rng, const double & generation) {
-    
+
     // Set the new individual to hold traits from parent 1 
     rkParameters<double> childParameters = p1;
 
@@ -319,11 +319,11 @@ rkParameters<double> mutate(const rkParameters<double> & p1, std::mt19937_64 & r
 
 //!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Method that creates a pair of new Individuals from a pair of other individuals and a mask
-void generateChildrenPair (const Adult & parent1, const Adult & parent2, Child * newChildren, std::vector<int> & mask, const double & annealing, std::mt19937_64 & rng, int & numNewChildren, const int & generation, const cudaConstants* cConstants) {
+void generateChildrenPair (Adult & parent1, Adult & parent2, Child * newChildren, const int & generateNum, std::vector<int> & mask, const double & annealing, std::mt19937_64 & rng, int & numNewChildren, const int & generation, const cudaConstants* cConstants) {
     
     //checks to make sure that more children are needed in the newChildren array before generating new children
     //if there are already enough children, it just returns and exits this function
-    if(numNewChildren >= cConstants->num_individuals){ 
+    if(numNewChildren >= generateNum){ 
         return;
     }
 
@@ -336,9 +336,11 @@ void generateChildrenPair (const Adult & parent1, const Adult & parent2, Child *
     //Will also ensure that no children are overwritten
     numNewChildren++;
 
+    //TODO: We want to check/return for avg mask 
+    //      Or impliment weighted averaging
     //checks to make sure that more children are needed in the newChildren array before generating new children
     //if there are already enough children, it just returns and exits this function
-    if(numNewChildren >= cConstants->num_individuals){
+    if(numNewChildren >= generateNum){
         return;
     }
 
@@ -351,20 +353,49 @@ void generateChildrenPair (const Adult & parent1, const Adult & parent2, Child *
     newChildren[numNewChildren] = Child(generateNewChild(parent1.startParams, parent2.startParams, mask, cConstants, annealing, rng, generation), cConstants); 
 
     //Add one to numNewChildren since a new child was generated
-    numNewChildren++; 
+    numNewChildren++;
 }
 
 //!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Creates the next pool to be used in the optimize function in opimization.cu
 void newGeneration (std::vector<Adult> & oldAdults, std::vector<Adult> & newAdults, const double & annealing, const int & generation, std::mt19937_64 & rng, const cudaConstants* cConstants) {
-    //TODO: This is a good start, I like it
-    //      Next step: think about how we can dynamically change based on available crossover methods.
-    //                 why are we doing 8? :shrug:
-    //                 In theory we will want to be able to test different crossover methods, so this algorithm should be 
-    //                         malleable to differeing numbers of children produced via the functions
-    //                  as an example: right now we generate two individuals from the averaging crossover (we only really need to make one!)
 
-    //TODO: This function could be broken up into at least two more functions, if not more
+    //Vector that will hold the adults who are potential parents
+    //The criteria for being a parent is being in the top survivor_count number of adults in the oldAdult pool and not being a duplicate (distance > 0)
+    //      Duplicate adults will generate children in a separate fashion
+    std::vector<Adult> parents; 
+
+    //Vector for duplicates, based on the same criteria as above
+    std::vector<Adult> duplicates;
+
+    //If statement will check if the generaton is 0 
+    //      If so, it will assign all the surviving adults to parents
+    //      If not, it will decide which vector based on cost
+    //      This is done becuase, only in generation 0, does the adults in oldAdults not have a calculated cost
+    if (generation == 0) {
+        //Assign all surviving adults to parents
+        for (int i = 0; i < cConstants->survivor_count; i++) {
+            parents.push_back(oldAdults[i]);
+        }   
+    }
+    else {
+        std::sort(oldAdults.begin(), oldAdults.end(), rankDistanceSort);
+        //Go through oldAdults until survivor_count and determine if they are duplicates or not
+        //      If so, add them to the duplicates vector
+        //      If not, add them to the parents vector
+        for (int i = 0; i < cConstants->survivor_count; i++){
+            if (std::abs(oldAdults[i].distance) < cConstants->distanceTolerance){
+                duplicates.push_back(oldAdults[i]);
+            }
+            else {
+                parents.push_back(oldAdults[i]);
+            }
+        }
+    }
+
+    //Variable that tracks the number of children that needs to be generated via the crossover method
+    //Set to the number of children that needs to be generated (num_individuals) minus the number of children that will be generated from duplicates via heavy mutation (size of duplicates)
+    int childrenFromCrossover = cConstants->num_individuals - duplicates.size();    
 
     //Import number of new individuals the GPU needs to fill its threads
     //Create a newChildren function to fill in with children generated from oldAdults
@@ -374,103 +405,17 @@ void newGeneration (std::vector<Adult> & oldAdults, std::vector<Adult> & newAdul
     //Child* newChildren = new Child[cConstants->num_individuals + cConstants->survivor_count]; 
     Child* newChildren = new Child[cConstants->num_individuals]; 
 
-    //Create a mask to determine which of the child's parameters will be inherited from which parents
-    std::vector<int> mask;
+    //Generate children with crossovers using non-duplicate parents
+    generateChildrenFromCrossover(parents, newChildren, childrenFromCrossover, rng, annealing, generation, cConstants);
 
-    //Make a basic mask with it set to avg at first
-    //Setting the mask to average is due to the reasoning that if the mask isn't changed, it is best that what is generated is not just a copy of one adult (hence, not setting it to Parent 1 or 2)
-    for (int i = 0; i < OPTIM_VARS; i++){
-        //TODO: is this the best initial setting? Does this even matter?
-        mask.push_back(AVG); 
+    //See if there are any duplicate adults before generating children from mutations
+    if (duplicates.size() > 0) {
+        //Generate the rest of the children using heavy mutation of duplicate adults
+        generateChildrenFromMutation(duplicates, newChildren, childrenFromCrossover, rng, annealing, generation, cConstants); 
     }
-
-    //Array that determines which parents will be paired up to generate children
-    //it will contain indexes of adults that are deemed to be parents
-    //it will be shuffled to generate random parent pairings
-    //NOTE: this will only be effective after oldAdults has been sorted (with the best Adults at the front)
-    //int parentPool [(cConstants->survivor_count)] = {0};
-    std::vector<int> parentPool;
-
-    //Fill the parentPool index with the number of indexes desired for survivors
-    for (int i = 0; i < cConstants->survivor_count; i++)
-    {
-        parentPool.push_back(i);
-    }
-
-    //Shuffle the parentPool mapping array
-    //This will generate a random list of indicies, which can then be used to map to random Adults within oldAdult's survivor range to pair parents
-    //This will effectively generate random parent pairs
-    std::shuffle(parentPool.begin(), parentPool.end(), rng); 
-
-    //Int that tracks the number of new individuals that have been generated
-    //Used primarily to make sure that no children are overwritten in newChildren; indexing in generatechildrenPair, should equal N when finished
-    //Starts as 0 beacuse no new children have been generated
-    int numNewChildren = 0;
-
-    //Int that tracks the index of parents; determines which parents are passed in to the generate children function
-    //Will also help track if the oldAdults array needs to be reshuffled to generate new parent pairs
-    int parentIndex = 0;
-
-    //While loop will make sure to generate children based on how many GPU threads are available
-    //This will result in children being generated until there are enough to fill the gpu
-    //Note: at the time of writing, the number of threads is tied to num_individuals
-    while (numNewChildren < cConstants->num_individuals) {
-        //TODO: You do have a potential here that is mapped in generateChildrenPair
-        //      If you generate 3 pairs (so 6 children), and your num_individuals is not evenly divisible by 6, then you are going to have a memory issue
-        //      There is also a potential problem is this algorithm ends up needing more than int parentNum = cConstants->num_individuals/4; pairs
-        //      I like the start, but think deeply about how each of these elements are going to be moving around
-
-        //Generate a pair of children based on the random cross over mask method from a pair of parents
-        //This will generate a set of parameters with variables randomly selected from each parent
-        
-        //Generate the base mask, with each variable being assigned to a random parent
-        crossOver_wholeRandom(mask, rng);
-
-        //Generate a pair of children based on the mask
-        generateChildrenPair(oldAdults[parentPool[parentIndex]], oldAdults[parentPool[parentIndex+1]], newChildren, mask, annealing, rng, numNewChildren, generation, cConstants);
-
-
-        //Generate a pair of children from a pair of parents based on the average mask method
-        //This mask method will generate a set of parameters based on the average of parameters from each parent
-
-        //Set the mask to be be average
-        crossOver_average(mask);
-
-        //Generate a pair of children based on the mask
-        generateChildrenPair(oldAdults[parentPool[parentIndex]], oldAdults[parentPool[parentIndex+1]], newChildren, mask, annealing, rng, numNewChildren, generation, cConstants);
-
-
-        //Generate a pair of children from a pair of parents based on the bundled random mask method
-        //This mask method will generate parameters with variables pulled from random parents
-        //This is different from the wholeRandom method in that the thrust variables (gamma, tau, and coast) is taken from the same parent
-
-        //Generate the base mask, each variable (or set of variables) is set to a random parent
-        crossOver_bundleVars(mask, rng);
-
-        //Generate a pair of children based on the mask
-        generateChildrenPair(oldAdults[parentPool[parentIndex]], oldAdults[parentPool[parentIndex+1]], newChildren, mask, annealing, rng, numNewChildren, generation, cConstants);
-
-        //Iterate through the shuffled section of the oldAdults array
-        //Add two to parentIndex to account for the variable tracking pairs of parents, not just one parent's index
-        parentIndex += 2;
-
-        //Check to see if parents from outside the selected survivor/shuffled range
-        //This will make sure that only the best adults have the potential to become parents
-        if (parentIndex >= (cConstants->survivor_count)) {
-            //Reset the parent index to start from the beginning of the shuffled section of oldAdults
-            parentIndex = 0;
-
-            //Re-shuffle the best/survivor section of oldAdults to make sure there are new pairs of parents
-            //This will ideally not harm genetic diversity too much, even with the same set of parents
-            std::shuffle(parentPool.begin(), parentPool.end(), rng);
-
-            //TODO: Kind of weird, but I like it.
-            //      Ok, so the rationale is that you only want to pull from the 'best' individuals
-            //      You don't want to pull from anywhere in oldAdults, because the bottom 3/4 of oldAdults is deemed to be 'bad'
-            //      Thus you will only ever consider the 'top' 1/4 of oldAdults, enforced by parentNum
-        }
-    }
-
+    
+    //Initialize variables needed for callRK
+    //TODO: there is likely a better solution for this
     double timeInitial = 0;
     double calcPerS = 0;
 
@@ -485,100 +430,146 @@ void newGeneration (std::vector<Adult> & oldAdults, std::vector<Adult> & newAdul
     //This will also put the converted children into the newAdults vector
     convertToAdults(newAdults, newChildren, cConstants); 
 
-    //Find the duplicate adults within oldAdults
-    //Will make sure that the generation is not 0
-    //      This is because the adults within the oldAdults vector haven't had their distances calcuated
-    if (generation != 0) {
-        //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE MUTATE ADULTS-_-_-_-_-_-_-_-_-_\n\n";
-        //Mutate duplicate adults within oldAdults
-        mutateAdults (oldAdults, rng, annealing, generation, cConstants);
-    }
-
     //Free the pointer's memory
     delete[] newChildren; 
 }
 
-//Find and mutate duplicate adults
-void mutateAdults(std::vector<Adult> & oldAdults, std::mt19937_64 & rng, const double& currentAnneal, const int & generation, const cudaConstants* cConstants) {
+// Generate children from non-duplicate parents using crossover methods
+void generateChildrenFromCrossover(std::vector<Adult> &parents, Child *newChildren, const int &childrenToGenerate, std::mt19937_64 &rng, const double &currentAnneal, const int &generation, const cudaConstants *cConstants)
+{
+    std::cout << "\n_-_-_-_-_-_-_-_-_-Start of generate children from crossover_-_-_-_-_-_-_-_-_-\n";
+    std::cout << "\n_-_-_-_-_-_-_-_-_-Size of parents: " << parents.size() << ", number of children to generate: " << childrenToGenerate << "_-_-_-_-_-_-_-_-_-\n";
+    // Create a mask to determine which of the child's parameters will be inherited from which parents
+    std::vector<int> mask;
 
-    //variable that keeps track of how many duplicate individuals there are
-    int duplicateNum = 0; 
-
-    //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE FIND DUPLICATION NUM-_-_-_-_-_-_-_-_-_\n\n";
-    //Find the amount of adults who are duplicates
-    for (int i = 0; i < oldAdults.size(); i++){
-        //Add one to the duplicateNum variable if there is a duplicate adult found
-        if (std::abs(oldAdults[i].distance) < cConstants->distanceTolerance){
-            duplicateNum++; 
-        }
+    // Make a basic mask with it set to avg at first
+    // Setting the mask to average is due to the reasoning that if the mask isn't changed, it is best that what is generated is not just a copy of one adult (hence, not setting it to Parent 1 or 2)
+    for (int i = 0; i < OPTIM_VARS; i++)
+    {
+        // TODO: is this the best initial setting? Does this even matter?
+        mask.push_back(AVG);
     }
 
-    //std::cout << "\n\n_-_-_-_-_-_-_-_-_-_-DUPLICATES FOUND: " <<  duplicateNum <<  " -_-_-_-_-_-_-_-_-_-_-\n";
+    // Vector that determines which parents will be paired up to generate children
+    // it will contain indexes of adults that are deemed to be parents
+    // it will be shuffled to generate random parent pairings
+    // NOTE: this will only be effective after oldAdults has been sorted (with the best Adults at the front)
+    std::vector<int> parentPool;
 
-    //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE DIST SORT-_-_-_-_-_-_-_-_-_\n\n";
-    //Sort the oldAdults vector to have the adults with distances of 0 (the duplicates) at the front
-    std::sort(oldAdults.begin(), oldAdults.end(), lowerDistanceSort);
+    // Fill the parentPool index with the number of indexes desired for survivors
+    for (int i = 0; i < parents.size(); i++)
+    {
+        parentPool.push_back(i);
+    }
 
-    //Create a temp Child array with the size of the number of duplicates found
-    Child* tempChildren = new Child[duplicateNum];
+    // Shuffle the parentPool mapping array
+    // This will generate a random list of indicies, which can then be used to map to random Adults within oldAdult's survivor range to pair parents
+    // This will effectively generate random parent pairs
+    std::shuffle(parentPool.begin(), parentPool.end(), rng);
 
-    //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE CREATE TEMP CHILDREN-_-_-_-_-_-_-_-_-_\n\n";
-    //Go back through the oldAdults array and add any duplicates' info to the tempChildren array
-    for (int i = 0; i < duplicateNum; i++){
-        
-        if (std::abs(oldAdults[i].distance) < cConstants->distanceTolerance)
+    // Tracks the number of new individuals that have been generated
+    // Used primarily to make sure that no children are overwritten in newChildren; indexing in generatechildrenPair, should equal childrenToGenerate when finished
+    // Starts as 0 beacuse no new children have been generated
+    int numNewChildren = 0;
+
+    // Tracks the the iteration through the parentPool vector; determines which parents are passed in to the generate children function
+    // Will also help track if parentPool needs to be reshuffled to generate new parent pairs
+    int parentIndex = 0;
+
+    // Toggles new pairings of parents without needing to reshuffle
+    //       (parent offeset = 0: 0,1 2,3 3,4...) (parent offset = 1: 1,2 3,4, 5,6...)
+    // Help keep track of how many times we have looped
+    int parentOffset = 0;
+
+    // Generate new children until we have generated enough
+    // NumNewChildren will update every time generateChildrenPair is called
+    // childrenToGenerate is the number of children that need to be generated
+    while (numNewChildren < childrenToGenerate)
+    {
+        // At this point, parentIndex/+1 could possibly have crossed the size of parentPool
+
+        // Check to see if we can calculate new pairs (else will be modifying parentIndex)
+        if (parentIndex + 1 < parentPool.size())
         {
-            //Use the adult's parameters to create temp children
-            tempChildren[i] = Child(oldAdults[i].startParams, cConstants);
+            // TODO: You do have a potential here that is mapped in generateChildrenPair
+            //       If you generate 3 pairs (so 6 children), and your num_individuals is not evenly divisible by 6, then you are going to have a memory issue
+            //       There is also a potential problem is this algorithm ends up needing more than int parentNum = cConstants->num_individuals/4; pairs
+            //       I like the start, but think deeply about how each of these elements are going to be moving around
+
+            // Generate a pair of children based on the random cross over mask method from a pair of parents
+            // This will generate a set of parameters with variables randomly selected from each parent
+
+            // Generate the base mask, with each variable being assigned to a random parent
+            crossOver_wholeRandom(mask, rng);
+
+            // Generate a pair of children based on the mask
+            generateChildrenPair(parents[parentPool[parentIndex]], parents[parentPool[parentIndex + 1]], newChildren, childrenToGenerate, mask, currentAnneal, rng, numNewChildren, generation, cConstants);
+
+            // Generate a pair of children from a pair of parents based on the average mask method
+            // This mask method will generate a set of parameters based on the average of parameters from each parent
+
+            // Set the mask to be be average
+            crossOver_average(mask);
+            // Generate a pair of children based on the mask
+            generateChildrenPair(parents[parentPool[parentIndex]], parents[parentPool[parentIndex + 1]], newChildren, childrenToGenerate, mask, currentAnneal, rng, numNewChildren, generation, cConstants);
+
+            // Generate a pair of children from a pair of parents based on the bundled random mask method
+            // This mask method will generate parameters with variables pulled from random parents
+            // This is different from the wholeRandom method in that the thrust variables (gamma, tau, and coast) is taken from the same parent
+
+            // Generate the base mask, each variable (or set of variables) is set to a random parent
+            crossOver_bundleVars(mask, rng);
+            // Generate a pair of children based on the mask
+            generateChildrenPair(parents[parentPool[parentIndex]], parents[parentPool[parentIndex + 1]], newChildren, childrenToGenerate, mask, currentAnneal, rng, numNewChildren, generation, cConstants);
+
+            // Add two to parentIndex to account for the variable tracking pairs of parents, not just one parent's index
+            parentIndex += 2;
         }
+        else
+        { // ParentIndex has crossed the boundary of parentPool size
+            if (parentOffset == 1)
+            {
+                std::cout << "\nIn generateChildrenFromCrossover() we've cycled through the parentPool twice\n";
+
+                // Force new pairs
+                std::shuffle(parentPool.begin(), parentPool.end(), rng);
+
+                parentOffset = 0;
+                parentIndex = 0;
+            }
+            else
+            {
+                parentIndex = 1;
+                // Forces pairs to be off by 1
+                parentOffset = 1;
+            }
+        }
+        //A new pair was computed or we reset parentOffset
+    }   //Repeat loop
+    std::cout << "\n_-_-_-_-_-_-_-_-_-Number of children generatated: " << numNewChildren << "_-_-_-_-_-_-_-_-_-\n";
+}
+
+//Generate mutated children from duplicate adults
+void generateChildrenFromMutation(std::vector<Adult> & duplicates, Child* newChildren, const int & startingIndex, std::mt19937_64 & rng, const double& currentAnneal, const int & generation, const cudaConstants* cConstants) {
+
+    if (cConstants -> num_individuals - startingIndex > duplicates.size()) 
+    {
+        std::cout << "\nERROR: Scott says this is an error (beginning of mutate children),\n\tDuplicates is too small!\n";
     }
     
-    //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE MUTATE TEMP CHILDREN-_-_-_-_-_-_-_-_-_\n\n";
-    //Now that there is a tempChild array, go through and mutate the paramters
-    for (int i = 0; i < duplicateNum; i++){
-        tempChildren[i].startParams = mutate(tempChildren[i].startParams, rng, currentAnneal, cConstants, generation, cConstants->duplicate_mutation_factor);
+    //Go through the duplicates vector and use the adults' info to generate children into newChildren
+    //NOTE: The index that is used to generate the child within newChildren depends on the size of the duplicates vector
+    //          The total number of new children that need to be created between both functions is num_individuals
+    //          generateChildrenFromCrossover has already filled newChildren with startingIndex number of children
+    //          Thus, the starting index until num_individuals is safe to be modified
+    for (int i = 0; i < cConstants->num_individuals - startingIndex; i++) {
+        //Assign the starting parameters of a corresponding duplicate to a child
+        newChildren[startingIndex + i] = Child(duplicates[i].startParams, cConstants);
+
+        //Now that the necessary child has been assigned starting parameters, go though and heavily mutate their parameters
+        //      Note: the mutation factor is set by duplicate_mutation_factor
+        newChildren[startingIndex + i].startParams = mutate(newChildren[startingIndex + i].startParams, rng, currentAnneal, cConstants, generation, cConstants->duplicate_mutation_factor);
     }
-
-    //Create variables necessary for callRK
-    double timeInitial = 0;
-    double calcPerS = 0;
-
-    //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE SIM NEW CHILDREN-_-_-_-_-_-_-_-_-_\n\n";
-    //Simulate the mutated children
-    callRK(duplicateNum, cConstants->thread_block_size, tempChildren, timeInitial, (cConstants->orbitalPeriod / cConstants->GuessMaxPossibleSteps), cConstants->rk_tol, calcPerS, cConstants);
-
-    //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE FIND TEMP CHILD INFO-_-_-_-_-_-_-_-_-_\n\n";
-    //Iterate through the simulated children to determine their error status (if it hasn't been set by callRK already) and calculate their pos and speed differences
-    for (int i = 0; i < duplicateNum; i++)
-    {
-        //Check to see if nans are generated in the finalPos elements
-        if (  isnan(tempChildren[i].finalPos.r) ||
-              isnan(tempChildren[i].finalPos.theta) ||
-              isnan(tempChildren[i].finalPos.z) ||
-              isnan(tempChildren[i].finalPos.vr) ||
-              isnan(tempChildren[i].finalPos.vtheta) ||
-              isnan(tempChildren[i].finalPos.vz)  ) {
-            //Mark the child with the nan variables with the nan_error flag
-            tempChildren[i].errorStatus = NAN_ERROR;
-        }//if it is not a nan, the status has already been made valid or sun_error in rk4SimpleCuda
-
-        //Now that the status has been determined, there is enough information to set pos and speed diffs
-        //The two functions will look at the child's errorStatus and set the diffs based on that
-        tempChildren[i].getPosDiff(cConstants);
-        tempChildren[i].getSpeedDiff(cConstants); 
-    } 
-
-    //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE CONVERT TEMP CHILDREN TO ADULTS-_-_-_-_-_-_-_-_-_\n\n";
-    //The children are completed, now we need to insert them back into the oldAdult vector
-    //Since the oldAdult vector nor the tempChildren array has not been resorted, it is okay to put the tempChildren back into the oldAdult vector the same way they were taken out
-    for (int i = 0; i < duplicateNum; i++)
-    {
-        oldAdults[i] = Adult(tempChildren[i]);
-    }
-    
-
-    //Free the memory
-    delete[] tempChildren; 
 }
 
 //Function that will convert the generated children into adults
@@ -616,7 +607,7 @@ void convertToAdults(std::vector<Adult> & newAdults, Child* newChildren, const c
 
 //Will create the first generation of adults from random parameters so that future generations have a pre-existing base of adults
 void firstGeneration(Child* initialChildren, std::vector<Adult>& oldAdults, const cudaConstants* cConstants){
-    const double timeIntial = 0;
+    double timeIntial = 0;
     double calcPerS  = 0;
 
      // Each child represents an individual set of starting parameters 

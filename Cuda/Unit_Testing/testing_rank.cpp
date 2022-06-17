@@ -949,7 +949,23 @@ bool changeInBestTest(double previousBestPosDiff, const Adult & currentBest, dou
             return false;
         }
 }
-
+// Sets the entire mask to be AVG for length OPTIM_VARS
+void crossOver_averageRatio(std::vector<int> & mask) {
+    for (int i = 0; i < OPTIM_VARS; i++) {
+        mask[i] = AVG_RATIO;
+    }
+    return;
+}
+else if (mask[i] == AVG_RATIO){
+                // If the mask is 4, average the values from both parents based on random ratio
+                childParameters.coeff.gamma[i - GAMMA_OFFSET] = ratio*p2.coeff.gamma[i - GAMMA_OFFSET] + (1 - ratio)*p1.coeff.gamma[i - GAMMA_OFFSET];
+            }
+            else if (mask[i] == AVG_RATIO) {
+                childParameters.coeff.tau[i - TAU_OFFSET] = ratio*p2.coeff.tau[i - TAU_OFFSET] + (1 - ratio)*p1.coeff.tau[i - TAU_OFFSET];
+            }
+        else if (mask[i] == AVG_RATIO) {
+                childParameters.coeff.coast[i - COAST_OFFSET] = ratio*p2.coeff.coast[i - COAST_OFFSET] + (1 - ratio)*p1.coeff.coast[i - COAST_OFFSET];
+            }
 */
 bool CAtest(){
     std::vector<Adult> CAtest;
@@ -983,7 +999,7 @@ bool CAtest(){
     //double posTolerance = 1e-14;
     //double dRate = 1e-8;
 
-    while(calculateCostTest(CAtest, missionType) > Rendezvous){
+    while(calculateCostTest(CAtest, missionType) >= Impact){
         //call the test to adjust the anneal
         changeAnnealTest(CAtest, missionType, new_anneal, currentAnneal);
         //print the results
@@ -1014,7 +1030,6 @@ void changeAnnealTest(const std::vector<Adult>& oldAdults, int missionType, doub
     double curCost = calculateCostTest(oldAdults, missionType);
     double anneal_initial = 0.1;
     double anneal_final = 1.0e-7;
-    double costThreshold = 1;
     //Caluclate the new current anneal
     //It will be a linear decrease from the initial/max anneal based on how well the current cost is compared to the cost threshold
     //If we happen to be close to covergence, and the cost we get is -0.0001:
@@ -1023,8 +1038,8 @@ void changeAnnealTest(const std::vector<Adult>& oldAdults, int missionType, doub
 //    currentAnneal = anneal_initial * (1 - std::abs(costThreshold / curCost));
 //    currentAnneal = anneal_initial * (1 - pow(std::abs(costThreshold / curCost),2.0));
 //    currentAnneal = anneal_initial * (1 - (1 / curCost));
-    if(missionType = Rendezvous){
-        currentAnneal = anneal_initial * (1 - (Rendezvous / curCost));
+    if(missionType == Rendezvous){
+        currentAnneal = anneal_initial * (1 - pow((Rendezvous / curCost),4.0));
     }else if (missionType == Impact){
         currentAnneal = anneal_initial * (1 - (Impact / curCost));
     }
@@ -1056,7 +1071,10 @@ double calculateCostTest(const std::vector<Adult> & oldAdults, int missionType){
     //  The run before convergence:
     //  cost =   number <= 1e-10     /         1e-10              -   1 = smallish number - 1
 //        cost = (oldAdults[0].posDiff /pos_threshold) - Impact;
-        cost = (oldAdults[0].posDiff /pos_threshold) ;
+        cost = (oldAdults[0].posDiff /pos_threshold);
+        if(cost < 1){
+            cost = 1;
+        }
         //this might better if we did:
 
     }
@@ -1065,6 +1083,9 @@ double calculateCostTest(const std::vector<Adult> & oldAdults, int missionType){
         //Similarly to impact, calculate how far the best adult's speed and position diffs are away from the goal and subtract by the number of mission goals
 //        cost = ((oldAdults[0].posDiff / pos_threshold) + (oldAdults[0].speedDiff / speed_threshold)) - Rendezvous;
         cost = ((oldAdults[0].posDiff / pos_threshold) + (oldAdults[0].speedDiff / speed_threshold));
+        if(cost < 2){
+            cost = 2;
+        }
     }
     
     //Return the calculated cost

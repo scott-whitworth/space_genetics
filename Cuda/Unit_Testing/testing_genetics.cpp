@@ -3,9 +3,14 @@ bool runGeneticsUnitTests(){
     //making cudaConstants to control what is going on in genetic algorithm while still using the original functions
     cudaConstants* utcConstants = new cudaConstants(); 
 
-    // Seed used for randomization rng things 
-    // Says to set the time_seed to NONE so time(0), but that does not work so set it to 0
+    // Seed used for randomization rng things, using seed 0 for consistancy / tracability 
     utcConstants->time_seed = 0; 
+
+    //TODO: VVV When? Why? This is going to be a slight issue in that you are copy/pasting
+    //      I would argue that you should have an argument for each of these, not just 'pulled them from the config'
+
+    //TODO: You don't need to redefine the meaning (that is defined in detali in Config_Constants) 
+    //      you need to be commenting on why you are using the values that you are using
 
     //values taken directly from the genetic config file
     utcConstants->anneal_initial = 0.10; // initial value for annealing, meant to replace the previously used calculation involving ANNEAL_MIN and ANNEAL_MAX with something more simple
@@ -36,6 +41,8 @@ bool runGeneticsUnitTests(){
     // (E.g. 8 does not evenly divide 10 -> two pairings of parents will each produce 8 kids, which is 16 total and 16 > 10)
     utcConstants->num_individuals = 10; 
 
+    //TODO: Isn't ^^^ 10 the const you set in const int genSize = 10; ?
+
     // Number of survivors selected, every pair of survivors creates 8 new individuals 
     // Chose 3 because that is approximately a quarter of 10
     // This also allows us to see if the shuffling and new parent pairing works as expected
@@ -52,11 +59,14 @@ bool runGeneticsUnitTests(){
     utcConstants->orbitalPeriod = 3.772645011085093e+07; // orbital period time of 1999RQ36 Bennu (s) 
     utcConstants->GuessMaxPossibleSteps = 1000000;
 
+    //TODO: GuessMaxPossibleSteps has been depreciated (and should not be 1000000) (also you set this twice, see below)
+
     //ALL THE STUFF SO EARTH'S INITIAL POSITION CAN BE CALCULATED
     utcConstants->triptime_max=2.0* SECONDS_IN_YEAR;
     utcConstants->triptime_min=1.0* SECONDS_IN_YEAR;
     utcConstants->timeRes=3600; // Earth Calculations Time Resolution Value
     utcConstants->v_escape = 2162.4/AU; //sqrt of DART Mission c3energy
+    // TODO: Wait... so are you doing DART or are you doing Bennu? ^^^ and VVV
     //Bennu config values
     utcConstants->r_fin_earth=9.857045197029908E-01;
     utcConstants->theta_fin_earth=1.242975503287042;
@@ -71,13 +81,19 @@ bool runGeneticsUnitTests(){
     utcConstants->max_numsteps=2500;
     utcConstants->min_numsteps=400;
 
+    //TODO: For testing I would set max_numsteps much lower. This puts an upper limit on the number of iterations inside the CUDA kernel
+    //      I would use 1000 or less. These unit tests cannot (and should not) test for numeric accuracy of the callRK function
+
 // SETTING A RANDOM NUMBER GENERATOR (rng) TO BE USED BY FUNCTIONS
     // This rng object is used for generating all random numbers in the genetic algorithm, passed in to functions that need it
     std::mt19937_64 rng(utcConstants->time_seed);
 
+    //TODO: just needed for what?
     launchCon = new EarthInfo(utcConstants); //VERY complicated part of the code with some possibility of errors -> just needed for 
 
 // CALLING THE DIFFERENT UNIT TESTING ALGORITHMS
+//TODO: I know you kind of have this in the .h, but I might put some documentation here (or in the functions themselves)
+//       arguing for why they are good tests i.e. what are you doing to verify correctness?
     bool allWorking = true;
     if (firstParentsTest(utcConstants)){
         cout << "PASSED: Children can be converted to adults that can be sorted" << endl;
@@ -86,6 +102,7 @@ bool runGeneticsUnitTests(){
         cout << "FAILED: Children cannot be converted to adults that can be sorted" << endl;
         allWorking = false;
     }
+
     if (createMasks(rng, true)){
         cout << "PASSED: All three masks were successfully generated as expected" << endl;
     }
@@ -93,6 +110,7 @@ bool runGeneticsUnitTests(){
         cout << "FAILED: Not all the masks were successfully generated" << endl;
         allWorking = false;
     }
+
     if (makeChildrenWithDifferentMethods(rng, utcConstants)){
         cout << "PASSED: Successfully made children using the three different methods" << endl;
     }
@@ -101,7 +119,7 @@ bool runGeneticsUnitTests(){
         allWorking = false;
     }
 
-    delete[] utcConstants;
+    delete[] utcConstants; //TODO: Why is this deleting an array of utcConstants? I am pretty sure this should just be a normal delete
     delete launchCon;
     return allWorking;
 }
@@ -111,7 +129,8 @@ bool firstParentsTest(const cudaConstants * utcConstants){
     std::vector<Adult> parents;
     Child* theChildren = new Child[utcConstants->num_individuals];
 
-    //Made 10 children and set them with semi-random position difference and speed difference values that can easily be determined are either true or false
+    //Made 10 children and set them with semi-random position difference and speed difference values
+    //        that can easily be determined are either true or false
     //These numbers are semi-random multiples of 10 and were entered in no specific order at this point
     //This sort of simulates when the initial generation of oldAdults are created using random parameters 
     //(but these don't change from run to run and are easier to do compare)
@@ -126,8 +145,10 @@ bool firstParentsTest(const cudaConstants * utcConstants){
     theChildren[8] = Child(20, 120);
     theChildren[9] = Child (340, 90);
 
-    //Ranks based on my net dominations (times it dominates others - times it is dominated by others) -> dominations based on output of dominationCheckTest
-    //Below is a list of the parameters of the above children and which rank they should belong to based on their position difference and speed differences
+    //Ranks based on my net dominations:
+    //      (times it dominates others - times it is dominated by others) -> dominations based on output of dominationCheckTest
+    //Below is a list of the parameters of the above children and which rank they should belong to 
+    //      based on their position difference and speed differences
     //Rank 1: (20, 70) [NET DOMINATIONS: 6]
     //Rank 2: (150, 20); (110, 40); (30, 90) [NET DOMINATIONS: 3]
     //Rank 3: (180, 30); (20, 120) [NET DOMINATIONS: 1]
@@ -135,6 +156,12 @@ bool firstParentsTest(const cudaConstants * utcConstants){
     //Rank 5: (50, 120) [NET DOMINATIONS: -2]
     //Rank 6: (340, 90) [NET DOMINATIONS: -6]
     //Rank 7: (220, 970) [NET DOMINATIONS-7]
+
+    //TODO: At this point you never use theChildren!
+    //      isn't the point of this to be testing the rank/distance? 
+    //      parents is empty at this point
+    //      children have not been processed
+    //      I think you want to set those values for the parents and then pass them in to giveRank and giveDistance
 
     stolenGiveRank(parents, utcConstants);
     //wrongWayToRank(parents);
@@ -153,6 +180,8 @@ bool firstParentsTest(const cudaConstants * utcConstants){
 
     delete[] theChildren;
 
+    //TODO: This is not a great output, you are just checking if the parent's size is 'correct', but don't you want to compare the order / rank?
+
     if (parents.size() == utcConstants->num_individuals){
         return true;
     }
@@ -165,13 +194,21 @@ bool firstParentsTest(const cudaConstants * utcConstants){
 
 
 void wrongWayToRank(std::vector<Adult> & newAdults){
-    int genSize = 10;
+    int genSize = 10; //TODO: Where is this coming from?
+
+    //TODO:                                                  Why? VVVVVV 
     std::vector<std::vector<int>> arrayOfDominations(genSize);  //a 2D vector that is genSize long
+
     for (int i = 0; i < genSize; i++){ //if there are any inputs in it so far, gives an error message
         if (arrayOfDominations[i].size() != 0){
+            //TODO: I don't actually see this as that important of a check, but just printing ERROR is not all that helpful, some detail would be nice
             cout << "ERROR" << endl;
         }
     }
+    
+    //TODO: Not actually part of the C++ standard. Static arrays need to be defined with either a literal value or a const
+    //      More importantly should probably be either a dynamic array or a vector
+
     int thisWasDominatedXTimes[genSize]; //an array holding how many times any singular index was dominated
     for (int h = 0; h < genSize; h++){ //sets the initial number of times a thing was dominated to 0
         thisWasDominatedXTimes[h] = 0;

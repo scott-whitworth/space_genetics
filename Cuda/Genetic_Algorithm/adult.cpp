@@ -255,8 +255,8 @@ bool dominationCheckTest(Adult& personA, Adult& personB, int missionType){
 
     double posTolerance = 5;
     double speedTolerance = 5;
-    //double posTolerance = 1e-14;
-    //double speedTolerance = 1e-14;
+    //double posTolerance = 0.0;
+    //double speedTolerance = 0.0;
     //true if A posDiff "equals" B posDiff
     bool APosEqualsB = false;
     //true if A speedDiff "equals" B speedDiff
@@ -275,13 +275,21 @@ bool dominationCheckTest(Adult& personA, Adult& personB, int missionType){
     }
     //If the mission type is a rendezvous, A's speed diff needs to be lower for it to be equal or better
     if (missionType == Impact) {
-        //Check if A's posDiff is approximately/better than B's posDiff and check the same for speed
+        /*//Check if A's posDiff is approximately/better than B's posDiff and check the same for speed
         //If so, A is equal to B
         if ((personA.posDiff < personB.posDiff || APosEqualsB) && (personA.speedDiff > personB.speedDiff || ASpeedEqualsB)) {
             AisEqual = true; 
         }  
         //If A has a better posDiff or speedDiff than B, then A is better than B
         if (personA.posDiff < personB.posDiff || personA.speedDiff > personB.speedDiff) {
+            AisBetter = true;
+        }*/
+        //For impact, only optimizing for one opbjective
+        if ((personA.posDiff < personB.posDiff || APosEqualsB)) {
+            AisEqual = true; 
+        }  
+        //If A has a better posDiff or speedDiff than B, then A is better than B
+        if (personA.posDiff < personB.posDiff) {
             AisBetter = true;
         }
     }

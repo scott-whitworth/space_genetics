@@ -23,6 +23,14 @@ bool runGeneticsUnitTests(bool printThings);
 // Output: returns true if this generation can be correctly generated and sorted or false if not
 bool firstParentsTest(const cudaConstants * utcConstants, bool printThings);
 
+//TODO: 'A function that' can be removed from the headers, keep it concise
+//TODO: When you have a bool (like printMask) a description is nice, but the value is the most interesting
+//      I might change both printMask and Output to:
+
+//      printMask - True: print to terminal mask values, false: don't print
+// Output: True -> all masks created as expected
+//         False -> some issue with mask creation (probably should identify what could go wrong)
+
 // A function that determines if masks are being generated correctly
 // Input: rng - a psuedorandom number generator used by to create masks
 //        printMask - whether or not you want the numeric values contained in the mask printed
@@ -34,6 +42,12 @@ bool createMasks(std::mt19937_64& rng, bool printMask);
 // Input: theResults - the Adults generated in firstParentsTest
 // Output: returns true if the results match our expectations or false if they do not
 bool checkParentsTest(std::vector<Adult>& theResults);
+
+//TODO: 'with know' what?
+//TODO: slight nitpick: you don't need to use the 'you' pronoun
+//      code in a meta-sense allows 'you' to do lots of things, but the inclusion of utcConstants does not have much to do with 'you'
+//      leaving it with: utcConstans - definition of mutation rate, thruster type, passed into generateChildrenPair
+//TODO: For all of these, it would be helpful to define what 'generated correctly' means
 
 //makes children using the different method -> not to populate a generation or anything, just to check each child creation method works as expected
 //starts with two known parents with know 

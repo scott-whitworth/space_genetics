@@ -41,13 +41,17 @@ bool CAtest();
 //       previousBestPosDiff is found from the changeInBestTest and used to see if the best adult has changed or not
 //       posTolerance is used for adjusting the annealing
 //       dRate is the distinguishable rate which is adjusted based on the current best posDiff -- TODO: this part used to be cost based, what should it be now?
-void changeAnnealTest(std::vector<Adult> newAdults, double & new_anneal, double & currentAnneal, double & anneal_min,  double & previousBestPosDiff, double & generation, const double & posTolerance, double & dRate);
+//NOTE: this header is outdated, this is the new changeAnneal function that uses cost
+void changeAnnealTest(const std::vector<Adult>& oldAdults, int missionType, double & new_anneal, double & currentAnneal);
+
+//function that calculates the cost
+double calculateCostTest(const std::vector<Adult> & oldAdults, int missionType);
 
 //test version of change in best, just checks if there has been a chnage in the best posDiff(used to be cost)
 //Input: previousBestPosDiff (was cost) 
 //       currentBest (the best posDiff of this generation)
 //       dRate to compare to current and previous best
-bool changeInBestTest(double previousBestPosDiff, const Adult & currentBest, double distinguishRate);
+//bool changeInBestTest(double previousBestPosDiff, const Adult & currentBest, double distinguishRate);
 
 
 bool dominationTest(){
@@ -57,12 +61,14 @@ bool dominationTest(){
 
     int r = 0;//rank
     double d = 1.0;//distance
-    int test = 4;// 1: set of 6 different posDiffs and speedDiffs that leads to a normal expected outcome
+    int test = 6;// 1: set of 6 different posDiffs and speedDiffs that leads to a normal expected outcome
                  // 2: set of 6 different posDiffs and speedDiffs for the new version of dominationCheckTest that accounts for mission type
                  // 3: set of 1000 random posDiffs and speedDiffs of values 1-1000, meant to show giveRank works for large sets
                  // 4: error status test of 6 adults
                  // 5: set of easy values to calculate distance and test what happens when we sort differently
                  // 6: random version of test 6, goes through all 3 ways to calculate distance based on missionType
+                 // 7: copied version of meg's problem set
+
     int missionType; //ren 1, imp 2
 
     //creating the vector and filling it with adults
@@ -278,6 +284,90 @@ bool dominationTest(){
             GRtest[i].speedDiff = 1 +  (rand() % 100);
         }
 
+    }else if(test == 7){
+        int vectSize = 10;//size of the vector for the test
+        //fill a vector with the adults
+        for(int i = 0; i < vectSize; i++){
+            GRtest.push_back(Adult(200, d)); 
+        }
+        //Rank (ren): 1
+        //rank (imp): 3
+        //distance (imp low): 1e+12
+        //distance (imp high): 1e+12
+        //distance (rendezvous): 1e+12
+        GRtest[0].posDiff = 150;
+        GRtest[0].speedDiff = 20;
+
+        //Rank (ren): 1
+        //Rank (imp): 4
+        //distance (imp low): 0.2625
+        //distance (imp high): 1.2
+        //distance (rendezvous): 0.2625
+        GRtest[1].posDiff = 120;
+        GRtest[1].speedDiff = 90;
+
+        //Rank (ren): 2
+        //Rank (imp): 1
+        //distance (imp low): 0.775
+        //distance (imp high): 10.15
+        //distance (rendezvous): 0.775
+        GRtest[2].posDiff = 180;
+        GRtest[2].speedDiff = 30;
+
+        //Rank (ren): 3
+        //Rank (imp): 5
+        //distance (imp low): 0.6375
+        //distance (imp high): 3.45
+        //distance (rendezvous): 0.6375
+        GRtest[3].posDiff = 20;
+        GRtest[3].speedDiff = 70;
+
+        //Rank (ren): 2
+        //Rank (imp): 6
+        //distance (imp low): 0.2675
+        //distance (imp high): 2.15
+        //distance (rendezvous): 0.225
+        GRtest[4].posDiff = 110;
+        GRtest[4].speedDiff = 40;
+
+        //Rank (ren): 1
+        //Rank (imp): 2
+        //distance (imp low): 0.8
+        //distance (imp high): 8.3
+        //distance (rendezvous): 0.8
+        GRtest[5].posDiff = 30;
+        GRtest[5].speedDiff = 90;
+
+        //Rank (ren): 2
+        //Rank (imp): 5
+        //distance (imp low): 0.1625
+        //distance (imp high): 1.1
+        //distance (rendezvous): 0.2125
+        GRtest[6].posDiff = 50;
+        GRtest[6].speedDiff = 120;
+
+        //Rank (ren): 1
+        //Rank (imp): 2
+        //distance (imp low): 1e+12
+        //distance (imp high): 1e+12
+        //distance (rendezvous): 1e+12
+        GRtest[7].posDiff = 220;
+        GRtest[7].speedDiff = 970;
+        //Rank (ren): 1
+        //Rank (imp): 2
+        //distance (imp low): 1e+12
+        //distance (imp high): 1e+12
+        //distance (rendezvous): 1e+12
+        GRtest[8].posDiff = 20;
+        GRtest[8].speedDiff = 120;
+        //Rank (ren): 1
+        //Rank (imp): 2
+        //distance (imp low): 1e+12
+        //distance (imp high): 1e+12
+        //distance (rendezvous): 1e+12
+        GRtest[9].posDiff = 340;
+        GRtest[9].speedDiff = 90;
+
     }
     else{
         cout << "Not a valid test" << endl;
@@ -285,7 +375,7 @@ bool dominationTest(){
 
     
     //test 7 has special printing and calling needs
-    if(test == 6){
+    if(test == 6 || test == 7){
         for(int run = 0; run < 3; run++){//run for the 3 cases
             if(run == 0){//normal rendezvous mission
                 missionType = 1; //ren 1, imp 2
@@ -320,6 +410,7 @@ bool dominationTest(){
 
             }
             else{//impact mission with speedDiff calc
+            /*
                 missionType = 2; //ren 1, imp 2
                 //call giveRank to rank each adult
                 giveRankTest(GRtest, missionType);
@@ -333,6 +424,7 @@ bool dominationTest(){
                 for(int i = 0; i < GRtest.size(); i++){
                     cout << "Rank: " << GRtest[i].rank << " Distance: " << GRtest[i].distance << " PosDiff: " << GRtest[i].posDiff << " speedDiff: " << GRtest[i].speedDiff << " Index: " << i <<  endl;
                 }
+                */
             }
         }
     }
@@ -619,8 +711,8 @@ void giveDistanceTest(std::vector<Adult> & allAdults, int poolSize, int missionT
     //Sort by the first objective function, posDiff
     std::sort(allAdults.begin(), allAdults.begin() + newPoolSize, LowerPosDiff);
     //Set the boundaries
-    allAdults[0].distance = 1e+12;
-    allAdults[newPoolSize - 1].distance = 1e+12;
+    allAdults[0].distance += 1;
+    allAdults[newPoolSize - 1].distance += 1;
     
     //cout << endl << "Post lowerPosDiff sort:" << endl;
     for(int i = 0; i < allAdults.size(); i++){
@@ -637,8 +729,16 @@ void giveDistanceTest(std::vector<Adult> & allAdults, int poolSize, int missionT
     //could we instead have it find the distance from i = 0 and i = 1
     for(int i = 1; i < newPoolSize-1; i++){
         //Divide left and right individuals by the worst individual to normalize
-        normalPosDiffRight = allAdults[i-1].posDiff/allAdults[newPoolSize - 1].posDiff;
-        normalPosDiffLeft = allAdults[i+1].posDiff/allAdults[newPoolSize - 1].posDiff;
+        if(missionType == Impact){
+            normalPosDiffRight = allAdults[i-1].posDiff/allAdults[newPoolSize - 1].posDiff;
+            
+            normalPosDiffLeft = allAdults[i+1].posDiff/allAdults[newPoolSize - 1].posDiff;
+            //cout << "Right: " << normalPosDiffRight << " Left: " << normalPosDiffLeft << endl;
+        }else{
+            normalPosDiffRight = allAdults[i-1].posDiff/allAdults[newPoolSize - 1].posDiff;
+            normalPosDiffLeft = allAdults[i+1].posDiff/allAdults[newPoolSize - 1].posDiff;
+        }
+        
         
         //distance = distance + abs((i+1) - (i-1))
         allAdults[i].distance = allAdults[i].distance + abs(normalPosDiffLeft - normalPosDiffRight);// /(pool[poolSize - 1].posDiff - pool[0].posDiff));
@@ -648,12 +748,12 @@ void giveDistanceTest(std::vector<Adult> & allAdults, int poolSize, int missionT
     //Repeat above process for speedDiff
     if(missionType == Impact){
         //cout << endl << "Post HigherSpeedDiff sort:" << endl;
-        std::sort(allAdults.begin(), allAdults.begin() + newPoolSize, HigherSpeedDiff);
+        //std::sort(allAdults.begin(), allAdults.begin() + newPoolSize, HigherSpeedDiff);
     }else{
         //cout << endl << "Post lowerSpeedDiff sort:" << endl;
         std::sort(allAdults.begin(), allAdults.begin() + newPoolSize, LowerSpeedDiff);
-        allAdults[0].distance = 1e+12;
-        allAdults[newPoolSize - 1].distance = 1e+12;
+        allAdults[0].distance += 1;
+        allAdults[newPoolSize - 1].distance += 1;
     }
     
     //Set the boundaries
@@ -679,9 +779,10 @@ void giveDistanceTest(std::vector<Adult> & allAdults, int poolSize, int missionT
         }else{
             normalSpeedDiffRight = allAdults[i-1].speedDiff/allAdults[newPoolSize - 1].speedDiff;
             normalSpeedDiffLeft = allAdults[i+1].speedDiff/allAdults[newPoolSize - 1].speedDiff;
+            allAdults[i].distance = allAdults[i].distance + abs((normalSpeedDiffLeft - normalSpeedDiffRight));// /(pool[poolSize - 1].speedDiff - pool[0].speedDiff));
         }
         //distance = distance + abs((i+1) - (i-1))
-        allAdults[i].distance = allAdults[i].distance + abs((normalSpeedDiffLeft - normalSpeedDiffRight));// /(pool[poolSize - 1].speedDiff - pool[0].speedDiff));
+        
 
     }
 
@@ -760,78 +861,9 @@ void oldGiveRankTest(Individual * pool, int poolSize) {
 }
 */
 
-bool CAtest(){
-    std::vector<Adult> CAtest;
-
-    int r = 0;//rank
-    double d = 1.0;//distance
-    int vectSize = 6;//size of the vector for the test
-
-    //creating the vector and filling it with adults
-    for(int i = 0; i < vectSize; i++){
-        CAtest.push_back(Adult(r, d)); 
-        //GRtest[i].posDiff = i;
-        //GRtest[i].speedDiff = i;
-    }
-
-    //Rank: 1
-    CAtest[0].posDiff = 1e-6;
-    CAtest[0].speedDiff = 1;
-    //Rank: 1
-    CAtest[1].posDiff = 4;
-    CAtest[1].speedDiff = 1;
-    //Rank: 2
-    CAtest[2].posDiff = 5;
-    CAtest[2].speedDiff = 7;
-    //Rank: 3
-    CAtest[3].posDiff = 9.72;
-    CAtest[3].speedDiff = 9.72;
-    //Rank: 2
-    CAtest[4].posDiff = 11;
-    CAtest[4].speedDiff = 2;
-    //Rank: 1
-    CAtest[5].posDiff = 3;
-    CAtest[5].speedDiff = 3;
-    //
-    //GRtest[6].posDiff = 10;
-    //GRtest[6].speedDiff = 10;
-    //
-    //GRtest[7].posDiff = 5;
-    //GRtest[7].speedDiff = 5;
-    //give them a rank
-    //giveRankTest(CAtest);
-
-    //give them a distance (this distance will not be used?)
-    //giveDistanceTest(CAtest, CAtest.size());
-
-    //**These are all based on what is in the config/cConstants**
-    double anneal_initial = 0.10;
-    double new_anneal;
-    double currentAnneal = anneal_initial;
-    double anneal_min = anneal_initial;
-    double previousBestPosDiff = 0;
-    double generation = 1;
-    double posTolerance = 1e-14;
-    double dRate = 1e-8;
-
-    while(generation < 10){
-        //call the test to adjust the anneal
-        changeAnnealTest(CAtest, new_anneal, currentAnneal, anneal_min, previousBestPosDiff, generation, posTolerance, dRate);
-        //print the results
-        cout << "done with run " << generation << endl;
-        cout << " new_anneal: " << new_anneal << " currentAnneal: " << currentAnneal << " anneal_min: " << anneal_min << endl;
-        cout <<  " previousBestPosDiff: " << previousBestPosDiff << " dRate: " << dRate <<  endl;
-        //adjust the best posDiff every generation to get more changes in the anneal
-        CAtest[0].posDiff = CAtest[0].posDiff/10;
-        //increase the generation 
-        generation++;
-    }
-
-    return true;
-
-}
 
 
+/*
 void changeAnnealTest(std::vector<Adult> newAdults, double & new_anneal, double & currentAnneal, double & anneal_min,  double & previousBestPosDiff, double & generation, const double & posTolerance, double & dRate){
     // Scaling anneal based on proximity to tolerance
     //cudaConstants (all based on what is in cConstants/config):
@@ -916,4 +948,125 @@ bool changeInBestTest(double previousBestPosDiff, const Adult & currentBest, dou
             cout << "false"<< endl;
             return false;
         }
+}
+
+*/
+bool CAtest(){
+    std::vector<Adult> CAtest;
+
+    int r = 0;//rank
+    double d = 1.0;//distance
+    int vectSize = 1;//size of the vector for the test
+
+    //creating the vector and filling it with adults
+    for(int i = 0; i < vectSize; i++){
+        CAtest.push_back(Adult(r, d)); 
+        //GRtest[i].posDiff = i;
+        //GRtest[i].speedDiff = i;
+    }
+
+    //Rank: 1
+    CAtest[0].posDiff = 3.14159e-8;
+    CAtest[0].speedDiff = 2.71828e-9;
+
+    //give them a distance (this distance will not be used?)
+    //giveDistanceTest(CAtest, CAtest.size());
+
+    //**These are all based on what is in the config/cConstants**
+    int missionType = 2;//1 for imp, 2 for ren
+    double anneal_initial = 0.10;
+    double new_anneal;
+    double currentAnneal = anneal_initial;
+    //double anneal_min = anneal_initial;
+    //double previousBestPosDiff = 0;
+    int generation = 1;
+    //double posTolerance = 1e-14;
+    //double dRate = 1e-8;
+
+    while(calculateCostTest(CAtest, missionType) > Rendezvous){
+        //call the test to adjust the anneal
+        changeAnnealTest(CAtest, missionType, new_anneal, currentAnneal);
+        //print the results
+        if(generation %1==0){
+        cout << "done with run " << generation << endl;
+        cout << "currentAnneal: " << currentAnneal << endl;
+        cout << "Current cost: " << calculateCostTest(CAtest, missionType) << endl;
+        cout << "Best posDiff: " << CAtest[0].posDiff << ", Best speedDiff: " << CAtest[0].speedDiff << endl;
+        }
+        //adjust the best posDiff every generation to get more changes in the anneal
+        CAtest[0].posDiff = CAtest[0].posDiff/1.2;
+        CAtest[0].speedDiff = CAtest[0].speedDiff/1.2;
+        //increase the generation 
+        generation++;
+    }
+        changeAnnealTest(CAtest, missionType, new_anneal, currentAnneal);
+        cout << "Total generations = " << generation << endl;
+        cout << "currentAnneal: " << currentAnneal << endl;
+        cout << "Current cost: " << calculateCostTest(CAtest, missionType) << endl;
+        cout << "Best posDiff: " << CAtest[0].posDiff << ", Best speedDiff: " << CAtest[0].speedDiff << endl;
+
+    return true;
+
+}
+void changeAnnealTest(const std::vector<Adult>& oldAdults, int missionType, double & new_anneal, double & currentAnneal){
+    
+    //Calculate the current cost for this generation
+    double curCost = calculateCostTest(oldAdults, missionType);
+    double anneal_initial = 0.1;
+    double anneal_final = 1.0e-7;
+    double costThreshold = 1;
+    //Caluclate the new current anneal
+    //It will be a linear decrease from the initial/max anneal based on how well the current cost is compared to the cost threshold
+    //If we happen to be close to covergence, and the cost we get is -0.0001:
+  //currentAnneal =               0.1          * (              1.000001                  )
+    //if the signs were correct, this would still be only a small decrease when very close to convergence
+//    currentAnneal = anneal_initial * (1 - std::abs(costThreshold / curCost));
+//    currentAnneal = anneal_initial * (1 - pow(std::abs(costThreshold / curCost),2.0));
+//    currentAnneal = anneal_initial * (1 - (1 / curCost));
+    if(missionType = Rendezvous){
+        currentAnneal = anneal_initial * (1 - (Rendezvous / curCost));
+    }else if (missionType == Impact){
+        currentAnneal = anneal_initial * (1 - (Impact / curCost));
+    }
+    
+//    currentAnneal = anneal_initial * (1 - pow((Rendezvous / curCost),2.0));
+    //Check to make sure that the current anneal does not fall below the designated minimum amount
+    if (currentAnneal < anneal_final)
+    {
+        currentAnneal = anneal_final;
+    }
+}
+
+double calculateCostTest(const std::vector<Adult> & oldAdults, int missionType){
+    //Create the cost double that will be returned
+    double cost; 
+    double pos_threshold = 1.0e-10;
+    double speed_threshold = 1.0e-11;
+
+    //How to calculate the cost will depend on the mission type
+    //In general, cost will be (for each mission parameter, the difference/the goal) - the number of mission parameters
+    //This will mean a cost of 0 or below signifies that the individual has hit the mission goals
+
+    //For impacts, the cost only depends on posDiff
+    //  NOTE: While the RD sorting favors high speed for impacts, convergence ultimately comes down to posDiff
+    if (missionType == Impact) {
+        //Calculate the cost based only on position
+        //The goal is position threshold and the current status is the best individual's posDiff
+    //  cost =      bigger number    /         1e-10              -   1 = large number - 1
+    //  The run before convergence:
+    //  cost =   number <= 1e-10     /         1e-10              -   1 = smallish number - 1
+//        cost = (oldAdults[0].posDiff /pos_threshold) - Impact;
+        cost = (oldAdults[0].posDiff /pos_threshold) ;
+        //this might better if we did:
+
+    }
+    //For rendezvous, the cost depends on both posDiff and speedDiff
+    else {
+        //Similarly to impact, calculate how far the best adult's speed and position diffs are away from the goal and subtract by the number of mission goals
+//        cost = ((oldAdults[0].posDiff / pos_threshold) + (oldAdults[0].speedDiff / speed_threshold)) - Rendezvous;
+        cost = ((oldAdults[0].posDiff / pos_threshold) + (oldAdults[0].speedDiff / speed_threshold));
+    }
+    
+    //Return the calculated cost
+    return cost; 
 }

@@ -12,6 +12,12 @@ bool runGeneticsUnitTests(bool printThings){
     // Says to set the time_seed to NONE so time(0), but that does not work so set it to 0
     utcConstants->time_seed = 0; 
 
+    //TODO: VVV When? Why? This is going to be a slight issue in that you are copy/pasting
+    //      I would argue that you should have an argument for each of these, not just 'pulled them from the config'
+
+    //TODO: You don't need to redefine the meaning (that is defined in detali in Config_Constants) 
+    //      you need to be commenting on why you are using the values that you are using
+
     //values taken directly from the genetic config file
     utcConstants->anneal_initial = 0.10; // initial value for annealing, meant to replace the previously used calculation involving ANNEAL_MIN and ANNEAL_MAX with something more simple
     utcConstants->anneal_final = 1.0e-7;   // final value for annealing, anneal cannot be reduced beyond this point
@@ -41,6 +47,8 @@ bool runGeneticsUnitTests(bool printThings){
     // (E.g. 8 does not evenly divide 10 -> two pairings of parents will each produce 8 kids, which is 16 total and 16 > 10)
     utcConstants->num_individuals = 10; 
 
+    //TODO: Isn't ^^^ 10 the const you set in const int genSize = 10; ?
+
     // Number of survivors selected, every pair of survivors creates 8 new individuals 
     // Chose 3 because that is approximately a quarter of 10
     // This also allows us to see if the shuffling and new parent pairing works as expected
@@ -57,11 +65,14 @@ bool runGeneticsUnitTests(bool printThings){
     utcConstants->orbitalPeriod = 3.772645011085093e+07; // orbital period time of 1999RQ36 Bennu (s) 
     utcConstants->GuessMaxPossibleSteps = 1000000;
 
+    //TODO: GuessMaxPossibleSteps has been depreciated (and should not be 1000000) (also you set this twice, see below)
+
     //ALL THE STUFF SO EARTH'S INITIAL POSITION CAN BE CALCULATED
     utcConstants->triptime_max=2.0* SECONDS_IN_YEAR;
     utcConstants->triptime_min=1.0* SECONDS_IN_YEAR;
     utcConstants->timeRes=3600; // Earth Calculations Time Resolution Value
     utcConstants->v_escape = 2162.4/AU; //sqrt of DART Mission c3energy
+    // TODO: Wait... so are you doing DART or are you doing Bennu? ^^^ and VVV
     //Bennu config values
     utcConstants->r_fin_earth=9.857045197029908E-01;
     utcConstants->theta_fin_earth=1.242975503287042;
@@ -76,13 +87,19 @@ bool runGeneticsUnitTests(bool printThings){
     utcConstants->max_numsteps=2500;
     utcConstants->min_numsteps=400;
 
+    //TODO: For testing I would set max_numsteps much lower. This puts an upper limit on the number of iterations inside the CUDA kernel
+    //      I would use 1000 or less. These unit tests cannot (and should not) test for numeric accuracy of the callRK function
+
 // SETTING A RANDOM NUMBER GENERATOR (rng) TO BE USED BY FUNCTIONS
     // This rng object is used for generating all random numbers in the genetic algorithm, passed in to functions that need it
     std::mt19937_64 rng(utcConstants->time_seed);
 
+    //TODO: just needed for what?
     launchCon = new EarthInfo(utcConstants); //VERY complicated part of the code with some possibility of errors -> just needed for 
 
 // CALLING THE DIFFERENT UNIT TESTING ALGORITHMS
+//TODO: I know you kind of have this in the .h, but I might put some documentation here (or in the functions themselves)
+//       arguing for why they are good tests i.e. what are you doing to verify correctness?
     bool allWorking = true;
     if (firstParentsTest(utcConstants, printThings)){
         cout << "PASSED: Children can be converted to adults that can be sorted" << endl;
@@ -114,7 +131,7 @@ bool runGeneticsUnitTests(bool printThings){
     }
 
 
-    delete[] utcConstants;
+    delete[] utcConstants; //TODO: Why is this deleting an array of utcConstants? I am pretty sure this should just be a normal delete
     delete launchCon;
     return allWorking;
 }
@@ -124,7 +141,8 @@ bool firstParentsTest(const cudaConstants * utcConstants, bool printThings){
     std::vector<Adult> parents;
     Child* theChildren = new Child[utcConstants->num_individuals];
 
-    //Made 10 children and set them with semi-random position difference and speed difference values that can easily be determined are either true or false
+    //Made 10 children and set them with semi-random position difference and speed difference values
+    //        that can easily be determined are either true or false
     //These numbers are semi-random multiples of 10 and were entered in no specific order at this point
     //This sort of simulates when the initial generation of oldAdults are created using random parameters 
     //(but these don't change from run to run and are easier to do compare)
@@ -915,64 +933,14 @@ void wrongWayToRank(std::vector<Adult> & newAdults){
             cout << "ERROR" << endl;
         }
     }
-    int thisWasDominatedXTimes[genSize]; //an array holding how many times any singular index was dominated
-    for (int h = 0; h < genSize; h++){ //sets the initial number of times a thing was dominated to 0
-        thisWasDominatedXTimes[h] = 0;
-    }
-    for (int i = 0; i < newAdults.size()-1; i++){ //goes through all the adults seeing which dominates
-        for(int j = i+1; j < newAdults.size(); j++){ //j starts at the index past i so things are not checked against themselves and things are not rechecked
-            //since a pair of indices should only be compared to one another once, it tracks the domination for both i and j
-            if (dominationCheckTest(newAdults[i], newAdults[j])){ //i dominates
-                arrayOfDominations[i].push_back(j);
-                thisWasDominatedXTimes[j]++;
-                cout << i << " dominated " << j << endl;
-            }
-            else if (dominationCheckTest(newAdults[j], newAdults[i])){//j dominates
-                arrayOfDominations[j].push_back(i);
-                thisWasDominatedXTimes[i]++;
-                cout << j << " dominated " << i << endl;
-            }
+
+    for (int i = 0; i < theResults.size(); i++){
+        if (theResults[i].posDiff != theAnswers[i].posDiff || theResults[i].speedDiff != theAnswers[i].speedDiff){
+            cout << "The Adult here is (" << theResults[i].posDiff << "," << theResults[i].speedDiff << "), but it should be (" << theAnswers[i].posDiff << "," << theAnswers[i].speedDiff << ")" << endl;
+            return false;
         }
-    }
-    for (int i = 0; i < genSize; i++){ //switch thisWasDominatedXTimes to the net number of times this was dominated by other things (negative numbers mean it did more dominating than getting dominated)
-        thisWasDominatedXTimes[i] -= arrayOfDominations[i].size();
-    }
-    int leastDominated = 1000; //starts at a random value that is far larger than anything that should occur in my code - as the name implies, this represents the smallest number of times an adult was dominated
-    bool all1000 = false; //when an adult has been given its permanent rank, the number of times it was dominated will be set to 1000 to ensure everything gets a rank
-    int k = 0; //a number k that represents the rank that will be assigned to an individual (k is a bad name for it, that was a holdover from when the below was a for loop not a while loop)
-    while (k < genSize && all1000 == false){ //loops until either everything has been given a rank
-        //resets leastDominated to a bad value and all1000 to true so the loop will repeat in the same manner as the previous run
-        leastDominated = 1000; 
-        all1000 = true;
-        for(int l = 0; l < genSize; l++){ //goes through every member of a generation, seeing how many times it was dominated
-            if (k == 0){
-                cout << l << ": " << thisWasDominatedXTimes[l] << endl;
-            }
-            if (thisWasDominatedXTimes[l] < leastDominated){ //if this was dominated fewer times than leastDominated, it is given the rank k+1 and the number of times it was dominated is the new leastDominated
-                leastDominated = thisWasDominatedXTimes[l];
-                all1000 = false;
-                newAdults[l].rank = k+1;
-            }
-            else if (thisWasDominatedXTimes[l] == leastDominated && leastDominated != 1000){ //if this number was dominated the same number of times as the next least dominated, they should have the same rank (the !=1000 keeps it from reranking ones that already have a rank)
-                all1000 = false;
-                newAdults[l].rank = k+1;
-            }
-        }
-        for (int anotherLoop = 0; anotherLoop < genSize; anotherLoop++){ //once the true value for leastDominated was selected, it sets any numbers who were dominated leastDomination times to saying they were dominated 1000 times so they are not reranked next 
-            if (thisWasDominatedXTimes[anotherLoop] == leastDominated && leastDominated != 1000){
-                thisWasDominatedXTimes[anotherLoop] = 1000;
-            }
-        }
-        k++; //increments k so not stuck in an infinite loop
     }
     
-    //prints everything so we can set it 
-    for (int m = 0; m < newAdults.size(); m++){
-        cout << m << ":" << newAdults[m].getRank() << " ~ ";
-        if (newAdults[m].getRank() == INT_MAX){
-            cout << "\nERROR - the function didn't work" << std::endl;
-        }
-    }
-    cout << std::endl; 
+    return true;
 }
 */

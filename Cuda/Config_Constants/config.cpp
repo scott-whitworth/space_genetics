@@ -217,6 +217,13 @@ void cudaConstants::FileRead(std::string fileName) {
                     this->mutation_rate = std::stod(variableValue);
                 }
 
+                else if (variableName == "default_mutation_factor") {
+                    this->default_mutation_factor = std::stod(variableValue);
+                }
+                else if (variableName == "duplicate_mutation_factor") {
+                    this->duplicate_mutation_factor = std::stod(variableValue);
+                }
+
                 else if (variableName == "gamma_mutate_scale") {
                     this->gamma_mutate_scale = std::stod(variableValue);
                 }
@@ -280,6 +287,9 @@ void cudaConstants::FileRead(std::string fileName) {
                 }
                 else if (variableName == "speedDominationTolerance") {
                     this->speedDominationTolerance = std::stod(variableValue);
+                }
+                else if (variableName == "distanceTolerance") {
+                    this->distanceTolerance = std::stod(variableValue);
                 }
 
 

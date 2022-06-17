@@ -99,10 +99,11 @@ void mutateMask(std::mt19937_64 & rng, bool * mutateMask, double mutation_rate);
 //        rng - random number generator to use
 //        annealing - a scalar value on the max random number when mutating
 //        cConstants - holds properties to use such as mutation rates and mutation scales for specific parameter property types
-//TODO: generation?
+//        generation - passed in to report on mutations if desired
+//        mutationScale - scalar for the mutation intensity, allows for control on the intensity of mutations between children and duplicates
 // Output: Returns rkParameter object that is the mutated version of p1
 // Called by generateNewIndividual
-rkParameters<double> mutate(const rkParameters<double> & p1, std::mt19937_64 & rng, const double & annealing, const cudaConstants* cConstants, const double & generation);
+rkParameters<double> mutate(const rkParameters<double> & p1, std::mt19937_64 & rng, const double & annealing, const cudaConstants* cConstants, const double & generation, const double & mutationScale);
 
 // Utility function for mutate() to get a random double with high resolution
 // Input: max - the absolute value of the min and max(min = -max) of the range
@@ -138,7 +139,17 @@ void generateChildrenPair(const Adult & parent1, const Adult & parent2, Child * 
 //          cConstants - the config constants; it is passed on to other functions and is used for constructing children and mutating their parameters
 // Outputs: newAdults will be filled with newly generated adults; it will be ready to be sorted and compared to other generations
 // NOTE: This function is called at the beginning of each generation within optimize() 
-void newGeneration(const std::vector<Adult> & oldAdults, std::vector<Adult> & newAdults, const double & annealing, const int & generation, const std::mt19937_64 & rng, const cudaConstants* cConstants);
+void newGeneration(std::vector<Adult> & oldAdults, std::vector<Adult> & newAdults, const double & annealing, const int & generation, const std::mt19937_64 & rng, const cudaConstants* cConstants);
+
+// mutateAdults will find duplicate adults within the passed in vector, mutate, rand resimulate them
+// Inputs:  oldAdults - a vector of adults that that will used to find duplicates
+//          rng - the random number generator, will be passed into the mutate function
+//          currentAnneal - the mutation anneal, will be passed into the mutate function 
+//          generation - the current generation, will be passed into the mutate function
+//          cConstants - the cuda constants
+// Outputs: The duplicate adults within oldAdults will be identified, their parameters will be mutated, they will be resimulated, and they will be reinserted into oldAdults
+// NOTE: This function assumes that oldAdults have already had their distances paid
+void mutateAdults(std::vector<Adult> & oldAdults, std::mt19937_64 & rng, const double& currentAnneal, const int & generation, const cudaConstants* cConstants);
 
 // Converts children previously simulated by callRK into adults
 //        It calculates the pos and speed diffs of the children and inserts the new children into the submitted adult vector

@@ -91,6 +91,15 @@ bool runGeneticsUnitTests(bool printThings){
 
 // CALLING THE DIFFERENT UNIT TESTING ALGORITHMS
     bool allWorking = true;
+
+    std::vector<Adult> aAdults;
+    if (verifyProperCloneSeparation(printThings, utcConstants)){
+        cout << "PASSED: Separating clones from unique numbers is working as expected" << endl;
+    }
+    else{
+        cout << "FAILED: Separating clones from unique numbers is not working as expected" << endl;
+    }
+    
     //firstParentsTest takes in the cuda constants and will verify that children can be converted into parents and sorted using rankDistanceSort
     if (firstParentsTest(utcConstants, printThings)){
         cout << "PASSED: Children can be converted to adults that can be sorted" << endl;
@@ -116,16 +125,22 @@ bool runGeneticsUnitTests(bool printThings){
         cout << "FAILED: Could not successfully make children using the three different methods" << endl;
         allWorking = false;
     }
+    if (verifyProperCloneSeparation(printThings, utcConstants)){
+        cout << "PASSED: Separating clones from unique numbers is working as expected" << endl;
+    }
+    else{
+        cout << "FAILED: Separating clones from unique numbers is not working as expected" << endl;
+    }
     //creates a generation of parents and then creates children from these parents
     //then these children are sent through a function that verifies their tripTime values 
     //tripTime was chosen because it was the paramerter set in creating the parents and it is easiest to see if the children have the correct values for tripTime 
-    if (firstFullGen(rng, utcConstants, printThings)){
-        cout << "PASSED: Successfully made the first generation of adults from another set of adults" << endl;
-    }
-    else{
-        cout << "FAILED: Could not successfully make the first generation of adults from another set of adults" << endl;
-        allWorking = false;
-    }
+    // if (firstFullGen(rng, utcConstants, printThings)){
+    //     cout << "PASSED: Successfully made the first generation of adults from another set of adults" << endl;
+    // }
+    // else{
+    //     cout << "FAILED: Could not successfully make the first generation of adults from another set of adults" << endl;
+    //     allWorking = false;
+    // }
 
     delete utcConstants;
     delete launchCon;
@@ -364,7 +379,7 @@ bool makeChildrenWithDifferentMethods(std::mt19937_64& rng, cudaConstants * utcC
         crossOver_wholeRandom(mask, rng);
 
         //Generate a pair of children based on the mask
-        generateChildrenPair(parent1, parent2, children, mask, annealing, rng, childrenCreated, gen, utcConstants);
+        generateChildrenPair(parent1, parent2, children, utcConstants->num_individuals, mask, annealing, rng, childrenCreated, gen, utcConstants);
 
         //the "magic" 1 represents the first test, crossover_wholeRandom
         if (!checkReasonability(children[childrenCreated -2], children[childrenCreated-1], mask, parentVals, 1, utcConstants, printThings)){
@@ -376,7 +391,7 @@ bool makeChildrenWithDifferentMethods(std::mt19937_64& rng, cudaConstants * utcC
         crossOver_average(mask);
 
         //Generate a pair of children based on the mask
-        generateChildrenPair(parent1, parent2, children, mask, annealing, rng, childrenCreated, gen, utcConstants);
+        generateChildrenPair(parent1, parent2, children, utcConstants->num_individuals, mask, annealing, rng, childrenCreated, gen, utcConstants);
 
         //the "magic" 2 represents the second test, crossover_average
        if (!checkReasonability(children[childrenCreated -2], children[childrenCreated-1], mask, parentVals, 2, utcConstants, printThings)){
@@ -387,7 +402,7 @@ bool makeChildrenWithDifferentMethods(std::mt19937_64& rng, cudaConstants * utcC
         crossOver_bundleVars(mask, rng);
 
         //Generate a pair of children based on the mask
-        generateChildrenPair(parent1, parent2, children, mask, annealing, rng, childrenCreated, gen, utcConstants);
+        generateChildrenPair(parent1, parent2, children, utcConstants->num_individuals, mask, annealing, rng, childrenCreated, gen, utcConstants);
         
         //the "magic" 3 represents the third test, crossover_bundleVars
         if (!checkReasonability(children[childrenCreated -2], children[childrenCreated-1], mask, parentVals, 3, utcConstants, printThings)){
@@ -538,6 +553,158 @@ bool checkReasonability(const Child& c1, const Child& c2, std::vector<int> & mas
     return true;
 }
 
+void twentyAdultsPosAndSpeedDiffMade(bool printThings, std::vector<Adult>& allAdults, cudaConstants* utcConstants){
+    utcConstants->num_individuals = 20;
+
+    Child* genZero = new Child[utcConstants->num_individuals]; 
+    allAdults.clear();
+
+    //made 20 children with semi-random speed and position differences and tripTimes
+    //the tripTime has no actual correlation with the posDiff and speedDiff
+    genZero[0] = Child(40000000.0, 0.02, 0.0043); //about 1.27 years  
+    genZero[1] = Child(35000000.0, 0.048, 0.00234); //about 1.12 years 
+    genZero[2] = Child(41000000.0, 0.299, 0.0034); //about 1.30 years
+    genZero[3] = Child(32000000.0, 0.025, 0.00354); //about 1.01 years 
+    genZero[4] = Child(47000000.0, 0.122, 0.0034); //about 1.49 years 
+    genZero[5] = Child(43000000.0, 0.02, 0.0034); //about 1.36 years 
+    genZero[6] = Child(37400000.0, 0.012, 0.0042); //about 1.18 years 
+    genZero[7] = Child(38000000.0, 0.14, 0.00192); //about 1.20 years 
+    genZero[8] = Child(44300000.0, 0.053, 0.00414); //about 1.40 years 
+    genZero[9] = Child(45200000.0, 0.098, 0.00432); //about 1.43 years 
+    genZero[10] = Child(80000000.0, 0.02, 0.0043); //about 2.54 years  
+    genZero[11] = Child(70000000.0, 0.048, 0.00234); //about 2.24 years 
+    genZero[12] = Child(82000000.0, 0.299, 0.0034); //about 3.60 years
+    genZero[13] = Child(64000000.0, 0.025, 0.00354); //about 2.02 years 
+    genZero[14] = Child(94000000.0, 0.122, 0.0034); //about 2.98 years 
+    genZero[15] = Child(43000000.0, 0.02, 0.0034); //about 1.36 years 
+    genZero[16] = Child(74800000.0, 0.017, 0.0042); //about 2.36 years 
+    genZero[17] = Child(76000000.0, 0.14, 0.00192); //about 2.40 years 
+    genZero[18] = Child(43000000.0, 0.02, 0.0034); //about 1.36 years 
+    genZero[19] = Child(41000000.0, 0.299, 0.0034); //about 1.30 years
+
+    for (int i = 0; i < utcConstants->num_individuals; i++){
+        allAdults.push_back(Adult(genZero[i]));
+    }
+
+    stolenGiveRank(allAdults, utcConstants);
+    std::sort(allAdults.begin(), allAdults.end(), rankSort);
+    stolenGiveDistance(allAdults, utcConstants);
+    std::sort(allAdults.begin(), allAdults.end(), rankDistanceSort);
+
+    if (printThings){
+        for (int i = 0; i < utcConstants->num_individuals; i++){
+            cout << "allAdults[" << i << "]: " << allAdults[i].unitTestingRankDistanceStatusPrint() << "- posDiff: " << allAdults[i].posDiff << ", speedDiff: " << allAdults[i].speedDiff << " & tripTime: " << allAdults[i].startParams.tripTime << endl;
+        }
+        cout << endl;
+    }
+
+    delete[] genZero;
+}
+
+bool verifyProperCloneSeparation(bool printThings, cudaConstants* utcConstants){
+    //for this test, we want the survivor count to be the entire population to give us the best sample size
+    utcConstants->survivor_count = 15;
+    std::vector<Adult> oldAdults;
+
+    //fills oldAdults with the 20 adults who only have posDiff, speedDiff, and tripTime uniquely assigned to them
+    twentyAdultsPosAndSpeedDiffMade(printThings, oldAdults, utcConstants);
+
+    //will be returned at the end of the loop
+    bool noProblems = true;
+
+    //Vector that will hold the adults who are potential parents
+    //The criteria for being a parent is being in the top survivor_count number of adults in the oldAdult pool and not being a duplicate (distance > 0)
+    //      Duplicate adults will generate children in a separate fashion
+    std::vector<Adult> parents; 
+
+    //Vector for duplicates, based on the same criteria as above
+    std::vector<Adult> duplicates;
+
+    //ensure the adults are sorted
+    std::sort(oldAdults.begin(), oldAdults.end(), rankDistanceSort);
+
+    //part taken directly from lines 422-439 of ga_crossover.cpp at 4:30PM on 6/21/22
+    //sort all the oldAdults
+    std::sort(oldAdults.begin(), oldAdults.end(), rankDistanceSort);
+    //loop through all the adults
+    for (int i = 0; i < utcConstants->survivor_count; i++){
+        //i+1 so it doesn't check itself or past indexes
+        for(int j = i+1; j < utcConstants->survivor_count; j++){
+            //only true if it is both a duplicate and has not been previous marked as a duplicate
+            if(duplicateCheck(oldAdults[i], oldAdults[j], utcConstants) && oldAdults[j].duplicate != true){
+                duplicates.push_back(oldAdults[j]);
+                oldAdults[j].duplicate = true;
+            }
+        }
+    }
+    //all that were not marked as duplicates are either unique or the original
+    for(int i = 0; i < utcConstants->survivor_count; i++){
+        if(oldAdults[i].duplicate != true){
+            parents.push_back(oldAdults[i]);
+        }
+    }
+    
+    //these loops print all the helpful information contained by each thing in parents and in duplicates
+    if (printThings){
+        for (int i = 0; i < parents.size(); i++){
+            cout << "parents[" << i << "]: " << parents[i].unitTestingRankDistanceStatusPrint() << "- posDiff: " << parents[i].posDiff << " & speedDiff: " << parents[i].speedDiff << " & tripTime: " << parents[i].startParams.tripTime<< endl;
+        }
+        for (int j = 0; j < duplicates.size(); j++){
+            cout << "duplicates[" << j << "]: " << duplicates[j].unitTestingRankDistanceStatusPrint() << "- posDiff: " << duplicates[j].posDiff << " & speedDiff: " << duplicates[j].speedDiff << " & tripTime: " << duplicates[j].startParams.tripTime << endl;
+        }
+    }
+
+    //if the number of 
+    if (parents.size() + duplicates.size() !=  utcConstants->survivor_count){
+        cout << "ERROR: Things were not properly copied over and parents and duplicates are not the correct lengths" << endl;
+        return false;
+    }
+
+    std::vector<Adult> expectedClones;
+    std::vector<Adult> expectedParents;
+
+    //after the values have been rank distance sorted, the expected parents and expected clones appear they would fall in the following order
+    //if we begin comparing elements and not just posDiff and speedDiff these lists will change
+    expectedParents.push_back(Adult(Child(38000000.0, 0.14, 0.00192)));
+    expectedParents.push_back(Adult(Child(37400000.0, 0.012, 0.0042)));
+    expectedParents.push_back(Adult(Child(70000000.0, 0.048, 0.00234)));
+    expectedParents.push_back(Adult(Child(43000000.0, 0.02, 0.0034)));
+    expectedParents.push_back(Adult(Child(64000000.0, 0.025, 0.00354)));
+    expectedParents.push_back(Adult(Child(47000000.0, 0.122, 0.0034)));
+    expectedParents.push_back(Adult(Child(74800000.0, 0.017, 0.0042)));
+    expectedParents.push_back(Adult(Child(41000000.0, 0.299, 0.0034)));
+    expectedParents.push_back(Adult(Child(44300000.0, 0.053, 0.00414)));
+    expectedParents.push_back(Adult(Child(40000000.0, 0.02, 0.0043)));
+    expectedParents.push_back(Adult(Child(45200000.0, 0.098, 0.00432)));
+
+    expectedClones.push_back(Adult(Child(76000000.0, 0.14, 0.00192))); 
+    expectedClones.push_back(Adult(Child(35000000.0, 0.048, 0.00234)));
+    expectedClones.push_back(Adult(Child(43000000.0, 0.02, 0.0034)));
+    expectedClones.push_back(Adult(Child(43000000.0, 0.02, 0.0034)));
+    expectedClones.push_back(Adult(Child(32000000.0, 0.025, 0.00354)));
+    expectedClones.push_back(Adult(Child(94000000.0, 0.122, 0.0034)));
+    expectedClones.push_back(Adult(Child(41000000.0, 0.299, 0.0034)));
+    expectedClones.push_back(Adult(Child(82000000.0, 0.299, 0.0034)));
+    expectedClones.push_back(Adult(Child(80000000.0, 0.02, 0.0043)));
+    
+    //checks the tripTimes against each other because this will allow us to see if these appear in the proper order or not
+    for (int i = 0; i < parents.size(); i++){
+        if (expectedParents[i].startParams.tripTime != parents[i].startParams.tripTime){
+            cout << "parents[" << i << "] did not match the expected value" << endl;
+            noProblems = false;
+        }
+    }
+    for (int i = 0; i < duplicates.size(); i++){
+        if (expectedClones[i].startParams.tripTime != duplicates[i].startParams.tripTime){
+            cout << "duplicates[" << i << "] did not match the expected value" << endl;
+            cout << duplicates[i].startParams.tripTime << " vs " << expectedClones[i].startParams.tripTime << endl;
+            noProblems = false;
+        }
+    }
+
+    return noProblems;
+}
+
 //just makes checkReasonability shorter - takes in an offset and accesses a child's parameter corresponding to this offset
 double getParamStuff(const int correspondingOffset, const Child& aChild){
     if (correspondingOffset == ALPHA_OFFSET){ 
@@ -659,6 +826,9 @@ bool verifyFullGen(std::vector<Adult>& youngGen, std::vector<Adult>& possParents
                     cout << "\t";
                 }
             }
+            else if (i > utcConstants->survivor_count){
+                cout << "                               ";
+            }   
             cout << "\t\t";
 
             cout << "youngGen[" << i << "]'s tripTime: ";
@@ -958,6 +1128,7 @@ void stolenGiveDistance(std::vector<Adult> & allAdults, const cudaConstants* cCo
             allAdults[i].distance = allAdults[i].distance + abs((normalSpeedDiffLeft - normalSpeedDiffRight));// /(allAdults[validAdults.size() - 1].speedDiff - allAdults[0].speedDiff));
         }
     }
+    
 }
 
 /*

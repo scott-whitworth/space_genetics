@@ -62,6 +62,35 @@ bool checkReasonability(const Child& c1, const Child& c2, std::vector<int> & mas
 // Output: the value of the parameter corresponding to that offset in the child
 double getParamStuff(const int correspondingOffset, const Child& aChild);
 
+// Fills allAdults with 20 adults with determined posDiffs, speedDiffs, and tripTimes 
+// Input: printThings - TRUE-> prints the adults after they have been rankDistance sorted
+//                     FALSE-> skips printing
+//       allAdults - vector of adults overwritten by the adults contained in this function
+//       utcConstants - used to access num_individuals (which this function increases to 20)
+// NOTE: None of these Adults went through callRK and some of their tripTimes fall outside the acceptable range
+//       These values were picked largely as they make the calculations easier and the final version using callRK
+//       is tested in firstFullGen
+// Output: num_individuals is 20 and allAdults is filled with the 20 individuals that were created in this function
+void twentyAdultsPosAndSpeedDiffMade(bool printThings, std::vector<Adult>& allAdults, cudaConstants* utcConstants);
+
+// Checks if clones are being separated from original/unique values properly
+// Input: printThings - TRUE-> displays information on the values being held in duplicates
+//                      FALSE-> no cout statements are printed unless there is an issue with the code
+// Output: The parents and duplictaes vectors are compared to the expected versions of these vectors 
+//         (these vectors were determined by looking at the order things ended up in after rankDistanceSort)
+//         Returns 
+bool verifyProperCloneSeparation(bool printThings, cudaConstants* utcConstants);
+
+//
+bool verifyChildrenFromCrossover(bool printThings, cudaConstants* utcConstants);
+
+//
+bool verifyChildrenFromMutation(bool printThings, cudaConstants* utcConstants);
+
+//copied directly from ga_crossover.cpp, just doesn't mess with the whole callRK thing
+bool UTCopyOfNewGeneration(std::vector<Adult> & oldAdults, std::vector<Adult> & newAdults, const double & annealing, const int & generation, std::mt19937_64 & rng, const cudaConstants* cConstants);
+
+
 // Makes a set of parents and creates children from these parents -> uses callRK
 // Input: rng - used by the masks to set up which parent a gene is being taken from
 //        utcConstants - used for a variety of things from num_individuals to being used by callRK and stolenGiveRank

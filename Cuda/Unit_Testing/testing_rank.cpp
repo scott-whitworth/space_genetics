@@ -52,6 +52,7 @@ double calculateCostTest(const std::vector<Adult> & oldAdults, int missionType);
 //       currentBest (the best posDiff of this generation)
 //       dRate to compare to current and previous best
 //bool changeInBestTest(double previousBestPosDiff, const Adult & currentBest, double distinguishRate);
+bool newDuplicateTest();
 
 
 bool dominationTest(){
@@ -467,71 +468,6 @@ bool dominationTest(){
         cout << "2nd Worst-> Rank: " << GRtest[GRtest.size() - 2].rank << ", p: " << GRtest[GRtest.size() - 2].posDiff << ", s: " << GRtest[GRtest.size() - 2].speedDiff << ", d: " << GRtest[GRtest.size() -2].distance << endl;
         cout << "Worst-> Rank: " << GRtest[GRtest.size() - 1].rank << ", p: " << GRtest[GRtest.size() - 1].posDiff << ", s: " << GRtest[GRtest.size() - 1].speedDiff << ", d: " << GRtest[GRtest.size() -1].distance << endl;
     }
-    
-
-    //this part is not in use; uses the individual class
-    /*
-    //same size as whatever test is running
-    int vectSize = GRtest.size();
-    //edited individual class
-    Individual * testPool = new Individual[GRtest.size()];
-
-    if(test == 3){//larger test with random values
-        srand(time(NULL));
-        for(int i = 0; i < vectSize; i++){
-            //edited individual class
-            testPool[i] = Individual(r, d);
-            //random values from 1 to 1000, same as adult class
-            testPool[i].posDiff = GRtest[i].posDiff;
-            testPool[i].speedDiff = GRtest[i].speedDiff;
-        }
-    }else if(test == 2){
-        for(int i = 0; i < vectSize; i++){
-            //edited individual class
-            testPool[i] = Individual(r, d);
-            //same to compare ranks
-            testPool[i].posDiff = GRtest[i].posDiff;
-            testPool[i].speedDiff = GRtest[i].speedDiff;
-        }
-    }else if (test == 1){
-        for(int i = 0; i < vectSize; i++){
-            testPool[i] = Individual(r, d);
-            //same to compare ranks
-            testPool[i].posDiff = GRtest[i].posDiff;
-            testPool[i].speedDiff = GRtest[i].speedDiff;
-        }
-    }else if (test == 4){
-        for(int i = 0; i < vectSize; i++){
-            testPool[i] = Individual(r, d);
-            //same to compare ranks
-            testPool[i].posDiff = GRtest[i].posDiff;
-            testPool[i].speedDiff = GRtest[i].speedDiff;
-        }
-    }
-
-    
-
-    //call the old giveRank function that uses arrays
-    oldGiveRankTest(testPool, vectSize);
-    //print the results
-    cout << "Ranks:" << endl;
-    for(int i = 0; i < vectSize; i++){
-        if(vectSize > 50){
-            if(i % 50 == 0){
-                cout << "r: " << testPool[i].rank << ", p: " << testPool[i].posDiff << ", s: " << testPool[i].speedDiff << endl;
-            }
-        }else{
-            cout << "r: " << testPool[i].rank << ", p: " << testPool[i].posDiff << ", s: " << testPool[i].speedDiff << endl;
-        }
-        
-    }
-    cout << "Best-> Rank: " << testPool[0].rank << ", p: " << testPool[0].posDiff << ", s: " << testPool[0].speedDiff << endl;
-    cout << "2nd Worst-> Rank: " << testPool[GRtest.size() - 2].rank << ", p: " << testPool[GRtest.size() - 2].posDiff << ", s: " << testPool[GRtest.size() - 2].speedDiff << endl;
-    cout << "Worst-> Rank: " << testPool[GRtest.size() - 1].rank << ", p: " << testPool[GRtest.size() - 1].posDiff << ", s: " << testPool[GRtest.size() - 1].speedDiff << endl;
-    */
-    //compare the best and worst and how they were ranked
-    //std::sort(testPool, testPool + vectSize, rankSortInd);
-    //do this sort after so the correct indexes are copied to testPool
         
     return true;
     
@@ -600,28 +536,6 @@ void giveRankTest(std::vector<Adult> & allAdults, int missionType) {
     int rankNum = 1;
     //vector to store individuals' indexes in next front
     std::vector<int> newFront;
-    /*
-    if(allAdults.size() > 20){
-        cout << "***Done with domination process***" << endl;
-        cout << " front size: " << front.size();
-        cout << " domination size: " << domination.size() << endl;
-    }else{
-        cout << " front size: " << front.size();
-        cout << " domination size: " << domination.size() << endl;
-        //print the 2d vector that has the index of every adult that has been dominated at least once
-        for(int k = 0; k < domination.size(); k++){
-            for(int l = 0; l < domination[k].size(); l++){
-                cout << domination[k][l] << ", ";
-            } 
-        cout << endl;
-        }
-        //print the dominatedByCount of every adult
-        for(int i = 0; i < dominatedByCount.size(); i++){
-            cout << dominatedByCount[i] << ", ";
-        }
-    }
-    
-    */
     
     //go until all individuals have been put in better ranks and none are left to give a ranking
     while(!front.empty()) {
@@ -795,178 +709,6 @@ void giveDistanceTest(std::vector<Adult> & allAdults, int poolSize, int missionT
     
 }
 
-/*
-void oldGiveRankTest(Individual * pool, int poolSize) {
-    //non-denominated sorting method
-    //https://www.iitk.ac.in/kangal/Deb_NSGA-II.pdf
-    //Used to store the current front of individuals. first filled with the first front individuals(best out of all population)
-    // filled with index of individuals in pool
-    std::vector<int> front;
-    
-    //loop through each individual
-    for (int i = 0; i < poolSize; i++){
-        
-        //number of times pool[i] has been dominated
-        pool[i].dominatedCount = 0;
-        //set of solutions that pool[i] dominates. Need to empty for each generation
-        std::vector<int>().swap(pool[i].dominated);
-        for(int j = 0; j < poolSize; j++){
-            
-            //if i dominates j, put the j index in the set of individuals dominated by i.
-            if (dominationCheckTestv2(pool[i], pool[j])  || isnan(pool[j].posDiff) || isnan(pool[j].speedDiff)){
-                pool[i].dominated.push_back(j);
-            }
-            //if j dominates i, increase the number of times that i has been dominated
-            else if (dominationCheckTestv2(pool[j], pool[i])  || isnan(pool[i].posDiff) || isnan(pool[j].speedDiff)) {
-                pool[i].dominatedCount++;
-            }
-        }
-        
-        //if i was never dominated, add it's index to the best front, front1. Making its ranking = 1.
-        if (pool[i].dominatedCount == 0){
-            pool[i].rank = 1;
-            front.push_back(i);
-        }
-    }
-    //Used to assign rank number
-    int rankNum = 1;
-    //vector to store individuals' indexes in next front
-    std::vector<int> newFront;
-    //go until all individuals have been put in better ranks and none are left to give a ranking
-    while(!front.empty()) {
-        //empty the new front to put new individuals in
-        std::vector<int>().swap(newFront);
-        //loop through all individuals in old front
-        for(int k = 0; k < front.size(); k++){
-            //loop through all the individuals that the individual in the old front dominated
-            for(int l = 0; l < pool[front[k]].dominated.size(); l++){
-                //subtract 1 from the dominated individuals' dominatedCount.
-                //if an individual was dominated only once for example, it would be on the second front of individuals.
-                pool[pool[front[k]].dominated[l]].dominatedCount--;
-                //if the dominated count is at 0, add the individual to the next front and make its rank equal to the next front number.
-                if (pool[pool[front[k]].dominated[l]].dominatedCount == 0){
-                    pool[pool[front[k]].dominated[l]].rank = rankNum + 1;
-                    newFront.push_back(pool[front[k]].dominated[l]);                        
-                }
-            }
-        }
-        //increment the rank number
-        rankNum++;
-        //empty the current front
-        std::vector<int>().swap(front);
-        //go to next front
-        front = newFront;
-    }
-    cout << endl << "Index 0 dominated count (old): " << pool[0].dominatedCount << endl;
-}
-*/
-
-
-
-/*
-void changeAnnealTest(std::vector<Adult> newAdults, double & new_anneal, double & currentAnneal, double & anneal_min,  double & previousBestPosDiff, double & generation, const double & posTolerance, double & dRate){
-    // Scaling anneal based on proximity to tolerance
-    //cudaConstants (all based on what is in cConstants/config):
-    int missionType = Rendezvous;
-    double anneal_final = 1.0e-7;
-    int change_check = 1;
-    double anneal_factor = 0.75;
-    double anneal_initial = 0.10;
-
-
-    // Far away: larger anneal scale, close: smaller anneal
-    if (missionType == Impact) {
-        //Impact is only based on posDiff, so proximity-based annealing only relies on how close posDiff is to tolerance.
-    //  new_anneal =    0.10       * (1 - (    1e-7     /         1e-6      ))
-    //             =    0.09
-        new_anneal = currentAnneal * (1 - (posTolerance / newAdults[0].posDiff));
-    }
-
-    else if (missionType == Rendezvous) {
-        if (posTolerance < newAdults[0].posDiff){ 
-            //TO DO: decide what we want to do with this annealing   
-            //Exponentially changing annealing, as oppose to what?
-            // this may be where the anneal is jumping?
-            //on first run:
-        //  new_anneal =    0.10       * (1 - pow(    1e-7     /        1e-6      )^2)
-        //             =    0.099
-            new_anneal = currentAnneal * (1 - pow(posTolerance / newAdults[0].posDiff,2.0));
-            if (new_anneal < anneal_final){
-                new_anneal = anneal_final; //Set a true minimum for annealing
-            }
-        }
-    }
-    
-    //Process to see if anneal needs to be adjusted
-    // If generations are stale, anneal drops
-    Adult currentBest;
-    // Compare current best individual to that from CHANGE_CHECK (50) many generations ago.
-    // If they are the same, change size of mutations
-    //change_check for the test here is 1
-    if (static_cast<int>(generation) % (change_check) == 0) { 
-        currentBest = newAdults[0];
-        // checks for anneal to change
-        // previousBest starts at 0 to ensure changeInBest = true on generation 0
-        if ( !(changeInBestTest(previousBestPosDiff, currentBest, dRate)) ) { 
-            //this ensures that changeInBest never compares two zeros, thus keeping dRate in relevance as the posDiff lowers
-            //on the first run through this, this requires the posDiff to be 1e-8
-            if (trunc(currentBest.posDiff/dRate) == 0) { //posDiff here used to be cost
-                while (trunc(currentBest.posDiff/dRate) == 0) { //posDiff here used to be cost
-                    dRate = dRate/10; 
-                }
-                std::cout << "\nnew dRate: " << dRate << std::endl;
-            }
-            // If no change in BestIndividual across generations, reduce currentAnneal by anneal_factor while staying above anneal_min
-            //reduce anneal_min
-            // the exponential decrease here leads to a huge jump on the last generation?
-            anneal_min = anneal_initial*exp(-sqrt(posTolerance/newAdults[0].posDiff)*generation);
-            if (anneal_min < anneal_final){
-                anneal_min = anneal_final;//Set a true minimum for annealing
-            }
-
-            //Rendezvous mission uses anneal_min, Impact does not
-            if(missionType == Impact) {
-                currentAnneal = currentAnneal * anneal_factor;
-            }
-            else if (missionType == Rendezvous){
-                currentAnneal = (currentAnneal * anneal_factor > anneal_min)? (currentAnneal * anneal_factor):(anneal_min);
-            }
-            std::cout << "\nnew anneal: " << currentAnneal << std::endl;              
-        }
-
-        previousBestPosDiff = currentBest.posDiff; //posDiff here used to be cost
-    }
-}
-
-bool changeInBestTest(double previousBestPosDiff, const Adult & currentBest, double distinguishRate) {
-    //truncate is used here to compare doubles via the distinguguishRate, to ensure that there has been relatively no change.
-        if (trunc(previousBestPosDiff/distinguishRate) != trunc(currentBest.posDiff/distinguishRate)) {
-            cout << "true"<< endl;
-            return true;
-        }
-        else { 
-            cout << "false"<< endl;
-            return false;
-        }
-}
-// Sets the entire mask to be AVG for length OPTIM_VARS
-void crossOver_averageRatio(std::vector<int> & mask) {
-    for (int i = 0; i < OPTIM_VARS; i++) {
-        mask[i] = AVG_RATIO;
-    }
-    return;
-}
-else if (mask[i] == AVG_RATIO){
-                // If the mask is 4, average the values from both parents based on random ratio
-                childParameters.coeff.gamma[i - GAMMA_OFFSET] = ratio*p2.coeff.gamma[i - GAMMA_OFFSET] + (1 - ratio)*p1.coeff.gamma[i - GAMMA_OFFSET];
-            }
-            else if (mask[i] == AVG_RATIO) {
-                childParameters.coeff.tau[i - TAU_OFFSET] = ratio*p2.coeff.tau[i - TAU_OFFSET] + (1 - ratio)*p1.coeff.tau[i - TAU_OFFSET];
-            }
-        else if (mask[i] == AVG_RATIO) {
-                childParameters.coeff.coast[i - COAST_OFFSET] = ratio*p2.coeff.coast[i - COAST_OFFSET] + (1 - ratio)*p1.coeff.coast[i - COAST_OFFSET];
-            }
-*/
 bool CAtest(){
     std::vector<Adult> CAtest;
 
@@ -1090,4 +832,139 @@ double calculateCostTest(const std::vector<Adult> & oldAdults, int missionType){
     
     //Return the calculated cost
     return cost; 
+}
+
+bool newDuplicateTest(){
+    //vector for the test
+    std::vector<Adult> dupeTest;
+
+    int vectSize = 8;//size of the vector for the test
+    srand(time(NULL));//random seed
+    //fill a vector with the adults
+    for(int i = 0; i < vectSize; i++){
+        //default constuctor, don't care about rank or distacne
+        dupeTest.push_back(Adult()); 
+        //random values from 1 to 100
+        //dupeTest[i].posDiff = 1 + (rand() % 100);
+        //dupeTest[i].speedDiff = 1 +  (rand() % 100);
+    }
+    //Rank (ren): 1
+    //rank (imp): 3
+    //distance (imp low): 1e+12
+    //distance (imp high): 1e+12
+    //distance (rendezvous): 1e+12
+    dupeTest[0].posDiff = 5;
+    dupeTest[0].speedDiff = 6;
+
+    //Rank (ren): 1
+    //Rank (imp): 4
+    //distance (imp low): 0.2625
+    //distance (imp high): 1.2
+    //distance (rendezvous): 0.2625
+    dupeTest[1].posDiff = 5;
+    dupeTest[1].speedDiff = 6;
+
+    //Rank (ren): 2
+    //Rank (imp): 1
+    //distance (imp low): 0.775
+    //distance (imp high): 10.15
+    //distance (rendezvous): 0.775
+    dupeTest[2].posDiff = 5;
+    dupeTest[2].speedDiff = 6;
+
+    //Rank (ren): 3
+    //Rank (imp): 5
+    //distance (imp low): 0.6375
+    //distance (imp high): 3.45
+    //distance (rendezvous): 0.6375
+    dupeTest[3].posDiff = 5;
+    dupeTest[3].speedDiff = 6;
+
+    //Rank (ren): 2
+    //Rank (imp): 6
+    //distance (imp low): 0.2675
+    //distance (imp high): 2.15
+    //distance (rendezvous): 0.225
+    dupeTest[4].posDiff = 11;
+    dupeTest[4].speedDiff = 2;
+
+    //Rank (ren): 1
+    //Rank (imp): 2
+    //distance (imp low): 0.8
+    //distance (imp high): 8.3
+    //distance (rendezvous): 0.8
+    dupeTest[5].posDiff = 5;
+    dupeTest[5].speedDiff = 6;
+
+    //Rank (ren): 2
+    //Rank (imp): 5
+    //distance (imp low): 0.1625
+    //distance (imp high): 1.1
+    //distance (rendezvous): 0.2125
+    dupeTest[6].posDiff = 11;
+    dupeTest[6].speedDiff = 2;
+
+    //Rank (ren): 1
+    //Rank (imp): 2
+    //distance (imp low): 1e+12
+    //distance (imp high): 1e+12
+    //distance (rendezvous): 1e+12
+    dupeTest[7].posDiff = 5;
+    dupeTest[7].speedDiff = 6;
+
+    //Vector that will hold the adults who are potential parents
+    //The criteria for being a parent is being in the top survivor_count number of adults in the oldAdult pool and not being a duplicate (distance > 0)
+    //      Duplicate adults will generate children in a separate fashion
+    std::vector<Adult> parents; 
+
+    //Vector for duplicates, based on the same criteria as above
+    std::vector<Adult> duplicates;
+    //this sort is not nescessary
+    std::sort(dupeTest.begin(), dupeTest.end(), rankDistanceSort);
+    for (int i = 0; i < vectSize; i++){//loop through all the adults
+        for(int j = i+1; j < vectSize; j++){//i+1 so it doesn't check itself or past indexes
+            if(duplicateCheckTest(dupeTest[i], dupeTest[j]) && dupeTest[j].duplicate != true){
+                //only true if it is both a duplicate and has not been previous marked as a duplicate
+                dupeTest[j].duplicate = true;
+                cout << i << ": " << j << endl;
+                duplicates.push_back(dupeTest[i]);
+                
+            }else{
+                //parents.push_back(dupeTest[i]);
+            }
+        }
+    }
+    //all that were not marked as duplicates are either unique or the original
+    for(int i = 0; i < vectSize; i++){
+        if(dupeTest[i].duplicate != true){
+            parents.push_back(dupeTest[i]);
+        }
+    }
+    //print the duplicates
+    cout << "Duplicate size: " << duplicates.size() << endl;
+    cout << "Duplicates index: " << endl;
+    for(int i = 0; i < duplicates.size(); i++){
+        cout << i << ": " << duplicates[i].posDiff << ", " << duplicates[i].speedDiff << endl;
+
+    }
+    //print the parents
+    cout << "Parents size: " << parents.size() << endl;
+    cout << "Parents index: " << endl;
+    for(int i = 0; i < parents.size(); i++){
+        cout << i << ": " << parents[i].posDiff << ", " << parents[i].speedDiff << endl;
+    }
+    //print the results
+    for(int i = 0; i < dupeTest.size(); i++){
+        if(dupeTest.size() > 50){//print every 50th adult for large vector
+            if(i % 50 == 0){
+                cout << "posDiff: " << dupeTest[i].posDiff << ", speedDiff: " << dupeTest[i].speedDiff << ", duplicate: " << dupeTest[i].duplicate << endl;
+            }
+        }
+        else{
+            cout << "posdiff: " << dupeTest[i].posDiff << ", speedDiff: " << dupeTest[i].speedDiff << ", duplicate: " << dupeTest[i].duplicate << endl;
+        }
+    }
+
+    return true;
+
 }

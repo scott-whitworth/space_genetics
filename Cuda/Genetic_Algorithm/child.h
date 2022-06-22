@@ -24,6 +24,7 @@ struct Child {
     
     ERROR_STATUS errorStatus; //record of if child is computed correctly, should be set in callRK
 
+
 //!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     // Default constructor
     // Input: None

@@ -33,6 +33,10 @@ struct Adult: public Child {
     //A large distance can be thought of as a high degree of genetic diversity for the adult
     double distance; 
 
+    //this is changed/checked in newGeneration()
+    //meant to make sure there is not more than one instance of the same adult in the next generation
+    bool duplicate;
+
 //!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     // Default constructor
     // Input: none
@@ -44,7 +48,7 @@ struct Adult: public Child {
     // Input: A child - this has cConstants, a set of rkParameters, and elements in it already, as well as the speedDiff and posDiff
     // Output: a child is turned into an adult
     // NOTE: This will be called by convertToAdults within newGeneration & ga_crossover.cu. Children that have just been simulated will be converted from a child into an adult
-    Adult(const Child& c): Child(c), rank(INT_MAX), distance(-1){}
+    Adult(const Child& c): Child(c), rank(INT_MAX), distance(-1), duplicate(false){}
 
     //TODO: Consider deleting this -> it is weird sorting from best to worst and calling best less than worst (unless we want to be very specific we mean LESS WRONG or something?)
     //Compare two adults by their rank and distance
@@ -65,7 +69,7 @@ struct Adult: public Child {
     // Output: Constructs an Adult using the unit testing Child constructor that only contains default and sets its rank and distance so it can be sorted using rankDistanceSort
     // ONLY USE FOR UNIT TESTING!!! SHOULD NEVER BE CALLED ELSEWHERE 
     Adult(int r, double d, ERROR_STATUS s = VALID): Child(s), rank(r), distance(d){}
-   
+
     // A function used exclusively for unit testing that prints that rank and distance of an adult
     // Output: takes an adult's rank, distance, and status and creates a string holding this information
     // ONLY USE FOR UNIT TESTING!!! Note: This was purposefully given a long name to discourage people from using it
@@ -128,6 +132,14 @@ bool lowerDistanceSort(const Adult& personA, const Adult& personB);
 //      It is used in via callSorts to put the best adults into oldAdults
 //      It is used in reportGeneration to print the best performing individual 
 bool rankDistanceSort(const Adult& personA, const Adult& personB);
+
+//compares two adults to see if they have the same posDiff and speedDiff
+//Input: Two adults and cConstants for the tolerances
+//Output: true if they have the same posDiff and speedDiff, false if they don't
+bool duplicateCheck(const Adult& personA, const Adult& personB, const cudaConstants* cConstants);
+
+//test version of duplicateCheck that does not use cConstants
+bool duplicateCheckTest(const Adult& personA, const Adult& personB);
 
 //!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 //Compare two adults to see if the first adult dominates the second adult

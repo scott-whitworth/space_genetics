@@ -47,6 +47,7 @@ Child:: Child(const Child& other){
     speedDiff = other.speedDiff;
     funcStatus = other.funcStatus;
     errorStatus = other.errorStatus;
+
 }
 
 //!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

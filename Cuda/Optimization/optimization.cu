@@ -103,7 +103,7 @@ void calculateDistValues (const std::vector<Adult> & allAdults, double & minDist
 //Input: all the updated parameters of the current generation
 //Output: calls the various terminal display functions when needed
 //Function that handles the reporting of a generation's performance
-void reportGeneration (std::vector<Adult>& oldAdults, const cudaConstants* cConstants, const double & currentAnneal, const double & anneal_min, const int & generation, int & numNans);
+void reportGeneration (std::vector<Adult>& oldAdults, std::vector<Adult> & allAdults, const cudaConstants* cConstants, const double & currentAnneal, const double & anneal_min, const int & generation, int & numNans);
 
 //----------------------------------------------------------------------------------------------------------------------------
 // Main processing function for Genetic Algorithm
@@ -332,7 +332,7 @@ void giveDistance(std::vector<Adult> & allAdults, const cudaConstants* cConstant
     std::sort(allAdults.begin(), allAdults.begin() + validAdults.size(), LowerPosDiff);
     //Set the boundaries
     allAdults[0].distance += MAX_DISTANCE; //+=1
-    allAdults[validAdults.size() - 1].distance += MAX_DISTANCE; //+=1
+    allAdults[validAdults.size() - 1].distance += 0; //+=1
 
 
     //For each individual besides the upper and lower bounds, make their distance equal to
@@ -352,7 +352,7 @@ void giveDistance(std::vector<Adult> & allAdults, const cudaConstants* cConstant
         std::sort(allAdults.begin(), allAdults.begin() + validAdults.size(), LowerSpeedDiff);
         //Set the boundaries
         allAdults[0].distance += MAX_DISTANCE; //+=1
-        allAdults[validAdults.size() - 1].distance += MAX_DISTANCE; //+=1
+        allAdults[validAdults.size() - 1].distance += 0; //+=1
 
     
         //For each individual besides the upper and lower bounds, make their distance equal to
@@ -739,7 +739,7 @@ void calculateDistValues (const std::vector<Adult> & allAdults, double & minDist
 }
 
 //Function that writes the results of the inserted generation
-void reportGeneration (std::vector<Adult> & oldAdults, const cudaConstants* cConstants, const double & currentAnneal, const double & anneal_min, const int & generation, int & numNans){
+void reportGeneration (std::vector<Adult> & oldAdults, std::vector<Adult> & allAdults, const cudaConstants* cConstants, const double & currentAnneal, const double & anneal_min, const int & generation, int & numNans){
     // If in recording mode and write_freq reached, call the record method
     if (static_cast<int>(generation) % cConstants->write_freq == 0 && cConstants->record_mode == true) {
         recordGenerationPerformance(cConstants, oldAdults, generation, currentAnneal, cConstants->num_individuals, anneal_min);
@@ -778,7 +778,7 @@ void reportGeneration (std::vector<Adult> & oldAdults, const cudaConstants* cCon
 
     //Record the parent pool for the next generation
     if (static_cast<int>(generation) % cConstants->all_write_freq == 0 && cConstants->record_mode == true) {
-        recordAllIndividuals("NextParents", cConstants, oldAdults, cConstants->num_individuals, generation);
+        recordAllIndividuals("NextParents", cConstants, allAdults, allAdults.size(), generation);
     }
 }
 
@@ -911,7 +911,7 @@ double optimize(const cudaConstants* cConstants) {
         changeAnneal (oldAdults, cConstants, new_anneal, currentAnneal, anneal_min, previousBestPosDiff, generation, posTolerance, dRate);
 
         //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE RECORD-_-_-_-_-_-_-_-_-_\n\n";
-        reportGeneration (oldAdults, cConstants, currentAnneal, anneal_min, generation, numNans);
+        reportGeneration (oldAdults, allAdults, cConstants, currentAnneal, anneal_min, generation, numNans);
 
         // Before replacing new adults, determine whether all are within tolerance
         // Determines when loop is finished

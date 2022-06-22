@@ -5,6 +5,7 @@
 Adult::Adult(){
     rank = INT_MAX; //might change later?
     distance = -1;
+    duplicate = false;
 }
 
 //Adult::Adult(rkParameters<double> & childParameters, const cudaConstants* cConstants): Child(childParameters, cConstants), rank(INT_MAX), distance(-1){
@@ -249,6 +250,68 @@ bool rankDistanceSort(const Adult& personA, const Adult& personB) {
     // }
     
 
+}
+
+bool duplicateCheck(const Adult& personA, const Adult& personB, const cudaConstants* cConstants){
+
+    //true if A posDiff "equals" B posDiff
+    bool APosEqualsB = false;
+    //true if A speedDiff "equals" B speedDiff
+    bool ASpeedEqualsB = false;
+
+    //tolerances used to determine the range of values considered equal
+    //these are both currently set to 1e-14 AU, I don't think these need to be modified 
+    double posTolerance = cConstants->posDominationTolerance;
+    double speedTolerance = cConstants->speedDominationTolerance;
+
+    //True is A posdiff is equal to B posDiff +- posTolerance
+    if ((personA.posDiff < personB.posDiff + posTolerance) && (personA.posDiff > personB.posDiff - posTolerance)){
+        APosEqualsB = true;
+    }
+    //True is A speeddiff is equal to B speedDiff +- speedTolerance
+    if ((personA.speedDiff < personB.speedDiff + speedTolerance) && (personA.speedDiff > personB.speedDiff - speedTolerance)){
+        ASpeedEqualsB = true;
+    }
+
+    //if they are both true then we found a duplicate
+    if(APosEqualsB == true && ASpeedEqualsB == true){
+        return true;
+    }else{//a dulplicate was not found
+        
+        return false;
+    }
+}
+
+bool duplicateCheckTest(const Adult& personA, const Adult& personB){
+
+    //true if A posDiff "equals" B posDiff
+    bool APosEqualsB = false;
+    //true if A speedDiff "equals" B speedDiff
+    bool ASpeedEqualsB = false;
+
+    //tolerances used to determine the range of values considered equal
+    //these are both currently set to 1e-14 AU, I don't think these need to be modified 
+    double posTolerance = 1e-14;
+    double speedTolerance = 1e-14;
+
+    //True is A posdiff is equal to B posDiff +- posTolerance
+    if ((personA.posDiff < personB.posDiff + posTolerance) && (personA.posDiff > personB.posDiff - posTolerance)){
+        APosEqualsB = true;
+    }
+    //True is A speeddiff is equal to B speedDiff +- speedTolerance
+    if ((personA.speedDiff < personB.speedDiff + speedTolerance) && (personA.speedDiff > personB.speedDiff - speedTolerance)){
+        ASpeedEqualsB = true;
+    }
+
+    //if they are both true then we found a duplicate
+    if(APosEqualsB == true && ASpeedEqualsB == true){
+        return true;
+    }else{//a dulplicate was not found
+        
+        return false;
+    }
+
+    return false;
 }
 
 bool dominationCheckTest(Adult& personA, Adult& personB, int missionType){

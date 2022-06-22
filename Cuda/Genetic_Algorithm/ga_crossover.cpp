@@ -132,7 +132,7 @@ double getRand(double max, std::mt19937_64 & rng) {
 
 //!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Creates a new rkParameters individual by combining properties of two parent Individuals using a mask to determine which
-rkParameters<double> generateNewChild(const rkParameters<double> & p1, const rkParameters<double> & p2, const std::vector<int> & mask, const cudaConstants * cConstants, const double & annealing, std::mt19937_64 & rng, const double & generation) {
+rkParameters<double> generateNewChild(const rkParameters<double> & p1, const rkParameters<double> & p2, const std::vector<int> & mask, const cudaConstants * cConstants, const double & annealing, std::mt19937_64 & rng, const double & generation, const bool & duplicate) {
 
     // Set the new individual to hold traits from parent 1 
     rkParameters<double> childParameters = p1;
@@ -224,7 +224,7 @@ rkParameters<double> generateNewChild(const rkParameters<double> & p1, const rkP
     }
 
     // Crossover complete, determine mutation
-    childParameters = mutate(childParameters, rng, annealing, cConstants, generation, cConstants->default_mutation_factor);
+    childParameters = mutate(childParameters, rng, annealing, cConstants, generation, cConstants->default_mutation_factor, duplicate);
 
     return childParameters;
 }
@@ -258,7 +258,7 @@ void mutateMask(std::mt19937_64 & rng, bool * mutateMask, double mutation_rate) 
 }
 
 // In a given Individual's parameters, generate a mutate mask using mutateMask() and then adjust parameters based on the mask, mutation of at least one gene is not guranteed
-rkParameters<double> mutate(const rkParameters<double> & p1, std::mt19937_64 & rng, const double & annealing, const cudaConstants* cConstants, const double & generation, const double & mutationScale) {    
+rkParameters<double> mutate(const rkParameters<double> & p1, std::mt19937_64 & rng, const double & annealing, const cudaConstants* cConstants, const double & generation, const double & mutationScale, const bool & duplicate) {    
     // initially set new individual to have all parameter values from parent 1
     rkParameters<double> childParameters = p1; 
 
@@ -266,7 +266,12 @@ rkParameters<double> mutate(const rkParameters<double> & p1, std::mt19937_64 & r
     bool * mutation_mask = new bool[OPTIM_VARS];
 
     // Determine which parameters will be mutated with the mutate mask
-    mutateMask(rng, mutation_mask, cConstants->mutation_rate);
+    if(duplicate == true){//if this child is an individual, give it a higher chance to mutate
+        mutateMask(rng, mutation_mask, cConstants->duplicate_mutation_factor);
+    }else{//not a duplicate, give it the usual mutation rate
+        mutateMask(rng, mutation_mask, cConstants->mutation_rate);
+    }
+    
 
     // Declare a record that is to describe what genes are being changed and by how much to record into mutateFile
     // double recordLog[OPTIM_VARS];
@@ -359,11 +364,13 @@ void generateChildrenPair (Adult & parent1, Adult & parent2, Child * newChildren
     if(numNewChildren >= childrenToGenerate){ 
         return;
     }
+    //this is not a duplicate
+    bool dupe = false;
 
     //TODO: There is inherently an issue here that you may over-write newChildren if you don't know the size
     //      It is possible you can do this externally, but here in this function, there is no check on the size of numNewChildren
     //Generate a new individual based on the two parents
-    newChildren[numNewChildren] = Child(generateNewChild(parent1.startParams, parent2.startParams, mask, cConstants, annealing, rng, generation), cConstants);
+    newChildren[numNewChildren] = Child(generateNewChild(parent1.startParams, parent2.startParams, mask, cConstants, annealing, rng, generation, dupe), cConstants);
 
     //Add one to numNewChildren to signify that a new child has been added to the newChildren vector
     //Will also ensure that no children are overwritten
@@ -383,7 +390,7 @@ void generateChildrenPair (Adult & parent1, Adult & parent2, Child * newChildren
     flipMask(mask); 
 
     //Generate a mirrored child
-    newChildren[numNewChildren] = Child(generateNewChild(parent1.startParams, parent2.startParams, mask, cConstants, annealing, rng, generation), cConstants); 
+    newChildren[numNewChildren] = Child(generateNewChild(parent1.startParams, parent2.startParams, mask, cConstants, annealing, rng, generation, dupe), cConstants); 
 
     //Add one to numNewChildren since a new child was generated
     numNewChildren++;
@@ -410,8 +417,30 @@ void newGeneration (std::vector<Adult> & oldAdults, std::vector<Adult> & newAdul
         for (int i = 0; i < cConstants->survivor_count; i++) {
             parents.push_back(oldAdults[i]);
         }   
+    }else{
+        //sort all the oldAdults
+        std::sort(oldAdults.begin(), oldAdults.end(), rankDistanceSort);
+        //loop through all the adults
+        for (int i = 0; i < cConstants->survivor_count; i++){
+            //i+1 so it doesn't check itself or past indexes
+            for(int j = i+1; j < cConstants->survivor_count; j++){
+                //only true if it is both a duplicate and has not been previous marked as a duplicate
+                if(duplicateCheck(oldAdults[i], oldAdults[j], cConstants) && oldAdults[j].duplicate != true){
+                    duplicates.push_back(oldAdults[j]);
+                    oldAdults[j].duplicate = true;
+                }
+            }
+        }
+        //all that were not marked as duplicates are either unique or the original
+        for(int i = 0; i < cConstants->survivor_count; i++){
+            if(oldAdults[i].duplicate != true){
+                parents.push_back(oldAdults[i]);
+            }
+        }
     }
+    /*
     else {
+        
         std::sort(oldAdults.begin(), oldAdults.end(), rankDistanceSort);
         //Go through oldAdults until survivor_count and determine if they are duplicates or not
         //      If so, add them to the duplicates vector
@@ -424,8 +453,9 @@ void newGeneration (std::vector<Adult> & oldAdults, std::vector<Adult> & newAdul
                 parents.push_back(oldAdults[i]);
             }
         }
+        
     }
-
+    */
     //Variable that tracks the number of children that needs to be generated via the crossover method
     //Set to the number of children that needs to be generated (num_individuals) minus the number of children that will be generated from duplicates via heavy mutation (size of duplicates)
     int childrenFromCrossover = cConstants->num_individuals - duplicates.size();    
@@ -442,7 +472,7 @@ void newGeneration (std::vector<Adult> & oldAdults, std::vector<Adult> & newAdul
     generateChildrenFromCrossover(parents, newChildren, childrenFromCrossover, rng, annealing, generation, cConstants);
 
     //See if there are any duplicate adults before generating children from mutations
-    if (duplicates.size() > 0) {
+    if(duplicates.size() > 0){
         //Generate the rest of the children using heavy mutation of duplicate adults
         generateChildrenFromMutation(duplicates, newChildren, childrenFromCrossover, rng, annealing, generation, cConstants); 
     }
@@ -595,13 +625,14 @@ void generateChildrenFromMutation(std::vector<Adult> & duplicates, Child* newChi
     //          The total number of new children that need to be created between both functions is num_individuals
     //          generateChildrenFromCrossover has already filled newChildren with startingIndex number of children
     //          Thus, the starting index until num_individuals is safe to be modified
+    bool dupe = true;
     for (int i = 0; i < cConstants->num_individuals - startingIndex; i++) {
         //Assign the starting parameters of a corresponding duplicate to a child
         newChildren[startingIndex + i] = Child(duplicates[i].startParams, cConstants);
 
         //Now that the necessary child has been assigned starting parameters, go though and heavily mutate their parameters
         //      Note: the mutation factor is set by duplicate_mutation_factor
-        newChildren[startingIndex + i].startParams = mutate(newChildren[startingIndex + i].startParams, rng, currentAnneal, cConstants, generation, cConstants->duplicate_mutation_factor);
+        newChildren[startingIndex + i].startParams = mutate(newChildren[startingIndex + i].startParams, rng, currentAnneal, cConstants, generation, cConstants->default_mutation_factor, dupe);
     }
 }
 

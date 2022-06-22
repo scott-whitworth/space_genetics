@@ -5,10 +5,9 @@
 // Default constructor
 //this is never called, and if it is we will know because of the func status
 Child::Child() {
-    //TODO: all we do is set status to DEFAULT_CHILD (which is essentially an error if we ever try to process)
-    //TODO: get rid of posDiff/speedDiff
+
     //posDiff = 1.0;
-    //speedDiff = 0.0; //TODO: This is ok for impact, but an issue for soft landing
+    //speedDiff = 0.0; //This is ok for impact, but an issue for soft landing
 
     funcStatus = DEFAULT_CHILD;//not ready to be an adult
 
@@ -19,7 +18,7 @@ Child::Child() {
 // Input: cConstants - to access c3energy value used in getCost()
 //        childParameters - struct returned by generateNewIndividual()
 // Output: this individual's startParams.y0 is set to the initial position and velocity of the spacecraft
-Child::Child(rkParameters<double> & childParameters, const cudaConstants* cConstants) {
+Child::Child(rkParameters<double> & childParameters, const cudaConstants* cConstants, int genCreated) {
 
     startParams = childParameters;
     elements<double> earth = launchCon->getCondition(startParams.tripTime); //get Earth's position and velocity at launch
@@ -34,6 +33,7 @@ Child::Child(rkParameters<double> & childParameters, const cudaConstants* cConst
 
     funcStatus = FUNCTIONAL_CHILD;//ready to be an adult
     errorStatus = NOT_RUN; //not run through callRK yet
+    birthday = genCreated;
 }
 
 // Copy constructor
@@ -47,7 +47,7 @@ Child:: Child(const Child& other){
     speedDiff = other.speedDiff;
     funcStatus = other.funcStatus;
     errorStatus = other.errorStatus;
-
+    birthday = other.birthday;
 }
 
 //!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

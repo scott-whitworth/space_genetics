@@ -34,13 +34,13 @@ struct cudaConstants {
     double anneal_final;   // final value for annealing, anneal cannot be reduced beyond this point
     double anneal_factor;  // factor by which annealing is multiplied with when there is no change in the best individual over 100 generations
 
-    double mutation_rate; // The percentage for probability of mutating a gene in a new individual, called iteratively to mutate more genes until the check fails
+    double mutation_amplitude; // The percentage for probability of mutating a gene in a new individual, called iteratively to mutate more genes until the check fails
     double sortingRatio; // A percentage for how much of selectSurvivors() chooses individuals that are bestPosDiff rather than bestSpeedDiff (0.95 = more posDiff, 0.05 = more speedDiff)
 
     // Scalars used to modify the mutate_scales below, used to assist in making adults mutate more if needed
     // A value of 1 will have an individual's parameters mutate at the scale of the variables below
-    double default_mutation_factor;
-    double duplicate_mutation_factor; 
+    double default_mutation_chance;
+    double duplicate_mutation_chance; 
     
     // Used in mutate(), affects the scale of change for the respective parameter values, in conjunction with annealing
     // Represents max bounds of mutation, mutation will never be +/- this value

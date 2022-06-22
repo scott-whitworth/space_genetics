@@ -106,9 +106,14 @@ void flipMask(std::vector<int> & mask) {
         else if (mask[i] == PARTNER2) {
             mask[i] = PARTNER1;
         }
+        else if (mask[i] == AVG){
+            mask[i] = AVG_RATIO;
+        }
+        else if (mask[i] == AVG_RATIO){
+            mask[i] = AVG;
+        }
         // If mask[i] is neither partner1 nor partner2 (must be avg then), leave it be
         // To handle the average enumeration
-        //TODO: We want to change AVG to AVG_RATIO
     }
     return;
 }
@@ -133,7 +138,7 @@ double getRand(double max, std::mt19937_64 & rng) {
 
 //!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Creates a new rkParameters individual by combining properties of two parent Individuals using a mask to determine which
-rkParameters<double> generateNewChild(const rkParameters<double> & p1, const rkParameters<double> & p2, const std::vector<int> & mask, const cudaConstants * cConstants, const double & annealing, std::mt19937_64 & rng, const double & generation, const bool & duplicate) {
+rkParameters<double> generateNewChild(const rkParameters<double> & p1, const rkParameters<double> & p2, const std::vector<int> & mask, const cudaConstants * cConstants, const double & annealing, std::mt19937_64 & rng, const int & generation) {
 
     // Set the new individual to hold traits from parent 1 
     rkParameters<double> childParameters = p1;
@@ -224,9 +229,8 @@ rkParameters<double> generateNewChild(const rkParameters<double> & p1, const rkP
         childParameters.alpha = ratio*p2.alpha + (1 - ratio)*p1.alpha;
     }
 
-    //TODO: this should be changed to that it is passing in default_mutation_factor and default_mutation_chance
     // Crossover complete, determine mutation
-    childParameters = mutate(childParameters, rng, annealing, cConstants, generation, cConstants->default_mutation_factor, duplicate);
+    childParameters = mutate(childParameters, rng, annealing, cConstants, generation, cConstants->mutation_amplitude, cConstants->default_mutation_chance);
 
     return childParameters;
 }
@@ -264,7 +268,7 @@ void mutateMask(std::mt19937_64 & rng, bool * mutateMask, double mutation_rate) 
 //                                        and mutationScale (the amount we mutate)
 
 // In a given Individual's parameters, generate a mutate mask using mutateMask() and then adjust parameters based on the mask, mutation of at least one gene is not guranteed
-rkParameters<double> mutate(const rkParameters<double> & p1, std::mt19937_64 & rng, const double & annealing, const cudaConstants* cConstants, const double & generation, const double & mutationScale, const bool & duplicate) {    
+rkParameters<double> mutate(const rkParameters<double> & p1, std::mt19937_64 & rng, const double & annealing, const cudaConstants* cConstants, const int & generation, const double & mutationScale, const double & mutation_chance) {    
     // initially set new individual to have all parameter values from parent 1
     rkParameters<double> childParameters = p1; 
 
@@ -272,11 +276,7 @@ rkParameters<double> mutate(const rkParameters<double> & p1, std::mt19937_64 & r
     bool * mutation_mask = new bool[OPTIM_VARS];
 
     // Determine which parameters will be mutated with the mutate mask
-    if(duplicate == true){//if this child is an individual, give it a higher chance to mutate
-        mutateMask(rng, mutation_mask, cConstants->duplicate_mutation_factor);
-    }else{//not a duplicate, give it the usual mutation rate
-        mutateMask(rng, mutation_mask, cConstants->mutation_rate);
-    }
+    mutateMask(rng, mutation_mask, mutation_chance);
     
 
     // Declare a record that is to describe what genes are being changed and by how much to record into mutateFile
@@ -363,7 +363,7 @@ rkParameters<double> mutate(const rkParameters<double> & p1, std::mt19937_64 & r
 
 //!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Method that creates a pair of new Individuals from a pair of other individuals and a mask
-void generateChildrenPair (Adult & parent1, Adult & parent2, Child * newChildren, const int & childrenToGenerate, std::vector<int> & mask, const double & annealing, std::mt19937_64 & rng, int & numNewChildren, const int & generation, const cudaConstants* cConstants) {
+void generateChildrenPair (const Adult & parent1, const Adult & parent2, Child * newChildren, const int & childrenToGenerate, std::vector<int> & mask, const double & annealing, std::mt19937_64 & rng, int & numNewChildren, const int & generation, const cudaConstants* cConstants) {
     
     //checks to make sure that more children are needed in the newChildren array before generating new children
     //if there are already enough children, it just returns and exits this function
@@ -371,21 +371,18 @@ void generateChildrenPair (Adult & parent1, Adult & parent2, Child * newChildren
         return;
     }
 
-    //TODO: Remove this (should be taken care of in generateNewChild)
+
     //this is not a duplicate
-    bool dupe = false;
 
     //TODO: There is inherently an issue here that you may over-write newChildren if you don't know the size
     //      It is possible you can do this externally, but here in this function, there is no check on the size of numNewChildren
     //Generate a new individual based on the two parents
-    newChildren[numNewChildren] = Child(generateNewChild(parent1.startParams, parent2.startParams, mask, cConstants, annealing, rng, generation, dupe), cConstants);
+    newChildren[numNewChildren] = Child(generateNewChild(parent1.startParams, parent2.startParams, mask, cConstants, annealing, rng, generation), cConstants, generation);
 
     //Add one to numNewChildren to signify that a new child has been added to the newChildren vector
     //Will also ensure that no children are overwritten
     numNewChildren++;
 
-    //TODO: We want to check/return for avg mask 
-    //      Or impliment weighted averaging
     //checks to make sure that more children are needed in the newChildren array before generating new children
     //if there are already enough children, it just returns and exits this function
     if(numNewChildren >= childrenToGenerate){
@@ -394,99 +391,15 @@ void generateChildrenPair (Adult & parent1, Adult & parent2, Child * newChildren
 
     //TODO: For efficiency, we might want to check if the mask is an averaging mask (if it is, we probably don't need to make the 'flip')
     //      On the other hand, even numbers are nice, so we may want to take the hit anyway just to keep things even
+    //Dealt with this by "flipping" an average mask to be a weighted average mask
     //Flip the mask to generate a mirrored individual
     flipMask(mask); 
 
     //Generate a mirrored child
-    newChildren[numNewChildren] = Child(generateNewChild(parent1.startParams, parent2.startParams, mask, cConstants, annealing, rng, generation, dupe), cConstants); 
+    newChildren[numNewChildren] = Child(generateNewChild(parent1.startParams, parent2.startParams, mask, cConstants, annealing, rng, generation), cConstants, generation); 
 
     //Add one to numNewChildren since a new child was generated
     numNewChildren++;
-}
-
-//!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-// Creates the next pool to be used in the optimize function in opimization.cu
-void newGeneration (std::vector<Adult> & oldAdults, std::vector<Adult> & newAdults, const double & annealing, const int & generation, std::mt19937_64 & rng, const cudaConstants* cConstants) {
-
-    //Vector that will hold the adults who are potential parents
-    //The criteria for being a parent is being in the top survivor_count number of adults in the oldAdult pool and not being a duplicate (distance > 0)
-    //      Duplicate adults will generate children in a separate fashion
-    std::vector<Adult> parents; 
-
-    //Vector for duplicates, based on the same criteria as above
-    std::vector<Adult> duplicates;
-
-    //If statement will check if the generaton is 0 
-    //      If so, it will assign all the surviving adults to parents
-    //      If not, it will decide which vector based on cost
-    //      This is done becuase, only in generation 0, does the adults in oldAdults not have a calculated cost
-    if (generation == 0) {
-        //Assign all surviving adults to parents
-        for (int i = 0; i < cConstants->survivor_count; i++) {
-            parents.push_back(oldAdults[i]);
-        }   
-    }else{
-        //TODO: This should be its own function (which should make unit testing easier)
-        //sort all the oldAdults
-        std::sort(oldAdults.begin(), oldAdults.end(), rankDistanceSort);
-        //loop through all the adults
-        for (int i = 0; i < cConstants->survivor_count; i++){
-            //i+1 so it doesn't check itself or past indexes
-            for(int j = i+1; j < cConstants->survivor_count; j++){
-                //only true if it is both a duplicate and has not been previous marked as a duplicate
-                // [j].duplicate check is for the second time an Adult is flagged as a duplicate
-                if(duplicateCheck(oldAdults[i], oldAdults[j], cConstants) && !oldAdults[j].duplicate){
-                    duplicates.push_back(oldAdults[j]);
-                    oldAdults[j].duplicate = true;
-                }
-            }
-        }
-        //all that were not marked as duplicates are either unique or the original
-        for(int i = 0; i < cConstants->survivor_count; i++){
-            if(!oldAdults[i].duplicate){
-                parents.push_back(oldAdults[i]);
-            }
-        }
-    }
-
-    //TODO: start of next function
-    //Variable that tracks the number of children that needs to be generated via the crossover method
-    //Set to the number of children that needs to be generated (num_individuals) minus the number of children that will be generated from duplicates via heavy mutation (size of duplicates)
-    int childrenFromCrossover = cConstants->num_individuals - duplicates.size();    
-
-    //Import number of new individuals the GPU needs to fill its threads
-    //Create a newChildren function to fill in with children generated from oldAdults
-    Child* newChildren = new Child[cConstants->num_individuals]; 
-
-    //Generate children with crossovers using non-duplicate parents
-    generateChildrenFromCrossover(parents, newChildren, childrenFromCrossover, rng, annealing, generation, cConstants);
-
-    //See if there are any duplicate adults before generating children from mutations
-    if(duplicates.size() > 0){
-        //Generate the rest of the children using heavy mutation of duplicate adults
-        generateChildrenFromMutation(duplicates, newChildren, childrenFromCrossover, rng, annealing, generation, cConstants); 
-    }
-    
-    //Initialize variables needed for callRK
-    //TODO: there is likely a better solution for this
-    double timeInitial = 0;
-    double calcPerS = 0;
-
-    // Each child represents an individual set of starting parameters 
-    // GPU based runge kutta process determines final position and velocity based on parameters
-    //Will fill in the final variables (final position & speed, posDiff, speedDiff) for each child
-    //    stepSize -> (cConstants->orbitalPeriod / cConstants->max_numsteps): 
-    //                good first guess as to step size, if too small/large RK will always scale to error tolerance
-    //TODO: Perhaps we should just import cCOnstants and newChildren into callRk, since most of the arguments come from cConstants regardless
-    callRK(cConstants->num_individuals, cConstants->thread_block_size, newChildren, timeInitial, (cConstants->orbitalPeriod / cConstants->max_numsteps), cConstants->rk_tol, calcPerS, cConstants); 
-
-    //Now that the children have been simulated, convert the children into adults
-    //First, it will calculate the right pos and speed diffs for the children
-    //This will also put the converted children into the newAdults vector
-    convertToAdults(newAdults, newChildren, cConstants); 
-
-    //Free the pointer's memory
-    delete[] newChildren; 
 }
 
 // Generate children from non-duplicate parents using crossover methods
@@ -612,67 +525,13 @@ void generateChildrenFromMutation(std::vector<Adult> & duplicates, Child* newChi
     //          The total number of new children that need to be created between both functions is num_individuals
     //          generateChildrenFromCrossover has already filled newChildren with startingIndex number of children
     //          Thus, the starting index until num_individuals is safe to be modified
-    bool dupe = true;
+    //bool dupe = true;
     for (int i = 0; i < cConstants->num_individuals - startingIndex; i++) {
         //Assign the starting parameters of a corresponding duplicate to a child
-        newChildren[startingIndex + i] = Child(duplicates[i].startParams, cConstants);
+        newChildren[startingIndex + i] = Child(duplicates[i].startParams, cConstants, generation);
 
         //Now that the necessary child has been assigned starting parameters, go though and heavily mutate their parameters
         //      Note: the mutation factor is set by duplicate_mutation_factor
-        //TODO: This will need the duplicate_mutation_scale and duplicate_mutation_chance 
-        newChildren[startingIndex + i].startParams = mutate(newChildren[startingIndex + i].startParams, rng, currentAnneal, cConstants, generation, cConstants->default_mutation_factor, dupe);
+        newChildren[startingIndex + i].startParams = mutate(newChildren[startingIndex + i].startParams, rng, currentAnneal, cConstants, generation, cConstants->mutation_amplitude, cConstants->duplicate_mutation_chance);
     }
-}
-
-//Function that will convert the generated children into adults
-//Will also transfer the created adults into the newAdult vector
-void convertToAdults(std::vector<Adult> & newAdults, Child* newChildren, const cudaConstants* cConstants) {
-    //TODO: Add a clear to newAdults, just in case
-    //      This should all be documented clearly in the header
-
-    //Iterate through the simulated children to determine their error status (if it hasn't been set by callRK already) and calculate their pos and speed differences
-    for (int i = 0; i < cConstants->num_individuals; i++)
-    {
-        //Check to see if nans are generated in the finalPos elements
-        if (  isnan(newChildren[i].finalPos.r) ||
-              isnan(newChildren[i].finalPos.theta) ||
-              isnan(newChildren[i].finalPos.z) ||
-              isnan(newChildren[i].finalPos.vr) ||
-              isnan(newChildren[i].finalPos.vtheta) ||
-              isnan(newChildren[i].finalPos.vz)  ) {
-            //Mark the child with the nan variables with the nan_error flag
-            newChildren[i].errorStatus = NAN_ERROR;
-        }//if it is not a nan, the status has already been made valid or sun_error in rk4SimpleCuda
-
-        //Now that the status has been determined, there is enough information to set pos and speed diffs
-        //The two functions will look at the child's errorStatus and set the diffs based on that
-        newChildren[i].getPosDiff(cConstants);
-        newChildren[i].getSpeedDiff(cConstants); 
-    }
-    
-    //Iterate through the newChildren vector to add them to the newAdult vector
-    //iterates until num_individuals as that is the number of new children needed to generate
-    //      This accounts for the potential that the number of children in newChildren is slightly larger than num_individuals
-    for (int i = 0; i < cConstants->num_individuals; i++)
-    {
-        //Fill in the newAdults vector with a new adult generated with a completed child
-        newAdults.push_back(Adult(newChildren[i]));
-    }
-}
-
-//Will create the first generation of adults from random parameters so that future generations have a pre-existing base of adults
-void firstGeneration(Child* initialChildren, std::vector<Adult>& oldAdults, const cudaConstants* cConstants){
-    double timeIntial = 0;
-    double calcPerS  = 0;
-
-     // Each child represents an individual set of starting parameters 
-        // GPU based runge kutta process determines final position and velocity based on parameters
-    //Will fill in the final variables (final position & speed, posDiff, speedDiff) for each child
-    //TODO: Perhaps we should just import cCOnstants and newChildren into callRk, since most of the arguments come from cConstants regardless
-    callRK(cConstants->num_individuals, cConstants->thread_block_size, initialChildren, timeIntial, (cConstants->orbitalPeriod / cConstants->max_numsteps), cConstants->rk_tol, calcPerS, cConstants); 
-
-    //Now that the children have been simulated, convert the children into adults
-    //This will calc the posDiff and speedDiff for each child
-    //It will also put the converted children into the newAdults vector
-    convertToAdults(oldAdults, initialChildren, cConstants); 
 }

@@ -5,12 +5,7 @@
 Adult::Adult(){
     rank = INT_MAX; //might change later?
     distance = -1;
-    duplicate = false;
 }
-
-//Adult::Adult(rkParameters<double> & childParameters, const cudaConstants* cConstants): Child(childParameters, cConstants), rank(INT_MAX), distance(-1){
-//do we need this?
-//}
 
 //TODO: Consider deleting this - calling this less than and then sorting from best to worst is a little misleading 
 //Compare two adults by their rank and distance
@@ -19,7 +14,6 @@ Adult::Adult(){
 //        if this adult and the other adult have the same rank and this adult has a greater distance than the other adult, return true
 //Sorts the whole pool from lowest to highest rank. Adults of the same rank are sorted from highest to lowest distance
 bool Adult::operator<(const Adult &other) {
-    //TODO: is this a good system to check validity first?
     if (errorStatus != VALID){
         return false;
     }
@@ -94,6 +88,8 @@ bool dominationCheck(Adult& personA, Adult& personB, const cudaConstants* cConst
     //tolerances used to determine the range of values considered equal
     //these are both currently set to 1e-14 AU, I don't think these need to be modified 
     //this tolerance is about 0.0015m, and I don't think we can go lower?
+
+    //TODO:Might want to consider deleting most of this function
 
     double posTolerance = cConstants->posDominationTolerance;
     double speedTolerance = cConstants->speedDominationTolerance;
@@ -222,7 +218,6 @@ bool lowerDistanceSort(const Adult& personA, const Adult& personB) {
 //        if person A and person B have the same rank and person A has a greater distance than person B, return true
 //Sorts the whole pool from lowest to highest rank. Individuals of the same rank are sorted from highest to lowest distance
 bool rankDistanceSort(const Adult& personA, const Adult& personB) {
-    //TODO: is this a good system to check validity first?
     if (personA.errorStatus != VALID){
         return false;
     }
@@ -237,18 +232,7 @@ bool rankDistanceSort(const Adult& personA, const Adult& personB) {
     }
     else {
         return false;
-    }
-    // OLD VERSION....
-    // if(personA.rank < personB.rank){
-    //     return true;
-    // }
-    // else if (personA.rank == personB.rank && personA.distance > personB.distance){
-    //     return true;
-    // }
-    // else {
-    //     return false;
-    // }
-    
+    }  
 
 }
 
@@ -281,7 +265,30 @@ bool duplicateCheck(const Adult& personA, const Adult& personB, const cudaConsta
         return false;
     }
 }
-//TODO: Either move (or add # define UNITTEST)
+
+//Find the duplicates within the imported vector
+void findDuplicates (std::vector<Adult>& adults, const cudaConstants* cConstants) {
+    //reset the status of all the duplicates
+    //This makes sure that previous duplicates get another look if their copies have been changed
+    for(int i = 0; i < adults.size(); i++){
+        if(adults[i].errorStatus == DUPLICATE){
+            adults[i].errorStatus = VALID;
+        }
+    }
+    //loop through all the adults
+    for (int i = 0; i < adults.size(); i++){
+        //i+1 so it doesn't check itself or past indexes
+        for(int j = i+1; j < adults.size(); j++){
+            //only true if it is both a duplicate and has not been previous marked as a duplicate
+            // [j].duplicate check is for the second time an Adult is flagged as a duplicate
+            //CHecks for a valid error status, so duplicates can be reset to valid without worry of overriding other error statuses
+            if(duplicateCheck(adults[i], adults[j], cConstants) && adults[j].errorStatus == VALID) {
+                adults[j].errorStatus = DUPLICATE;
+            }
+        }
+    }
+}
+#ifdef UNITTEST //this should be defined in unit testing
 
 bool duplicateCheckTest(const Adult& personA, const Adult& personB){
 
@@ -397,7 +404,6 @@ bool dominationCheckTest(Adult& personA, Adult& personB, int missionType){
         return false;
     }
 }
-#ifdef UNITTEST //this should be defined in unit testing
 
 const std::string Adult::unitTestingRankDistanceStatusPrint(){
     std::string allInfo = "(" + std::to_string(rank) + "," + std::to_string(distance);

@@ -24,6 +24,7 @@ struct Child {
     
     ERROR_STATUS errorStatus; //record of if child is computed correctly, should be set in callRK
 
+    int birthday; //keeps track of the generation this individual was created in 
     //TODO: Add birthday (to keep track of generation created)
     // This will need to be pulled in via the constructor
     // Tripple check you do this correctly, there are complicated delegated adult/child constructors
@@ -43,7 +44,7 @@ struct Child {
     //        newChild - struct returned by generateNewChild()
     // Output: this individual's startParams.y0 is set to the initial position and velocity of the spacecraft
     //         Child is ready to be passed into callRK
-    Child(rkParameters<double> & childParameters, const cudaConstants* cConstants);
+    Child(rkParameters<double> & childParameters, const cudaConstants* cConstants, int genCreated);
 
     // Copy constructor
     // Sets this child's parameters, elements, posDiff, and speedDiff to another child's values for these quantities

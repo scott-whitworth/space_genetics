@@ -60,7 +60,7 @@ void initializeRecord(const cudaConstants * cConstants);
 //        anneal_min - outputs the current generation's anneal_min
 //        poolSize - to know size of the pool, currently unused
 // output: genPerformanceT-[time_seed].csv is appended parameter information on the best individual in pool
-void recordGenerationPerformance(const cudaConstants * cConstants, const std::vector<Adult>& pool, double generation, double new_anneal, int poolSize, double anneal_min);
+void recordGenerationPerformance(const cudaConstants * cConstants, const std::vector<Adult>& pool, int generation, double new_anneal, int poolSize, double anneal_min);
 
 // Method for doing recording information at the end of the optimization process
 // input: cConstants - to access config info
@@ -81,7 +81,7 @@ void setMutateFile(const cudaConstants* cConstants);
 //        numGenes - the number of genes that are to be mutated
 //        recordLog[OPTIM_VARS] - a "mutate mask" that is an array corresponding to the optimization array that contains the random mutate values being applied
 // output: file mutateFile-[time_seed].csv is appended a new row containing mutate information
-void recordMutateFile(const cudaConstants * cConstants, double generation, double annealing, int numGenes, double recordLog[OPTIM_VARS]);
+void recordMutateFile(const cudaConstants * cConstants, int generation, double annealing, int numGenes, double recordLog[OPTIM_VARS]);
 
 // method that stores information of launchCon of timeRes*24 resolution
 // input: cConstants - access time range and resolution info

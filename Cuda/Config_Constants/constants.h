@@ -59,9 +59,10 @@ enum STATUS {
 enum ERROR_STATUS{
     VALID = 0,   //not a nan, no problems with any of the parameter values
     SUN_ERROR = 1,   //flew too close to the sun, the posDiff and speedDiff are set to bad values during callRK
-    OTHER_ERROR = 2,   //any nans not caught during callRk are set to this error status in optimization
+    DUPLICATE = 2,  //an adult has been found to be a duplicate of another, original adult
     NOT_RUN = 3, //child has not been run through callRK (this is the default when created)
     NAN_ERROR = 4, //there was an issue during the simulation of the child, causing its final pos to be nan
+    OTHER_ERROR = 5,   //any nans not caught during callRk are set to this error status in optimization
 };
 //TODO: add a DUPLICATE error enum
 //   this will also need to be set when duplicates are processed (should result in a poor placement in rankDistanceSort)

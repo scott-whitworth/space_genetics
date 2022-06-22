@@ -213,15 +213,15 @@ void cudaConstants::FileRead(std::string fileName) {
                     this->sortingRatio = std::stod(variableValue);
                 }
                 
-                else if (variableName == "mutation_rate") {
-                    this->mutation_rate = std::stod(variableValue);
+                else if (variableName == "mutation_amplitude") {
+                    this->mutation_amplitude = std::stod(variableValue);
                 }
 
-                else if (variableName == "default_mutation_factor") {
-                    this->default_mutation_factor = std::stod(variableValue);
+                else if (variableName == "default_mutation_chance") {
+                    this->default_mutation_chance = std::stod(variableValue);
                 }
-                else if (variableName == "duplicate_mutation_factor") {
-                    this->duplicate_mutation_factor = std::stod(variableValue);
+                else if (variableName == "duplicate_mutation_chance") {
+                    this->duplicate_mutation_chance = std::stod(variableValue);
                 }
 
                 else if (variableName == "gamma_mutate_scale") {
@@ -374,7 +374,7 @@ std::ostream& operator<<(std::ostream& os, const cudaConstants& object) {
     os << "\ttriptime min - max: " << object.triptime_min << " - "  << object.triptime_max << "\talpha: " << object.alpha_random_start_range << "\tbeta: " << object.beta_random_start_range << "\tzeta: " << object.zeta_random_start_range << "\n\n";
     
     os << "Mutation & Scales:\n";
-    os << "\tmutation_rate: " << object.mutation_rate << "\n";
+    os << "\tmutation_amplitude: " << object.mutation_amplitude << "\n";
     os << "\tgamma_scale: "   << object.gamma_mutate_scale    << "\ttau_m_scale: "   << object.tau_mutate_scale   << "\tcoast_m_scale: " << object.coast_mutate_scale << "\n";
     os << "\talpha_m_scale: " << object.alpha_mutate_scale << "\tbeta_m_scale: "  << object.beta_mutate_scale  << "\tzeta_m_scale: " << object.zeta_mutate_scale << "\ttriptime_m_scale: "<< object.triptime_mutate_scale << "\n\n";
 

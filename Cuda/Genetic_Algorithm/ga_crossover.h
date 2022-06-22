@@ -82,7 +82,7 @@ void copyMask(int * maskIn, int * maskOut);
 //        cConstants, annealing, rng, generation - passed through to mutate()
 // Output: Returns rkParameter object that is new individual
 // Called from generateChildrenPair, calls mutate
-rkParameters<double> generateNewChild(const rkParameters<double> & p1, const rkParameters<double> & p2, const std::vector<int> & mask, const cudaConstants * cConstants, const double & annealing, std::mt19937_64 & rng, const double & generation, const bool & duplicate);
+rkParameters<double> generateNewChild(const rkParameters<double> & p1, const rkParameters<double> & p2, const std::vector<int> & mask, const cudaConstants * cConstants, const double & annealing, std::mt19937_64 & rng, const int & generation);
 
 // Utility function, generates a boolean mask for which paramters to mutate (1: mutate, 0: not mutated)
 // Number of genes mutated is a compound probability of n-1 genes before it
@@ -106,9 +106,10 @@ void mutateMask(std::mt19937_64 & rng, bool * mutateMask, double mutation_rate);
 //        cConstants - holds properties to use such as mutation rates and mutation scales for specific parameter property types
 //        generation - passed in to report on mutations if desired
 //        mutationScale - scalar for the mutation intensity, allows for control on the intensity of mutations between children and duplicates
+//        mutation_chance - the chance for each gene to mutate, different if its a duplicate or not
 // Output: Returns rkParameter object that is the mutated version of p1
 // Called by generateNewIndividual
-rkParameters<double> mutate(const rkParameters<double> & p1, std::mt19937_64 & rng, const double & annealing, const cudaConstants* cConstants, const double & generation, const double & mutationScale, const bool & duplicate);
+rkParameters<double> mutate(const rkParameters<double> & p1, std::mt19937_64 & rng, const double & annealing, const cudaConstants* cConstants, const int & generation, const double & mutationScale, const double & mutation_chance);
 
 // Utility function for mutate() to get a random double with high resolution
 // Input: max - the absolute value of the min and max(min = -max) of the range
@@ -130,23 +131,7 @@ double getRand(double max, std::mt19937_64 & rng);
 //         numNewChildren is incremented by +2
 // Called by newGeneration() each time a new mask is generated 
 
-//TODO: Add const back to parent1 and parent2
-void generateChildrenPair( Adult & parent1, Adult & parent2, Child * newChildren, const int & childrenToGenerate, std::vector<int> & mask, const double & annealing, std::mt19937_64 & rng, int & numNewChildren, const int & generation, const cudaConstants* cConstants);
-
-// newGeneration will generate a mask and use random adults from oldAdults to generate new children
-//      It will then simulate the newChildren.
-//      Finally, it will convert the new children into adults and insert them into the newAdults vector
-//      Note: the number of new children generated should ideally equal the number of threads on the gpu
-//          this is set in the config file
-// Inputs:  oldAdults - a vector of adults that will be used to pull random parents to generate children
-//          newAdults - a vector of adults that will be filled by children that have been simulated and converted into adults
-//          annealing - a double that will be passed on to other functions; it determines how much a child's parameters are mutated
-//          generation - the generation that the algorithim is on; this will be passed on to other functions and is used for reporting
-//          rng - a random number generator that is both passed on to other functions and used to pull random parents
-//          cConstants - the config constants; it is passed on to other functions and is used for constructing children and mutating their parameters
-// Outputs: newAdults will be filled with newly generated adults; it will be ready to be sorted and compared to other generations
-// NOTE: This function is called at the beginning of each generation within optimize() 
-void newGeneration(std::vector<Adult> & oldAdults, std::vector<Adult> & newAdults, const double & annealing, const int & generation, std::mt19937_64 & rng, const cudaConstants* cConstants);
+void generateChildrenPair(const Adult & parent1, const Adult & parent2, Child * newChildren, const int & childrenToGenerate, std::vector<int> & mask, const double & annealing, std::mt19937_64 & rng, int & numNewChildren, const int & generation, const cudaConstants* cConstants);
 
 // This function will generate a certain number of children via the ga_crossover method
 //      It will ensure that duplicate adults within the survivor pool do not create children
@@ -157,7 +142,7 @@ void newGeneration(std::vector<Adult> & oldAdults, std::vector<Adult> & newAdult
 //          currentAnneal - this is the current anneal status, passed into mutate
 //          generation - this is the current generation, passed into mutate
 //          cConstants - the cuda constants
-// Outputs: This function will fill the newChildren array up to childrenToGenerate with generated chilren, ready to be simulated
+// Outputs: This function will fill the newChildren array up to childrenToGenerate with generated children, ready to be simulated
 void generateChildrenFromCrossover(std::vector<Adult> & parents, Child* newChildren, const int & childrenToGenerate, std::mt19937_64 & rng, const double & currentAnneal, const int & generation, const cudaConstants* cConstants);
 
 // This function will use duplicate adults to generate children using heavy mutation
@@ -169,26 +154,9 @@ void generateChildrenFromCrossover(std::vector<Adult> & parents, Child* newChild
 //          currentAnneal - the mutation anneal, will be passed into the mutate function 
 //          generation - the current generation, will be passed into the mutate function
 //          cConstants - the cuda constants
-// Outputs: Duplicate adults' starting paramters will have been copied into children in the newChildren array and mutated, filling up the rest of newChildren
+// Outputs: Duplicate adults' starting parameters will have been copied into children in the newChildren array and mutated, filling up the rest of newChildren
 // NOTE: this function assumes (but isn't dependent on) that generateNewChildrenFromCrossover has been called previously
 void generateChildrenFromMutation(std::vector<Adult> & duplicates, Child* newChildren, const int & startingIndex, std::mt19937_64 & rng, const double& currentAnneal, const int & generation, const cudaConstants* cConstants);
-
-// Converts children previously simulated by callRK into adults
-//        It calculates the pos and speed diffs of the children and inserts the new children into the submitted adult vector
-// Input: newAdults - the vector of adults the converted adults will be inserted into
-//        newChildren - the array of simulated children that will be tranformed into adults
-//        cConstants - needed for the number of individuals
-// Output: newAdults will be filled with the children that are converted into adults 
-//this happens after teh first generation is created and then after every new child generation is made 
-void convertToAdults(std::vector<Adult> & newAdults, Child* newChildren, const cudaConstants* cConstants);
-
-// Creates the first generation of adults by taking in an array of children with randomly generated parameters
-// Input: initialChildren - children with randomly generated parameters whose runge kutta values have not yet been computed 
-//        oldAdults - a vector that will be filled with the children once they've gone through callRK and are converted into adults
-//        cConstants - passed on into callRK and convertToAdults
-// Output: oldAdults is full of the children that have been converted into adults - this allows us to have a bunch of random adults to create a new generation
-//
-void firstGeneration(Child* initialChildren, std::vector<Adult>& oldAdults, const cudaConstants* cConstants);
 
 #include "ga_crossover.cpp"
 

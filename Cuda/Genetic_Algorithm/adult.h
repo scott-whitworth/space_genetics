@@ -31,9 +31,7 @@ struct Adult: public Child {
 
     //this is changed/checked in newGeneration()
     //meant to make sure there is not more than one instance of the same adult in the next generation
-    bool duplicate;
-    //TODO: We can remove duplicate
-    //      this should be covered with the updated DUPLICATE error enum status
+
 
 //!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     // Default constructor
@@ -46,7 +44,7 @@ struct Adult: public Child {
     // Input: A child - this has cConstants, a set of rkParameters, and elements in it already, as well as the speedDiff and posDiff
     // Output: a child is turned into an adult
     // NOTE: This will be called by convertToAdults within newGeneration & ga_crossover.cu. Children that have just been simulated will be converted from a child into an adult
-    Adult(const Child& c): Child(c), rank(INT_MAX), distance(-1), duplicate(false){}
+    Adult(const Child& c): Child(c), rank(INT_MAX), distance(-1){}
 
     //TODO: Consider deleting this -> it is weird sorting from best to worst and calling best less than worst (unless we want to be very specific we mean LESS WRONG or something?)
     //Compare two adults by their rank and distance
@@ -55,8 +53,6 @@ struct Adult: public Child {
     //        if this adult and the other adult have the same rank and this adult has a greater distance than the other adult, return true
     //Sorts the whole pool from lowest to highest rank. Adults of the same rank are sorted from highest to lowest distance
     bool operator<(const Adult &other);
-
-    //TODO: Comments on where these ^^^^ constructors should be called (i.e. at the end of newGeneration, after callRK)
 
     #ifdef UNITTEST //this should be defined in unit testing
 
@@ -134,6 +130,14 @@ bool rankDistanceSort(const Adult& personA, const Adult& personB);
 //Input: Two adults and cConstants for the tolerances
 //Output: true if they have the same posDiff and speedDiff, false if they don't
 bool duplicateCheck(const Adult& personA, const Adult& personB, const cudaConstants* cConstants);
+
+//Will take the given adult vector and find any duplicate adults
+//Input:    adults - Vector of adults that will be searched through
+//Output:   Duplicate individuals within the adults array will have their error status set to duplicate
+//NOTE: Ideally, this function should be used after combining old/newAdults into allAdults
+//      This means the function will find duplicates within the same generation but also beween generations
+//NOTE: This function does not assume the adults have been sorted
+void findDuplicates (std::vector<Adult>& adults, const cudaConstants* cConstants);
 
 //test version of duplicateCheck that does not use cConstants
 bool duplicateCheckTest(const Adult& personA, const Adult& personB);

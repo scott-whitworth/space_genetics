@@ -68,7 +68,7 @@ void errorCheck(double *time, elements<double> *yp,  double *gamma,  double *tau
 }
 
 // file mutateFile-[time_seed].csv is appended a new row containing mutate information
-void recordMutateFile(const cudaConstants * cConstants, double generation, double annealing, int numGenes, double recordLog[OPTIM_VARS]) {
+void recordMutateFile(const cudaConstants * cConstants, int generation, double annealing, int numGenes, double recordLog[OPTIM_VARS]) {
   std::ofstream mutateFile;
   int seed = cConstants->time_seed;
   mutateFile.open("mutateFile-" + std::to_string(seed) + ".csv", std::ios_base::app);
@@ -380,7 +380,7 @@ void initializeRecord(const cudaConstants * cConstants) {
 
 //!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Take in the current state of the generation and appends to excel file, assumes initializeRecord() had already been called before (no need to output a header row)
-void recordGenerationPerformance(const cudaConstants * cConstants, const std::vector<Adult>& pool, double generation, double new_anneal, int poolSize, double anneal_min) {
+void recordGenerationPerformance(const cudaConstants * cConstants, const std::vector<Adult>& pool, int generation, double new_anneal, int poolSize, double anneal_min) {
   std::ofstream excelFile;
   int seed = cConstants->time_seed;
   std::string fileId = std::to_string(seed);

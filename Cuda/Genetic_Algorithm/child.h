@@ -62,6 +62,10 @@ struct Child {
     // Child constructor for testing_genetics that doesn't take cConstants as a parameter because we're not using cConstants in testing_genetics
     // If I need to have elements for some reason, this is easy to modify to shadow the other Child constructor with rkParameters, I just need the actual v_escape value
     Child(rkParameters<double> & childParameters): startParams(childParameters){}
+
+    // Child constructor for unit tests that makes it possible to only use tripTime, posDiff, and speedDiff as input parameters
+    //alpha is 3.12, beta is 1.5, and zeta is 0 -> these were all arbitrarily chosen values
+    Child(double tripTime, double posD, double speedD): startParams(tripTime, 3.12, 1.5,0, coefficients<double>()), errorStatus(VALID), posDiff(posD), speedDiff(speedD), funcStatus(FUNCTIONAL_CHILD){}
     #endif //unit testing end if
 
     //Child(rkParameters<double> & childParams, elements<double> posFinal,  double posD,  double speedD, STATUS s, int errStat): startParams(childParams), finalPos(posFinal), posDiff(posD), speedDiff(speedD), funcStatus(s), errorStatus(errorStatus){}

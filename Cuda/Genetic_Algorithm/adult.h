@@ -15,10 +15,6 @@
 // Adult is inheriting startParams, errorStatus, posDiff, speedDiff, and finalPos from Child
 // adult inherits the genes from child to avoid calling RK when we dont need to
 struct Adult: public Child {
-    // double cost;    // cost value of the individual, something that the genetic algorithm is attempting to minimize
-    
-    //TODO: Add the isParent statuis to replace the bool that was used previously
-
     //rank measures how good this adult is compared to other adults in it's generation. The lower the rank, the better.
     //     NOTE: ranks are not exclusive to one individual (e.g. multiple individuals can have rank 1); it may be helpful to think of ranks as tiers instead
     //It is set within the giveRank() function in optimization.cu
@@ -36,6 +32,8 @@ struct Adult: public Child {
     //this is changed/checked in newGeneration()
     //meant to make sure there is not more than one instance of the same adult in the next generation
     bool duplicate;
+    //TODO: We can remove duplicate
+    //      this should be covered with the updated DUPLICATE error enum status
 
 //!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     // Default constructor
@@ -55,7 +53,6 @@ struct Adult: public Child {
     //input: another adult
     //output: if this adult's rank is lower than the other adult's rank, return true
     //        if this adult and the other adult have the same rank and this adult has a greater distance than the other adult, return true
-    //TODO: What about status? We should probably document that here
     //Sorts the whole pool from lowest to highest rank. Adults of the same rank are sorted from highest to lowest distance
     bool operator<(const Adult &other);
 

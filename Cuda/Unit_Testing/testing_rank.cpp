@@ -1,5 +1,4 @@
 #include "../Genetic_Algorithm/adult.h"
-//#include "../Genetic_Algorithm/individuals.h"
 //#include UNITTEST
 #include <iostream>
 #include <iomanip>

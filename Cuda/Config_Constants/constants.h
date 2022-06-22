@@ -63,6 +63,9 @@ enum ERROR_STATUS{
     NOT_RUN = 3, //child has not been run through callRK (this is the default when created)
     NAN_ERROR = 4, //there was an issue during the simulation of the child, causing its final pos to be nan
 };
+//TODO: add a DUPLICATE error enum
+//   this will also need to be set when duplicates are processed (should result in a poor placement in rankDistanceSort)
+
 //Error values for nans to be changed to, used in callRK and optimization when finding nans
 #define BAD_POSDIFF          10 //a bad posDiff for either mission to have (10 AU)
 #define BAD_RENDEV_SPEEDDIFF 10 //a bad speedDiff for a rendezvous mission to have (10 AU/s)

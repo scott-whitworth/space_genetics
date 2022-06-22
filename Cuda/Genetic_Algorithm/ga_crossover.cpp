@@ -108,6 +108,7 @@ void flipMask(std::vector<int> & mask) {
         }
         // If mask[i] is neither partner1 nor partner2 (must be avg then), leave it be
         // To handle the average enumeration
+        //TODO: We want to change AVG to AVG_RATIO
     }
     return;
 }
@@ -223,6 +224,7 @@ rkParameters<double> generateNewChild(const rkParameters<double> & p1, const rkP
         childParameters.alpha = ratio*p2.alpha + (1 - ratio)*p1.alpha;
     }
 
+    //TODO: this should be changed to that it is passing in default_mutation_factor and default_mutation_chance
     // Crossover complete, determine mutation
     childParameters = mutate(childParameters, rng, annealing, cConstants, generation, cConstants->default_mutation_factor, duplicate);
 
@@ -256,6 +258,10 @@ void mutateMask(std::mt19937_64 & rng, bool * mutateMask, double mutation_rate) 
 
     }
 }
+
+//TODO: take out duplicate
+//      use two different parameters for both mutation chance (we probably want higher for duplicate mutiation)
+//                                        and mutationScale (the amount we mutate)
 
 // In a given Individual's parameters, generate a mutate mask using mutateMask() and then adjust parameters based on the mask, mutation of at least one gene is not guranteed
 rkParameters<double> mutate(const rkParameters<double> & p1, std::mt19937_64 & rng, const double & annealing, const cudaConstants* cConstants, const double & generation, const double & mutationScale, const bool & duplicate) {    
@@ -364,6 +370,8 @@ void generateChildrenPair (Adult & parent1, Adult & parent2, Child * newChildren
     if(numNewChildren >= childrenToGenerate){ 
         return;
     }
+
+    //TODO: Remove this (should be taken care of in generateNewChild)
     //this is not a duplicate
     bool dupe = false;
 
@@ -418,6 +426,7 @@ void newGeneration (std::vector<Adult> & oldAdults, std::vector<Adult> & newAdul
             parents.push_back(oldAdults[i]);
         }   
     }else{
+        //TODO: This should be its own function (which should make unit testing easier)
         //sort all the oldAdults
         std::sort(oldAdults.begin(), oldAdults.end(), rankDistanceSort);
         //loop through all the adults
@@ -425,7 +434,8 @@ void newGeneration (std::vector<Adult> & oldAdults, std::vector<Adult> & newAdul
             //i+1 so it doesn't check itself or past indexes
             for(int j = i+1; j < cConstants->survivor_count; j++){
                 //only true if it is both a duplicate and has not been previous marked as a duplicate
-                if(duplicateCheck(oldAdults[i], oldAdults[j], cConstants) && oldAdults[j].duplicate != true){
+                // [j].duplicate check is for the second time an Adult is flagged as a duplicate
+                if(duplicateCheck(oldAdults[i], oldAdults[j], cConstants) && !oldAdults[j].duplicate){
                     duplicates.push_back(oldAdults[j]);
                     oldAdults[j].duplicate = true;
                 }
@@ -433,39 +443,19 @@ void newGeneration (std::vector<Adult> & oldAdults, std::vector<Adult> & newAdul
         }
         //all that were not marked as duplicates are either unique or the original
         for(int i = 0; i < cConstants->survivor_count; i++){
-            if(oldAdults[i].duplicate != true){
+            if(!oldAdults[i].duplicate){
                 parents.push_back(oldAdults[i]);
             }
         }
     }
-    /*
-    else {
-        
-        std::sort(oldAdults.begin(), oldAdults.end(), rankDistanceSort);
-        //Go through oldAdults until survivor_count and determine if they are duplicates or not
-        //      If so, add them to the duplicates vector
-        //      If not, add them to the parents vector
-        for (int i = 0; i < cConstants->survivor_count; i++){
-            if (std::abs(oldAdults[i].distance) < cConstants->distanceTolerance){
-                duplicates.push_back(oldAdults[i]);
-            }
-            else {
-                parents.push_back(oldAdults[i]);
-            }
-        }
-        
-    }
-    */
+
+    //TODO: start of next function
     //Variable that tracks the number of children that needs to be generated via the crossover method
     //Set to the number of children that needs to be generated (num_individuals) minus the number of children that will be generated from duplicates via heavy mutation (size of duplicates)
     int childrenFromCrossover = cConstants->num_individuals - duplicates.size();    
 
     //Import number of new individuals the GPU needs to fill its threads
     //Create a newChildren function to fill in with children generated from oldAdults
-    //Add the survivorCount to the size of the array to account for the potential that the number of children that the crossover methods generate doesn't evenly divide num_individuals
-    //      This extra space will allow for some breathing room within the array
-    //      Despite the extra space, it is intended that we only generate num_individuals of children
-    //Child* newChildren = new Child[cConstants->num_individuals + cConstants->survivor_count]; 
     Child* newChildren = new Child[cConstants->num_individuals]; 
 
     //Generate children with crossovers using non-duplicate parents
@@ -483,10 +473,12 @@ void newGeneration (std::vector<Adult> & oldAdults, std::vector<Adult> & newAdul
     double calcPerS = 0;
 
     // Each child represents an individual set of starting parameters 
-        // GPU based runge kutta process determines final position and velocity based on parameters
+    // GPU based runge kutta process determines final position and velocity based on parameters
     //Will fill in the final variables (final position & speed, posDiff, speedDiff) for each child
+    //    stepSize -> (cConstants->orbitalPeriod / cConstants->max_numsteps): 
+    //                good first guess as to step size, if too small/large RK will always scale to error tolerance
     //TODO: Perhaps we should just import cCOnstants and newChildren into callRk, since most of the arguments come from cConstants regardless
-    callRK(cConstants->num_individuals, cConstants->thread_block_size, newChildren, timeInitial, (cConstants->orbitalPeriod / cConstants->GuessMaxPossibleSteps), cConstants->rk_tol, calcPerS, cConstants); 
+    callRK(cConstants->num_individuals, cConstants->thread_block_size, newChildren, timeInitial, (cConstants->orbitalPeriod / cConstants->max_numsteps), cConstants->rk_tol, calcPerS, cConstants); 
 
     //Now that the children have been simulated, convert the children into adults
     //First, it will calculate the right pos and speed diffs for the children
@@ -554,11 +546,6 @@ void generateChildrenFromCrossover(std::vector<Adult> &parents, Child *newChildr
         // Check to see if we can calculate new pairs (else will be modifying parentIndex)
         if (parentIndex + 1 < parentPool.size())
         {
-            // TODO: You do have a potential here that is mapped in generateChildrenPair
-            //       If you generate 3 pairs (so 6 children), and your num_individuals is not evenly divisible by 6, then you are going to have a memory issue
-            //       There is also a potential problem is this algorithm ends up needing more than int parentNum = cConstants->num_individuals/4; pairs
-            //       I like the start, but think deeply about how each of these elements are going to be moving around
-
             // Generate a pair of children based on the random cross over mask method from a pair of parents
             // This will generate a set of parameters with variables randomly selected from each parent
 
@@ -632,6 +619,7 @@ void generateChildrenFromMutation(std::vector<Adult> & duplicates, Child* newChi
 
         //Now that the necessary child has been assigned starting parameters, go though and heavily mutate their parameters
         //      Note: the mutation factor is set by duplicate_mutation_factor
+        //TODO: This will need the duplicate_mutation_scale and duplicate_mutation_chance 
         newChildren[startingIndex + i].startParams = mutate(newChildren[startingIndex + i].startParams, rng, currentAnneal, cConstants, generation, cConstants->default_mutation_factor, dupe);
     }
 }
@@ -639,6 +627,9 @@ void generateChildrenFromMutation(std::vector<Adult> & duplicates, Child* newChi
 //Function that will convert the generated children into adults
 //Will also transfer the created adults into the newAdult vector
 void convertToAdults(std::vector<Adult> & newAdults, Child* newChildren, const cudaConstants* cConstants) {
+    //TODO: Add a clear to newAdults, just in case
+    //      This should all be documented clearly in the header
+
     //Iterate through the simulated children to determine their error status (if it hasn't been set by callRK already) and calculate their pos and speed differences
     for (int i = 0; i < cConstants->num_individuals; i++)
     {

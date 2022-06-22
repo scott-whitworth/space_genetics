@@ -6,6 +6,13 @@
 using std::cout;
 using std::endl;
 
+//TODO: Fix comment headers
+//  high level points: 'this function' should never be used
+//  be specific but also concise
+//  don't refer to data types unless you absolutely need to 'rs - the vector of Adults....' that is redundant
+//  Your header should clarify *why* before clarifying what
+//  Your header should spcify expectations for what is coming in (this vector should already be sorted) or outputs (passed by reference)
+
 // This function compares two adults with set ranks and distances using rankSort and rankDistanceSort
 // Uses the unitTesting constructor for Adult to make Adults with a known rank and distance so they can be better compared
 // Prints cout statements to the terminal that tells you how the results of the comparison 

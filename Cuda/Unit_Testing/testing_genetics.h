@@ -6,6 +6,8 @@
 #include <random> //for rng
 #include <time.h>
 
+//TODO: Some comment headers are good, others still need work.
+
 //const int genSize = 10; //a now unnecessary variable basically representing num_individuals (used in wrongWayToRank which is no longer in use)
 
 // Makes a set of cudaConstants that so ga_crossover functions could be used directly and calls all the unit test functions

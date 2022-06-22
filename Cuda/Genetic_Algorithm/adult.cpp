@@ -281,6 +281,7 @@ bool duplicateCheck(const Adult& personA, const Adult& personB, const cudaConsta
         return false;
     }
 }
+//TODO: Either move (or add # define UNITTEST)
 
 bool duplicateCheckTest(const Adult& personA, const Adult& personB){
 

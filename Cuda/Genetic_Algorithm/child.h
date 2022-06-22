@@ -24,6 +24,11 @@ struct Child {
     
     ERROR_STATUS errorStatus; //record of if child is computed correctly, should be set in callRK
 
+    //TODO: Add birthday (to keep track of generation created)
+    // This will need to be pulled in via the constructor
+    // Tripple check you do this correctly, there are complicated delegated adult/child constructors
+    // should be an int (even if double elsewhere)
+
 
 //!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     // Default constructor

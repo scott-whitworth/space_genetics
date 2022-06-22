@@ -42,7 +42,7 @@ bool checkTolerance(double posTolerance, double speedTolerance, const std::vecto
 //          avgBirthday - average birth generation for the adults
 //          oldestBirthday - the oldest adult's birth generation
 // Outputs: The arguments will be filled in with the up-to-date values for this generation
-void calculateGenerationValues (const std::vector<Adult> & allAdults, const int & generation, double & minDist, double & avgDist, double & maxDist, double & avgAge, double & avgBirthday, int & oldestBirthday)
+void calculateGenerationValues (const std::vector<Adult> & allAdults, const int & generation, double & minDist, double & avgDist, double & maxDist, double & avgAge, double & avgBirthday, int & oldestBirthday);
 
 //----------------------------------------------------------------------------------------------------------------------------
 //Input: all the updated parameters of the current generation

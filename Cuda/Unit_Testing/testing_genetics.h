@@ -78,7 +78,8 @@ void twentyAdultsPosAndSpeedDiffMade(bool printThings, std::vector<Adult>& allAd
 //                      FALSE-> no cout statements are printed unless there is an issue with the code
 // Output: The parents and duplictaes vectors are compared to the expected versions of these vectors 
 //         (these vectors were determined by looking at the order things ended up in after rankDistanceSort)
-//         Returns 
+//         Returns TRUE if the values match their expected order
+//         FALSE if not
 bool verifyProperCloneSeparation(bool printThings, cudaConstants* utcConstants);
 
 //

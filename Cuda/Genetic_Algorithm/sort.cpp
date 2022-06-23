@@ -112,10 +112,8 @@ void giveRank(std::vector<Adult> & allAdults, const cudaConstants* cConstants) {
 
 //gives each adult in the allAdults a distance representing how different it is from other individuals
 void giveDistance(std::vector<Adult> & allAdults, const cudaConstants* cConstants){
-    //pool that holds the indexes of the valid adults
-    std::vector<int> validAdults;
-    //TODO: This should probably be a single int that is keepting track of how many valid adults there are in allAdults
-
+    //int that counts the number of the valid adults
+    int validAdults;
     //starting rankSort to make sure nans are at the end of the array.
     std::sort(allAdults.begin(), allAdults.end(), rankSort);
 
@@ -123,7 +121,7 @@ void giveDistance(std::vector<Adult> & allAdults, const cudaConstants* cConstant
     //the size of this vector will be used to find the distance for valid adults only
     for(int i = 0; i < allAdults.size(); i++){
         if(allAdults[i].errorStatus == VALID){
-            validAdults.push_back(i);
+            validAdults++;
         }
     }
 
@@ -134,42 +132,42 @@ void giveDistance(std::vector<Adult> & allAdults, const cudaConstants* cConstant
     }
     
     //Sort by the first objective function, posDiff
-    std::sort(allAdults.begin(), allAdults.begin() + validAdults.size(), LowerPosDiff);
+    std::sort(allAdults.begin(), allAdults.begin() + validAdults, LowerPosDiff);
     //Set the boundaries
     allAdults[0].distance += MAX_DISTANCE; //+=1
-    allAdults[validAdults.size() - 1].distance += MAX_DISTANCE; //+=1
+    allAdults[validAdults - 1].distance += MAX_DISTANCE; //+=1
 
 
     //For each individual besides the upper and lower bounds, make their distance equal to
     //the current distance + the absolute normalized difference in the function values of two adjacent individuals.
     double normalPosDiffLeft;
     double normalPosDiffRight;
-    for(int i = 1; i < validAdults.size() - 1; i++){
+    for(int i = 1; i < validAdults - 1; i++){
         //Divide left and right individuals by the worst individual to normalize
-        normalPosDiffLeft = allAdults[i+1].posDiff/allAdults[validAdults.size() - 1].posDiff;
-        normalPosDiffRight = allAdults[i-1].posDiff/allAdults[validAdults.size() - 1].posDiff;
+        normalPosDiffLeft = allAdults[i+1].posDiff/allAdults[validAdults - 1].posDiff;
+        normalPosDiffRight = allAdults[i-1].posDiff/allAdults[validAdults - 1].posDiff;
         //distance = distance + abs((i+1) - (i-1))
-        allAdults[i].distance = allAdults[i].distance + abs((normalPosDiffLeft - normalPosDiffRight));// /(allAdults[validAdults.size() - 1].posDiff - allAdults[0].posDiff));
+        allAdults[i].distance = allAdults[i].distance + abs((normalPosDiffLeft - normalPosDiffRight));// /(allAdults[validAdults - 1].posDiff - allAdults[0].posDiff));
     }
 
     //Repeat above process for speedDiff
     if(cConstants->missionType == Rendezvous){//only do this for the rendezvous mission since it has 2 objectives
-        std::sort(allAdults.begin(), allAdults.begin() + validAdults.size(), LowerSpeedDiff);
+        std::sort(allAdults.begin(), allAdults.begin() + validAdults, LowerSpeedDiff);
         //Set the boundaries
         allAdults[0].distance += MAX_DISTANCE; //+=1
-        allAdults[validAdults.size() - 1].distance += MAX_DISTANCE; //+=1
+        allAdults[validAdults - 1].distance += MAX_DISTANCE; //+=1 //TODO:Was 0 for a bit, but isn't now consider which way is best
 
     
         //For each individual besides the upper and lower bounds, make their distance equal to
         //the current distance + the absolute normalized difference in the function values of two adjacent individuals.
         double normalSpeedDiffLeft;
         double normalSpeedDiffRight;
-        for(int i = 1; i < validAdults.size() - 1; i++){
+        for(int i = 1; i < validAdults - 1; i++){
             //Divide left and right individuals by the worst individual to normalize
-            normalSpeedDiffLeft = allAdults[i+1].speedDiff/allAdults[validAdults.size() - 1].speedDiff;
-            normalSpeedDiffRight = allAdults[i-1].speedDiff/allAdults[validAdults.size() - 1].speedDiff;
+            normalSpeedDiffLeft = allAdults[i+1].speedDiff/allAdults[validAdults - 1].speedDiff;
+            normalSpeedDiffRight = allAdults[i-1].speedDiff/allAdults[validAdults - 1].speedDiff;
             //distance = distance + abs((i+1) - (i-1))
-            allAdults[i].distance = allAdults[i].distance + abs((normalSpeedDiffLeft - normalSpeedDiffRight));// /(allAdults[validAdults.size() - 1].speedDiff - allAdults[0].speedDiff));
+            allAdults[i].distance = allAdults[i].distance + abs((normalSpeedDiffLeft - normalSpeedDiffRight));// /(allAdults[validAdults - 1].speedDiff - allAdults[0].speedDiff));
         }
     }
 }

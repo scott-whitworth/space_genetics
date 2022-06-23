@@ -31,10 +31,12 @@ bool checkTolerance(double posTolerance, double speedTolerance, const std::vecto
 
 //----------------------------------------------------------------------------------------------------------------------------
 // TEST / LIKELY TEMPORARY FUNCTION
-// This function will find the minimum, maximum, and average distance, the avg age, and the avg and max birthdays of the individuals in allAdults, which will then be used for reporting
+// This function will find the minimum, maximum, and average distance, average pos and speed diffs, the avg age, and the avg and max birthdays of the individuals in allAdults, which will then be used for reporting
 // 
-// Inputs:  allAdults - array of adults that will be considered\
+// Inputs:  allAdults - array of adults that will be considered
 //          generation - the current generation
+//          avgPosDiff - the average generation position difference
+//          avgSpeedDiff - the average generation speed difference
 //          minDist - minimum distance that will be calculated
 //          avgDist - the average distance that will be calculated
 //          maxDist - the maximum distance that will be calculated
@@ -42,13 +44,13 @@ bool checkTolerance(double posTolerance, double speedTolerance, const std::vecto
 //          avgBirthday - average birth generation for the adults
 //          oldestBirthday - the oldest adult's birth generation
 // Outputs: The arguments will be filled in with the up-to-date values for this generation
-void calculateGenerationValues (const std::vector<Adult> & allAdults, const int & generation, double & minDist, double & avgDist, double & maxDist, double & avgAge, double & avgBirthday, int & oldestBirthday);
+void calculateGenerationValues (const std::vector<Adult> & allAdults, const int & generation, double & avgPosDiff, double & avgSpeedDiff, double & minDist, double & avgDist, double & maxDist, double & avgAge, double & avgBirthday, int & oldestBirthday);
 
 //----------------------------------------------------------------------------------------------------------------------------
 //Input: all the updated parameters of the current generation
 //Output: calls the various terminal display functions when needed
 //Function that handles the reporting of a generation's performance
-void reportGeneration (std::vector<Adult> & oldAdults, std::vector<Adult> & allAdults, const cudaConstants* cConstants, const double & currentAnneal, const double & anneal_min, const int & generation, int & numNans, double minDist, double avgDist, double maxDist, double avgAge, double avgBirthday, int oldestBirthday);
+void reportGeneration (std::vector<Adult> & oldAdults, std::vector<Adult> & allAdults, const cudaConstants* cConstants, const double & currentAnneal, const double & anneal_min, const int & generation, int & numNans, double & avgPosDiff, double & avgSpeedDiff, double minDist, double avgDist, double maxDist, double avgAge, double avgBirthday, int oldestBirthday);
 
 //----------------------------------------------------------------------------------------------------------------------------
 // Main processing function for Genetic Algorithm
@@ -179,11 +181,15 @@ bool checkTolerance(double posTolerance, double speedTolerance, const std::vecto
 }
 
 //Function that will calculate distance and birthday values for a generation
-void calculateGenerationValues (const std::vector<Adult> & allAdults, const int & generation, double & minDist, double & avgDist, double & maxDist, double & avgAge, double & avgBirthday, int & oldestBirthday){
+void calculateGenerationValues (const std::vector<Adult> & allAdults, const int & generation, double & avgPosDiff, double & avgSpeedDiff, double & minDist, double & avgDist, double & maxDist, double & avgAge, double & avgBirthday, int & oldestBirthday){
     //Reset the dist values
     minDist = 2; //Set the min dist to the maximum possible value, so that it will be changed
     avgDist = 0; 
     maxDist = 0; //Set the max dist to the min possible value, so that it is garunteed to be changed
+
+    //Reset the diff values
+    avgPosDiff = 0;
+    avgSpeedDiff = 0;
 
     //Reset the age values
     avgAge = 0;
@@ -210,6 +216,10 @@ void calculateGenerationValues (const std::vector<Adult> & allAdults, const int 
         //Add to the avg distance
         avgDist += allAdults[i].distance;
 
+        //Add to the avg diffs
+        avgPosDiff += allAdults[i].posDiff;
+        avgSpeedDiff += allAdults[i].speedDiff; 
+
         //Add to the avg age values
         //avgAge measures the age relative to the current generation (how many generations old), so it is generation minus the adults' birthdays 
         avgBirthday += allAdults[i].birthday;
@@ -218,16 +228,18 @@ void calculateGenerationValues (const std::vector<Adult> & allAdults, const int 
 
     //Divide the averages by the number of adults to get the averages
     avgDist /= allAdults.size();
+    avgPosDiff /= allAdults.size();
+    avgSpeedDiff /= allAdults.size(); 
     avgAge /= allAdults.size(); 
     avgBirthday /= allAdults.size(); 
     
 }
 
 //Function that writes the results of the inserted generation
-void reportGeneration (std::vector<Adult> & oldAdults, std::vector<Adult> & allAdults, const cudaConstants* cConstants, const double & currentAnneal, const double & anneal_min, const int & generation, int & numNans, double minDist, double avgDist, double maxDist, double avgAge, double avgBirthday, int oldestBirthday){
+void reportGeneration (std::vector<Adult> & oldAdults, std::vector<Adult> & allAdults, const cudaConstants* cConstants, const double & currentAnneal, const double & anneal_min, const int & generation, int & numNans, double & avgPosDiff, double & avgSpeedDiff, double minDist,  double avgDist, double maxDist, double avgAge, double avgBirthday, int oldestBirthday){
     // If in recording mode and write_freq reached, call the record method
     if (static_cast<int>(generation) % cConstants->write_freq == 0 && cConstants->record_mode == true) {
-        recordGenerationPerformance(cConstants, oldAdults, generation, currentAnneal, cConstants->num_individuals, anneal_min, minDist, avgDist, maxDist, avgAge, generation-oldestBirthday, avgBirthday, oldestBirthday);
+        recordGenerationPerformance(cConstants, oldAdults, generation, currentAnneal, cConstants->num_individuals, anneal_min, avgPosDiff, avgSpeedDiff, minDist, avgDist, maxDist, avgAge, generation-oldestBirthday, avgBirthday, oldestBirthday);
     }
 
     // Only call terminalDisplay every DISP_FREQ, not every single generation
@@ -345,7 +357,8 @@ double optimize(const cudaConstants* cConstants) {
     //  couting all adults in the generation - includes oldAdults and newAdults that have nan values
     int numNans = 0;
 
-    //Initialize variables needed for distance and birthday reporting
+    //Initialize variables needed for distance, average differences, and birthday reporting
+    double avgPositionDiff, avgSpeedDiff;
     double maxDistance, minDistance, avgDistance, avgAge, avgBirthday;
     int oldestBirthday;
 
@@ -395,10 +408,10 @@ double optimize(const cudaConstants* cConstants) {
         changeAnneal (oldAdults, cConstants, new_anneal, currentAnneal, anneal_min, previousBestPosDiff, generation, posTolerance, dRate);
 
         //Calculate variables for birthdays and distances
-        calculateGenerationValues(allAdults, generation, minDistance, avgDistance, maxDistance, avgAge, avgBirthday, oldestBirthday);
+        calculateGenerationValues(allAdults, generation, avgPositionDiff, avgSpeedDiff, minDistance, avgDistance, maxDistance, avgAge, avgBirthday, oldestBirthday);
 
         //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE RECORD-_-_-_-_-_-_-_-_-_\n\n";
-        reportGeneration (oldAdults, allAdults, cConstants, currentAnneal, anneal_min, generation, numNans, minDistance, avgDistance, maxDistance, avgAge, avgBirthday, oldestBirthday);
+        reportGeneration (oldAdults, allAdults, cConstants, currentAnneal, anneal_min, generation, numNans, avgPositionDiff, avgSpeedDiff, minDistance, avgDistance, maxDistance, avgAge, avgBirthday, oldestBirthday);
         //TODO: verify that old/AllAdults are in the right order (and clarify with comment here)
 
         // Before replacing new adults, determine whether all are within tolerance
@@ -421,7 +434,7 @@ double optimize(const cudaConstants* cConstants) {
     // for the annealing argument, set to -1 (since the anneal is only relevant to the next generation and so means nothing for the last one)
     // for the numFront argument, set to -1 (just because)
     if (cConstants->record_mode == true) {
-        recordGenerationPerformance(cConstants, oldAdults, generation, currentAnneal, cConstants->num_individuals, anneal_min, minDistance, avgDistance, maxDistance, avgAge, generation-oldestBirthday, avgBirthday, oldestBirthday);
+        recordGenerationPerformance(cConstants, oldAdults, generation, currentAnneal, cConstants->num_individuals, anneal_min, avgPositionDiff, avgSpeedDiff, minDistance, avgDistance, maxDistance, avgAge, generation-oldestBirthday, avgBirthday, oldestBirthday);
     }
     // Only call finalRecord if the results actually converged on a solution
     // also display last generation onto terminal

@@ -48,7 +48,7 @@ void calculateGenerationValues (const std::vector<Adult> & allAdults, const int 
 //Input: all the updated parameters of the current generation
 //Output: calls the various terminal display functions when needed
 //Function that handles the reporting of a generation's performance
-void reportGeneration (std::vector<Adult>& oldAdults, std::vector<Adult> & allAdults, const cudaConstants* cConstants, const double & currentAnneal, const double & anneal_min, const int & generation, int & numNans);
+void reportGeneration (std::vector<Adult> & oldAdults, std::vector<Adult> & allAdults, const cudaConstants* cConstants, const double & currentAnneal, const double & anneal_min, const int & generation, int & numNans, double minDist, double avgDist, double maxDist, double avgAge, double avgBirthday, int oldestBirthday);
 
 //----------------------------------------------------------------------------------------------------------------------------
 // Main processing function for Genetic Algorithm
@@ -224,10 +224,10 @@ void calculateGenerationValues (const std::vector<Adult> & allAdults, const int 
 }
 
 //Function that writes the results of the inserted generation
-void reportGeneration (std::vector<Adult> & oldAdults, std::vector<Adult> & allAdults, const cudaConstants* cConstants, const double & currentAnneal, const double & anneal_min, const int & generation, int & numNans){
+void reportGeneration (std::vector<Adult> & oldAdults, std::vector<Adult> & allAdults, const cudaConstants* cConstants, const double & currentAnneal, const double & anneal_min, const int & generation, int & numNans, double minDist, double avgDist, double maxDist, double avgAge, double avgBirthday, int oldestBirthday){
     // If in recording mode and write_freq reached, call the record method
     if (static_cast<int>(generation) % cConstants->write_freq == 0 && cConstants->record_mode == true) {
-        recordGenerationPerformance(cConstants, oldAdults, generation, currentAnneal, cConstants->num_individuals, anneal_min);
+        recordGenerationPerformance(cConstants, oldAdults, generation, currentAnneal, cConstants->num_individuals, anneal_min, minDist, avgDist, maxDist, avgAge, generation-oldestBirthday, avgBirthday, oldestBirthday);
     }
 
     // Only call terminalDisplay every DISP_FREQ, not every single generation
@@ -255,7 +255,10 @@ void reportGeneration (std::vector<Adult> & oldAdults, std::vector<Adult> & allA
         std::cout << "\nBest Rank Distance Individual:";
         std::sort(oldAdults.begin(), oldAdults.end(), rankDistanceSort);
         terminalDisplay(oldAdults[0], generation);
-        std::cout << "\n# of errors this generation: " << numNans << "\n" << std::endl;
+        std::cout << "\n# of errors this generation: " << numNans << "\n";
+
+        //display the oldest individual
+        std::cout << "\nOldest age adult: " << generation - oldestBirthday << "\n\n";
         
         //Reset the tally of nans.
         numNans = 0;
@@ -395,7 +398,7 @@ double optimize(const cudaConstants* cConstants) {
         calculateGenerationValues(allAdults, generation, minDistance, avgDistance, maxDistance, avgAge, avgBirthday, oldestBirthday);
 
         //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE RECORD-_-_-_-_-_-_-_-_-_\n\n";
-        reportGeneration (oldAdults, allAdults, cConstants, currentAnneal, anneal_min, generation, numNans);
+        reportGeneration (oldAdults, allAdults, cConstants, currentAnneal, anneal_min, generation, numNans, minDistance, avgDistance, maxDistance, avgAge, avgBirthday, oldestBirthday);
         //TODO: verify that old/AllAdults are in the right order (and clarify with comment here)
 
         // Before replacing new adults, determine whether all are within tolerance
@@ -418,7 +421,7 @@ double optimize(const cudaConstants* cConstants) {
     // for the annealing argument, set to -1 (since the anneal is only relevant to the next generation and so means nothing for the last one)
     // for the numFront argument, set to -1 (just because)
     if (cConstants->record_mode == true) {
-        recordGenerationPerformance(cConstants, oldAdults, generation, currentAnneal, cConstants->num_individuals, anneal_min);
+        recordGenerationPerformance(cConstants, oldAdults, generation, currentAnneal, cConstants->num_individuals, anneal_min, minDistance, avgDistance, maxDistance, avgAge, generation-oldestBirthday, avgBirthday, oldestBirthday);
     }
     // Only call finalRecord if the results actually converged on a solution
     // also display last generation onto terminal

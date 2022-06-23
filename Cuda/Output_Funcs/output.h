@@ -59,8 +59,15 @@ void initializeRecord(const cudaConstants * cConstants);
 //        new_anneal - outputs the current generation's anneal
 //        anneal_min - outputs the current generation's anneal_min
 //        poolSize - to know size of the pool, currently unused
+//        minDist - minimum distance for the generation
+//        avgDist - average distance for the generation
+//        maxDist - the max distance for the generation
+//        avgAge - the generation-adjusted average generation age
+//        avgBirthday - the non-generation-adjusted average generation age
+//        oldestAge - the generation-adjusted oldest generation age
+//        oldestBirthday - the non-generation-adjusted oldest generation age
 // output: genPerformanceT-[time_seed].csv is appended parameter information on the best individual in pool
-void recordGenerationPerformance(const cudaConstants * cConstants, const std::vector<Adult>& pool, int generation, double new_anneal, int poolSize, double anneal_min);
+void recordGenerationPerformance(const cudaConstants * cConstants, const std::vector<Adult>& pool, int generation, double new_anneal, int poolSize, double anneal_min, double minDist, double avgDist, double maxDist, double avgAge, int oldestAge, double avgBirthday, int oldestBirthday);
 
 // Method for doing recording information at the end of the optimization process
 // input: cConstants - to access config info

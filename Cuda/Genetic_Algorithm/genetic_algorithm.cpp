@@ -293,7 +293,7 @@ void eliminateBadAdults(std::vector<Adult>& allAdults, std::vector<Adult>& newAd
         if(oldAdults[i].errorStatus != VALID ){//tallies the number of nans in allAdults by checking if the adult being passed into newAdult is a Nan or not
             numNans++;
             //TODO: We should cout an error here, there should not ever be oldAdults with error status (but what about duplicates?)
-        }else if(generation - newAdults[i].birthday > ageTolerance){
+        }else if(generation - oldAdults[i].birthday > ageTolerance){
             //make sure there are no adults that are too old (older than 50 generations)
             //do nothing and don't add them 
         }

@@ -137,7 +137,7 @@ void giveDistance(std::vector<Adult> & allAdults, const cudaConstants* cConstant
     std::sort(allAdults.begin(), allAdults.begin() + validAdults.size(), LowerPosDiff);
     //Set the boundaries
     allAdults[0].distance += MAX_DISTANCE; //+=1
-    allAdults[validAdults.size() - 1].distance += 0; //+=1
+    allAdults[validAdults.size() - 1].distance += MAX_DISTANCE; //+=1
 
 
     //For each individual besides the upper and lower bounds, make their distance equal to
@@ -157,7 +157,7 @@ void giveDistance(std::vector<Adult> & allAdults, const cudaConstants* cConstant
         std::sort(allAdults.begin(), allAdults.begin() + validAdults.size(), LowerSpeedDiff);
         //Set the boundaries
         allAdults[0].distance += MAX_DISTANCE; //+=1
-        allAdults[validAdults.size() - 1].distance += 0; //+=1
+        allAdults[validAdults.size() - 1].distance += MAX_DISTANCE; //+=1
 
     
         //For each individual besides the upper and lower bounds, make their distance equal to

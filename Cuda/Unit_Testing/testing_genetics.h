@@ -2,7 +2,9 @@
 #include "../Earth_calculations/earthInfo.h"  // For launchCon and EarthInfo()
 #include "../Genetic_Algorithm/adult.h" //to access Adults
 #include "../Runge_Kutta/runge_kuttaCUDA.cuh" // ONLY in here so I don't get errors when compiling since I am including ga_crossover.h which needs this
-#include "../Genetic_Algorithm/ga_crossover.h" //to access the genetics algorithms being unit tested here
+#include "../Genetic_Algorithm/ga_crossover.h" //to access the genetics crossover algorithms being unit tested here
+#include "../Genetic_Algorithm/genetic_algorithm.h" //for the rest of genetics algorithms being tested
+#include "../Genetic_Algorithm/sort.h" //allows me to access giveRank and giveDistance directly
 #include <random> //for rng
 #include <time.h>
 
@@ -118,16 +120,6 @@ bool checkUTMutateMask();
 //unit test version of the mutateMask function from ga_crossover
 void UTmutateMask(std::mt19937_64 & rng, bool * mutateMask, double mutation_rate);
 
-//took this directly from optimization.cu on 6/14/22 near the end of the day - will become out of date if changes made to version in optimization.cu
-void stolenGiveRank(std::vector<Adult> & allAdults, const cudaConstants* cConstants);
-//took this directly from optimization.cu on 6/14/22 near the end of the day - will become out of date if changes made to version in optimization.cu
-void stolenGiveDistance(std::vector<Adult> & allAdults, const cudaConstants* cConstants);
-
-
-//giveRank was broken so I threw together an inefficient giveRank type function 
-//Not sure it does the same thing, but works well enough for me to be able to verify if the results seems reasonable
-//Calculates rank based on net dominations- different than actual giveRank -> makes more ranks
-//void wrongWayToRank(std::vector<Adult> & newAdults);
 
 
 

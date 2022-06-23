@@ -124,7 +124,7 @@ bool dominationCheck(Adult& personA, Adult& personB, const cudaConstants* cConst
         if (personA.posDiff < personB.posDiff || personA.speedDiff > personB.speedDiff) {
             AisBetter = true;
         }*/
-        //For impact, only optimizing for one opbjective
+        //For impact, only optimizing for one objective
         if ((personA.posDiff < personB.posDiff || APosEqualsB)) {
             AisEqual = true; 
         }  

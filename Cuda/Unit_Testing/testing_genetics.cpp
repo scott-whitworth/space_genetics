@@ -729,7 +729,18 @@ bool verifyProperCloneSeparation(bool printThings, cudaConstants* utcConstants){
 
 //
 bool verifyChildrenFromCrossover(bool printThings, cudaConstants* utcConstants){
-    return true;
+    std::vector<Adult> oldAdults;
+
+    //fills oldAdults with the 20 adults who only have posDiff, speedDiff, and tripTime uniquely assigned to them
+    twentyAdultsPosAndSpeedDiffMade(printThings, oldAdults, utcConstants);
+
+    findDuplicates(oldAdults, utcConstants);
+
+    for (int i = 0; i < oldAdults.size(); i++){
+        if (oldAdults[i].errorStatus == DUPLICATE){
+
+        }
+    }
 }
 
 //just makes checkReasonability shorter - takes in an offset and accesses a child's parameter corresponding to this offset

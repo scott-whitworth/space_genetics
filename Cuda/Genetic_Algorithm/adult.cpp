@@ -91,8 +91,10 @@ bool dominationCheck(Adult& personA, Adult& personB, const cudaConstants* cConst
 
     //TODO:Might want to consider deleting most of this function
 
-    double posTolerance = cConstants->posDominationTolerance;
-    double speedTolerance = cConstants->speedDominationTolerance;
+    double posTolerance = cConstants->posDominationTolerance/1e+5;
+    double speedTolerance = cConstants->speedDominationTolerance/1e+5;
+    double pos_threshold = cConstants-> pos_threshold;
+    double speed_threshold = cConstants-> speed_threshold;
     //double posTolerance = 1e-14;
     //double speedTolerance = 1e-14;
     //true if A posDiff "equals" B posDiff
@@ -104,11 +106,11 @@ bool dominationCheck(Adult& personA, Adult& personB, const cudaConstants* cConst
     //std::cout << "\n\nPERSON B TEST: posDiff = " << personB.posDiff << ", speedDiff = " << personB.speedDiff; 
 
     //True is A posdiff is equal to B posDiff +- posTolerance
-    if ((personA.posDiff < personB.posDiff + posTolerance) && (personA.posDiff > personB.posDiff - posTolerance)){
+    if (((personA.posDiff < personB.posDiff + posTolerance) && (personA.posDiff > personB.posDiff - posTolerance)) || (personA.posDiff < pos_threshold && personB.posDiff < pos_threshold)){
         APosEqualsB = true;
     }
     //True is A speeddiff is equal to B speedDiff +- speedTolerance
-    if ((personA.speedDiff < personB.speedDiff + speedTolerance) && (personA.speedDiff > personB.speedDiff - speedTolerance)){
+    if (((personA.speedDiff < personB.speedDiff + speedTolerance) && (personA.speedDiff > personB.speedDiff - speedTolerance)) || (personA.speedDiff < speed_threshold && personB.speedDiff < speed_threshold)){
         ASpeedEqualsB = true;
     }
     //If the mission type is a rendezvous, A's speed diff needs to be lower for it to be equal or better
@@ -122,7 +124,7 @@ bool dominationCheck(Adult& personA, Adult& personB, const cudaConstants* cConst
         if (personA.posDiff < personB.posDiff || personA.speedDiff > personB.speedDiff) {
             AisBetter = true;
         }*/
-        //For impact, only optimizing for one opbjective
+        //For impact, only optimizing for one objective
         if ((personA.posDiff < personB.posDiff || APosEqualsB)) {
             AisEqual = true; 
         }  

@@ -31,10 +31,14 @@ bool checkTolerance(double posTolerance, double speedTolerance, const std::vecto
 
 //----------------------------------------------------------------------------------------------------------------------------
 // TEST / LIKELY TEMPORARY FUNCTION
-// This function will find the minimum, maximum, and average distance, the avg age, and the avg and max birthdays of the individuals in allAdults, which will then be used for reporting
+// This function will find the minimum, maximum, and average distance, average pos and speed diffs, the number of duplicates,
+//                         the avg age, and the avg and max birthdays of the individuals in allAdults, which will then be used for reporting
 // 
-// Inputs:  allAdults - array of adults that will be considered\
+// Inputs:  allAdults - array of adults that will be considered
 //          generation - the current generation
+//          avgPosDiff - the average generation position difference
+//          avgSpeedDiff - the average generation speed difference
+//          duplicateNum - the number of duplicate adults found
 //          minDist - minimum distance that will be calculated
 //          avgDist - the average distance that will be calculated
 //          maxDist - the maximum distance that will be calculated
@@ -42,13 +46,13 @@ bool checkTolerance(double posTolerance, double speedTolerance, const std::vecto
 //          avgBirthday - average birth generation for the adults
 //          oldestBirthday - the oldest adult's birth generation
 // Outputs: The arguments will be filled in with the up-to-date values for this generation
-void calculateGenerationValues (const std::vector<Adult> & allAdults, const int & generation, double & minDist, double & avgDist, double & maxDist, double & avgAge, double & avgBirthday, int & oldestBirthday);
+void calculateGenerationValues (const std::vector<Adult> & allAdults, const int & generation, double & avgPosDiff, double & avgSpeedDiff, int & duplicateNum, double & minDist, double & avgDist, double & maxDist, double & avgAge, double & avgBirthday, int & oldestBirthday);
 
 //----------------------------------------------------------------------------------------------------------------------------
 //Input: all the updated parameters of the current generation
 //Output: calls the various terminal display functions when needed
 //Function that handles the reporting of a generation's performance
-void reportGeneration (std::vector<Adult> & oldAdults, std::vector<Adult> & allAdults, const cudaConstants* cConstants, const double & currentAnneal, const double & anneal_min, const int & generation, int & numNans, double minDist, double avgDist, double maxDist, double avgAge, double avgBirthday, int oldestBirthday);
+void reportGeneration (std::vector<Adult> & oldAdults, std::vector<Adult> & allAdults, const cudaConstants* cConstants, const double & currentAnneal, const double & anneal_min, const int & generation, int & numNans, double & avgPosDiff, double & avgSpeedDiff, int & duplicateNum, double minDist, double avgDist, double maxDist, double avgAge, double avgBirthday, int oldestBirthday);
 
 //----------------------------------------------------------------------------------------------------------------------------
 // Main processing function for Genetic Algorithm
@@ -96,6 +100,109 @@ void countStatuses (const std::vector<Adult> & adultVec, const int & generation)
 
     std::cout << "\n_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_\n\n";
     
+}
+
+//Temp test function that is an assistant function to verify vectors
+//Will attempt to find which sort an adult vector is in
+void verifyVectorSort (const std::vector<Adult>& adults) {
+    //Create flag bools that are used to try and find in what order each vector is sorted 
+    bool rankSorted, distanceSorted, rankDistanceSorted;
+    //Assume the vector is sorted in some ways 
+    rankSorted = true;
+    distanceSorted = true;
+    rankDistanceSorted = true; 
+
+    //go through the first 10 indicies of the vector (if it isn't empty)
+    //if there is a pattern, it will report the potential sort
+    if (adults.size() == 0)
+    {
+        //If its empty, report that
+        std::cout << "empty vector"; 
+    }
+    else {
+        for (int i = 0; i < 10; i++) {
+            //Check to see if the vector is not in rank or rank-distance order
+            //Since both rely on rank first, it is okay to check them at the same time
+            if (adults[i].rank > adults[i+1].rank){
+                //make rank and rank distance false, since it isn't sorted by any sort of rank
+                rankSorted = rankDistanceSorted = false;
+            }
+            //see if rank is good, so check for distance for rank-distance
+            else {
+                //is only sorted by distance within a rank, so we need to see if the next adult is in the same rank
+                if (adults[i].rank == adults[i+1].rank)
+                {
+                    //Check to see if the distances are not sorted
+                    if (adults[i].distance < adults[i+1].distance)
+                    {
+                        //Array potentially in rank sort, but not rank-distance sort
+                        rankDistanceSorted = false;
+                    }
+                    
+                }
+                
+            }
+            //Check to see if distances are not sorted correctly
+            if (adults[i].distance < adults[i+1].distance)
+            {
+                distanceSorted = false; 
+            }
+            
+        }
+
+        //Not that the vector has been sorted through, report a probable sort, or report that no sort was identified
+        if (rankDistanceSorted)
+        {
+            std::cout<<"rank-distance sorted";
+        }
+        else if (rankSorted)
+        {
+            std::cout<<"rank sorted";
+        }
+        else if (distanceSorted)
+        {
+            std::cout<<"distance sorted";
+        }
+        else {
+            std::cout<<"no/unidentified sort";
+        }
+    }
+}
+
+//Temp test function to verify the status of the adult vectors
+//Will report to the console the size of each vector and attempt to find out in what order they are sorted
+void verifyVectors (const std::vector<Adult>& newAdults, const std::vector<Adult>& oldAdults, const std::vector<Adult>& allAdults, const std::string & areaUsed = "") {
+    //Separate section for vector reporting
+    std::cout << "\n_-_-_-_-_-_-_-_-VECTOR REPORTS-_-_-_-_-_-_-_-_\n";
+
+    //Report where this is being used if reported
+    if (areaUsed.size() > 0)
+    {
+        std::cout << "\nREPORT POINT: " << areaUsed << "\n";
+    }
+    
+    //First start of reports for newAdults
+    //Report size, set up reporting for sort
+    std::cout << "\nnewAdults:\n\tsize: " << newAdults.size() << "\n\tsort status: ";
+
+    //try to find sort status for newAdults
+    verifyVectorSort(newAdults);
+
+    //Next, report stats for oldAdults
+    //Report size, set up reporting for sort
+    std::cout << "\noldAdults:\n\tsize: " << oldAdults.size() << "\n\tsort status: ";
+
+    //try to find sort status for newAdults
+    verifyVectorSort(oldAdults);
+
+    //Next, report stats for oldAdults
+    //Report size, set up reporting for sort
+    std::cout << "\nallAdults:\n\tsize: " << allAdults.size() << "\n\tsort status: ";
+
+    //try to find sort status for newAdults
+    verifyVectorSort(allAdults);
+
+    std::cout << "\n\n_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_\n\n";
 }
 
 //-----------------------------------------------------------------------------------------------------------------------------
@@ -179,11 +286,18 @@ bool checkTolerance(double posTolerance, double speedTolerance, const std::vecto
 }
 
 //Function that will calculate distance and birthday values for a generation
-void calculateGenerationValues (const std::vector<Adult> & allAdults, const int & generation, double & minDist, double & avgDist, double & maxDist, double & avgAge, double & avgBirthday, int & oldestBirthday){
+void calculateGenerationValues (const std::vector<Adult> & allAdults, const int & generation, double & avgPosDiff, double & avgSpeedDiff, int & duplicateNum, double & minDist, double & avgDist, double & maxDist, double & avgAge, double & avgBirthday, int & oldestBirthday){
     //Reset the dist values
     minDist = 2; //Set the min dist to the maximum possible value, so that it will be changed
     avgDist = 0; 
     maxDist = 0; //Set the max dist to the min possible value, so that it is garunteed to be changed
+
+    //Reset the diff values
+    avgPosDiff = 0;
+    avgSpeedDiff = 0;
+
+    //Reset the duplicate counter
+    duplicateNum = 0;
 
     //Reset the age values
     avgAge = 0;
@@ -206,9 +320,19 @@ void calculateGenerationValues (const std::vector<Adult> & allAdults, const int 
         if (allAdults[i].birthday < oldestBirthday) {
             oldestBirthday = allAdults[i].birthday; 
         }
+        
+        //Check to see if the adult is a duplicate and increment the counter if so
+        if (allAdults[i].errorStatus == DUPLICATE) {
+            duplicateNum++;
+        }
+        
 
         //Add to the avg distance
         avgDist += allAdults[i].distance;
+
+        //Add to the avg diffs
+        avgPosDiff += allAdults[i].posDiff;
+        avgSpeedDiff += allAdults[i].speedDiff; 
 
         //Add to the avg age values
         //avgAge measures the age relative to the current generation (how many generations old), so it is generation minus the adults' birthdays 
@@ -218,16 +342,18 @@ void calculateGenerationValues (const std::vector<Adult> & allAdults, const int 
 
     //Divide the averages by the number of adults to get the averages
     avgDist /= allAdults.size();
+    avgPosDiff /= allAdults.size();
+    avgSpeedDiff /= allAdults.size(); 
     avgAge /= allAdults.size(); 
     avgBirthday /= allAdults.size(); 
     
 }
 
 //Function that writes the results of the inserted generation
-void reportGeneration (std::vector<Adult> & oldAdults, std::vector<Adult> & allAdults, const cudaConstants* cConstants, const double & currentAnneal, const double & anneal_min, const int & generation, int & numNans, double minDist, double avgDist, double maxDist, double avgAge, double avgBirthday, int oldestBirthday){
+void reportGeneration (std::vector<Adult> & oldAdults, std::vector<Adult> & allAdults, const cudaConstants* cConstants, const double & currentAnneal, const double & anneal_min, const int & generation, int & numNans, double & avgPosDiff, double & avgSpeedDiff, int & duplicateNum, double minDist,  double avgDist, double maxDist, double avgAge, double avgBirthday, int oldestBirthday){
     // If in recording mode and write_freq reached, call the record method
     if (static_cast<int>(generation) % cConstants->write_freq == 0 && cConstants->record_mode == true) {
-        recordGenerationPerformance(cConstants, oldAdults, generation, currentAnneal, cConstants->num_individuals, anneal_min, minDist, avgDist, maxDist, avgAge, generation-oldestBirthday, avgBirthday, oldestBirthday);
+        recordGenerationPerformance(cConstants, oldAdults, generation, currentAnneal, cConstants->num_individuals, anneal_min, avgPosDiff, avgSpeedDiff, duplicateNum, minDist, avgDist, maxDist, avgAge, generation-oldestBirthday, avgBirthday, oldestBirthday);
     }
 
     // Only call terminalDisplay every DISP_FREQ, not every single generation
@@ -320,8 +446,6 @@ double optimize(const cudaConstants* cConstants) {
 
     // number of current generation
     int generation = 0;    
-    //TODO: This, for sure, should be an int
-    //      This will be a major refactor, do it very carefully.
     
     // Genetic solution tolerance for each objective
     double posTolerance = cConstants->pos_threshold;
@@ -345,7 +469,9 @@ double optimize(const cudaConstants* cConstants) {
     //  couting all adults in the generation - includes oldAdults and newAdults that have nan values
     int numNans = 0;
 
-    //Initialize variables needed for distance and birthday reporting
+    //Initialize variables needed for distance, average differences, number of duplicate adults, and birthday reporting
+    double avgPositionDiff, avgSpeedDiff;
+    int duplicateNum;
     double maxDistance, minDistance, avgDistance, avgAge, avgBirthday;
     int oldestBirthday;
 
@@ -354,6 +480,8 @@ double optimize(const cudaConstants* cConstants) {
     //oldAdults goes into this function empty and comes out filled with num_individuals Adults
     //      these adults are either randomly generated or pulled from a file
     createFirstGeneration(oldAdults, cConstants, rng, generation); 
+
+    //verifyVectors(newAdults, oldAdults, allAdults, "Post First Generation");
 
     // main gentic algorithm loop
     // - continues until checkTolerance returns true (specific number of individuals are within threshold)
@@ -366,6 +494,7 @@ double optimize(const cudaConstants* cConstants) {
         //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE NEW GEN-_-_-_-_-_-_-_-_-_\n\n";
         newGeneration(oldAdults, newAdults, currentAnneal, generation, rng, cConstants);
         //TODO: What is the state of oldAdults / newAdults after this is run (just a reminder)
+        //verifyVectors(newAdults, oldAdults, allAdults, "Post New Generation");
 
         //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE PREP PARENTS-_-_-_-_-_-_-_-_-_\n\n";
         //fill oldAdults with the best adults from this generation and the previous generation so that the best parents can be selected (numNans is for all adults in the generation - the oldAdults and the newAdults)
@@ -377,6 +506,7 @@ double optimize(const cudaConstants* cConstants) {
         //      by the end of the function, it is filled with the best num_individuals adults from allAdults (sorted by rankDistanceSort) 
         preparePotentialParents(allAdults, newAdults, oldAdults, numNans, cConstants, generation);
         //TODO: What is the state of all/old/newAdults (just a reminder)
+        //verifyVectors(newAdults, oldAdults, allAdults, "Post Prepare Parents");
 
 
         //UPDATE (6/7/22): callRK moved into ga_crossover, the effect on the efficiency of the code is not known yet
@@ -395,10 +525,10 @@ double optimize(const cudaConstants* cConstants) {
         changeAnneal (oldAdults, cConstants, new_anneal, currentAnneal, anneal_min, previousBestPosDiff, generation, posTolerance, dRate);
 
         //Calculate variables for birthdays and distances
-        calculateGenerationValues(allAdults, generation, minDistance, avgDistance, maxDistance, avgAge, avgBirthday, oldestBirthday);
+        calculateGenerationValues(allAdults, generation, avgPositionDiff, avgSpeedDiff, duplicateNum, minDistance, avgDistance, maxDistance, avgAge, avgBirthday, oldestBirthday);
 
         //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE RECORD-_-_-_-_-_-_-_-_-_\n\n";
-        reportGeneration (oldAdults, allAdults, cConstants, currentAnneal, anneal_min, generation, numNans, minDistance, avgDistance, maxDistance, avgAge, avgBirthday, oldestBirthday);
+        reportGeneration (oldAdults, allAdults, cConstants, currentAnneal, anneal_min, generation, numNans, avgPositionDiff, avgSpeedDiff, duplicateNum, minDistance, avgDistance, maxDistance, avgAge, avgBirthday, oldestBirthday);
         //TODO: verify that old/AllAdults are in the right order (and clarify with comment here)
 
         // Before replacing new adults, determine whether all are within tolerance
@@ -409,9 +539,11 @@ double optimize(const cudaConstants* cConstants) {
         //Increment the generation counter
         ++generation;
 
+        //verifyVectors(newAdults, oldAdults, allAdults, "End Of Generation");
+
         //sorts oldAdults using rankDistance sort
         //This will prep the oldAdults array to be used to generate new children; this makes sure any sorts from the record/report functions are undone
-        std::sort(oldAdults.begin(), oldAdults.end(), rankDistanceSort); 
+        //std::sort(oldAdults.begin(), oldAdults.end(), rankDistanceSort); 
         //TODO: If we need this for generateNewChildren, why not just put this sort in generateNewChildren?
     
         //Loop exits based on result of checkTolerance and if max_generations has been hit
@@ -421,7 +553,7 @@ double optimize(const cudaConstants* cConstants) {
     // for the annealing argument, set to -1 (since the anneal is only relevant to the next generation and so means nothing for the last one)
     // for the numFront argument, set to -1 (just because)
     if (cConstants->record_mode == true) {
-        recordGenerationPerformance(cConstants, oldAdults, generation, currentAnneal, cConstants->num_individuals, anneal_min, minDistance, avgDistance, maxDistance, avgAge, generation-oldestBirthday, avgBirthday, oldestBirthday);
+        recordGenerationPerformance(cConstants, oldAdults, generation, currentAnneal, cConstants->num_individuals, anneal_min, avgPositionDiff, avgSpeedDiff, duplicateNum, minDistance, avgDistance, maxDistance, avgAge, generation-oldestBirthday, avgBirthday, oldestBirthday);
     }
     // Only call finalRecord if the results actually converged on a solution
     // also display last generation onto terminal

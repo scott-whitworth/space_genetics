@@ -8,6 +8,10 @@ bool runGeneticsUnitTests(bool printThings){
     utcConstants->posDominationTolerance = 1.0e-14;
     utcConstants->speedDominationTolerance = 1.0e-14;
 
+    //chose pos_threshold and speed_threshold so anything past the first significant figure in the clone separation test is trivial
+    utcConstants->pos_threshold = 0.01;
+    utcConstants->speed_threshold = 0.001;
+
     // Seed used for randomization rng things, using seed 0 for consistancy / tracability 
     utcConstants->time_seed = 0; 
 
@@ -498,6 +502,13 @@ bool checkReasonability(const Child& c1, const Child& c2, std::vector<int> & mas
                 skipPrint = false; //whether or not valid messages are being printed, it needs to print error message
                 noErrors = false;
             }
+            //ensures that the random average ends up with something that is at least within the bounds of where it should be 
+            else if ((getParamStuff(i,c2) > parentsValues[parValIndex] && getParamStuff(i,c2) > parentsValues[parValIndex+1]) || (getParamStuff(i,c2) < parentsValues[parValIndex] && getParamStuff(i,c2) < parentsValues[parValIndex+1])){
+                cout << "Error with ";
+                skipPrint = false; //whether or not valid messages are being printed, it needs to print error message
+                noErrors = false;
+            }
+            
             else if (printThings){
                 cout << "Expected values for ";   
             }
@@ -616,7 +627,7 @@ void twentyAdultsPosAndSpeedDiffMade(bool printThings, std::vector<Adult>& allAd
 
 bool verifyProperCloneSeparation(bool printThings, cudaConstants* utcConstants){
     //for this test, we want the survivor count to be the entire population to give us the best sample size
-    utcConstants->survivor_count = 15;
+    utcConstants->survivor_count = 20;
     std::vector<Adult> oldAdults;
 
     //fills oldAdults with the 20 adults who only have posDiff, speedDiff, and tripTime uniquely assigned to them
@@ -699,11 +710,11 @@ bool verifyProperCloneSeparation(bool printThings, cudaConstants* utcConstants){
     expectedClones.push_back(Adult(Child(35000000.0, 0.048, 0.00234)));
     expectedClones.push_back(Adult(Child(43000000.0, 0.02, 0.0034)));
     expectedClones.push_back(Adult(Child(43000000.0, 0.02, 0.0034)));
-    expectedClones.push_back(Adult(Child(32000000.0, 0.025, 0.00354)));
     expectedClones.push_back(Adult(Child(94000000.0, 0.122, 0.0034)));
+    expectedClones.push_back(Adult(Child(32000000.0, 0.025, 0.00354)));
     expectedClones.push_back(Adult(Child(41000000.0, 0.299, 0.0034)));
-    expectedClones.push_back(Adult(Child(82000000.0, 0.299, 0.0034)));
     expectedClones.push_back(Adult(Child(80000000.0, 0.02, 0.0043)));
+    expectedClones.push_back(Adult(Child(82000000.0, 0.299, 0.0034)));
     
     //checks the tripTimes against each other because this will allow us to see if these appear in the proper order or not
     for (int i = 0; i < parents.size(); i++){
@@ -721,6 +732,57 @@ bool verifyProperCloneSeparation(bool printThings, cudaConstants* utcConstants){
     }
 
     return noProblems;
+}
+
+//
+bool verifyChildrenFromCrossover(bool printThings, cudaConstants* utcConstants){
+    std::vector<Adult> oldAdults;
+
+    //fills oldAdults with the 20 adults who only have posDiff, speedDiff, and tripTime uniquely assigned to them
+    twentyAdultsPosAndSpeedDiffMade(printThings, oldAdults, utcConstants);
+
+    findDuplicates(oldAdults, utcConstants);
+
+    std::vector<double> posDiffs;
+    posDiffs.push_back(0.23);
+    posDiffs.push_back(0.153);
+    posDiffs.push_back(0.284);
+    posDiffs.push_back(0.032);
+    posDiffs.push_back(0.835);
+    posDiffs.push_back(0.556);
+    posDiffs.push_back(0.679);
+    posDiffs.push_back(0.332);
+    posDiffs.push_back(0.026);
+    std::vector<double> speedDiffs;
+    speedDiffs.push_back(0.009221);
+    speedDiffs.push_back(0.003865);
+    speedDiffs.push_back(0.008965);
+    speedDiffs.push_back(0.007342);
+    speedDiffs.push_back(0.00856);
+    speedDiffs.push_back(0.001356);
+    speedDiffs.push_back(0.0014368);
+    speedDiffs.push_back(0.008365);
+    speedDiffs.push_back(0.009243);
+    
+    //make all the Adults in oldAdults unique individuals
+    for (int i = 0; i < oldAdults.size(); i++){
+        if (oldAdults[i].errorStatus == DUPLICATE){
+            oldAdults[i].posDiff = posDiffs[posDiffs.size()-1];
+            posDiffs.pop_back();
+            oldAdults[i].speedDiff = speedDiffs[speedDiffs.size()-1];
+            speedDiffs.pop_back();
+        }
+    }
+
+    findDuplicates(oldAdults, utcConstants);
+
+    //make all the Adults in oldAdults unique individuals
+    for (int i = 0; i < oldAdults.size(); i++){
+        if (oldAdults[i].errorStatus == DUPLICATE){
+            cout << "Oops - I made a mistake!" << endl;
+        }
+    }
+    
 }
 
 //just makes checkReasonability shorter - takes in an offset and accesses a child's parameter corresponding to this offset

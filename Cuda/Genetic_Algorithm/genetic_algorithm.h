@@ -85,9 +85,10 @@ void firstGeneration(Child* initialChildren, std::vector<Adult>& oldAdults, cons
 //        numNans - this function tallies the nans (and other errors) that occur in this population of adults
 //        cConstants - allows us to access num_individuals
 //        generation - this is needed for eliminateBadAdults
+//        currentAnneal - this is used in findDuplicate to change the tolerance for finding a duplicate
 // Output: oldAdults is filled with the adults that are potential parents for the next generation
 //TODO: more info about what is happening to allAdults / newAdults / oldAdults
-void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& newAdults, std::vector<Adult>& oldAdults, int& numNans, const cudaConstants* cConstants, const int & generation);
+void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& newAdults, std::vector<Adult>& oldAdults, int& numNans, int& duplicateNum, const cudaConstants* cConstants, const int & generation, const double& currentAnneal);
 
 //function that sorts the adults in newAdults and oldAdults and puts them in allAdults while excluding unwanted adults
 //the unwanted adults are those with nans, uneven genes (really good speedDiff, but worst posDiff), and adults that are older than 50 generations
@@ -98,7 +99,7 @@ void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& 
 //       generation - to check the current generation to eliminate the old adults
 //Output: allAdults is filled with the adults we want 
 //this is called in preparePotentialParents()
-void eliminateBadAdults(std::vector<Adult>& allAdults, std::vector<Adult>& newAdults, std::vector<Adult>& oldAdults, int& numNans, const cudaConstants* cConstants, const int & generation);
+void eliminateBadAdults(std::vector<Adult>& allAdults, std::vector<Adult>& newAdults, std::vector<Adult>& oldAdults, int& numNans, int& duplicateNum, const cudaConstants* cConstants, const int & generation);
 
 #include "genetic_algorithm.cpp"
 

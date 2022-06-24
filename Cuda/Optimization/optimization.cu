@@ -297,7 +297,7 @@ void calculateGenerationValues (const std::vector<Adult> & allAdults, const int 
     avgSpeedDiff = 0;
 
     //Reset the duplicate counter
-    duplicateNum = 0;
+    //duplicateNum = 0;
 
     //Reset the age values
     avgAge = 0;
@@ -322,9 +322,10 @@ void calculateGenerationValues (const std::vector<Adult> & allAdults, const int 
         }
         
         //Check to see if the adult is a duplicate and increment the counter if so
-        if (allAdults[i].errorStatus == DUPLICATE) {
-            duplicateNum++;
-        }
+        //removing this for now, this vesion will delete duplicates before this point
+        //if (allAdults[i].errorStatus == DUPLICATE) {
+            //duplicateNum++;
+        //}
         
 
         //Add to the avg distance
@@ -383,6 +384,7 @@ void reportGeneration (std::vector<Adult> & oldAdults, std::vector<Adult> & allA
         terminalDisplay(oldAdults[0], generation);
         std::cout << "\n# of errors this generation: " << numNans << "\n";
 
+        std::cout << "\n# of duplicates this generation: " << duplicateNum << "\n";
         //display the oldest individual
         std::cout << "\nOldest age adult: " << generation - oldestBirthday << "\n\n";
         
@@ -471,7 +473,7 @@ double optimize(const cudaConstants* cConstants) {
 
     //Initialize variables needed for distance, average differences, number of duplicate adults, and birthday reporting
     double avgPositionDiff, avgSpeedDiff;
-    int duplicateNum;
+    int duplicateNum = 0;
     double maxDistance, minDistance, avgDistance, avgAge, avgBirthday;
     int oldestBirthday;
 
@@ -504,7 +506,7 @@ double optimize(const cudaConstants* cConstants) {
         //      by the end of the function, it is cleared
         //oldAdults goes in with the pool of potential parents that may have generated the newAdults
         //      by the end of the function, it is filled with the best num_individuals adults from allAdults (sorted by rankDistanceSort) 
-        preparePotentialParents(allAdults, newAdults, oldAdults, numNans, cConstants, generation);
+        preparePotentialParents(allAdults, newAdults, oldAdults, numNans, duplicateNum, cConstants, generation, currentAnneal);
         //TODO: What is the state of all/old/newAdults (just a reminder)
         //verifyVectors(newAdults, oldAdults, allAdults, "Post Prepare Parents");
 

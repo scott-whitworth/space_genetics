@@ -9,6 +9,9 @@ void newGeneration (std::vector<Adult> & oldAdults, std::vector<Adult> & newAdul
     //Vector for duplicates, based on the same criteria as above
     std::vector<Adult> duplicates;
 
+    parents.clear();
+    duplicates.clear();
+
     //separates oldAdults into parents (full of unique individuals) and duplicates (anything whose posDiff and speedDiff are about the same as an Adult in parents)
     separateDuplicates(oldAdults, parents, duplicates, generation, cConstants);
 
@@ -217,9 +220,10 @@ void firstGeneration(Child* initialChildren, std::vector<Adult>& oldAdults, cons
 }
 
 //fills oldAdults with the best adults from this generation and the previous generation so that the best parents can be selected
-void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& newAdults, std::vector<Adult>& oldAdults, int& numNans, const cudaConstants* cConstants, const int & generation){
+void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& newAdults, std::vector<Adult>& oldAdults, int& numNans, int& duplicateNum, const cudaConstants* cConstants, const int & generation, const double& currentAnneal){
     std::vector<Adult>().swap(allAdults); //ensures this vector is empty and ready for new inputs
     numNans = 0;
+    duplicateNum = 0;
 
     //TODO: Making sure there are no errors within allAdults is temporary,
     //       eventually we need to make sure they are at the end of the rankDistanceSort but still include them within allAdults
@@ -233,12 +237,13 @@ void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& 
 
     //countStatuses(newAdults, generation);
     //countStatuses(oldAdults, generation);
+    //Iterate through allAdults and find any duplicate adults
+    findDuplicates(newAdults, oldAdults, cConstants, currentAnneal);
 
     //get rid of any invalid or old adults, as well as adults with bad posDiffs or speedDiffs that are too small
-    eliminateBadAdults(allAdults, newAdults, oldAdults, numNans, cConstants, generation);
+    eliminateBadAdults(allAdults, newAdults, oldAdults, numNans, duplicateNum, cConstants, generation);
 
-    //Iterate through allAdults and find any duplicate adults
-    findDuplicates(allAdults, cConstants); 
+    
 
     //countStatuses(allAdults, generation);
 
@@ -274,28 +279,32 @@ void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& 
 }
 
 //eliminates unwanted adults from allAdults
-void eliminateBadAdults(std::vector<Adult>& allAdults, std::vector<Adult>& newAdults, std::vector<Adult>& oldAdults, int& numNans, const cudaConstants* cConstants, const int & generation){
+void eliminateBadAdults(std::vector<Adult>& allAdults, std::vector<Adult>& newAdults, std::vector<Adult>& oldAdults, int& numNans, int& duplicateNum, const cudaConstants* cConstants, const int & generation){
     double posTolerance = cConstants->pos_threshold/100;
     double speedTolerance = cConstants->speed_threshold/100;
-    int ageTolerance = 50;
+    int ageTolerance = 500;
 
     for (int i = 0; i < newAdults.size(); i++){ //copies all the elements of newAdults into allAdults
-        if(newAdults[i].errorStatus != VALID) { //tallies the number of nans in allAdults by checking if the adult being passed into newAdult is a Nan or not
+        if(newAdults[i].errorStatus != VALID && newAdults[i].errorStatus != DUPLICATE) { //tallies the number of nans in allAdults by checking if the adult being passed into newAdult is a Nan or not
             numNans++;
         }else if((newAdults[i].posDiff < posTolerance && newAdults[i].speedDiff > speedTolerance) || (newAdults[i].posDiff > posTolerance && newAdults[i].speedDiff < speedTolerance)){//check if the adult is too good in one aspect
             //do nothing and don't add them to all adults
+        }else if(newAdults[i].errorStatus == DUPLICATE){
+            duplicateNum++;
         }
         else {
             allAdults.push_back(newAdults[i]);
         }
     }
     for (int i = 0; i < oldAdults.size(); i++){ //copies over all the elements of oldAdults into allAdults
-        if(oldAdults[i].errorStatus != VALID ){//tallies the number of nans in allAdults by checking if the adult being passed into newAdult is a Nan or not
+        if(oldAdults[i].errorStatus != VALID && oldAdults[i].errorStatus != DUPLICATE){//tallies the number of nans in allAdults by checking if the adult being passed into newAdult is a Nan or not
             numNans++;
             //TODO: We should cout an error here, there should not ever be oldAdults with error status (but what about duplicates?)
         }else if(generation - oldAdults[i].birthday > ageTolerance){
             //make sure there are no adults that are too old (older than 50 generations)
             //do nothing and don't add them 
+        }else if(oldAdults[i].errorStatus == DUPLICATE){
+            duplicateNum++;
         }
         else {
             allAdults.push_back(oldAdults[i]);

@@ -21,7 +21,7 @@ void changeAnneal (const std::vector<Adult>& oldAdults, const cudaConstants* cCo
     }
     else 
     {
-        currentAnneal = cConstants->anneal_initial * (1 - pow((Rendezvous / curCost), 4.0)); 
+        currentAnneal = cConstants->anneal_initial * (1 - pow((Rendezvous / curCost), 0.2)); 
     }
     
 

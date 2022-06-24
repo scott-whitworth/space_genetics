@@ -113,7 +113,7 @@ void giveRank(std::vector<Adult> & allAdults, const cudaConstants* cConstants) {
 //gives each adult in the allAdults a distance representing how different it is from other individuals
 void giveDistance(std::vector<Adult> & allAdults, const cudaConstants* cConstants){
     //int that counts the number of the valid adults
-    int validAdults;
+    int validAdults = 0;
     //starting rankSort to make sure nans are at the end of the array.
     std::sort(allAdults.begin(), allAdults.end(), rankSort);
 

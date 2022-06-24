@@ -238,7 +238,7 @@ bool rankDistanceSort(const Adult& personA, const Adult& personB) {
 
 }
 
-bool duplicateCheck(const Adult& personA, const Adult& personB, const cudaConstants* cConstants){
+bool duplicateCheck(const Adult& personA, const Adult& personB, const cudaConstants* cConstants, const double& currentAnneal){
 
     //true if A posDiff "equals" B posDiff
     bool APosEqualsB = false;
@@ -247,8 +247,8 @@ bool duplicateCheck(const Adult& personA, const Adult& personB, const cudaConsta
 
     //tolerances used to determine the range of values considered equal
     //these are both currently set to 1e-14 AU, I don't think these need to be modified 
-    double posTolerance = cConstants->posDominationTolerance;
-    double speedTolerance = cConstants->speedDominationTolerance;
+    double posTolerance = cConstants->pos_threshold*currentAnneal;
+    double speedTolerance = cConstants->speed_threshold*currentAnneal;
 
     //True is A posdiff is equal to B posDiff +- posTolerance
     if ((personA.posDiff < personB.posDiff + posTolerance) && (personA.posDiff > personB.posDiff - posTolerance)){
@@ -269,25 +269,47 @@ bool duplicateCheck(const Adult& personA, const Adult& personB, const cudaConsta
 }
 
 //Find the duplicates within the imported vector
-void findDuplicates (std::vector<Adult>& adults, const cudaConstants* cConstants) {
+void findDuplicates (std::vector<Adult>& newAdults, std::vector<Adult>& oldAdults, const cudaConstants* cConstants, const double& currentAnneal) {
     //reset the status of all the duplicates
     //This makes sure that previous duplicates get another look if their copies have been changed
-    for(int i = 0; i < adults.size(); i++){
-        if(adults[i].errorStatus == DUPLICATE){
-            adults[i].errorStatus = VALID;
+    std::vector<Adult> tempAllAdults;
+    int newAdultsSize = newAdults.size();
+    int oldAdultsSize = oldAdults.size();
+
+    
+    for(int i = 0; i < oldAdults.size(); i++){
+        tempAllAdults.push_back(oldAdults[i]);
+        if(oldAdults[i].errorStatus == DUPLICATE){
+            oldAdults[i].errorStatus = VALID;
         }
     }
+    for(int i = 0; i < newAdults.size(); i++){
+        tempAllAdults.push_back(newAdults[i]);
+        if(newAdults[i].errorStatus == DUPLICATE){
+            newAdults[i].errorStatus = VALID;
+        }
+    }
+    oldAdults.clear();
+    newAdults.clear();
     //loop through all the adults
-    for (int i = 0; i < adults.size(); i++){
+    for (int i = 0; i < tempAllAdults.size(); i++){
         //i+1 so it doesn't check itself or past indexes
-        for(int j = i+1; j < adults.size(); j++){
+        for(int j = i+1; j < tempAllAdults.size(); j++){
             //only true if it is both a duplicate and has not been previous marked as a duplicate
             // [j].duplicate check is for the second time an Adult is flagged as a duplicate
             //CHecks for a valid error status, so duplicates can be reset to valid without worry of overriding other error statuses
-            if(duplicateCheck(adults[i], adults[j], cConstants) && adults[j].errorStatus == VALID) {
-                adults[j].errorStatus = DUPLICATE;
+            if(duplicateCheck(tempAllAdults[i], tempAllAdults[j], cConstants, currentAnneal) && tempAllAdults[j].errorStatus == VALID) {
+                tempAllAdults[j].errorStatus = DUPLICATE;
             }
         }
+    }
+
+    for(int i = 0; i < oldAdultsSize; i++){
+        oldAdults.push_back(tempAllAdults[i]);
+    }
+
+    for(int i = oldAdultsSize; i < (newAdultsSize + oldAdultsSize); i++){
+        newAdults.push_back(tempAllAdults[i]);
     }
 }
 #ifdef UNITTEST //this should be defined in unit testing

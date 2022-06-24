@@ -127,17 +127,18 @@ bool lowerDistanceSort(const Adult& personA, const Adult& personB);
 bool rankDistanceSort(const Adult& personA, const Adult& personB);
 
 //compares two adults to see if they have the same posDiff and speedDiff
-//Input: Two adults and cConstants for the tolerances
+//Input: Two adults and cConstants for the tolerances, currentAnneal for the tolerance adjustment
 //Output: true if they have the same posDiff and speedDiff, false if they don't
-bool duplicateCheck(const Adult& personA, const Adult& personB, const cudaConstants* cConstants);
+bool duplicateCheck(const Adult& personA, const Adult& personB, const cudaConstants* cConstants, const double& currentAnneal);
 
 //Will take the given adult vector and find any duplicate adults
 //Input:    adults - Vector of adults that will be searched through
+//          currentAnneal - for changeing the duplicate tolerance
 //Output:   Duplicate individuals within the adults array will have their error status set to duplicate
 //NOTE: Ideally, this function should be used after combining old/newAdults into allAdults
 //      This means the function will find duplicates within the same generation but also beween generations
 //NOTE: This function does not assume the adults have been sorted
-void findDuplicates (std::vector<Adult>& adults, const cudaConstants* cConstants);
+void findDuplicates (std::vector<Adult>& adults, const cudaConstants* cConstants, const double& currentAnneal);
 
 //test version of duplicateCheck that does not use cConstants
 bool duplicateCheckTest(const Adult& personA, const Adult& personB);

@@ -91,8 +91,8 @@ bool dominationCheck(Adult& personA, Adult& personB, const cudaConstants* cConst
 
     //TODO:Might want to consider deleting most of this function
 
-    double posTolerance = cConstants->posDominationTolerance/1e+5;
-    double speedTolerance = cConstants->speedDominationTolerance/1e+5;
+    double posTolerance = cConstants->posDominationTolerance;
+    double speedTolerance = cConstants->speedDominationTolerance;
     double pos_threshold = cConstants-> pos_threshold;
     double speed_threshold = cConstants-> speed_threshold;
     //double posTolerance = 1e-14;

@@ -9,8 +9,8 @@ bool runGeneticsUnitTests(bool printThings){
     utcConstants->speedDominationTolerance = 1.0e-14;
 
     //chose pos_threshold and speed_threshold so anything past the first significant figure in the clone separation test is trivial
-    utcConstants->pos_threshold = 0.01;
-    utcConstants->speed_threshold = 0.001;
+    utcConstants->pos_threshold = 1.0e-11;
+    utcConstants->speed_threshold = 1.0e-11;
 
     // Seed used for randomization rng things, using seed 0 for consistancy / tracability 
     utcConstants->time_seed = 0; 
@@ -156,21 +156,19 @@ bool firstParentsTest(const cudaConstants * utcConstants, bool printThings){
     //These numbers are semi-random multiples of 10 and were entered in no specific order at this point
     //This sort of simulates when the initial generation of oldAdults are created using random parameters 
     //(but these don't change from run to run and are easier to do compare)
-    theChildren[0] = Child(150, 20);
-    theChildren[1] = Child (120, 90);
-    theChildren[2] = Child(180, 30);
-    theChildren[3] = Child (20, 70);
-    theChildren[4] = Child(110, 40);
-    theChildren[5] = Child (30, 90);
-    theChildren[6] = Child(50, 120);
-    theChildren[7] = Child (220, 970);
-    theChildren[8] = Child(20, 120);
-    theChildren[9] = Child (340, 90);
-
+    theChildren[0] = Child(1.5000, .2000); //
+    theChildren[1] = Child (1.2000, .9000); //
+    theChildren[2] = Child(1.8000, .3000); //
+    theChildren[3] = Child (.2000, .7000); //
+    theChildren[4] = Child(1.1000, .4000); //
+    theChildren[5] = Child (.3000, .9000); //
+    theChildren[6] = Child(.5000, 1.2000); //
+    theChildren[7] = Child (2.2000, 9.7000);
+    theChildren[8] = Child(.2000, 1.2000); //
+    theChildren[9] = Child (3.4000, .9000); //
     for (int i = 0; i < utcConstants->num_individuals; i++){
         parents.push_back(Adult(theChildren[i]));
     }
-
     //Ranks based on my hand calculation of ranks based on the version of giveRank from 6/16/22 
     //Dominations are based on the dominations test
     //Below is a list of the parameters of the above children and which rank they should belong to 
@@ -184,7 +182,7 @@ bool firstParentsTest(const cudaConstants * utcConstants, bool printThings){
     giveRank(parents, utcConstants);
     giveDistance(parents, utcConstants);
     std::sort(parents.begin(), parents.end(), rankDistanceSort);
-
+    
     //The final result should be... (see the PDF for the work done to calculate this)
     //Rank 1: (150, 20); (20, 70); (110, 40)
     //Rank 2:  (180, 30); (30, 90); (20, 120)  
@@ -201,7 +199,7 @@ bool firstParentsTest(const cudaConstants * utcConstants, bool printThings){
     delete[] theChildren;
 
     //Ensures the size is correct and that the parents match their expected values
-    if (parents.size() == utcConstants->num_individuals && checkParentsTest(parents)){
+    if (utcConstants->num_individuals == parents.size() && checkParentsTest(parents)){
         return true;
     }
     else{
@@ -215,16 +213,16 @@ bool firstParentsTest(const cudaConstants * utcConstants, bool printThings){
 //      from firstParentsTest to the correct order of the values 
 bool checkParentsTest(std::vector<Adult>& theResults){
     std::vector<Adult> theAnswers;
-    theAnswers.push_back(Adult(Child(150, 20)));
-    theAnswers.push_back(Adult(Child(20, 70)));
-    theAnswers.push_back(Adult(Child(110, 40)));
-    theAnswers.push_back(Adult(Child(180, 30)));
-    theAnswers.push_back(Adult(Child(30, 90)));
-    theAnswers.push_back(Adult(Child(20, 120)));
-    theAnswers.push_back(Adult(Child(50,120)));
-    theAnswers.push_back(Adult(Child(120, 90)));    
-    theAnswers.push_back(Adult(Child(220,970)));
-    theAnswers.push_back(Adult(Child(340,90)));
+    theAnswers.push_back(Adult(Child(1.50, .20)));
+    theAnswers.push_back(Adult(Child(.20, .70)));
+    theAnswers.push_back(Adult(Child(1.10, .40)));
+    theAnswers.push_back(Adult(Child(1.80, .30)));
+    theAnswers.push_back(Adult(Child(.30, .90)));
+    theAnswers.push_back(Adult(Child(.20, 1.20)));
+    theAnswers.push_back(Adult(Child(.50,1.20)));
+    theAnswers.push_back(Adult(Child(1.20, .90)));    
+    theAnswers.push_back(Adult(Child(2.20,9.70)));
+    theAnswers.push_back(Adult(Child(3.40,.90)));
 
     //if the two vectors are not the same size, we have a problem
     if (theAnswers.size() != theResults.size()){
@@ -783,6 +781,15 @@ bool verifyChildrenFromCrossover(bool printThings, cudaConstants* utcConstants){
         }
     }
     
+     if (printThings){
+        for (int i = 0; i < utcConstants->num_individuals; i++){
+            cout << "allAdults[" << i << "]: " << oldAdults[i].unitTestingRankDistanceStatusPrint() << "- posDiff: " << oldAdults[i].posDiff << ", speedDiff: " << oldAdults[i].speedDiff << " & tripTime: " << oldAdults[i].startParams.tripTime << endl;
+        }
+        cout << endl;
+    }
+
+
+    return true;
 }
 
 //just makes checkReasonability shorter - takes in an offset and accesses a child's parameter corresponding to this offset

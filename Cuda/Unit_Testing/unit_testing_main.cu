@@ -12,6 +12,9 @@ int main(){
     //       Check: <parameters of the unit test (I still don't really know exactly what this is testing)>
         cout << "PASSED: Differentiated the better of two adults" << endl;
     }
+    else{
+        cout << "Could not correctly differentiate between two adults in all instances" << endl;
+    }
     if (sortAdultVec(lotsOfCouts)){ //if it successfully makes it through sortAdultVec, it tells the user it was sucessful
     //TODO: Same thing... what does 'successfully' mean here? We can see 'tell the user' based on the following cout 
       cout << "PASSED: Sorted a vector of adults as expected" << endl;

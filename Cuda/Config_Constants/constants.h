@@ -64,7 +64,6 @@ enum ERROR_STATUS{
     NAN_ERROR = 4, //there was an issue during the simulation of the child, causing its final pos to be nan
     OTHER_ERROR = 5,   //any nans not caught during callRk are set to this error status in optimization
 };
-//TODO: add a DUPLICATE error enum
 //   this will also need to be set when duplicates are processed (should result in a poor placement in rankDistanceSort)
 
 //Error values for nans to be changed to, used in callRK and optimization when finding nans

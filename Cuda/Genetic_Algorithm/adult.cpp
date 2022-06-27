@@ -91,10 +91,10 @@ bool dominationCheck(Adult& personA, Adult& personB, const cudaConstants* cConst
 
     //TODO:Might want to consider deleting most of this function
 
-    double posTolerance = cConstants->posDominationTolerance/1e+5;
-    double speedTolerance = cConstants->speedDominationTolerance/1e+5;
-    double pos_threshold = cConstants-> pos_threshold;
-    double speed_threshold = cConstants-> speed_threshold;
+    double posTolerance = cConstants->posDominationTolerance;
+    double speedTolerance = cConstants->speedDominationTolerance;
+    double pos_threshold = cConstants-> pos_threshold*.5;
+    double speed_threshold = cConstants-> speed_threshold*.5;
     //double posTolerance = 1e-14;
     //double speedTolerance = 1e-14;
     //true if A posDiff "equals" B posDiff
@@ -249,6 +249,12 @@ bool duplicateCheck(const Adult& personA, const Adult& personB, const cudaConsta
     //these are both currently set to 1e-14 AU, I don't think these need to be modified 
     double posTolerance = cConstants->pos_threshold*currentAnneal;
     double speedTolerance = cConstants->speed_threshold*currentAnneal;
+    if(posTolerance < cConstants->posDominationTolerance){
+        posTolerance = cConstants->posDominationTolerance;
+    }
+    if(speedTolerance < cConstants->speedDominationTolerance){
+        speedTolerance = cConstants->speedDominationTolerance;
+    }
 
     //True is A posdiff is equal to B posDiff +- posTolerance
     if ((personA.posDiff < personB.posDiff + posTolerance) && (personA.posDiff > personB.posDiff - posTolerance)){

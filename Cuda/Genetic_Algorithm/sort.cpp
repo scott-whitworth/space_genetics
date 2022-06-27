@@ -149,14 +149,12 @@ void giveDistance(std::vector<Adult> & allAdults, const cudaConstants* cConstant
         //distance = distance + abs((i+1) - (i-1))
         allAdults[i].distance = allAdults[i].distance + abs((normalPosDiffLeft - normalPosDiffRight));// /(allAdults[validAdults - 1].posDiff - allAdults[0].posDiff));
     }
-
     //Repeat above process for speedDiff
     if(cConstants->missionType == Rendezvous){//only do this for the rendezvous mission since it has 2 objectives
         std::sort(allAdults.begin(), allAdults.begin() + validAdults, LowerSpeedDiff);
-
         //if an individual has a speedDiff in the convergence range, then these individuals will be sorted by their posDiff as well
         int sortUsingPosDiff = 0;
-        while(allAdults[sortUsingPosDiff].speedDiff < cConstants->speed_threshold){
+        while(allAdults[sortUsingPosDiff].speedDiff < cConstants->speed_threshold && sortUsingPosDiff < allAdults.size()){
             sortUsingPosDiff++;
         }
         std::sort(allAdults.begin(), allAdults.begin() + sortUsingPosDiff, LowerPosDiff);

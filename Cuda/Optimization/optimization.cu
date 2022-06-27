@@ -448,24 +448,15 @@ double optimize(const cudaConstants* cConstants) {
 
     // number of current generation
     int generation = 0;    
-    
-    // Genetic solution tolerance for each objective
-    double posTolerance = cConstants->pos_threshold;
-    double speedTolerance = cConstants->speed_threshold;  
-    //TODO: Can we just use the cConstants value directly? I don't think we need the doubles defined here
-             
-    // distinguishable rate used in changeInBest()
-    //  - used to help check for a change in anneal
+              
+    // distinguishable rate used in changeAnneal()
+    //  - used to help decrease anneal when the oldest adult gets over 500 generations
     //  - Gets smaller when no change is detected
-    double dRate = 1.0e-8;
+    double dRate = 1.0;
 
     // Flag for finishing the genetic process
     // set by checkTolerance()
     bool convergence = false;
-
-    //sets the anneal for the generation
-    //used for proximity based annealing
-    double new_anneal;
 
     //number of Nans, specifically used for diagnostic recording
     //  couting all adults in the generation - includes oldAdults and newAdults that have nan values
@@ -523,11 +514,13 @@ double optimize(const cudaConstants* cConstants) {
 
         //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE ANNEAL STFF-_-_-_-_-_-_-_-_-_\n\n";
         //Perform utitlity tasks (adjusting anneal and reporting data)
-        //Assumes oldAdults is in rankDistance order
-        changeAnneal (oldAdults, cConstants, new_anneal, currentAnneal, anneal_min, previousBestPosDiff, generation, posTolerance, dRate);
 
         //Calculate variables for birthdays and distances
         calculateGenerationValues(allAdults, generation, avgPositionDiff, avgSpeedDiff, duplicateNum, minDistance, avgDistance, maxDistance, avgAge, avgBirthday, oldestBirthday);
+
+        //Assumes oldAdults is in rankDistance order
+        changeAnneal (oldAdults, cConstants, currentAnneal, oldestBirthday, previousBestPosDiff, generation, cConstants->pos_threshold, dRate);
+
 
         //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE RECORD-_-_-_-_-_-_-_-_-_\n\n";
         reportGeneration (oldAdults, allAdults, cConstants, currentAnneal, anneal_min, generation, numNans, avgPositionDiff, avgSpeedDiff, duplicateNum, minDistance, avgDistance, maxDistance, avgAge, avgBirthday, oldestBirthday);
@@ -536,7 +529,7 @@ double optimize(const cudaConstants* cConstants) {
         // Before replacing new adults, determine whether all are within tolerance
         // Determines when loop is finished
         //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE CONVERGENCE CHECK-_-_-_-_-_-_-_-_-_\n\n";
-        convergence = checkTolerance(posTolerance, speedTolerance, oldAdults, cConstants);
+        convergence = checkTolerance(cConstants->pos_threshold, cConstants->speed_threshold, oldAdults, cConstants);
         
         //Increment the generation counter
         ++generation;

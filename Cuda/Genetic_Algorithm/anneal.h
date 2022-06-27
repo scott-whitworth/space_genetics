@@ -9,7 +9,7 @@
 //Input: current anneal and dRate
 //Output: an update of the anneal and dRate based on the tolerance and changeInBest
 //Function that adjusts the anneal based on the current circumstances
-void changeAnneal (const std::vector<Adult>& oldAdults, const cudaConstants* cConstants, double & new_anneal, double & currentAnneal, double & anneal_min,  double & previousBestPosDiff, int & generation, const double & posTolerance, double & dRate);
+void changeAnneal (const std::vector<Adult>& oldAdults, const cudaConstants* cConstants, double & currentAnneal, int & oldestBirthday,  double & previousBestPosDiff, int & generation, const double & posTolerance, double & dRate);
 
 //----------------------------------------------------------------------------------------------------------------------------
 // Used to identify if the best adult has changed

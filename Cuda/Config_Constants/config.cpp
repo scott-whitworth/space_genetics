@@ -258,6 +258,9 @@ void cudaConstants::FileRead(std::string fileName) {
                 else if (variableName == "change_check") {
                     this->change_check = std::stoi(variableValue);
                 }
+                else if (variableName == "max_age"){
+                    this->max_age = std::stoi(variableValue);
+                }
 
 
 /////////////////////////////////////////////////////////////////////////// -- OTHER -- //////////////////////////////////////////////////////////////////////////////////

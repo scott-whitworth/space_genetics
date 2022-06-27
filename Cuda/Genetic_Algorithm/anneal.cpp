@@ -1,15 +1,12 @@
 //TODO: Figure out what to replace posDiff (what used to be cost)
 //Function that will adjust the annneal based on the previous anneal and if there was a change in the best individual
-void changeAnneal (const std::vector<Adult>& oldAdults, const cudaConstants* cConstants, double & new_anneal, double & currentAnneal, double & anneal_min,  double & previousBestPosDiff, int & generation, const double & posTolerance, double & dRate){
+void changeAnneal (const std::vector<Adult>& oldAdults, const cudaConstants* cConstants, double & currentAnneal, int & oldestBirthday,  double & previousBestPosDiff, int & generation, const double & posTolerance, double & dRate){
     
     //Calculate the current cost for this generation
     double curCost = calculateCost(oldAdults, cConstants);
     
     //Caluclate the new current anneal
     //It will be a linear decrease from the initial/max anneal based on how well the current cost is compared to the cost threshold
-    //If we happen to be close to covergence, and the cost we get is -0.0001:
-  //currentAnneal =               0.1          * (              1.000001                  )
-    //if the signs were correct, this would still be only a small decrease when very close to convergence
 
     //How we calculate the anneal depends on the mission type
     //  Our current formula is anneal_max * (1 - (Mission goals / cost))
@@ -21,7 +18,10 @@ void changeAnneal (const std::vector<Adult>& oldAdults, const cudaConstants* cCo
     }
     else 
     {
-        currentAnneal = cConstants->anneal_initial * (1 - pow((Rendezvous / curCost), 0.2)); 
+        if(oldestBirthday > 500 && oldestBirthday % 10 == 0){
+            dRate = dRate/1.3;
+        }
+        currentAnneal = (cConstants->anneal_initial * (1 - pow((Rendezvous / curCost), 0.18)))*dRate;
     }
     
 
@@ -90,7 +90,7 @@ void changeAnneal (const std::vector<Adult>& oldAdults, const cudaConstants* cCo
     }
     */
 }
-
+//TODO: What should we do with old methods now that the new one works well?
 //tests if the best value has changed much in the since the last time this was called
 bool changeInBest(double previousBestPosDiff, const Adult & currentBest, double distinguishRate) {
     //truncate is used here to compare doubles via the distinguguishRate, to ensure that there has been relatively no change.

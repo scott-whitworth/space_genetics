@@ -55,7 +55,9 @@ void separateDuplicates(std::vector<Adult> & oldAdults, std::vector<Adult> & par
         for (int i = 0; i < cConstants->survivor_count; i++) {
             parents.push_back(oldAdults[i]);
         }   
-    }else{
+    }else{//TODO: We may not need this anymore if we plan on removing duplicates, if we fully mutate a duplicate it
+          //      is likely that it will be an adult with a bad posDiff and speedDiff because all the paramters changed from the current best
+
         //TODO: This should be its own function (which should make unit testing easier) - Done?
         //sort all the oldAdults by rankDistance, so the best will be chosen as survivors/parents
         std::sort(oldAdults.begin(), oldAdults.end(), rankDistanceSort);
@@ -85,7 +87,7 @@ void separateDuplicates(std::vector<Adult> & oldAdults, std::vector<Adult> & par
 
 //
 void makeChildren(std::vector<Adult> & parents, std::vector<Adult> & duplicates, Child * newChildren, const double & annealing, const int & generation, std::mt19937_64 & rng, const cudaConstants* cConstants){
-    //TODO: start of next function - DONE
+
     //Variable that tracks the number of children that needs to be generated via the crossover method
     //Set to the number of children that needs to be generated (num_individuals) minus the number of children that will be generated from duplicates via heavy mutation (size of duplicates)
     int childrenFromCrossover = cConstants->num_individuals - duplicates.size();    
@@ -94,7 +96,7 @@ void makeChildren(std::vector<Adult> & parents, std::vector<Adult> & duplicates,
     generateChildrenFromCrossover(parents, newChildren, childrenFromCrossover, rng, annealing, generation, cConstants);
 
     //See if there are any duplicate adults before generating children from mutations
-    if(duplicates.size() > 0){
+    if(duplicates.size() > 0){//TODO: Again, we have no duplicates going through this currently, is it worth keeping?
         //Generate the rest of the children using heavy mutation of duplicate adults
         generateChildrenFromMutation(duplicates, newChildren, childrenFromCrossover, rng, annealing, generation, cConstants); 
     }
@@ -260,7 +262,6 @@ void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& 
     oldAdults.clear(); //empties oldAdults so new values can be put in it
     int counter = 0; //a variable that ensures we put the correct number of adults in oldAdults
     //copies the best adults from allAdults into oldAdults (should be half of allAdults that are copied over)
-    //TODO:: Make sure dividing num_individuals / 2 is correct or if we should divide by something else
 
     while (counter < cConstants->num_individuals && counter < allAdults.size()){
         oldAdults.push_back(allAdults[counter]);
@@ -282,7 +283,7 @@ void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& 
 void eliminateBadAdults(std::vector<Adult>& allAdults, std::vector<Adult>& newAdults, std::vector<Adult>& oldAdults, int& numNans, int& duplicateNum, const cudaConstants* cConstants, const int & generation){
     double posTolerance = cConstants->pos_threshold/100;
     double speedTolerance = cConstants->speed_threshold/100;
-    int ageTolerance = 500;
+    int ageTolerance = cConstants->max_age;
 
     for (int i = 0; i < newAdults.size(); i++){ //copies all the elements of newAdults into allAdults
         if(newAdults[i].errorStatus != VALID && newAdults[i].errorStatus != DUPLICATE) { //tallies the number of nans in allAdults by checking if the adult being passed into newAdult is a Nan or not
@@ -299,9 +300,9 @@ void eliminateBadAdults(std::vector<Adult>& allAdults, std::vector<Adult>& newAd
     for (int i = 0; i < oldAdults.size(); i++){ //copies over all the elements of oldAdults into allAdults
         if(oldAdults[i].errorStatus != VALID && oldAdults[i].errorStatus != DUPLICATE){//tallies the number of nans in allAdults by checking if the adult being passed into newAdult is a Nan or not
             numNans++;
-            //TODO: We should cout an error here, there should not ever be oldAdults with error status (but what about duplicates?)
+            //If a cout error is put here, make sure its not generation 0
         }else if(generation - oldAdults[i].birthday > ageTolerance){
-            //make sure there are no adults that are too old (older than 50 generations)
+            //make sure there are no adults that are too old (older than max_age generations)
             //do nothing and don't add them 
         }else if(oldAdults[i].errorStatus == DUPLICATE){
             duplicateNum++;
@@ -310,7 +311,7 @@ void eliminateBadAdults(std::vector<Adult>& allAdults, std::vector<Adult>& newAd
             allAdults.push_back(oldAdults[i]);
         }
     }
-    //just for debugging to make syre we are not getting rid of too many adults
+    //just for debugging to make sure we are not getting rid of too many adults
     if(allAdults.size() < cConstants->num_individuals){
         std::cout << "The size of allAdults is smaller than N" << std::endl;
     }else if(allAdults.size() < cConstants->survivor_count){

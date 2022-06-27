@@ -82,7 +82,7 @@ bool runGeneticsUnitTests(bool printThings){
     utcConstants->min_numsteps=400;
 
     //New ga_crossover stuff
-    //distanceTolerance=1.0e-14;
+    utcConstants->distanceTolerance=1.0e-14;
     //default_mutation_factor=1.0         //Set at one to allow for the mutation scales below to be applied normally/to children at face value
     //duplicate_mutation_factor=1.0;       //Set at 10; when duplicate adults are mutated, they will undergo stronger mutations
 
@@ -758,6 +758,7 @@ bool verifyChildrenFromCrossover(std::mt19937_64& rng, bool printThings, cudaCon
 
     //loops 4 times the number of survivors is n/(2^exponent) -> survivor_count = n (20), n/2 (10), n/4 (5), n/8 (2)
     while (exponent < 4){
+        bool goodThisTime = true;
         bool printParents = false;
         //fills oldAdults with the 20 adults who only have posDiff, speedDiff, and tripTime uniquely assigned to them
         //set the print status to false because we do not need to print this again before it is modified
@@ -831,7 +832,10 @@ bool verifyChildrenFromCrossover(std::mt19937_64& rng, bool printThings, cudaCon
         //the number of children to be generated using this method is num_individuals because there should be no duplicates at this point
         generateChildrenFromCrossover(parents, children, utcConstants->num_individuals, rng, utcConstants->anneal_initial, 1, utcConstants);
         cout << "got past first generate" << endl;
-        noErrors = cfcAnswersMatchExpectations(occupiesLastSpace, utcConstants->num_individuals, children, utcConstants, parents);
+        goodThisTime = cfcAnswersMatchExpectations(occupiesLastSpace, utcConstants->num_individuals, children, utcConstants, parents);
+        if (!goodThisTime){
+            noErrors = false;
+        }
         cout << "got past first generate and check" << endl;
         //refills oldAdults with 11 unique individuals and 9 duplicates 
         twentyAdultsPosAndSpeedDiffMade(printParents, oldAdults, utcConstants);
@@ -846,7 +850,10 @@ bool verifyChildrenFromCrossover(std::mt19937_64& rng, bool printThings, cudaCon
         //generates individuals based on solely the original/unique individuals from the population
         //generation is set to two to distinguish individuals created in this second call from those created in the first
         generateChildrenFromCrossover(parents, children, utcConstants->num_individuals - duplicates.size(), rng, utcConstants->anneal_initial, 2, utcConstants);
-        noErrors = cfcAnswersMatchExpectations(occupiesLastSpace, utcConstants->num_individuals - duplicates.size(), children, utcConstants, parents);
+        goodThisTime = cfcAnswersMatchExpectations(occupiesLastSpace, utcConstants->num_individuals - duplicates.size(), children, utcConstants, parents);
+        if (!goodThisTime){
+            noErrors = false;
+        }
         cout << "got past second generate and check" << endl;
         //fill oldAdults entirely with duplicates
         for (int i = 0; i < oldAdults.size(); i++){
@@ -864,11 +871,14 @@ bool verifyChildrenFromCrossover(std::mt19937_64& rng, bool printThings, cudaCon
         occupiesLastSpace = children[utcConstants->num_individuals - duplicates.size()];
 
         //generates individuals based on solely the original/unique individual from oldAdults
-        //can the code handle only one parent?
+        //can the code handle only one parent? If so, what does it do?
         //generation is set to three to distinguish individuals created in this third call from those created in the first and second
         generateChildrenFromCrossover(parents, children, utcConstants->num_individuals - duplicates.size(), rng, utcConstants->anneal_initial, 3, utcConstants);
-        noErrors = cfcAnswersMatchExpectations(occupiesLastSpace, utcConstants->num_individuals - duplicates.size(), children, utcConstants, parents);
+        goodThisTime = cfcAnswersMatchExpectations(occupiesLastSpace, utcConstants->num_individuals - duplicates.size(), children, utcConstants, parents);
         cout << "got past third generate and check" << endl;
+        if (!goodThisTime){
+            noErrors = false;
+        }
         utcConstants->survivor_count /= 2; //Halves the survivor population
         exponent++;
     }
@@ -887,12 +897,64 @@ bool cfcAnswersMatchExpectations(const Child & endSpot, const int & numChildren,
             cout << "The last child was overwritten" << endl;
         }
     }
-    /*
-    for (int i = 0; i < parents.size(); i++){
-        for (int j = 0; j < parents.size(); j++){
-
+    
+    int currSet = 0;
+    while(currSet*crossoverChildrenCount < numChildren){
+        bool correctParents = false;
+        bool ableToCheckBothParents = false;
+        int prnt1 = -1, prnt2 = -1;
+        if (currSet*crossoverChildrenCount + fullAvgOffset < numChildren){
+            ableToCheckBothParents = true;
+            for (int i = 0; i < parents.size(); i++){
+                //a parent must have a partner to generate a Child, so it is counted as an error if a parent generates a Child by itself
+                for (int j = i; j < parents.size(); j++){ 
+                    if ((parents[i].tripTime + parents[j].tripTime)/2 == childrenGenerated[currSet*crossoverChildrenCount + fullAvgOffset].tripTime){
+                        correctParents = true;
+                        prnt1 = i;
+                        prnt2 = j;
+                    }
+                }
+            }
         }
-    }*/
+        else{
+            for (int i = 0; i < parents.size(); i++){
+                if (parents[i].tripTime == childrenGenerated[currSet*crossoverChildrenCount].tripTime){
+                   prnt1 = i;
+                }
+                if (currSet*crossoverChildrenCount + 1 < numChildren){
+                    ableToCheckBothParents = true;
+                    if (parents[i].tripTime == childrenGenerated[currSet*crossoverChildrenCount + 1].tripTime){
+                        prnt2 = i;
+                    }
+                }
+            }
+        }
+        if (prnt1 > -1){
+            if (ableToCheckBothParents){
+                if (prnt1 == prnt2){
+                    cout << "Unable to determine if children were correctly generated from parnets" << endl;
+                    correctParents = true; 
+                }
+                else if (prnt2 > -1){
+                    correctParents = true;
+                }
+                else{
+                    correctParents = false;
+                }
+            }
+            else{
+                cout << "Unable to determine if children were correctly generated from parnets" << endl;
+                correctParents = true; 
+            }
+        }
+        else {
+            correctParents = false;
+        }
+        if (!correctParents){
+            noErrors = false;
+        }
+    }
+
     return noErrors;
 }
 

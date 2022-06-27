@@ -84,16 +84,27 @@ void twentyAdultsPosAndSpeedDiffMade(bool printThings, std::vector<Adult>& allAd
 // Checks if clones are being separated from original/unique values properly
 // Input: printThings - TRUE-> displays information on the values being held in duplicates
 //                      FALSE-> no cout statements are printed unless there is an issue with the code
+//        utcConstansts - used to access and change survivor_count, num_individuals, and to pass into the genetic algorithms
 // Output: The parents and duplictaes vectors are compared to the expected versions of these vectors 
 //         (these vectors were determined by looking at the order things ended up in after rankDistanceSort)
 //         Returns TRUE if the values match their expected order
 //         FALSE if not
 bool verifyProperCloneSeparation(bool printThings, cudaConstants* utcConstants);
 
-//
+// Verifies that generateChildrenFromCrossover works as expected by using different parents
+//      and different proportions of these parents to generate children 
+//      these children have their unmutated tripTimes compared to their potential parents' to see if they match expectations
+// Input: rng - a psuedorandom number generator used by to create masks
+//        printThings - TRUE -> prints all the Adults
+//                      FALSE -> only prints error messages and whether it passed or failed
+//        utcConstants - used to ensure num_individuals and anneal_initial are the desired values
+//                       also used to update survivor_count and to pass into genetic algorithms
+// Output: TRUE - if all the children generated seem to match the values we expected them to hit
+//         FALSE - if any of the children generated are unusual or fail to meet our expectations for them
 bool verifyChildrenFromCrossover(std::mt19937_64& rng, bool printThings, cudaConstants* utcConstants);
 
-// Compares the results from verifyChildrenFromCrossover with the correct values
+// Compares the results from verifyChildrenFromCrossover with the expected values for those Children
+// Input: endSpot - if the number of children generated using 
 bool cfcAnswersMatchExpectations(const Child & endSpot, const int & numChildren, const Child* childrenGenerated, const cudaConstants* utcConstants, std::vector<Adult> parents);
 
 //

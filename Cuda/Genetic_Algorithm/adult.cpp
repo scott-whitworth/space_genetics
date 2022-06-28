@@ -7,28 +7,6 @@ Adult::Adult(){
     distance = -1;
 }
 
-//TODO: Consider deleting this - calling this less than and then sorting from best to worst is a little misleading 
-//Compare two adults by their rank and distance
-//input: another adult
-//output: if this adult's rank is lower than the other adult's rank, return true
-//        if this adult and the other adult have the same rank and this adult has a greater distance than the other adult, return true
-//Sorts the whole pool from lowest to highest rank. Adults of the same rank are sorted from highest to lowest distance
-bool Adult::operator<(const Adult &other) {
-    if (errorStatus != VALID){
-        return false;
-    }
-    if(rank < other.rank){
-        return true;
-    }
-    else if (rank == other.rank && distance > other.distance){
-        return true;
-    }
-    else {
-        return false;
-    }
-}
-
-
 //!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Compare two individuals by their positional difference values, used in standard sort to have array contain lowest posDiff individual at start
 // input: two individuals
@@ -91,19 +69,16 @@ bool dominationCheck(Adult& personA, Adult& personB, const cudaConstants* cConst
 
     //TODO:Might want to consider deleting most of this function
 
+    //pos and speed variables used for comparing adutls to eachother
     double posTolerance = cConstants->posDominationTolerance;
     double speedTolerance = cConstants->speedDominationTolerance;
     double pos_threshold = cConstants-> pos_threshold*.5;
     double speed_threshold = cConstants-> speed_threshold*.5;
-    //double posTolerance = 1e-14;
-    //double speedTolerance = 1e-14;
+
     //true if A posDiff "equals" B posDiff
     bool APosEqualsB = false;
     //true if A speedDiff "equals" B speedDiff
     bool ASpeedEqualsB = false;
-
-    //std::cout << "\n\nPERSON A TEST: posDiff = " << personA.posDiff << ", speedDiff = " << personA.speedDiff; 
-    //std::cout << "\n\nPERSON B TEST: posDiff = " << personB.posDiff << ", speedDiff = " << personB.speedDiff; 
 
     //True is A posdiff is equal to B posDiff +- posTolerance
     if (((personA.posDiff < personB.posDiff + posTolerance) && (personA.posDiff > personB.posDiff - posTolerance)) || (personA.posDiff < pos_threshold && personB.posDiff < pos_threshold)){
@@ -115,15 +90,6 @@ bool dominationCheck(Adult& personA, Adult& personB, const cudaConstants* cConst
     }
     //If the mission type is a rendezvous, A's speed diff needs to be lower for it to be equal or better
     if (cConstants -> missionType == Impact) {
-        /*//Check if A's posDiff is approximately/better than B's posDiff and check the same for speed
-        //If so, A is equal to B
-        if ((personA.posDiff < personB.posDiff || APosEqualsB) && (personA.speedDiff > personB.speedDiff || ASpeedEqualsB)) {
-            AisEqual = true; 
-        }  
-        //If A has a better posDiff or speedDiff than B, then A is better than B
-        if (personA.posDiff < personB.posDiff || personA.speedDiff > personB.speedDiff) {
-            AisBetter = true;
-        }*/
         //For impact, only optimizing for one objective
         if ((personA.posDiff < personB.posDiff || APosEqualsB)) {
             AisEqual = true; 

@@ -51,6 +51,7 @@ void makeChildren(std::vector<Adult> & parents, std::vector<Adult> & duplicates,
 // Converts children previously simulated by callRK into adults
 //        It calculates the pos and speed diffs of the children and inserts the new children into the submitted adult vector
 // Input: newAdults - the vector of adults the converted adults will be inserted into
+//                    NOTE: newAdults is cleared in the beginning of the function, it is not needed for this to be empty before
 //        newChildren - the array of simulated children that will be transformed into adults
 //        cConstants - needed for the number of individuals
 // Output: newAdults will be filled with the children that are converted into adults 
@@ -86,8 +87,11 @@ void firstGeneration(Child* initialChildren, std::vector<Adult>& oldAdults, cons
 //        cConstants - allows us to access num_individuals
 //        generation - this is needed for eliminateBadAdults
 //        currentAnneal - this is used in findDuplicate to change the tolerance for finding a duplicate
-// Output: oldAdults is filled with the adults that are potential parents for the next generation
-//TODO: more info about what is happening to allAdults / newAdults / oldAdults
+// Output: oldAdults is filled with the top N number of adults, sorted by rankDistance
+//              The adults that are potential parents for the next generation
+//         allAdults is filled with 2N - number of duplicates + errors adults from the combination of the inputted old/newAdults vectors
+//              It is sorted by rankDistance
+//         newAdults remains the same (size of N and unsorted)
 void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& newAdults, std::vector<Adult>& oldAdults, int& numNans, int& duplicateNum, const cudaConstants* cConstants, const int & generation, const double& currentAnneal);
 
 //function that sorts the adults in newAdults and oldAdults and puts them in allAdults while excluding unwanted adults

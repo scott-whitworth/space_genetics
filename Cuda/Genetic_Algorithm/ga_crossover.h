@@ -18,8 +18,6 @@
 // PARTNER2 (2) - At this index of the OPTIM_VARS array, accept the gene value from parent 2
 //      AVG (3) - At this index of the OPTIM_VARS array, use the average value for the gene from parent 1 and parent 2
 
-//TODO: Document org: probably group / document everything together
-
 // Mask definition / example
 // mask is a pointer array set to OPTIM_VARS length and contains enumeration values (ranges from 1 to 3)
 // used in determing for a given parameter value which parent to receive it from
@@ -75,15 +73,6 @@ void copyMask(int * maskIn, int * maskOut);
 
 ///////////////////////////////////////////////////////////////////////////////
 
-// Creates a new rkParameters individual by combining properties of two parent Individuals using a crossover mask
-// Input: two rkParameter from individuals (p1 and p2) - source of genes for new individual
-//        mask - Contains maskValue values and length of OPTIM_VARS,
-//               determines how the two parent properties are merged into creating the new individual
-//        cConstants, annealing, rng, generation - passed through to mutate()
-// Output: Returns rkParameter object that is new individual
-// Called from generateChildrenPair, calls mutate
-rkParameters<double> generateNewChild(const rkParameters<double> & p1, const rkParameters<double> & p2, const std::vector<int> & mask, const cudaConstants * cConstants, const double & annealing, std::mt19937_64 & rng, const int & generation);
-
 // Utility function, generates a boolean mask for which paramters to mutate (1: mutate, 0: not mutated)
 // Number of genes mutated is a compound probability of n-1 genes before it
 // First gene chance is base mutation rate, second chance is after first is mutated
@@ -116,6 +105,17 @@ rkParameters<double> mutate(const rkParameters<double> & p1, std::mt19937_64 & r
 // Output: A double value that is between -max and +max
 double getRand(double max, std::mt19937_64 & rng);
 
+///////////////////////////////////////////////////////////////////////////////
+
+// Creates a new rkParameters individual by combining properties of two parent Individuals using a crossover mask
+// Input: two rkParameter from individuals (p1 and p2) - source of genes for new individual
+//        mask - Contains maskValue values and length of OPTIM_VARS,
+//               determines how the two parent properties are merged into creating the new individual
+//        cConstants, annealing, rng, generation - passed through to mutate()
+// Output: Returns rkParameter object that is new individual
+// Called from generateChildrenPair, calls mutate
+rkParameters<double> generateNewChild(const rkParameters<double> & p1, const rkParameters<double> & p2, const std::vector<int> & mask, const cudaConstants * cConstants, const double & annealing, std::mt19937_64 & rng, const int & generation);
+
 // Method that creates a pair of new Children from a pair of parent Adults and a mask
 // Input:  parent1 - the first parent that the children will draw parameters from
 //         parent2 - the second parent that the children will draw parameters from
@@ -130,8 +130,9 @@ double getRand(double max, std::mt19937_64 & rng);
 //         mask is flipped in polarity (refer to flipMask method) 
 //         numNewChildren is incremented by +2
 // Called by newGeneration() each time a new mask is generated 
-
 void generateChildrenPair(const Adult & parent1, const Adult & parent2, Child * newChildren, const int & childrenToGenerate, std::vector<int> & mask, const double & annealing, std::mt19937_64 & rng, int & numNewChildren, const int & generation, const cudaConstants* cConstants);
+
+///////////////////////////////////////////////////////////////////////////////
 
 // This function will generate a certain number of children via the ga_crossover method
 //      It will ensure that duplicate adults within the survivor pool do not create children

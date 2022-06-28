@@ -46,14 +46,6 @@ struct Adult: public Child {
     // NOTE: This will be called by convertToAdults within newGeneration & ga_crossover.cu. Children that have just been simulated will be converted from a child into an adult
     Adult(const Child& c): Child(c), rank(INT_MAX), distance(-1){}
 
-    //TODO: Consider deleting this -> it is weird sorting from best to worst and calling best less than worst (unless we want to be very specific we mean LESS WRONG or something?)
-    //Compare two adults by their rank and distance
-    //input: another adult
-    //output: if this adult's rank is lower than the other adult's rank, return true
-    //        if this adult and the other adult have the same rank and this adult has a greater distance than the other adult, return true
-    //Sorts the whole pool from lowest to highest rank. Adults of the same rank are sorted from highest to lowest distance
-    bool operator<(const Adult &other);
-
     #ifdef UNITTEST //this should be defined in unit testing
 
     // Constructor used ONLY FOR UNIT TESTING!!!
@@ -118,7 +110,6 @@ bool lowerDistanceSort(const Adult& personA, const Adult& personB);
 
 //Compare two individuals by their rank and distance
 //input: two individuals
-//TODO: consider status (this goes for the above ones)
 //output: if person A's rank is lower than person B's rank, return true
 //        if person A and person B have the same rank and person A has a greater distance than person B, return true
 //NOTE: This is used within selectParents (specifically callSorts) and reportGeneration of optimization.cu 

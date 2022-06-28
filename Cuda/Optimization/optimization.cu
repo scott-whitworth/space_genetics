@@ -340,7 +340,7 @@ void calculateGenerationValues (const std::vector<Adult> & allAdults, const int 
         avgBirthday += allAdults[i].birthday;
         avgAge += (generation - allAdults[i].birthday);   
     }
-
+    oldestBirthday = generation - oldestBirthday;
     //Divide the averages by the number of adults to get the averages
     avgDist /= allAdults.size();
     avgPosDiff /= allAdults.size();
@@ -354,7 +354,7 @@ void calculateGenerationValues (const std::vector<Adult> & allAdults, const int 
 void reportGeneration (std::vector<Adult> & oldAdults, std::vector<Adult> & allAdults, const cudaConstants* cConstants, const double & currentAnneal, const double & anneal_min, const int & generation, int & numNans, double & avgPosDiff, double & avgSpeedDiff, int & duplicateNum, double minDist,  double avgDist, double maxDist, double avgAge, double avgBirthday, int oldestBirthday){
     // If in recording mode and write_freq reached, call the record method
     if (static_cast<int>(generation) % cConstants->write_freq == 0 && cConstants->record_mode == true) {
-        recordGenerationPerformance(cConstants, oldAdults, generation, currentAnneal, cConstants->num_individuals, anneal_min, avgPosDiff, avgSpeedDiff, duplicateNum, minDist, avgDist, maxDist, avgAge, generation-oldestBirthday, avgBirthday, oldestBirthday);
+        recordGenerationPerformance(cConstants, oldAdults, generation, currentAnneal, cConstants->num_individuals, anneal_min, avgPosDiff, avgSpeedDiff, duplicateNum, minDist, avgDist, maxDist, avgAge, oldestBirthday, avgBirthday, generation+oldestBirthday);
     }
 
     // Only call terminalDisplay every DISP_FREQ, not every single generation
@@ -386,7 +386,7 @@ void reportGeneration (std::vector<Adult> & oldAdults, std::vector<Adult> & allA
 
         std::cout << "\n# of duplicates this generation: " << duplicateNum << "\n";
         //display the oldest individual
-        std::cout << "\nOldest age adult: " << generation - oldestBirthday << "\n\n";
+        std::cout << "\nOldest age adult: " << oldestBirthday << "\n\n";
         
         //Reset the tally of nans.
         numNans = 0;
@@ -431,6 +431,7 @@ double optimize(const cudaConstants* cConstants) {
     // contains all thread unique input parameters
     // The "children pool" of the current genertation
     //TODO: Where is this size set? Are we certian the size is correct? / do we have positive control?
+    //      6/28/22: Can be verified with a function, okay to delete this?
     std::vector<Adult> newAdults; 
 
     //Input parameters from the previous generation. Mixes with new children to determine new inputParameters
@@ -440,11 +441,6 @@ double optimize(const cudaConstants* cConstants) {
 
     //the set of all old and new individuals
     std::vector<Adult> allAdults;
-
-    //used to compare the progress in cost between generations
-    //Set as 0 at first to make sure that there is a change in the best indvidivual for the first check
-    double previousBestPosDiff = 0;
-    //TODO: Figure out if we can delete
 
     // number of current generation
     int generation = 0;    
@@ -486,7 +482,10 @@ double optimize(const cudaConstants* cConstants) {
         //newAdults is empty and will be filled with the "grown" children generated in this method
         //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE NEW GEN-_-_-_-_-_-_-_-_-_\n\n";
         newGeneration(oldAdults, newAdults, currentAnneal, generation, rng, cConstants);
-        //TODO: What is the state of oldAdults / newAdults after this is run (just a reminder)
+        //Test function that will display the size and likely sort of each adult vector
+        //      newAdults: should be N size & unsorted
+        //      oldAdults: should be N size & rankDistance sorted
+        //      allAdults: should be empty or ~2N size of previous generation's adults and rankDistance sorted depending on if its on the 0th generation or not
         //verifyVectors(newAdults, oldAdults, allAdults, "Post New Generation");
 
         //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE PREP PARENTS-_-_-_-_-_-_-_-_-_\n\n";
@@ -498,7 +497,9 @@ double optimize(const cudaConstants* cConstants) {
         //oldAdults goes in with the pool of potential parents that may have generated the newAdults
         //      by the end of the function, it is filled with the best num_individuals adults from allAdults (sorted by rankDistanceSort) 
         preparePotentialParents(allAdults, newAdults, oldAdults, numNans, duplicateNum, cConstants, generation, currentAnneal);
-        //TODO: What is the state of all/old/newAdults (just a reminder)
+
+        //Test function that will display the size and likely sort of each adult vector
+        //      TODO: What should the states be? We should report them here to reference with the actual test
         //verifyVectors(newAdults, oldAdults, allAdults, "Post Prepare Parents");
 
 
@@ -519,12 +520,15 @@ double optimize(const cudaConstants* cConstants) {
         calculateGenerationValues(allAdults, generation, avgPositionDiff, avgSpeedDiff, duplicateNum, minDistance, avgDistance, maxDistance, avgAge, avgBirthday, oldestBirthday);
 
         //Assumes oldAdults is in rankDistance order
-        changeAnneal (oldAdults, cConstants, currentAnneal, oldestBirthday, previousBestPosDiff, generation, cConstants->pos_threshold, dRate);
+        changeAnneal (oldAdults, cConstants, currentAnneal, oldestBirthday, dRate);
 
 
         //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE RECORD-_-_-_-_-_-_-_-_-_\n\n";
         reportGeneration (oldAdults, allAdults, cConstants, currentAnneal, anneal_min, generation, numNans, avgPositionDiff, avgSpeedDiff, duplicateNum, minDistance, avgDistance, maxDistance, avgAge, avgBirthday, oldestBirthday);
-        //TODO: verify that old/AllAdults are in the right order (and clarify with comment here)
+
+        //Test function that will display the size and likely sort of each adult vector
+        //      TODO: What should the states be? We should report them here to reference with the actual test
+        //verifyVectors(newAdults, oldAdults, allAdults, "End Of Generation");
 
         // Before replacing new adults, determine whether all are within tolerance
         // Determines when loop is finished
@@ -533,13 +537,6 @@ double optimize(const cudaConstants* cConstants) {
         
         //Increment the generation counter
         ++generation;
-
-        //verifyVectors(newAdults, oldAdults, allAdults, "End Of Generation");
-
-        //sorts oldAdults using rankDistance sort
-        //This will prep the oldAdults array to be used to generate new children; this makes sure any sorts from the record/report functions are undone
-        //std::sort(oldAdults.begin(), oldAdults.end(), rankDistanceSort); 
-        //TODO: If we need this for generateNewChildren, why not just put this sort in generateNewChildren?
     
         //Loop exits based on result of checkTolerance and if max_generations has been hit
     } while ( !convergence && generation < cConstants->max_generations);

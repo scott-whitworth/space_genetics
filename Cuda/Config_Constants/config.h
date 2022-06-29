@@ -117,7 +117,7 @@ struct cudaConstants {
     //Flag for what type of landing you want. Current modes: "soft"=1, "hard"=2
     int missionType;
 
-    //maximum age for an adullt used in the genetic algorithim
+    //maximum age for an adult used in the genetic algorithim
     int max_age;
 
     // Default constructor, sets the config file path to be "genetic.config" for geneticFileRead()

@@ -24,19 +24,17 @@ void giveRank(std::vector<Adult> & allAdults, const cudaConstants* cConstants) {
     for (int i = 0; i < allAdults.size(); i++){
 
         //For each individual within allAdults, compare them to each other adult
-        for(int j = 0; j < allAdults.size(); j++){
-            //TODO: This should be j = i + 1
-            //      This is will need to change all of the logic below VVV
-
+        for(int j = i+1; j < allAdults.size(); j++){
 
             //TODO: Where is the best place to check for status conditions? In dominationCheck or here
             //check the status of both i and j and see if i is automatically dominated
             if(allAdults[i].errorStatus != VALID && allAdults[j].errorStatus == VALID){
                 dominatedByCount[i]++;
-
+                domination[j].push_back(i);
             }//check the status of both i and j and see if j is automatically dominated
             else if(allAdults[j].errorStatus != VALID && allAdults[i].errorStatus == VALID){
                 domination[i].push_back(j);
+                dominatedByCount[j]++;
                 
             }//if either both are valid or both are not valid, it will rank them normally
             //Check to see if i dominates j
@@ -44,16 +42,15 @@ void giveRank(std::vector<Adult> & allAdults, const cudaConstants* cConstants) {
                 //Put the jth index in the set of individuals dominated by i
                 //std::cout << "\n" << i << "th (i) Adult dominates " << j << "th (j) Adult!\n";
                 domination[i].push_back(j);
+                dominatedByCount[j]++;
             }
             //Check to see if j dominates i
             else if ( dominationCheck( allAdults[j], allAdults[i], cConstants) ){
                 //std::cout << "\n" << j << "th (j) Adult dominates " << i << "th (i) Adult!\n";
                 //Add one to i's dominated by count
-                dominatedByCount[i]++; 
+                dominatedByCount[i]++;
+                domination[j].push_back(i);
             }
-            //Implicit else:
-            //    (and i == j)
-            //    If both are valid AND neither dominate eachother, then nothing changes (dominatedByCount / domination does not update)
         }
         
         //if i was never dominated, add it's index to the best front, front1. Making its ranking = 1.
@@ -157,11 +154,15 @@ void giveDistance(std::vector<Adult> & allAdults, const cudaConstants* cConstant
         while(allAdults[sortUsingPosDiff].speedDiff < cConstants->speed_threshold && sortUsingPosDiff < allAdults.size()){
             sortUsingPosDiff++;
         }
+
+        //Sort all adults who meet the speed threshold by position
+        //Ideally, this will help to prioritize position a little more since position is having more issues meeting the threshold
         std::sort(allAdults.begin(), allAdults.begin() + sortUsingPosDiff, LowerPosDiff);
 
-        //Set the boundaries
-        allAdults[0].distance += MAX_DISTANCE; //+=1
-        allAdults[validAdults - 1].distance += MAX_DISTANCE; //+=1 //TODO:Was 0 for a bit, but isn't now consider which way is best
+        //Add the max distance (usually should be 1) to the extreme adults
+        //Setting the distance boundaries
+        allAdults[0].distance += MAX_DISTANCE;
+        allAdults[validAdults - 1].distance += MAX_DISTANCE;
 
     
         //For each individual besides the upper and lower bounds, make their distance equal to

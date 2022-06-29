@@ -1,10 +1,9 @@
-//TODO: Figure out what to replace posDiff (what used to be cost)
 //Function that will adjust the annneal based on the previous anneal and if there was a change in the best individual
-void changeAnneal (const std::vector<Adult>& oldAdults, const cudaConstants* cConstants, double & currentAnneal, int & oldestBirthday,  double & previousBestPosDiff, int & generation, const double & posTolerance, double & dRate){
+void changeAnneal (const std::vector<Adult>& oldAdults, const cudaConstants* cConstants, double & currentAnneal, int & oldestBirthday, double & dRate){
     
-    //Calculate the current cost for this generation
-    double curCost = calculateCost(oldAdults, cConstants);
-    
+    //Grab the current best (based on rank-distance) cost of this generation
+    double curCost = oldAdults[0].cost;
+    double previousAnneal = currentAnneal;
     //Caluclate the new current anneal
     //It will be a linear decrease from the initial/max anneal based on how well the current cost is compared to the cost threshold
 
@@ -14,14 +13,18 @@ void changeAnneal (const std::vector<Adult>& oldAdults, const cudaConstants* cCo
     //  Thus, the number of mission goals are different between the missions, so we need to check what type of mission it is to calculate the anneal
     if (cConstants -> missionType == Impact) 
     {
-        currentAnneal = cConstants->anneal_initial * (1 - (Impact / curCost));
+        currentAnneal = cConstants->anneal_initial * (1 - (curCost));
     }
     else 
     {
         if(oldestBirthday > 500 && oldestBirthday % 10 == 0){
-            dRate = dRate/1.3;
+            dRate = dRate/1.0;
         }
-        currentAnneal = (cConstants->anneal_initial * (1 - pow((Rendezvous / curCost), 0.18)))*dRate;
+
+        currentAnneal = (cConstants->anneal_initial * (1 - pow((curCost), 0.1)))*dRate;
+        if(currentAnneal > previousAnneal){
+            currentAnneal = previousAnneal;
+        }
     }
     
 
@@ -30,79 +33,11 @@ void changeAnneal (const std::vector<Adult>& oldAdults, const cudaConstants* cCo
     {
         currentAnneal = cConstants->anneal_final;
     }
-    
-
-    /*
-    // Scaling anneal based on proximity to tolerance
-    // Far away: larger anneal scale, close: smaller anneal
-    if (cConstants->missionType == Impact) {
-        //Impact is only based on posDiff, so proximity-based annealing only relies on how close posDiff is to tolerance.
-        new_anneal = currentAnneal * (1 - (posTolerance / oldAdults[0].posDiff));
-    }
-
-    else if (cConstants->missionType == Rendezvous) {
-        if (posTolerance < oldAdults[0].posDiff){ 
-            //TODO: decide what we want to do with this annealing   
-            //Exponentially changing annealing TODO: this annealing and the impact annealing are hardly getting adjusted
-            new_anneal = currentAnneal * (1 - pow(posTolerance / oldAdults[0].posDiff,2.0));
-            if (new_anneal < cConstants->anneal_final){
-                new_anneal = cConstants->anneal_final; //Set a true minimum for annealing
-            }
-        }
-    }
-    
-    /*
-    //Process to see if anneal needs to be adjusted
-    // If generations are stale, anneal drops
-    Adult currentBest;
-    // Compare current best individual to that from CHANGE_CHECK (50) many generations ago.
-    // If they are the same, change size of mutations
-    if (static_cast<int>(generation) % (cConstants->change_check) == 0) { 
-        currentBest = oldAdults[0];
-        // checks for anneal to change
-        // previousBest starts at 0 to ensure changeInBest = true on generation 0
-        if ( !(changeInBest(previousBestPosDiff, currentBest, dRate)) ) { 
-            //this ensures that changeInBest never compares two zeros, thus keeping dRate in relevance as the posDiff lowers
-            if (trunc(currentBest.posDiff/dRate) == 0) { //posDiff here used to be cost
-                while (trunc(currentBest.posDiff/dRate) == 0) { //posDiff here used to be cost
-                    dRate = dRate/10; 
-                }
-                std::cout << "\nnew dRate: " << dRate << std::endl;
-            }
-            // If no change in BestIndividual across generations, reduce currentAnneal by anneal_factor while staying above anneal_min
-            //reduce anneal_min
-            anneal_min = cConstants->anneal_initial*exp(-sqrt(posTolerance/oldAdults[0].posDiff)*generation);
-            if (anneal_min < cConstants->anneal_final){
-                anneal_min = cConstants->anneal_final;//Set a true minimum for annealing
-            }
-
-            //Rendezvous mission uses anneal_min, Impact does not
-            if(cConstants->missionType == Impact) {
-                currentAnneal = currentAnneal * cConstants->anneal_factor;
-            }
-            else if (cConstants->missionType == Rendezvous){
-                currentAnneal = (currentAnneal * cConstants->anneal_factor > anneal_min)? (currentAnneal * cConstants->anneal_factor):(anneal_min);
-            }
-            std::cout << "\nnew anneal: " << currentAnneal << std::endl;              
-        }
-
-        previousBestPosDiff = currentBest.posDiff; //posDiff here used to be cost
-    }
-    */
-}
-//TODO: What should we do with old methods now that the new one works well?
-//tests if the best value has changed much in the since the last time this was called
-bool changeInBest(double previousBestPosDiff, const Adult & currentBest, double distinguishRate) {
-    //truncate is used here to compare doubles via the distinguguishRate, to ensure that there has been relatively no change.
-        if (trunc(previousBestPosDiff/distinguishRate) != trunc(currentBest.posDiff/distinguishRate)) {
-            return true;
-        }
-        else { 
-            return false;
-        }
 }
 
+//TODO: Do we need this anymore now that cost is calulated for each individual?
 //Function that will calculate this generation's best adult's cost
+/*
 double calculateCost(const std::vector<Adult> & oldAdults, const cudaConstants* cConstants){
     //Create the cost double that will be returned
     double cost; 
@@ -162,3 +97,4 @@ double calculateCost(const std::vector<Adult> & oldAdults, const cudaConstants* 
     //Return the calculated cost
     return cost; 
 }
+*/

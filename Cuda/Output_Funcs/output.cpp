@@ -374,7 +374,7 @@ void initializeRecord(const cudaConstants * cConstants) {
     }
   }
 
-  excelFile << "anneal,anneal_min,minDistance,avgDistance,maxDistance,avgAge,oldestAge,bestAdultBirthday,avgBirthday,oldestBirthday,duplicateNum\n";
+  excelFile << "anneal,anneal_min,minDistance,avgDistance,maxDistance,avgAge,oldestAge,bestAdultBirthday,avgBirthday,oldestBirthday,duplicateNum,avgParentCost,cost,parentChildCostRatio\n";
   excelFile.close();
 }
 
@@ -424,6 +424,9 @@ void recordGenerationPerformance(const cudaConstants * cConstants, const std::ve
   excelFile << avgBirthday << ",";
   excelFile << oldestBirthday << ",";
   excelFile << duplicateNum << ",";
+  excelFile << pool[0].avgParentCost << ",";
+  excelFile << pool[0].cost << ",";
+  excelFile << pool[0].avgParentCost/pool[0].cost << ",";
   excelFile << "\n"; // End of row
   excelFile.close();
   
@@ -454,7 +457,7 @@ void recordAllIndividuals(std::string name, const cudaConstants * cConstants, co
   //entirePool << "cost,";
   entirePool << "posDiff,";
   entirePool << "speedDiff,";
-  entirePool << "birthday,rank,distance,";
+  entirePool << "birthday,rank,distance,avgParentCost,cost,parentChildCostRatio";
   entirePool << '\n';
 
   entirePool << std::setprecision(20);
@@ -484,6 +487,9 @@ void recordAllIndividuals(std::string name, const cudaConstants * cConstants, co
     entirePool << pool[i].birthday << ",";
     entirePool << pool[i].rank << ",";
     entirePool << pool[i].distance << ",";
+    entirePool << pool[i].avgParentCost << ",";
+    entirePool << pool[i].cost << ",";
+    entirePool << pool[i].avgParentCost/pool[i].cost << ",";
     entirePool << "\n";
   }
   entirePool.close();

@@ -23,13 +23,13 @@ void newGeneration (std::vector<Adult> & oldAdults, std::vector<Adult> & newAdul
     makeChildren(parents, duplicates, newChildren, annealing, generation, rng, cConstants);
     
     //Initialize variables needed for callRK
-    //TODO: there is likely a better solution for this
+    //TODO: there is likely a better solution for this than just setting them as 0 here
     double timeInitial = 0;
     double calcPerS = 0;
 
     // Each child represents an individual set of starting parameters 
     // GPU based runge kutta process determines final position and velocity based on parameters
-    //Will fill in the final variables (final position & speed, posDiff, speedDiff) for each child
+    // Will fill in the final variables (final position & speed, posDiff, speedDiff) for each child
     //    stepSize -> (cConstants->orbitalPeriod / cConstants->max_numsteps): 
     //                good first guess as to step size, if too small/large RK will always scale to error tolerance
     //TODO: Perhaps we should just import cCOnstants and newChildren into callRk, since most of the arguments come from cConstants regardless
@@ -46,6 +46,10 @@ void newGeneration (std::vector<Adult> & oldAdults, std::vector<Adult> & newAdul
 
 //separates the duplicates from the unique individuals (parents)
 void separateDuplicates(std::vector<Adult> & oldAdults, std::vector<Adult> & parents, std::vector<Adult> & duplicates, const int & generation, const cudaConstants* cConstants){
+    //Clearing parents and duplicates before separating the parents and duplicates from a vector ensures parents
+    //      and duplicates are only filled with individuals from the oldAdults vector
+    parents.clear();
+    duplicates.clear();
     //If statement will check if the generation is 0 
     //      If so, it will assign all the surviving adults to parents
     //      If not, it will decide which vector based on cost
@@ -58,7 +62,6 @@ void separateDuplicates(std::vector<Adult> & oldAdults, std::vector<Adult> & par
     }else{//TODO: We may not need this anymore if we plan on removing duplicates, if we fully mutate a duplicate it
           //      is likely that it will be an adult with a bad posDiff and speedDiff because all the paramters changed from the current best
 
-        //TODO: This should be its own function (which should make unit testing easier) - Done?
         //sort all the oldAdults by rankDistance, so the best will be chosen as survivors/parents
         std::sort(oldAdults.begin(), oldAdults.end(), rankDistanceSort);
         
@@ -105,8 +108,8 @@ void makeChildren(std::vector<Adult> & parents, std::vector<Adult> & duplicates,
 //Function that will convert the generated children into adults
 //Will also transfer the created adults into the newAdult vector
 void convertToAdults(std::vector<Adult> & newAdults, Child* newChildren, const cudaConstants* cConstants) {
-    //TODO: Add a clear to newAdults, just in case
-    //      This should all be documented clearly in the header
+    //Clear newAdults as a percaution against newAdults becoming too big
+    newAdults.clear();
 
     //Iterate through the simulated children to determine their error status (if it hasn't been set by callRK already) and calculate their pos and speed differences
     for (int i = 0; i < cConstants->num_individuals; i++)
@@ -125,7 +128,9 @@ void convertToAdults(std::vector<Adult> & newAdults, Child* newChildren, const c
         //Now that the status has been determined, there is enough information to set pos and speed diffs
         //The two functions will look at the child's errorStatus and set the diffs based on that
         newChildren[i].getPosDiff(cConstants);
-        newChildren[i].getSpeedDiff(cConstants); 
+        newChildren[i].getSpeedDiff(cConstants);
+        newChildren[i].getCost(cConstants);
+
     }
     
     //Iterate through the newChildren vector to add them to the newAdult vector
@@ -147,7 +152,7 @@ void createFirstGeneration(std::vector<Adult>& oldAdults, const cudaConstants* c
     if (cConstants->random_start) {
         // individuals set to randomly generated, but reasonable, parameters
         for (int i = 0; i < cConstants->num_individuals; i++) { 
-            initialChildren[i] = Child(randomParameters(rng, cConstants), cConstants, generation);
+            initialChildren[i] = Child(randomParameters(rng, cConstants), cConstants, generation, 0);
         }
     }
     // Read from file using cConstants initial_start_file_address to get path
@@ -197,7 +202,7 @@ void createFirstGeneration(std::vector<Adult>& oldAdults, const cudaConstants* c
 
             rkParameters<double> example(tripTime, alpha, beta, zeta, testcoeff); 
 
-            initialChildren[i] = Child(example, cConstants, generation);
+            initialChildren[i] = Child(example, cConstants, generation, 0);
         }
     }
     firstGeneration(initialChildren, oldAdults, cConstants);
@@ -227,15 +232,12 @@ void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& 
     numNans = 0;
     duplicateNum = 0;
 
-    //TODO: Making sure there are no errors within allAdults is temporary,
-    //       eventually we need to make sure they are at the end of the rankDistanceSort but still include them within allAdults
-
     //TODO: We should figure out if we want the size of allAdults (or the other vectors) to not be their expected size
     //      The following code may result in allAdults being less than 2*n (or 2*num_individuals)
     //      There are good reasons either way for this choice
     // 
     //      We should for sure be checking to make sure allAdults never gets below survivor size / num_individuals
-    //      
+    //          Update: we have a check for this, but no handling of the error
 
     //countStatuses(newAdults, generation);
     //countStatuses(oldAdults, generation);
@@ -313,8 +315,8 @@ void eliminateBadAdults(std::vector<Adult>& allAdults, std::vector<Adult>& newAd
     }
     //just for debugging to make sure we are not getting rid of too many adults
     if(allAdults.size() < cConstants->num_individuals){
-        std::cout << "The size of allAdults is smaller than N" << std::endl;
+        std::cout << "The size of allAdults is smaller than N (num_individuals)" << std::endl;
     }else if(allAdults.size() < cConstants->survivor_count){
-        std::cout << "ERROR: The size of allAdults is smaller than N/4" << std::endl;
+        std::cout << "ERROR: The size of allAdults is smaller than survivor count!" << std::endl;
     }
 }

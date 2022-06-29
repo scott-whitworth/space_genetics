@@ -137,105 +137,6 @@ double getRand(double max, std::mt19937_64 & rng) {
 }
 
 //!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-// Creates a new rkParameters individual by combining properties of two parent Individuals using a mask to determine which
-rkParameters<double> generateNewChild(const rkParameters<double> & p1, const rkParameters<double> & p2, const std::vector<int> & mask, const cudaConstants * cConstants, const double & annealing, std::mt19937_64 & rng, const int & generation) {
-
-    // Set the new individual to hold traits from parent 1 
-    rkParameters<double> childParameters = p1;
-
-    double ratio;
-    ratio = (static_cast<double>(rng()) / rng.max());//random value between 0 and 1
-    // Based on mask values, set parameters value is to be set to parent 2 or average of parent 1 and 2
-    // Only calculate values pertaining to thrust if a thruster is being used
-    if (cConstants->thruster_type != thruster<double>::NO_THRUST) {
-        // Iterate through the gamma values
-        for (int i = GAMMA_OFFSET; i < (GAMMA_OFFSET + GAMMA_ARRAY_SIZE); i++) {
-            if (mask[i] == PARTNER2) {
-                childParameters.coeff.gamma[i - GAMMA_OFFSET] = p2.coeff.gamma[i - GAMMA_OFFSET]; // If the mask is 2, use the value from parent 2
-            }
-            else if (mask[i] == AVG) {
-                // If the mask is 3, average the values from both parents
-                childParameters.coeff.gamma[i - GAMMA_OFFSET] = p2.coeff.gamma[i - GAMMA_OFFSET]/2.0 + p1.coeff.gamma[i - GAMMA_OFFSET]/2.0;
-            }
-            else if (mask[i] == AVG_RATIO){
-                // If the mask is 4, average the values from both parents based on random ratio
-                childParameters.coeff.gamma[i - GAMMA_OFFSET] = ratio*p2.coeff.gamma[i - GAMMA_OFFSET] + (1 - ratio)*p1.coeff.gamma[i - GAMMA_OFFSET];
-            }
-        }
-        // Iterate through tau values
-        for (int i = TAU_OFFSET; i < (TAU_OFFSET + TAU_ARRAY_SIZE); i++) {
-            if (mask[i] == PARTNER2) {
-                childParameters.coeff.tau[i - TAU_OFFSET] = p2.coeff.tau[i - TAU_OFFSET];
-            }
-            else if (mask[i] == AVG) {
-                childParameters.coeff.tau[i - TAU_OFFSET] = p2.coeff.tau[i - TAU_OFFSET]/2.0 + p1.coeff.tau[i - TAU_OFFSET]/2.0;
-            }
-            else if (mask[i] == AVG_RATIO) {
-                childParameters.coeff.tau[i - TAU_OFFSET] = ratio*p2.coeff.tau[i - TAU_OFFSET] + (1 - ratio)*p1.coeff.tau[i - TAU_OFFSET];
-            }
-        }
-        // Iterate through coasting values
-        for (int i = COAST_OFFSET; i < (COAST_OFFSET + COAST_ARRAY_SIZE); i++) {
-            if (mask[i] == PARTNER2) {
-                childParameters.coeff.coast[i - COAST_OFFSET] = p2.coeff.coast[i - COAST_OFFSET];
-            }
-            else if (mask[i] == AVG) {
-                childParameters.coeff.coast[i - COAST_OFFSET] = p2.coeff.coast[i - COAST_OFFSET]/2.0 + p1.coeff.coast[i - COAST_OFFSET]/2.0;
-            }
-            else if (mask[i] == AVG_RATIO) {
-                childParameters.coeff.coast[i - COAST_OFFSET] = ratio*p2.coeff.coast[i - COAST_OFFSET] + (1 - ratio)*p1.coeff.coast[i - COAST_OFFSET];
-            }
-        }
-    }
-    
-    // Go through other variables
-    if (mask[TRIPTIME_OFFSET] == PARTNER2) { //tripTime
-        childParameters.tripTime = p2.tripTime;
-    }
-    else if (mask[TRIPTIME_OFFSET] == AVG) {
-        childParameters.tripTime = p2.tripTime/2.0 + p1.tripTime/2.0;
-    }
-    else if (mask[TRIPTIME_OFFSET] == AVG_RATIO) {
-        childParameters.tripTime = ratio*p2.tripTime + (1 - ratio)*p1.tripTime;
-    }
-    
-    if (mask[ZETA_OFFSET] == PARTNER2) { //zeta
-        childParameters.zeta = p2.zeta;
-    }
-    else if (mask[ZETA_OFFSET] == AVG) {
-        childParameters.zeta = p2.zeta/2.0 + p1.zeta/2.0;
-    }
-    else if (mask[ZETA_OFFSET] == AVG_RATIO) {
-        childParameters.zeta = ratio*p2.zeta + (1 - ratio)*p1.zeta;
-    }
-    
-    if (mask[BETA_OFFSET] == PARTNER2) { //beta
-        childParameters.beta = p2.beta;
-    }
-    else if (mask[BETA_OFFSET] == AVG) {
-        childParameters.beta = p2.beta/2.0 + p1.beta/2.0;
-    }
-    else if (mask[BETA_OFFSET] == AVG_RATIO) {
-        childParameters.beta = ratio*p2.beta + (1 - ratio)*p1.beta;
-    }
-    
-    if (mask[ALPHA_OFFSET] == PARTNER2) { //alpha
-        childParameters.alpha = p2.alpha;
-    }
-    else if (mask[ALPHA_OFFSET] == AVG) {
-        childParameters.alpha = p2.alpha/2.0 + p1.alpha/2.0;
-    }
-    else if (mask[ALPHA_OFFSET] == AVG_RATIO) {
-        childParameters.alpha = ratio*p2.alpha + (1 - ratio)*p1.alpha;
-    }
-
-    // Crossover complete, determine mutation
-    childParameters = mutate(childParameters, rng, annealing, cConstants, generation, cConstants->mutation_amplitude, cConstants->default_mutation_chance);
-
-    return childParameters;
-}
-
-//!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Utility function to generate a boolean mask that determines which parameter value is mutating and how many based on mutation_rate iteratively
 void mutateMask(std::mt19937_64 & rng, bool * mutateMask, double mutation_rate) {
     for (int i = 0; i < OPTIM_VARS; i++) {
@@ -359,6 +260,104 @@ rkParameters<double> mutate(const rkParameters<double> & p1, std::mt19937_64 & r
 }
 
 //!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+// Creates a new rkParameters individual by combining properties of two parent Individuals using a mask to determine which
+rkParameters<double> generateNewChild(const rkParameters<double> & p1, const rkParameters<double> & p2, const std::vector<int> & mask, const cudaConstants * cConstants, const double & annealing, std::mt19937_64 & rng, const int & generation) {
+
+    // Set the new individual to hold traits from parent 1 
+    rkParameters<double> childParameters = p1;
+
+    double ratio;
+    ratio = (static_cast<double>(rng()) / rng.max());//random value between 0 and 1
+    // Based on mask values, set parameters value is to be set to parent 2 or average of parent 1 and 2
+    // Only calculate values pertaining to thrust if a thruster is being used
+    if (cConstants->thruster_type != thruster<double>::NO_THRUST) {
+        // Iterate through the gamma values
+        for (int i = GAMMA_OFFSET; i < (GAMMA_OFFSET + GAMMA_ARRAY_SIZE); i++) {
+            if (mask[i] == PARTNER2) {
+                childParameters.coeff.gamma[i - GAMMA_OFFSET] = p2.coeff.gamma[i - GAMMA_OFFSET]; // If the mask is 2, use the value from parent 2
+            }
+            else if (mask[i] == AVG) {
+                // If the mask is 3, average the values from both parents
+                childParameters.coeff.gamma[i - GAMMA_OFFSET] = p2.coeff.gamma[i - GAMMA_OFFSET]/2.0 + p1.coeff.gamma[i - GAMMA_OFFSET]/2.0;
+            }
+            else if (mask[i] == AVG_RATIO){
+                // If the mask is 4, average the values from both parents based on random ratio
+                childParameters.coeff.gamma[i - GAMMA_OFFSET] = ratio*p2.coeff.gamma[i - GAMMA_OFFSET] + (1 - ratio)*p1.coeff.gamma[i - GAMMA_OFFSET];
+            }
+        }
+        // Iterate through tau values
+        for (int i = TAU_OFFSET; i < (TAU_OFFSET + TAU_ARRAY_SIZE); i++) {
+            if (mask[i] == PARTNER2) {
+                childParameters.coeff.tau[i - TAU_OFFSET] = p2.coeff.tau[i - TAU_OFFSET];
+            }
+            else if (mask[i] == AVG) {
+                childParameters.coeff.tau[i - TAU_OFFSET] = p2.coeff.tau[i - TAU_OFFSET]/2.0 + p1.coeff.tau[i - TAU_OFFSET]/2.0;
+            }
+            else if (mask[i] == AVG_RATIO) {
+                childParameters.coeff.tau[i - TAU_OFFSET] = ratio*p2.coeff.tau[i - TAU_OFFSET] + (1 - ratio)*p1.coeff.tau[i - TAU_OFFSET];
+            }
+        }
+        // Iterate through coasting values
+        for (int i = COAST_OFFSET; i < (COAST_OFFSET + COAST_ARRAY_SIZE); i++) {
+            if (mask[i] == PARTNER2) {
+                childParameters.coeff.coast[i - COAST_OFFSET] = p2.coeff.coast[i - COAST_OFFSET];
+            }
+            else if (mask[i] == AVG) {
+                childParameters.coeff.coast[i - COAST_OFFSET] = p2.coeff.coast[i - COAST_OFFSET]/2.0 + p1.coeff.coast[i - COAST_OFFSET]/2.0;
+            }
+            else if (mask[i] == AVG_RATIO) {
+                childParameters.coeff.coast[i - COAST_OFFSET] = ratio*p2.coeff.coast[i - COAST_OFFSET] + (1 - ratio)*p1.coeff.coast[i - COAST_OFFSET];
+            }
+        }
+    }
+    
+    // Go through other variables
+    if (mask[TRIPTIME_OFFSET] == PARTNER2) { //tripTime
+        childParameters.tripTime = p2.tripTime;
+    }
+    else if (mask[TRIPTIME_OFFSET] == AVG) {
+        childParameters.tripTime = p2.tripTime/2.0 + p1.tripTime/2.0;
+    }
+    else if (mask[TRIPTIME_OFFSET] == AVG_RATIO) {
+        childParameters.tripTime = ratio*p2.tripTime + (1 - ratio)*p1.tripTime;
+    }
+    
+    if (mask[ZETA_OFFSET] == PARTNER2) { //zeta
+        childParameters.zeta = p2.zeta;
+    }
+    else if (mask[ZETA_OFFSET] == AVG) {
+        childParameters.zeta = p2.zeta/2.0 + p1.zeta/2.0;
+    }
+    else if (mask[ZETA_OFFSET] == AVG_RATIO) {
+        childParameters.zeta = ratio*p2.zeta + (1 - ratio)*p1.zeta;
+    }
+    
+    if (mask[BETA_OFFSET] == PARTNER2) { //beta
+        childParameters.beta = p2.beta;
+    }
+    else if (mask[BETA_OFFSET] == AVG) {
+        childParameters.beta = p2.beta/2.0 + p1.beta/2.0;
+    }
+    else if (mask[BETA_OFFSET] == AVG_RATIO) {
+        childParameters.beta = ratio*p2.beta + (1 - ratio)*p1.beta;
+    }
+    
+    if (mask[ALPHA_OFFSET] == PARTNER2) { //alpha
+        childParameters.alpha = p2.alpha;
+    }
+    else if (mask[ALPHA_OFFSET] == AVG) {
+        childParameters.alpha = p2.alpha/2.0 + p1.alpha/2.0;
+    }
+    else if (mask[ALPHA_OFFSET] == AVG_RATIO) {
+        childParameters.alpha = ratio*p2.alpha + (1 - ratio)*p1.alpha;
+    }
+
+    // Crossover complete, determine mutation
+    childParameters = mutate(childParameters, rng, annealing, cConstants, generation, cConstants->mutation_amplitude, cConstants->default_mutation_chance);
+
+    return childParameters;
+}
+
 // Method that creates a pair of new Individuals from a pair of other individuals and a mask
 void generateChildrenPair (const Adult & parent1, const Adult & parent2, Child * newChildren, const int & childrenToGenerate, std::vector<int> & mask, const double & annealing, std::mt19937_64 & rng, int & numNewChildren, const int & generation, const cudaConstants* cConstants) {
     
@@ -368,12 +367,9 @@ void generateChildrenPair (const Adult & parent1, const Adult & parent2, Child *
         return;
     }
 
-
-
-
     //TODO: this is where things are breaking on the tesla as of 6/24
     //Generate a new individual based on the two parents
-    newChildren[numNewChildren] = Child(generateNewChild(parent1.startParams, parent2.startParams, mask, cConstants, annealing, rng, generation), cConstants, generation);
+    newChildren[numNewChildren] = Child(generateNewChild(parent1.startParams, parent2.startParams, mask, cConstants, annealing, rng, generation), cConstants, generation, (parent1.cost + parent2.cost)/2);
 
     //Add one to numNewChildren to signify that a new child has been added to the newChildren vector
     //Will also ensure that no children are overwritten
@@ -384,20 +380,17 @@ void generateChildrenPair (const Adult & parent1, const Adult & parent2, Child *
     if(numNewChildren >= childrenToGenerate){
         return;
     }
-
-    //TODO: For efficiency, we might want to check if the mask is an averaging mask (if it is, we probably don't need to make the 'flip')
-    //      On the other hand, even numbers are nice, so we may want to take the hit anyway just to keep things even
-    //Dealt with this by "flipping" an average mask to be a weighted average mask
     //Flip the mask to generate a mirrored individual
     flipMask(mask); 
 
     //Generate a mirrored child
-    newChildren[numNewChildren] = Child(generateNewChild(parent1.startParams, parent2.startParams, mask, cConstants, annealing, rng, generation), cConstants, generation); 
+    newChildren[numNewChildren] = Child(generateNewChild(parent1.startParams, parent2.startParams, mask, cConstants, annealing, rng, generation), cConstants, generation, (parent1.cost + parent2.cost)/2); 
 
     //Add one to numNewChildren since a new child was generated
     numNewChildren++;
 }
 
+//!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Generate children from non-duplicate parents using crossover methods
 void generateChildrenFromCrossover(std::vector<Adult> &parents, Child *newChildren, const int &childrenToGenerate, std::mt19937_64 &rng, const double &currentAnneal, const int &generation, const cudaConstants *cConstants)
 {
@@ -424,7 +417,7 @@ void generateChildrenFromCrossover(std::vector<Adult> &parents, Child *newChildr
     // it will be shuffled to generate random parent pairings
     // NOTE: this will only be effective after oldAdults has been sorted (with the best Adults at the front)
     std::vector<int> parentPool;
-
+/*
     //find the lowest posDiff in the parent pool
     for (int i = 0; i < parents.size(); i++)
     {
@@ -446,19 +439,19 @@ void generateChildrenFromCrossover(std::vector<Adult> &parents, Child *newChildr
     }
     //make it the second adult in the parent vector
     parentPool.push_back(bestSpeedDiffIndex);
-
+*/
     // Fill the parentPool index with the number of indexes desired for survivors
     for (int i = 0; i < parents.size(); i++)
     {
-        if(i != bestPosDiffIndex || i != bestSpeedDiffIndex){//do not add the two best indexes as they are already in the pool
+        //if(i != bestPosDiffIndex || i != bestSpeedDiffIndex){//do not add the two best indexes as they are already in the pool
             parentPool.push_back(i);
-        }
+        //}
     }
 
     // Shuffle the parentPool mapping array
     // This will generate a random list of indicies, which can then be used to map to random Adults within oldAdult's survivor range to pair parents
     // This will effectively generate random parent pairs
-    //std::shuffle(parentPool.begin(), parentPool.end(), rng);
+    std::shuffle(parentPool.begin(), parentPool.end(), rng);
     
     // Tracks the number of new individuals that have been generated
     // Used primarily to make sure that no children are overwritten in newChildren; indexing in generatechildrenPair, should equal childrenToGenerate when finished
@@ -485,9 +478,9 @@ void generateChildrenFromCrossover(std::vector<Adult> &parents, Child *newChildr
         if (parentIndex + 1 < parentPool.size())
         {
             //after the best two make children, shuffle the rest of the pool
-            if(parentIndex == 2 && parentOffset == 0){
-                std::shuffle(parentPool.begin()+2, parentPool.end(), rng);
-            }
+            // if(parentIndex == 0 && parentOffset == 0){
+            //     std::shuffle(parentPool.begin(), parentPool.end(), rng);
+            // }
 
             // Generate a pair of children based on the random cross over mask method from a pair of parents
             // This will generate a set of parameters with variables randomly selected from each parent
@@ -557,7 +550,7 @@ void generateChildrenFromMutation(std::vector<Adult> & duplicates, Child* newChi
     //bool dupe = true;
     for (int i = 0; i < cConstants->num_individuals - startingIndex; i++) {
         //Assign the starting parameters of a corresponding duplicate to a child
-        newChildren[startingIndex + i] = Child(duplicates[i].startParams, cConstants, generation);
+        newChildren[startingIndex + i] = Child(duplicates[i].startParams, cConstants, generation, duplicates[i].cost);
 
         //Now that the necessary child has been assigned starting parameters, go though and heavily mutate their parameters
         //      Note: the mutation factor is set by duplicate_mutation_factor

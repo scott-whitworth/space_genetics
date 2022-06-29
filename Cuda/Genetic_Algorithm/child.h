@@ -6,7 +6,7 @@
 #include "../Config_Constants/constants.h"
 
 //TODO: Big step: think about where in the code we rely on numeric data to determine errors (like checking for NAN)
-//      Change to interface with STATUS instead
+//TODO: Is ERROR_STATUS necessary? We have statuses for it, but they aren't used... we only use STATUS as of 6/28/22
 
 // Child is a structure member of the genetic algorithm's population and has set of parameters and the resulting position and velocity
 //once a child is created it will then be copied to an adult with some added parameters
@@ -17,6 +17,8 @@ struct Child {
 
     double posDiff; // in AU, difference in position between spacecraft and center of asteroid at end of run
     double speedDiff; // in AU/s, difference in velocity between spacecraft and asteroid at end of run
+    double avgParentCost; //The average of the two parents cost
+    double cost; //cost of the individual's posDiff and speedDiff
 
     //Both status and error_status are defined in constants.h
 
@@ -25,10 +27,6 @@ struct Child {
     ERROR_STATUS errorStatus; //record of if child is computed correctly, should be set in callRK
 
     int birthday; //keeps track of the generation this individual was created in 
-    //TODO: Add birthday (to keep track of generation created)
-    // This will need to be pulled in via the constructor
-    // Tripple check you do this correctly, there are complicated delegated adult/child constructors
-    // should be an int (even if double elsewhere)
 
 
 //!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -44,7 +42,7 @@ struct Child {
     //        newChild - struct returned by generateNewChild()
     // Output: this individual's startParams.y0 is set to the initial position and velocity of the spacecraft
     //         Child is ready to be passed into callRK
-    Child(rkParameters<double> & childParameters, const cudaConstants* cConstants, int genCreated);
+    Child(rkParameters<double> & childParameters, const cudaConstants* cConstants, int genCreated, double calcAvgParentCost);
 
     // Copy constructor
     // Sets this child's parameters, elements, posDiff, and speedDiff to another child's values for these quantities
@@ -90,6 +88,11 @@ struct Child {
     // Output: Assigns and returns this individual's speedDiff value
     __host__ __device__ double getSpeedDiff(const cudaConstants* cConstants);
 
+    // Calculates the cost depending on the mission type
+    // Input: cConstants for the tolerances, and the child's posDiff and speedDiff are used
+    //        NOTE: This function assumes that the pos/speed diffs have already been calculated
+    // Output: a cost that is from 0 to 1 for impact and 0 to 2 for rendezvous
+    __host__ void getCost(const cudaConstants* cConstants);
 };
 
 #include "child.cpp"

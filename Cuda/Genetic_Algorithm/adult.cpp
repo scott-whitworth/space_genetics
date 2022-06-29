@@ -250,16 +250,16 @@ void findDuplicates (std::vector<Adult>& newAdults, std::vector<Adult>& oldAdult
 
     
     for(int i = 0; i < oldAdults.size(); i++){
-        tempAllAdults.push_back(oldAdults[i]);
         if(oldAdults[i].errorStatus == DUPLICATE){
             oldAdults[i].errorStatus = VALID;
         }
+        tempAllAdults.push_back(oldAdults[i]);
     }
     for(int i = 0; i < newAdults.size(); i++){
-        tempAllAdults.push_back(newAdults[i]);
         if(newAdults[i].errorStatus == DUPLICATE){
             newAdults[i].errorStatus = VALID;
         }
+        tempAllAdults.push_back(newAdults[i]);
     }
     oldAdults.clear();
     newAdults.clear();

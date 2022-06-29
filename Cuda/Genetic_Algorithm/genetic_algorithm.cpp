@@ -50,10 +50,11 @@ void separateDuplicates(std::vector<Adult> & oldAdults, std::vector<Adult> & par
     //      and duplicates are only filled with individuals from the oldAdults vector
     parents.clear();
     duplicates.clear();
+
     //If statement will check if the generation is 0 
     //      If so, it will assign all the surviving adults to parents
-    //      If not, it will decide which vector based on cost
-    //      This is done because, only in generation 0, does the adults in oldAdults not have a calculated cost
+    //      If not, it will decide which vector based on progress
+    //      This is done because, only in generation 0, does the adults in oldAdults not have a calculated progress
     if (generation == 0) {
         //Assign all surviving adults to parents
         for (int i = 0; i < cConstants->survivor_count; i++) {
@@ -129,7 +130,7 @@ void convertToAdults(std::vector<Adult> & newAdults, Child* newChildren, const c
         //The two functions will look at the child's errorStatus and set the diffs based on that
         newChildren[i].getPosDiff(cConstants);
         newChildren[i].getSpeedDiff(cConstants);
-        newChildren[i].getCost(cConstants);
+        newChildren[i].getProgress(cConstants);
 
     }
     

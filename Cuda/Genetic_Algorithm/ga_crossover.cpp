@@ -369,7 +369,7 @@ void generateChildrenPair (const Adult & parent1, const Adult & parent2, Child *
 
     //TODO: this is where things are breaking on the tesla as of 6/24
     //Generate a new individual based on the two parents
-    newChildren[numNewChildren] = Child(generateNewChild(parent1.startParams, parent2.startParams, mask, cConstants, annealing, rng, generation), cConstants, generation, (parent1.cost + parent2.cost)/2);
+    newChildren[numNewChildren] = Child(generateNewChild(parent1.startParams, parent2.startParams, mask, cConstants, annealing, rng, generation), cConstants, generation, (parent1.progress + parent2.progress)/2);
 
     //Add one to numNewChildren to signify that a new child has been added to the newChildren vector
     //Will also ensure that no children are overwritten
@@ -384,7 +384,7 @@ void generateChildrenPair (const Adult & parent1, const Adult & parent2, Child *
     flipMask(mask); 
 
     //Generate a mirrored child
-    newChildren[numNewChildren] = Child(generateNewChild(parent1.startParams, parent2.startParams, mask, cConstants, annealing, rng, generation), cConstants, generation, (parent1.cost + parent2.cost)/2); 
+    newChildren[numNewChildren] = Child(generateNewChild(parent1.startParams, parent2.startParams, mask, cConstants, annealing, rng, generation), cConstants, generation, (parent1.progress + parent2.progress)/2); 
 
     //Add one to numNewChildren since a new child was generated
     numNewChildren++;
@@ -398,12 +398,7 @@ void generateChildrenFromCrossover(std::vector<Adult> &parents, Child *newChildr
     //std::cout << "\n_-_-_-_-_-_-_-_-_-Size of parents: " << parents.size() << ", number of children to generate: " << childrenToGenerate << "_-_-_-_-_-_-_-_-_-\n";
     // Create a mask to determine which of the child's parameters will be inherited from which parents
     std::vector<int> mask;
-    //These will hold the posDiff and speedDiff that are the lowest in the current parent pool
-    double curBestPosDiff = 0;
-    double curBestSpeedDiff = 0;
-    //These will hold the index of the best posDiff and the best speedDiff in the current parent pool
-    int bestPosDiffIndex;
-    int bestSpeedDiffIndex;
+
     // Make a basic mask with it set to avg at first
     // Setting the mask to average is due to the reasoning that if the mask isn't changed, it is best that what is generated is not just a copy of one adult (hence, not setting it to Parent 1 or 2)
     for (int i = 0; i < OPTIM_VARS; i++)
@@ -411,41 +406,20 @@ void generateChildrenFromCrossover(std::vector<Adult> &parents, Child *newChildr
         // TODO: is this the best initial setting? Does this even matter?
         mask.push_back(AVG);
     }
+
+    //Sort the parents by rank distance to make sure only the best adults pass on genes
     std::sort(parents.begin(), parents.end(), rankDistanceSort);
+
     // Vector that determines which parents will be paired up to generate children
     // it will contain indexes of adults that are deemed to be parents
     // it will be shuffled to generate random parent pairings
     // NOTE: this will only be effective after oldAdults has been sorted (with the best Adults at the front)
     std::vector<int> parentPool;
-/*
-    //find the lowest posDiff in the parent pool
-    for (int i = 0; i < parents.size(); i++)
-    {
-        if(parents[i].posDiff < curBestPosDiff){//make it the new current best if true and copy its index
-            curBestPosDiff = parents[i].posDiff;
-            bestPosDiffIndex = i;
-        }
-    }
-    //make it the first adult in the parent vector
-    parentPool.push_back(bestPosDiffIndex);
 
-    //find the lowest posDiff in the parent pool
-    for (int i = 0; i < parents.size(); i++)
-    {
-        if(parents[i].speedDiff < curBestSpeedDiff){//make it the new current best if true and copy its index
-            curBestSpeedDiff = parents[i].speedDiff;
-            bestSpeedDiffIndex = i;
-        }
-    }
-    //make it the second adult in the parent vector
-    parentPool.push_back(bestSpeedDiffIndex);
-*/
     // Fill the parentPool index with the number of indexes desired for survivors
     for (int i = 0; i < parents.size(); i++)
     {
-        //if(i != bestPosDiffIndex || i != bestSpeedDiffIndex){//do not add the two best indexes as they are already in the pool
-            parentPool.push_back(i);
-        //}
+        parentPool.push_back(i);
     }
 
     // Shuffle the parentPool mapping array
@@ -547,10 +521,10 @@ void generateChildrenFromMutation(std::vector<Adult> & duplicates, Child* newChi
     //          The total number of new children that need to be created between both functions is num_individuals
     //          generateChildrenFromCrossover has already filled newChildren with startingIndex number of children
     //          Thus, the starting index until num_individuals is safe to be modified
-    //bool dupe = true;
+    
     for (int i = 0; i < cConstants->num_individuals - startingIndex; i++) {
         //Assign the starting parameters of a corresponding duplicate to a child
-        newChildren[startingIndex + i] = Child(duplicates[i].startParams, cConstants, generation, duplicates[i].cost);
+        newChildren[startingIndex + i] = Child(duplicates[i].startParams, cConstants, generation, duplicates[i].progress);
 
         //Now that the necessary child has been assigned starting parameters, go though and heavily mutate their parameters
         //      Note: the mutation factor is set by duplicate_mutation_factor

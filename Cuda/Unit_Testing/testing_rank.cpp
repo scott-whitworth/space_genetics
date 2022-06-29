@@ -39,15 +39,15 @@ bool CAtest();
 //       generation is used for adjusting the anneal further every set amount of generations
 //       previousBestPosDiff is found from the changeInBestTest and used to see if the best adult has changed or not
 //       posTolerance is used for adjusting the annealing
-//       dRate is the distinguishable rate which is adjusted based on the current best posDiff -- TODO: this part used to be cost based, what should it be now?
-//NOTE: this header is outdated, this is the new changeAnneal function that uses cost
+//       dRate is the distinguishable rate which is adjusted based on the current best posDiff
+//NOTE/TODO: this header is outdated, this is the new changeAnneal function that uses progress
 void changeAnnealTest(const std::vector<Adult>& oldAdults, int missionType, double & new_anneal, double & currentAnneal);
 
-//function that calculates the cost
-double calculateCostTest(const std::vector<Adult> & oldAdults, int missionType);
+//function that calculates the progress
+double calculateProgressTest(const std::vector<Adult> & oldAdults, int missionType);
 
-//test version of change in best, just checks if there has been a chnage in the best posDiff(used to be cost)
-//Input: previousBestPosDiff (was cost) 
+//test version of change in best, just checks if there has been a chnage in the best posDiff(used to be progress)
+//Input: previousBestPosDiff (was progress) 
 //       currentBest (the best posDiff of this generation)
 //       dRate to compare to current and previous best
 //bool changeInBestTest(double previousBestPosDiff, const Adult & currentBest, double distinguishRate);
@@ -713,14 +713,14 @@ bool CAtest(){
     //double posTolerance = 1e-14;
     //double dRate = 1e-8;
 
-    while(calculateCostTest(CAtest, missionType) >= Impact){
+    while(calculateProgressTest(CAtest, missionType) >= Impact){
         //call the test to adjust the anneal
         changeAnnealTest(CAtest, missionType, new_anneal, currentAnneal);
         //print the results
         if(generation %1==0){
         cout << "done with run " << generation << endl;
         cout << "currentAnneal: " << currentAnneal << endl;
-        cout << "Current cost: " << calculateCostTest(CAtest, missionType) << endl;
+        cout << "Current progress: " << calculateProgressTest(CAtest, missionType) << endl;
         cout << "Best posDiff: " << CAtest[0].posDiff << ", Best speedDiff: " << CAtest[0].speedDiff << endl;
         }
         //adjust the best posDiff every generation to get more changes in the anneal
@@ -732,7 +732,7 @@ bool CAtest(){
         changeAnnealTest(CAtest, missionType, new_anneal, currentAnneal);
         cout << "Total generations = " << generation << endl;
         cout << "currentAnneal: " << currentAnneal << endl;
-        cout << "Current cost: " << calculateCostTest(CAtest, missionType) << endl;
+        cout << "Current progress: " << calculateProgressTest(CAtest, missionType) << endl;
         cout << "Best posDiff: " << CAtest[0].posDiff << ", Best speedDiff: " << CAtest[0].speedDiff << endl;
 
     return true;
@@ -740,25 +740,25 @@ bool CAtest(){
 }
 void changeAnnealTest(const std::vector<Adult>& oldAdults, int missionType, double & new_anneal, double & currentAnneal){
     
-    //Calculate the current cost for this generation
-    double curCost = calculateCostTest(oldAdults, missionType);
+    //Calculate the current progress for this generation
+    double curProgress = calculateProgressTest(oldAdults, missionType);
     double anneal_initial = 0.1;
     double anneal_final = 1.0e-7;
     //Caluclate the new current anneal
-    //It will be a linear decrease from the initial/max anneal based on how well the current cost is compared to the cost threshold
-    //If we happen to be close to covergence, and the cost we get is -0.0001:
+    //It will be a linear decrease from the initial/max anneal based on how well the current progress is compared to the progress threshold
+    //If we happen to be close to covergence, and the progress we get is -0.0001:
   //currentAnneal =               0.1          * (              1.000001                  )
     //if the signs were correct, this would still be only a small decrease when very close to convergence
-//    currentAnneal = anneal_initial * (1 - std::abs(costThreshold / curCost));
-//    currentAnneal = anneal_initial * (1 - pow(std::abs(costThreshold / curCost),2.0));
-//    currentAnneal = anneal_initial * (1 - (1 / curCost));
+//    currentAnneal = anneal_initial * (1 - std::abs(costThreshold / curProgress));
+//    currentAnneal = anneal_initial * (1 - pow(std::abs(costThreshold / curProgress),2.0));
+//    currentAnneal = anneal_initial * (1 - (1 / curProgress));
     if(missionType == Rendezvous){
-        currentAnneal = anneal_initial * (1 - pow((Rendezvous / curCost),4.0));
+        currentAnneal = anneal_initial * (1 - pow((Rendezvous / curProgress),4.0));
     }else if (missionType == Impact){
-        currentAnneal = anneal_initial * (1 - (Impact / curCost));
+        currentAnneal = anneal_initial * (1 - (Impact / curProgress));
     }
     
-//    currentAnneal = anneal_initial * (1 - pow((Rendezvous / curCost),2.0));
+//    currentAnneal = anneal_initial * (1 - pow((Rendezvous / curProgress),2.0));
     //Check to make sure that the current anneal does not fall below the designated minimum amount
     if (currentAnneal < anneal_final)
     {
@@ -766,44 +766,44 @@ void changeAnnealTest(const std::vector<Adult>& oldAdults, int missionType, doub
     }
 }
 
-double calculateCostTest(const std::vector<Adult> & oldAdults, int missionType){
-    //Create the cost double that will be returned
-    double cost; 
+double calculateProgressTest(const std::vector<Adult> & oldAdults, int missionType){
+    //Create the progress double that will be returned
+    double progress; 
     double pos_threshold = 1.0e-10;
     double speed_threshold = 1.0e-11;
 
-    //How to calculate the cost will depend on the mission type
-    //In general, cost will be (for each mission parameter, the difference/the goal) - the number of mission parameters
-    //This will mean a cost of 0 or below signifies that the individual has hit the mission goals
+    //How to calculate the progress will depend on the mission type
+    //In general, progress will be (for each mission parameter, the difference/the goal) - the number of mission parameters
+    //This will mean a progress of 0 or below signifies that the individual has hit the mission goals
 
-    //For impacts, the cost only depends on posDiff
+    //For impacts, the progress only depends on posDiff
     //  NOTE: While the RD sorting favors high speed for impacts, convergence ultimately comes down to posDiff
     if (missionType == Impact) {
-        //Calculate the cost based only on position
+        //Calculate the progress based only on position
         //The goal is position threshold and the current status is the best individual's posDiff
-    //  cost =      bigger number    /         1e-10              -   1 = large number - 1
+    //  progress =      bigger number    /         1e-10              -   1 = large number - 1
     //  The run before convergence:
-    //  cost =   number <= 1e-10     /         1e-10              -   1 = smallish number - 1
-//        cost = (oldAdults[0].posDiff /pos_threshold) - Impact;
-        cost = (oldAdults[0].posDiff /pos_threshold);
-        if(cost < 1){
-            cost = 1;
+    //  progress =   number <= 1e-10     /         1e-10              -   1 = smallish number - 1
+//        progress = (oldAdults[0].posDiff /pos_threshold) - Impact;
+        progress = (oldAdults[0].posDiff /pos_threshold);
+        if(progress < 1){
+            progress = 1;
         }
         //this might better if we did:
 
     }
-    //For rendezvous, the cost depends on both posDiff and speedDiff
+    //For rendezvous, the progress depends on both posDiff and speedDiff
     else {
         //Similarly to impact, calculate how far the best adult's speed and position diffs are away from the goal and subtract by the number of mission goals
-//        cost = ((oldAdults[0].posDiff / pos_threshold) + (oldAdults[0].speedDiff / speed_threshold)) - Rendezvous;
-        cost = ((oldAdults[0].posDiff / pos_threshold) + (oldAdults[0].speedDiff / speed_threshold));
-        if(cost < 2){
-            cost = 2;
+//        progress = ((oldAdults[0].posDiff / pos_threshold) + (oldAdults[0].speedDiff / speed_threshold)) - Rendezvous;
+        progress = ((oldAdults[0].posDiff / pos_threshold) + (oldAdults[0].speedDiff / speed_threshold));
+        if(progress < 2){
+            progress = 2;
         }
     }
     
-    //Return the calculated cost
-    return cost; 
+    //Return the calculated progress
+    return progress; 
 }
 /*
 bool newDuplicateTest(){

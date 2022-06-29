@@ -15,10 +15,12 @@ Child::Child() {
 }
 
 // Set the initial position of the spacecraft according to the newly generated parameters
-// Input: cConstants - to access c3energy value used in getCost()
-//        childParameters - struct returned by generateNewIndividual()
+// Input:  childParameters - the starting paramters that are generated randomly, from mutation, or from crossover
+//         cConstants - to access the v_escape value for calculations of the startParams
+//         genCreated - the generation this child is created, used for birthday/age data
+//         calcAvgParentProgress - the creating parent's average progress. Will be set to 0 for randomly generated children
 // Output: this individual's startParams.y0 is set to the initial position and velocity of the spacecraft
-Child::Child(rkParameters<double> & childParameters, const cudaConstants* cConstants, int genCreated, double calcAvgParentCost) {
+Child::Child(rkParameters<double> & childParameters, const cudaConstants* cConstants, int genCreated, double calcAvgParentProgress) {
 
     startParams = childParameters;
     elements<double> earth = launchCon->getCondition(startParams.tripTime); //get Earth's position and velocity at launch
@@ -33,9 +35,8 @@ Child::Child(rkParameters<double> & childParameters, const cudaConstants* cConst
 
     funcStatus = FUNCTIONAL_CHILD;//ready to be an adult
     errorStatus = NOT_RUN; //not run through callRK yet
-    birthday = genCreated;
-    avgParentCost = calcAvgParentCost;
-
+    birthday = genCreated; //Set the child's birthday to the current generation
+    avgParentProgress = calcAvgParentProgress; //The avg progress of the creating parents, if any (0 for randomly generated children)
 }
 
 // Copy constructor
@@ -50,8 +51,8 @@ Child:: Child(const Child& other){
     funcStatus = other.funcStatus;
     errorStatus = other.errorStatus;
     birthday = other.birthday;
-    avgParentCost = other.avgParentCost;
-    cost = other.cost;
+    avgParentProgress = other.avgParentProgress;
+    progress = other.progress;
 
 }
 
@@ -102,20 +103,22 @@ __host__ __device__ double Child::getSpeedDiff(const cudaConstants* cConstants) 
     return speedDiff;
 }
 
-__host__ void Child::getCost(const cudaConstants* cConstants) {
+__host__ __device__ void Child::getProgress(const cudaConstants* cConstants) {
 
-    //Variables will be used to calculate cost
+    //Variables will be used to calculate progress
     //      They both will specifically be used to calculate the adult's diff / goal diff
     //      This prevents a excellent speed diff causing the adult's diff / goal diff to be less than 1
-    //          If this was the case, there is the potential that the cost goal could be met even if the position diff hadn't hit it's goal
+    //          If this was the case, there is the potential that the progress goal could be met even if the position diff hadn't hit it's goal
     double rel_posDiff, rel_speedDiff;
     rel_posDiff = rel_speedDiff = 0;
 
-    //How to calculate the cost will depend on the mission type
-    //In general, cost will be (for each mission parameter, the difference/the goal) - the number of mission parameters
-    //This will mean a cost of 0 or below signifies that the individual has hit the mission goals
+    //How to calculate the progress will depend on the mission type
+    //In general, progress will be the number of objectives / the combined rel diffs of the objectives
+    //      The rel diffs are themselves calculated by dividing the current diff by the threshold of that objective, which calculates how close the child is to that goal
+    //      To make sure an individual beating one goal by a lot but not meeting the other doesn't have a progress of 1, if the diffs are meeting the goal, the rel diffs are set to 1 to signify 100% progress
+    //This will mean a progress of 1 signifies that the individual has hit the mission goals
 
-    //For impacts, the cost only depends on posDiff
+    //For impacts, the progress only depends on posDiff
     //  NOTE: While the RD sorting favors high speed for impacts, convergence ultimately comes down to posDiff
     if (cConstants -> missionType == Impact) {
         //The goal is position threshold and the current status is the best individual's posDiff
@@ -130,10 +133,11 @@ __host__ void Child::getCost(const cudaConstants* cConstants) {
             rel_posDiff = 1.0;
         }
 
-        //The coast is the rel_posDiff minus the number of mission goals (1 in this case)
-        cost = Impact/rel_posDiff;
+        //The progress is measured by the number of objectives (1) divided by the rel diff
+        //So, a simulation meeting the requirements has a progress value of 1 since it would be 1/1
+        progress = Impact/rel_posDiff;
     }
-    //For rendezvous, the cost depends on both posDiff and speedDiff
+    //For rendezvous, the progress depends on both posDiff and speedDiff
     else {
         //Similarly to impact, calculate how far the best adult's speed and position diffs are away from the goal and subtract by the number of mission goals
         
@@ -152,12 +156,12 @@ __host__ void Child::getCost(const cudaConstants* cConstants) {
             rel_speedDiff = 1.0;
         }
 
-        //The cost the addition of each difference between the goals and pod/speed diffs minus the rendezvous mission goal count (2)
-        //This means a flight that meets all goals will have a cost of 0, since the rel pos/speed diffs would be set to 1
-        cost = Rendezvous/(rel_posDiff + rel_speedDiff);
+        //The progress calculates as the number of objectives for the mission (2) divided by the sum of both rel diffs
+        //This means a flight that meets all goals will have a progress of 1, since the rel pos/speed diffs would be set to 1, so it would be 2/2
+        progress = Rendezvous/(rel_posDiff + rel_speedDiff);
     }
     
-    //Return the calculated cost
+    //End the function
     return; 
 }
 

@@ -61,7 +61,7 @@ bool dominationTest(){
 
     int r = 0;//rank
     double d = 1.0;//distance
-    int test = 6;// 1: set of 6 different posDiffs and speedDiffs that leads to a normal expected outcome
+    int test = 7;// 1: set of 6 different posDiffs and speedDiffs that leads to a normal expected outcome
                  // 2: set of 6 different posDiffs and speedDiffs for the new version of dominationCheckTest that accounts for mission type
                  // 3: set of 1000 random posDiffs and speedDiffs of values 1-1000, meant to show giveRank works for large sets
                  // 4: error status test of 6 adults
@@ -291,80 +291,52 @@ bool dominationTest(){
             GRtest.push_back(Adult(200, d)); 
         }
         //Rank (ren): 1
-        //rank (imp): 3
-        //distance (imp low): 1e+12
-        //distance (imp high): 1e+12
-        //distance (rendezvous): 1e+12
+        //distance (rendezvous): 1.1764
         GRtest[0].posDiff = 150;
         GRtest[0].speedDiff = 20;
 
-        //Rank (ren): 1
-        //Rank (imp): 4
-        //distance (imp low): 0.2625
-        //distance (imp high): 1.2
-        //distance (rendezvous): 0.2625
+        //Rank (ren): 3
+        //distance (rendezvous): 0.1176
         GRtest[1].posDiff = 120;
         GRtest[1].speedDiff = 90;
 
         //Rank (ren): 2
-        //Rank (imp): 1
-        //distance (imp low): 0.775
-        //distance (imp high): 10.15
-        //distance (rendezvous): 0.775
+        //distance (rendezvous): 0.2265
         GRtest[2].posDiff = 180;
         GRtest[2].speedDiff = 30;
 
-        //Rank (ren): 3
-        //Rank (imp): 5
-        //distance (imp low): 0.6375
-        //distance (imp high): 3.45
-        //distance (rendezvous): 0.6375
+        //Rank (ren): 1
+        //distance (rendezvous): 1.0515
         GRtest[3].posDiff = 20;
         GRtest[3].speedDiff = 70;
 
-        //Rank (ren): 2
-        //Rank (imp): 6
-        //distance (imp low): 0.2675
-        //distance (imp high): 2.15
-        //distance (rendezvous): 0.225
+        //Rank (ren): 1
+        //distance (rendezvous): 0.2471
         GRtest[4].posDiff = 110;
         GRtest[4].speedDiff = 40;
 
-        //Rank (ren): 1
-        //Rank (imp): 2
-        //distance (imp low): 0.8
-        //distance (imp high): 8.3
-        //distance (rendezvous): 0.8
+        //Rank (ren): 2
+        //distance (rendezvous): 0.1088
         GRtest[5].posDiff = 30;
         GRtest[5].speedDiff = 90;
 
-        //Rank (ren): 2
-        //Rank (imp): 5
-        //distance (imp low): 0.1625
-        //distance (imp high): 1.1
-        //distance (rendezvous): 0.2125
+        //Rank (ren): 3
+        //distance (rendezvous): 1.1115
         GRtest[6].posDiff = 50;
         GRtest[6].speedDiff = 120;
 
-        //Rank (ren): 1
-        //Rank (imp): 2
-        //distance (imp low): 1e+12
-        //distance (imp high): 1e+12
-        //distance (rendezvous): 1e+12
+        //Rank (ren): 4
+        //distance (rendezvous): 1.0309
         GRtest[7].posDiff = 220;
         GRtest[7].speedDiff = 970;
-        //Rank (ren): 1
-        //Rank (imp): 2
-        //distance (imp low): 1e+12
-        //distance (imp high): 1e+12
-        //distance (rendezvous): 1e+12
+
+        //Rank (ren): 2
+        //distance (rendezvous): 0.0603
         GRtest[8].posDiff = 20;
         GRtest[8].speedDiff = 120;
-        //Rank (ren): 1
-        //Rank (imp): 2
-        //distance (imp low): 1e+12
-        //distance (imp high): 1e+12
-        //distance (rendezvous): 1e+12
+
+        //Rank (ren): 4
+        //distance (rendezvous): 1.0309
         GRtest[9].posDiff = 340;
         GRtest[9].speedDiff = 90;
 
@@ -374,8 +346,8 @@ bool dominationTest(){
     }
 
     
-    //test 7 has special printing and calling needs
-    if(test == 6 || test == 7){
+    //test 6 has special printing and calling needs
+    if(test == 6){
         for(int run = 0; run < 3; run++){//run for the 3 cases
             if(run == 0){//normal rendezvous mission
                 missionType = 1; //ren 1, imp 2
@@ -428,8 +400,8 @@ bool dominationTest(){
             }
         }
     }
-    else{//this will print for tests 1-6
-        missionType = 2;//1 ren, 2 imp
+    else{//this will print for tests 1-5 and 7
+        missionType = 2;//2 ren, 1 imp
         //call giveRank to rank each adult
         giveRankTest(GRtest, missionType);
         //only sort by rank
@@ -500,7 +472,7 @@ void giveRankTest(std::vector<Adult> & allAdults, int missionType) {
     for (int i = 0; i < allAdults.size(); i++){
 
         //For each individual within allAdults, compare them to each other adult
-        for(int j = 0; j < allAdults.size(); j++){
+        for(int j = i+1; j < allAdults.size(); j++){
             
             if(allAdults[i].errorStatus != VALID && allAdults[j].errorStatus == VALID){
                 dominatedByCount[i]++;//tried it with this in the first if statement and it does not work, leads to a miscount
@@ -513,13 +485,14 @@ void giveRankTest(std::vector<Adult> & allAdults, int missionType) {
                 //Put the jth index in the set of individuals dominated by i
 
                 domination[i].push_back(j);
-
+                dominatedByCount[j]++;
                 //domination[i][j] = j;//this does not work
             }
             //Check to see if j dominates i
             else if (dominationCheckTest(allAdults[j], allAdults[i], missionType)){
-                
-                dominatedByCount[i]++;//tried it with this in the first if statement and it does not work, leads to a miscount
+                dominatedByCount[i]++;
+                domination[j].push_back(i);
+                //dominatedByCount[i]++;//tried it with this in the first if statement and it does not work, leads to a miscount
             }
         }
         
@@ -832,7 +805,7 @@ double calculateCostTest(const std::vector<Adult> & oldAdults, int missionType){
     //Return the calculated cost
     return cost; 
 }
-
+/*
 bool newDuplicateTest(){
     //vector for the test
     std::vector<Adult> dupeTest;
@@ -966,4 +939,4 @@ bool newDuplicateTest(){
 
     return true;
 
-}
+}*/

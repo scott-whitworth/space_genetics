@@ -1,13 +1,14 @@
 function [] = plotData(cR,y0A,y0E,sizeC,tripTime,coast,coast_threshold,gammaCoeff,tauCoeff,fuelMass,alpha,beta,zeta,launchPos)
 
     %% Conversion data
+    %au=1.49597870691E11; % conversion of m/au
     au=1.49597870691E11; % conversion of m/au
     
     % Solving differential motions
     timeFinal=(3.772645011085093e+07); % orbital period for Bennu
     %timeFinal=(6.653820100923719e+07); % orbital period for Didymos
     tspan=[tripTime 0];
-    options = odeset('RelTol',1e-12);
+    options = odeset('RelTol',1e-13);
     [tE, yE] = ode45(@orbitalMotion,tspan,y0E,options,gammaCoeff,tauCoeff,tripTime,0);
     [tA, yA] = ode45(@orbitalMotion,tspan,y0A,options,gammaCoeff,tauCoeff,tripTime,0);
     

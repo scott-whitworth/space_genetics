@@ -4,13 +4,13 @@
 
 // Utility function to display the currently best individual onto the terminal while the algorithm is still running
 // input: Individual to be displayed (assumed to be the best individual of the pool) and the value for the current generation iterated
-// output: onto the console termina, generation is displayed and best individual's posDiff, speedDiff, and cost values
+// output: onto the console termina, generation is displayed and best individual's posDiff, speedDiff, and progress values
 void terminalDisplay(const Adult& individual, unsigned int currentGeneration) {
     std::cout << "\nGeneration: " << currentGeneration << std::endl;
     std::cout << "Best individual:" << std::endl;
     std::cout << "\tposDiff: " << individual.posDiff << std::endl;
     std::cout << "\tspeedDiff: " << individual.speedDiff << std::endl;
-    //std::cout << "\tcost: "    << individual.cost << std::endl;
+    //std::cout << "\tprogress: "    << individual.progress << std::endl;
 }
 
 // mutateFile[time_seed].csv is given a header row, now ready to be used by recordMutateFile()
@@ -374,7 +374,7 @@ void initializeRecord(const cudaConstants * cConstants) {
     }
   }
 
-  excelFile << "anneal,anneal_min,minDistance,avgDistance,maxDistance,avgAge,oldestAge,bestAdultBirthday,avgBirthday,oldestBirthday,duplicateNum,avgParentCost,cost,parentChildCostRatio\n";
+  excelFile << "anneal,anneal_min,minDistance,avgDistance,maxDistance,avgAge,oldestAge,bestAdultBirthday,avgBirthday,oldestBirthday,duplicateNum,avgParentProgress,progress,parentChildProgressRatio\n";
   excelFile.close();
 }
 
@@ -392,7 +392,6 @@ void recordGenerationPerformance(const cudaConstants * cConstants, const std::ve
   excelFile << pool[0].speedDiff << ",";
   excelFile << avgPosDiff << ",";
   excelFile << avgSpeedDiff << ","; 
-  //excelFile << pool[0].cost << ",";
 
   // Record best individuals parameters
   excelFile << pool[0].startParams.alpha << ",";
@@ -424,9 +423,9 @@ void recordGenerationPerformance(const cudaConstants * cConstants, const std::ve
   excelFile << avgBirthday << ",";
   excelFile << oldestBirthday << ",";
   excelFile << duplicateNum << ",";
-  excelFile << pool[0].avgParentCost << ",";
-  excelFile << pool[0].cost << ",";
-  excelFile << pool[0].avgParentCost/pool[0].cost << ",";
+  excelFile << pool[0].avgParentProgress << ",";
+  excelFile << pool[0].progress << ",";
+  excelFile << pool[0].avgParentProgress/pool[0].progress << ",";
   excelFile << "\n"; // End of row
   excelFile.close();
   
@@ -454,10 +453,9 @@ void recordAllIndividuals(std::string name, const cudaConstants * cConstants, co
   for (int i = 0; i < COAST_ARRAY_SIZE; i++) {
     entirePool << "coast" << i << ",";
   }
-  //entirePool << "cost,";
   entirePool << "posDiff,";
   entirePool << "speedDiff,";
-  entirePool << "birthday,rank,distance,avgParentCost,cost,parentChildCostRatio";
+  entirePool << "birthday,rank,distance,avgParentProgress,progress,parentChildProgressRatio";
   entirePool << '\n';
 
   entirePool << std::setprecision(20);
@@ -481,15 +479,14 @@ void recordAllIndividuals(std::string name, const cudaConstants * cConstants, co
     for (int j = 0; j < COAST_ARRAY_SIZE; j++) {
       entirePool << pool[i].startParams.coeff.coast[j] << ",";
     }
-    //entirePool << pool[i].cost << ",";
     entirePool << pool[i].posDiff << ",";
     entirePool << pool[i].speedDiff << ",";
     entirePool << pool[i].birthday << ",";
     entirePool << pool[i].rank << ",";
     entirePool << pool[i].distance << ",";
-    entirePool << pool[i].avgParentCost << ",";
-    entirePool << pool[i].cost << ",";
-    entirePool << pool[i].avgParentCost/pool[i].cost << ",";
+    entirePool << pool[i].avgParentProgress << ",";
+    entirePool << pool[i].progress << ",";
+    entirePool << pool[i].avgParentProgress/pool[i].progress << ",";
     entirePool << "\n";
   }
   entirePool.close();

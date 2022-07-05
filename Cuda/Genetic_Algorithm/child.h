@@ -17,8 +17,8 @@ struct Child {
 
     double posDiff; // in AU, difference in position between spacecraft and center of asteroid at end of run
     double speedDiff; // in AU/s, difference in velocity between spacecraft and asteroid at end of run
-    double avgParentCost; //The average of the two parents cost
-    double cost; //cost of the individual's posDiff and speedDiff
+    double progress; //progress of the individual's posDiff and speedDiff. 0 to 1 scale with 0 being poor and 1 meaning that the individual have completed all objectives
+    double avgParentProgress; //The average of the two parents progress
 
     //Both status and error_status are defined in constants.h
 
@@ -38,11 +38,13 @@ struct Child {
 
     // Set the initial position of the spacecraft according to the newly generated parameters
     // Called from: generateNewChild()
-    // Input: cConstants - to access the v_escape value for calculations of the startParams
-    //        newChild - struct returned by generateNewChild()
+    // Input:  childParameters - the starting paramters that are generated randomly, from mutation, or from crossover
+    //         cConstants - to access the v_escape value for calculations of the startParams
+    //         genCreated - the generation this child is created, used for birthday/age data
+    //         calcAvgParentProgress - the creating parent's average progress. Will be set to 0 for randomly generated children
     // Output: this individual's startParams.y0 is set to the initial position and velocity of the spacecraft
     //         Child is ready to be passed into callRK
-    Child(rkParameters<double> & childParameters, const cudaConstants* cConstants, int genCreated, double calcAvgParentCost);
+    Child(rkParameters<double> & childParameters, const cudaConstants* cConstants, int genCreated, double calcAvgParentProgress);
 
     // Copy constructor
     // Sets this child's parameters, elements, posDiff, and speedDiff to another child's values for these quantities
@@ -88,11 +90,11 @@ struct Child {
     // Output: Assigns and returns this individual's speedDiff value
     __host__ __device__ double getSpeedDiff(const cudaConstants* cConstants);
 
-    // Calculates the cost depending on the mission type
+    // Calculates the progress depending on the mission type
     // Input: cConstants for the tolerances, and the child's posDiff and speedDiff are used
     //        NOTE: This function assumes that the pos/speed diffs have already been calculated
-    // Output: a cost that is from 0 to 1 for impact and 0 to 2 for rendezvous
-    __host__ void getCost(const cudaConstants* cConstants);
+    // Output: the child has been assigned a progress value betweeen 0 and 1
+    __host__ __device__ void getProgress(const cudaConstants* cConstants);
 };
 
 #include "child.cpp"

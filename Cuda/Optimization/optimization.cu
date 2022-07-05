@@ -378,13 +378,17 @@ void reportGeneration (std::vector<Adult> & oldAdults, std::vector<Adult> & allA
             std::sort(oldAdults.begin(), oldAdults.end(), HigherSpeedDiff);
             terminalDisplay(oldAdults[0], generation);
         }
-        //display to the terminal the best individual based on cost
+        //display to the terminal the best individual based on rankDistance
         std::cout << "\nBest Rank Distance Individual:";
         std::sort(oldAdults.begin(), oldAdults.end(), rankDistanceSort);
         terminalDisplay(oldAdults[0], generation);
+
+        //Display number of errors
         std::cout << "\n# of errors this generation: " << numNans << "\n";
 
+        //Display number of duplicates
         std::cout << "\n# of duplicates this generation: " << duplicateNum << "\n";
+        
         //display the oldest individual
         std::cout << "\nOldest age adult: " << oldestBirthday << "\n\n";
         

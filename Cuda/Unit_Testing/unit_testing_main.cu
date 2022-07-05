@@ -6,7 +6,8 @@ using std::endl;
 #include "../Unit_Testing/testing_genetics.h"
 
 int main(){
-    bool lotsOfCouts = true; //determines whether or not all adults' ranks, distances, and statuses will be printed
+    //determines whether or much of the workings of the unit tests will be printed or not
+    bool lotsOfCouts = true; 
     if (compareTwoAdults()){ //if it sucessfully makes it through compareTwoAdults, it prints a confirmation message for the user 
     // TODO: The above comment, while correct, is not as helpful as something like:
     //       Check: <parameters of the unit test (I still don't really know exactly what this is testing)>
@@ -26,7 +27,7 @@ int main(){
         cout << "PASSED: All the genetics tests passed" << endl;
     }
     else{
-        cout << "Unidentified error in testing_genetics" << endl;
+        cout << "Completed all the genetics units tests, but some FAILED" << endl;
     }
     // if(dominationTest()){
     //     cout << "dominationTest has ended" <<endl;

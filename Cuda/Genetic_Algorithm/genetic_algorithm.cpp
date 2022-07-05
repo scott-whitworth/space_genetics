@@ -69,14 +69,16 @@ void separateDuplicates(std::vector<Adult> & oldAdults, std::vector<Adult> & par
         //Iterate through the best of oldAdults and sort the individuals into either the parent or the duplicate vectors
         for (int i = 0; i < cConstants->survivor_count; i++)
         {
-            if (oldAdults[i].errorStatus == VALID)
+            if (oldAdults[i].errorStatus == VALID || oldAdults[i].errorStatus == DUPLICATE)
             {
                 parents.push_back(oldAdults[i]);
             }
+            /*
             else if (oldAdults[i].errorStatus == DUPLICATE)
             {
                 duplicates.push_back(oldAdults[i]);
             }
+            */
         }
 
         //Check to see if the size of parents + the size of duplicates is less then survivor_count
@@ -98,12 +100,14 @@ void makeChildren(std::vector<Adult> & parents, std::vector<Adult> & duplicates,
 
     //Generate children with crossovers using non-duplicate parents
     generateChildrenFromCrossover(parents, newChildren, childrenFromCrossover, rng, annealing, generation, cConstants);
+    /*
 
     //See if there are any duplicate adults before generating children from mutations
     if(duplicates.size() > 0){//TODO: Again, we have no duplicates going through this currently, is it worth keeping?
         //Generate the rest of the children using heavy mutation of duplicate adults
         generateChildrenFromMutation(duplicates, newChildren, childrenFromCrossover, rng, annealing, generation, cConstants); 
     }
+    */
 }
 
 //Function that will convert the generated children into adults
@@ -295,6 +299,7 @@ void eliminateBadAdults(std::vector<Adult>& allAdults, std::vector<Adult>& newAd
             //do nothing and don't add them to all adults
         }else if(newAdults[i].errorStatus == DUPLICATE){
             duplicateNum++;
+            allAdults.push_back(newAdults[i]);
         }
         else {
             allAdults.push_back(newAdults[i]);
@@ -309,6 +314,7 @@ void eliminateBadAdults(std::vector<Adult>& allAdults, std::vector<Adult>& newAd
             //do nothing and don't add them 
         }else if(oldAdults[i].errorStatus == DUPLICATE){
             duplicateNum++;
+            allAdults.push_back(oldAdults[i]);
         }
         else {
             allAdults.push_back(oldAdults[i]);

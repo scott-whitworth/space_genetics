@@ -72,6 +72,11 @@ struct Child {
     // Child constructor for unit tests that makes it possible to only use tripTime, posDiff, and speedDiff as input parameters
     //alpha is 3.12, beta is 1.5, and zeta is 0 -> these were all arbitrarily chosen values
     Child(double tripTime, double posD, double speedD): startParams(tripTime, 3.12, 1.5,0, coefficients<double>()), errorStatus(VALID), posDiff(posD), speedDiff(speedD), funcStatus(FUNCTIONAL_CHILD){}
+   
+    // Child constructor for testing_genetics that will copy all the important elements from an Adult back into a Child
+    //This allows us to use the unit testing verification functions to ensure newAdults were correctly generated, even though those functions are meant to take in Children
+    Child(rkParameters<double> & childParameters, double posD, double speedD, double prog, double avgPrntProg, int bday): startParams(childParameters), errorStatus(VALID), posDiff(posD), speedDiff(speedD), funcStatus(FUNCTIONAL_CHILD), progress(prog), avgParentProgress(avgPrntProg), birthday(bday){}
+
     #endif //unit testing end if
 
     //Child(rkParameters<double> & childParams, elements<double> posFinal,  double posD,  double speedD, STATUS s, int errStat): startParams(childParams), finalPos(posFinal), posDiff(posD), speedDiff(speedD), funcStatus(s), errorStatus(errorStatus){}

@@ -12,10 +12,10 @@ Adult::Adult(){
 // input: two individuals
 // output: returns true if personB has a higher positional difference than personA
 bool LowerPosDiff(Adult& personA, Adult& personB) {
-    if(personA.errorStatus !=  VALID){
+    if(personA.errorStatus !=  VALID && personA.errorStatus != DUPLICATE){
         return false;
     }
-    if(personB.errorStatus !=  VALID){
+    if(personB.errorStatus !=  VALID && personB.errorStatus != DUPLICATE){
         return true;
     }
     if (personA.posDiff < personB.posDiff) {
@@ -142,10 +142,10 @@ bool dominationCheck(Adult& personA, Adult& personB, const cudaConstants* cConst
 //output: if person A's rank is lower than person B's rank, return true
 bool rankSort(const Adult& personA, const Adult& personB){
     //TODO: is this a good system to check validity first?
-    if(personA.errorStatus != VALID){ //if personA has nan values or other errors they are set as worse than other adults (even other adults with errors)
+    if(personA.errorStatus != VALID && personA.errorStatus != DUPLICATE){ //if personA has nan values or other errors they are set as worse than other adults (even other adults with errors)
         return false;
     }
-    else if (personB.errorStatus != VALID){ //if personA is not a nan, but personB is, personA is better
+    else if (personB.errorStatus != VALID && personB.errorStatus != DUPLICATE){ //if personA is not a nan, but personB is, personA is better
         return true;
     }
     if (personA.rank < personB.rank) {
@@ -165,10 +165,10 @@ bool rankSort(const Adult& personA, const Adult& personB){
 //              Note: personA's status is checked before personB's, so if neither person is valid, it will return false
 //  NOTE: This function assumes that the distance for both adults have already been calculated
 bool lowerDistanceSort(const Adult& personA, const Adult& personB) {
-    if(personA.errorStatus != VALID){ //if personA has nan values or other errors they are set as worse than other adults (even other adults with errors)
+    if(personA.errorStatus != VALID && personA.errorStatus != DUPLICATE){ //if personA has nan values or other errors they are set as worse than other adults (even other adults with errors)
         return false;
     }
-    else if (personB.errorStatus != VALID){ //if personA is not a nan, but personB is, personA is better
+    else if (personB.errorStatus != VALID && personB.errorStatus != DUPLICATE){ //if personA is not a nan, but personB is, personA is better
         return true;
     }
     if (personA.distance < personB.distance) {
@@ -186,10 +186,10 @@ bool lowerDistanceSort(const Adult& personA, const Adult& personB) {
 //        if person A and person B have the same rank and person A has a greater distance than person B, return true
 //Sorts the whole pool from lowest to highest rank. Individuals of the same rank are sorted from highest to lowest distance
 bool rankDistanceSort(const Adult& personA, const Adult& personB) {
-    if (personA.errorStatus != VALID){
+    if (personA.errorStatus != VALID && personA.errorStatus != DUPLICATE){
         return false;
     }
-    else if (personB.errorStatus != VALID){ //if personA is not a nan, but personB is, personA is better
+    else if (personB.errorStatus != VALID && personB.errorStatus != DUPLICATE){ //if personA is not a nan, but personB is, personA is better
         return true;
     }
     if(personA.rank < personB.rank){

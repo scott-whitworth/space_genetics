@@ -521,7 +521,7 @@ void generateChildrenFromMutation(std::vector<Adult> & duplicates, Child* newChi
     //          The total number of new children that need to be created between both functions is num_individuals
     //          generateChildrenFromCrossover has already filled newChildren with startingIndex number of children
     //          Thus, the starting index until num_individuals is safe to be modified
-    
+    /*
     for (int i = 0; i < cConstants->num_individuals - startingIndex; i++) {
         //Assign the starting parameters of a corresponding duplicate to a child
         newChildren[startingIndex + i] = Child(duplicates[i].startParams, cConstants, generation, duplicates[i].progress);
@@ -530,4 +530,5 @@ void generateChildrenFromMutation(std::vector<Adult> & duplicates, Child* newChi
         //      Note: the mutation factor is set by duplicate_mutation_factor
         newChildren[startingIndex + i].startParams = mutate(newChildren[startingIndex + i].startParams, rng, currentAnneal, cConstants, generation, cConstants->mutation_amplitude, cConstants->duplicate_mutation_chance);
     }
+    */
 }

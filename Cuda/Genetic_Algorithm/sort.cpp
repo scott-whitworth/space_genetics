@@ -28,6 +28,7 @@ void giveRank(std::vector<Adult> & allAdults, const cudaConstants* cConstants) {
 
             //TODO: Where is the best place to check for status conditions? In dominationCheck or here
             //check the status of both i and j and see if i is automatically dominated
+            /*
             if(allAdults[i].errorStatus != VALID && allAdults[j].errorStatus == VALID){
                 dominatedByCount[i]++;
                 domination[j].push_back(i);
@@ -36,9 +37,11 @@ void giveRank(std::vector<Adult> & allAdults, const cudaConstants* cConstants) {
                 domination[i].push_back(j);
                 dominatedByCount[j]++;
                 
-            }//if either both are valid or both are not valid, it will rank them normally
+            }
+            */
+            //if either both are valid or both are not valid, it will rank them normally
             //Check to see if i dominates j
-            else if (dominationCheck(allAdults[i], allAdults[j], cConstants)){
+            if (dominationCheck(allAdults[i], allAdults[j], cConstants)){
                 //Put the jth index in the set of individuals dominated by i
                 //std::cout << "\n" << i << "th (i) Adult dominates " << j << "th (j) Adult!\n";
                 domination[i].push_back(j);
@@ -117,7 +120,7 @@ void giveDistance(std::vector<Adult> & allAdults, const cudaConstants* cConstant
     //checks if the adult is valid and then adds that index to the vector
     //the size of this vector will be used to find the distance for valid adults only
     for(int i = 0; i < allAdults.size(); i++){
-        if(allAdults[i].errorStatus == VALID){
+        if(allAdults[i].errorStatus == VALID || allAdults[i].errorStatus == DUPLICATE){
             validAdults++;
         }
     }

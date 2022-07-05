@@ -20,6 +20,8 @@ struct cudaConstants {
     double speed_threshold; // maximum distance for how fast the spacecraft must be going when it reaches the asteroid
     double posDominationTolerance; //Tolerance for individual posDiff equality in dominates function
     double speedDominationTolerance; //Tolerance for individual speedDiff equality in dominates function
+    double posDominationThreshold; //The limit of how low posDiff can be before it stops dominating others with posDiffs just as low
+    double speedDominationThreshold; //The limit of how low speedDiff can be before it stops dominating others with speedDiffs just as low
     double distanceTolerance; //Tolerance for how small an adult's distance has to be for it to be considered a duplicate
 
     double costThreshold; // Determines the goal for the generation's cost; it is used to to calculate anneal

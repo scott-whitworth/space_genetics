@@ -72,8 +72,8 @@ bool dominationCheck(Adult& personA, Adult& personB, const cudaConstants* cConst
     //pos and speed variables used for comparing adutls to eachother
     double posTolerance = cConstants->posDominationTolerance;
     double speedTolerance = cConstants->speedDominationTolerance;
-    double pos_threshold = cConstants-> pos_threshold*.5;
-    double speed_threshold = cConstants-> speed_threshold*.5;
+    double pos_threshold = cConstants-> posDominationThreshold;
+    double speed_threshold = cConstants-> speedDominationThreshold;
 
     //true if A posDiff "equals" B posDiff
     bool APosEqualsB = false;

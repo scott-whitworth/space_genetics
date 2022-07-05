@@ -291,6 +291,12 @@ void cudaConstants::FileRead(std::string fileName) {
                 else if (variableName == "speedDominationTolerance") {
                     this->speedDominationTolerance = std::stod(variableValue);
                 }
+                else if (variableName == "posDominationThreshold") {
+                    this->posDominationThreshold = std::stod(variableValue);
+                }
+                else if (variableName == "speedDominationThreshold") {
+                    this->speedDominationThreshold = std::stod(variableValue);
+                }
                 else if (variableName == "distanceTolerance") {
                     this->distanceTolerance = std::stod(variableValue);
                 }

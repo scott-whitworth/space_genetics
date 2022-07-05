@@ -374,7 +374,7 @@ void initializeRecord(const cudaConstants * cConstants) {
     }
   }
 
-  excelFile << "anneal,anneal_min,minDistance,avgDistance,maxDistance,avgAge,oldestAge,bestAdultBirthday,avgBirthday,oldestBirthday,duplicateNum,avgParentProgress,progress,parentChildProgressRatio\n";
+  excelFile << "anneal,minDistance,avgDistance,maxDistance,avgAge,oldestAge,bestAdultAge,avgBirthday,oldestBirthday,bestAdultBirthday,duplicateNum,avgParentProgress,progress,parentChildProgressRatio\n";
   excelFile.close();
 }
 
@@ -411,7 +411,7 @@ void recordGenerationPerformance(const cudaConstants * cConstants, const std::ve
 
   //New anneal every gen
   excelFile << new_anneal << ",";
-  excelFile << anneal_min << ",";
+  //excelFile << anneal_min << ",";
   //Distance values
   excelFile << minDist << ",";
   excelFile << avgDist << ",";
@@ -419,9 +419,10 @@ void recordGenerationPerformance(const cudaConstants * cConstants, const std::ve
   //Age values
   excelFile << avgAge << ",";
   excelFile << oldestAge << ",";
-  excelFile << pool[0].birthday << ",";
+  excelFile << generation - pool[0].birthday << ",";
   excelFile << avgBirthday << ",";
   excelFile << oldestBirthday << ",";
+  excelFile << pool[0].birthday << ",";
   excelFile << duplicateNum << ",";
   excelFile << pool[0].avgParentProgress << ",";
   excelFile << pool[0].progress << ",";

@@ -340,7 +340,7 @@ void calculateGenerationValues (const std::vector<Adult> & allAdults, const int 
         avgBirthday += allAdults[i].birthday;
         avgAge += (generation - allAdults[i].birthday);   
     }
-    oldestBirthday = generation - oldestBirthday;
+
     //Divide the averages by the number of adults to get the averages
     avgDist /= allAdults.size();
     avgPosDiff /= allAdults.size();
@@ -354,7 +354,7 @@ void calculateGenerationValues (const std::vector<Adult> & allAdults, const int 
 void reportGeneration (std::vector<Adult> & oldAdults, std::vector<Adult> & allAdults, const cudaConstants* cConstants, const double & currentAnneal, const double & anneal_min, const int & generation, int & numNans, double & avgPosDiff, double & avgSpeedDiff, int & duplicateNum, double minDist,  double avgDist, double maxDist, double avgAge, double avgBirthday, int oldestBirthday){
     // If in recording mode and write_freq reached, call the record method
     if (static_cast<int>(generation) % cConstants->write_freq == 0 && cConstants->record_mode == true) {
-        recordGenerationPerformance(cConstants, oldAdults, generation, currentAnneal, cConstants->num_individuals, anneal_min, avgPosDiff, avgSpeedDiff, duplicateNum, minDist, avgDist, maxDist, avgAge, oldestBirthday, avgBirthday, generation+oldestBirthday);
+        recordGenerationPerformance(cConstants, oldAdults, generation, currentAnneal, cConstants->num_individuals, anneal_min, avgPosDiff, avgSpeedDiff, duplicateNum, minDist, avgDist, maxDist, avgAge, generation-oldestBirthday, avgBirthday, oldestBirthday);
     }
 
     // Only call terminalDisplay every DISP_FREQ, not every single generation
@@ -390,7 +390,9 @@ void reportGeneration (std::vector<Adult> & oldAdults, std::vector<Adult> & allA
         std::cout << "\n# of duplicates this generation: " << duplicateNum << "\n";
         
         //display the oldest individual
-        std::cout << "\nOldest age adult: " << oldestBirthday << "\n\n";
+        std::cout << "\nOldest age adult: " << generation - oldestBirthday << "\n";
+
+        std::cout << "\nCurrent Progress: " << oldAdults[0].progress << "\n\n";
         
         //Reset the tally of nans.
         numNans = 0;
@@ -524,7 +526,7 @@ double optimize(const cudaConstants* cConstants) {
         calculateGenerationValues(allAdults, generation, avgPositionDiff, avgSpeedDiff, duplicateNum, minDistance, avgDistance, maxDistance, avgAge, avgBirthday, oldestBirthday);
 
         //Assumes oldAdults is in rankDistance order
-        changeAnneal (oldAdults, cConstants, currentAnneal, oldestBirthday, dRate);
+        changeAnneal (oldAdults, cConstants, currentAnneal, oldestBirthday, dRate, generation);
 
 
         //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE RECORD-_-_-_-_-_-_-_-_-_\n\n";
@@ -549,7 +551,7 @@ double optimize(const cudaConstants* cConstants) {
     // for the annealing argument, set to -1 (since the anneal is only relevant to the next generation and so means nothing for the last one)
     // for the numFront argument, set to -1 (just because)
     if (cConstants->record_mode == true) {
-        recordGenerationPerformance(cConstants, oldAdults, generation, currentAnneal, cConstants->num_individuals, anneal_min, avgPositionDiff, avgSpeedDiff, duplicateNum, minDistance, avgDistance, maxDistance, avgAge, generation-oldestBirthday, avgBirthday, oldestBirthday);
+        recordGenerationPerformance(cConstants, oldAdults, generation, currentAnneal, cConstants->num_individuals, anneal_min, avgPositionDiff, avgSpeedDiff, duplicateNum, minDistance, avgDistance, maxDistance, avgAge, oldestBirthday, avgBirthday, generation+oldestBirthday);
     }
     // Only call finalRecord if the results actually converged on a solution
     // also display last generation onto terminal

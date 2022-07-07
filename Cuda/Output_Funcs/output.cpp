@@ -335,7 +335,7 @@ void initializeRecord(const cudaConstants * cConstants) {
   std::string fileId = std::to_string(seed);
   excelFile.open("genPerformance-" + fileId + ".csv", std::ios_base::app);
 
-  excelFile << "gen,bestPosDiff,bestSpeedDiff,avgPosDiff,avgSpeedDiff,alpha,beta,zeta,tripTime,";
+  excelFile << "gen,bestOverallPosDiff,bestOverallSpeedDiff,lowestPosPosDiff,lowestPosSpeedDiff,lowestSpeedPosDiff,lowestSpeedSpeedDiff,avgPosDiff,avgSpeedDiff,alpha,beta,zeta,tripTime,";
   
   for (int i = 0; i < GAMMA_ARRAY_SIZE; i++) {
     excelFile << "gamma"; 
@@ -380,7 +380,7 @@ void initializeRecord(const cudaConstants * cConstants) {
 
 //!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Take in the current state of the generation and appends to excel file, assumes initializeRecord() had already been called before (no need to output a header row)
-void recordGenerationPerformance(const cudaConstants * cConstants, const std::vector<Adult>& pool, int generation, double new_anneal, int poolSize, double anneal_min, double avgPosDiff, double avgSpeedDiff, int duplicateNum, double minDist,  double avgDist, double maxDist, double avgAge, int oldestAge, double avgBirthday, int oldestBirthday) {
+void recordGenerationPerformance(const cudaConstants * cConstants, std::vector<Adult>& pool, int generation, double new_anneal, int poolSize, double anneal_min, double avgPosDiff, double avgSpeedDiff, int duplicateNum, double minDist,  double avgDist, double maxDist, double avgAge, int oldestAge, double avgBirthday, int oldestBirthday) {
   std::ofstream excelFile;
   int seed = cConstants->time_seed;
   std::string fileId = std::to_string(seed);
@@ -388,12 +388,18 @@ void recordGenerationPerformance(const cudaConstants * cConstants, const std::ve
   excelFile << std::setprecision(20);
   excelFile << std::fixed;
   // Record best individuals best posDiff and speedDiff of this generation
-  excelFile << generation << "," << pool[0].posDiff << ",";
-  excelFile << pool[0].speedDiff << ",";
-  excelFile << avgPosDiff << ",";
+  excelFile << generation << ",";
+
+  excelFile << pool[0].posDiff << "," << pool[0].speedDiff << ","; //Record the best rank distance individual
+  std::sort(pool.begin(), pool.end(), LowerPosDiff); //Sort the pool to get the best pos diff
+  excelFile << pool[0].posDiff << "," << pool[0].speedDiff << ","; //Record the lowest posdiff adult
+  std::sort(pool.begin(), pool.end(), LowerSpeedDiff);
+  excelFile << pool[0].posDiff << "," << pool[0].speedDiff << ","; //Record the lowest speeddiff adult
+  std::sort(pool.begin(), pool.end(), rankDistanceSort); //Reset the sort for future functions
+  excelFile << avgPosDiff << ","; //Record the generation's average pos and speed diffs
   excelFile << avgSpeedDiff << ","; 
 
-  // Record best individuals parameters
+  // Record best individual's parameters
   excelFile << pool[0].startParams.alpha << ",";
   excelFile << pool[0].startParams.beta << ",";
   excelFile << pool[0].startParams.zeta << ",";
@@ -423,7 +429,9 @@ void recordGenerationPerformance(const cudaConstants * cConstants, const std::ve
   excelFile << avgBirthday << ",";
   excelFile << oldestBirthday << ",";
   excelFile << pool[0].birthday << ",";
+  //DuplicateCounts
   excelFile << duplicateNum << ",";
+  //Progress values
   excelFile << pool[0].avgParentProgress << ",";
   excelFile << pool[0].progress << ",";
   excelFile << pool[0].avgParentProgress/pool[0].progress << ",";

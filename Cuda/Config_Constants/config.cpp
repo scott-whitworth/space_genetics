@@ -220,9 +220,7 @@ void cudaConstants::FileRead(std::string fileName) {
                 else if (variableName == "default_mutation_chance") {
                     this->default_mutation_chance = std::stod(variableValue);
                 }
-                else if (variableName == "duplicate_mutation_chance") {
-                    this->duplicate_mutation_chance = std::stod(variableValue);
-                }
+                
 
                 else if (variableName == "gamma_mutate_scale") {
                     this->gamma_mutate_scale = std::stod(variableValue);

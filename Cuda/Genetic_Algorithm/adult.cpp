@@ -62,10 +62,6 @@ bool dominationCheck(Adult& personA, Adult& personB, const cudaConstants* cConst
     bool AisEqual = false;
     //Is true if A is better than B for at least one objective
     bool AisBetter = false;
-    //TODO: Might want to consider modifying tolerances 
-    //tolerances used to determine the range of values considered equal
-    //these are both currently set to 1e-14 AU, I don't think these need to be modified 
-    //this tolerance is about 0.0015m, and I don't think we can go lower?
 
     //TODO:Might want to consider deleting most of this function
 
@@ -141,7 +137,6 @@ bool dominationCheck(Adult& personA, Adult& personB, const cudaConstants* cConst
 //input: two individuals
 //output: if person A's rank is lower than person B's rank, return true
 bool rankSort(const Adult& personA, const Adult& personB){
-    //TODO: is this a good system to check validity first?
     if(personA.errorStatus != VALID && personA.errorStatus != DUPLICATE){ //if personA has nan values or other errors they are set as worse than other adults (even other adults with errors)
         return false;
     }
@@ -156,6 +151,7 @@ bool rankSort(const Adult& personA, const Adult& personB){
     }
 }
 
+//TODO: this is outdated now, do we delete?
 //Compare two adults based on their distance, sorting the lowest distances first
 //  This function will be used to detect duplicates within mutateAdults in ga_crossover
 //input:  PersonA - First adult to be compared

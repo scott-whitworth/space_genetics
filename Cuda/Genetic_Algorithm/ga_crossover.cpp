@@ -367,7 +367,6 @@ void generateChildrenPair (const Adult & parent1, const Adult & parent2, Child *
         return;
     }
 
-    //TODO: this is where things are breaking on the tesla as of 6/24
     //Generate a new individual based on the two parents
     newChildren[numNewChildren] = Child(generateNewChild(parent1.startParams, parent2.startParams, mask, cConstants, annealing, rng, generation), cConstants, generation, (parent1.progress + parent2.progress)/2);
 
@@ -391,7 +390,7 @@ void generateChildrenPair (const Adult & parent1, const Adult & parent2, Child *
 }
 
 //!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-// Generate children from non-duplicate parents using crossover methods
+// Generate children from parents using crossover methods
 void generateChildrenFromCrossover(std::vector<Adult> &parents, Child *newChildren, const int &childrenToGenerate, std::mt19937_64 &rng, const double &currentAnneal, const int &generation, const cudaConstants *cConstants)
 {
     //std::cout << "\n_-_-_-_-_-_-_-_-_-Start of generate children from crossover_-_-_-_-_-_-_-_-_-\n";
@@ -403,7 +402,6 @@ void generateChildrenFromCrossover(std::vector<Adult> &parents, Child *newChildr
     // Setting the mask to average is due to the reasoning that if the mask isn't changed, it is best that what is generated is not just a copy of one adult (hence, not setting it to Parent 1 or 2)
     for (int i = 0; i < OPTIM_VARS; i++)
     {
-        // TODO: is this the best initial setting? Does this even matter?
         mask.push_back(AVG);
     }
 

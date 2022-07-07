@@ -42,7 +42,7 @@ void newGeneration (std::vector<Adult> & oldAdults, std::vector<Adult> & newAdul
 void fillParents(std::vector<Adult> & oldAdults, std::vector<Adult> & parents, const int & generation, const cudaConstants* cConstants){
     //Clearing parents before separating the parents from a vector ensures parents
     parents.clear();
-
+    //TODO: this function is a bit outdated now that duplicates are being kept
     //If statement will check if the generation is 0 
     //      If so, it will assign all the surviving adults to parents
     //      If not, it will decide which vector based on progress
@@ -217,13 +217,6 @@ void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& 
     numNans = 0;
     duplicateNum = 0;
 
-    //TODO: We should figure out if we want the size of allAdults (or the other vectors) to not be their expected size
-    //      The following code may result in allAdults being less than 2*n (or 2*num_individuals)
-    //      There are good reasons either way for this choice
-    // 
-    //      We should for sure be checking to make sure allAdults never gets below survivor size / num_individuals
-    //          Update: we have a check for this, but no handling of the error
-
     //countStatuses(newAdults, generation);
     //countStatuses(oldAdults, generation);
     //Iterate through allAdults and find any duplicate adults
@@ -271,6 +264,7 @@ void eliminateBadAdults(std::vector<Adult>& allAdults, std::vector<Adult>& newAd
     double posTolerance = cConstants->pos_threshold/100;
     double speedTolerance = cConstants->speed_threshold/100;
     int ageTolerance = cConstants->max_age;
+    //if we ever want to eliminate duplicates again, this is the place to do it
 
     for (int i = 0; i < newAdults.size(); i++){ //copies all the elements of newAdults into allAdults
         if(newAdults[i].errorStatus != VALID && newAdults[i].errorStatus != DUPLICATE) { //tallies the number of nans in allAdults by checking if the adult being passed into newAdult is a Nan or not
@@ -279,7 +273,7 @@ void eliminateBadAdults(std::vector<Adult>& allAdults, std::vector<Adult>& newAd
             //do nothing and don't add them to all adults
         }else if(newAdults[i].errorStatus == DUPLICATE){
             duplicateNum++;
-            allAdults.push_back(newAdults[i]);
+            allAdults.push_back(newAdults[i]);//remove this if we want to remove duplicates
         }
         else {
             allAdults.push_back(newAdults[i]);
@@ -294,7 +288,7 @@ void eliminateBadAdults(std::vector<Adult>& allAdults, std::vector<Adult>& newAd
             //do nothing and don't add them 
         }else if(oldAdults[i].errorStatus == DUPLICATE){
             duplicateNum++;
-            allAdults.push_back(oldAdults[i]);
+            allAdults.push_back(oldAdults[i]);//remove this if we want to remove duplicates
         }
         else {
             allAdults.push_back(oldAdults[i]);

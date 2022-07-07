@@ -41,8 +41,7 @@ struct cudaConstants {
 
     // Scalars used to modify the mutate_scales below, used to assist in making adults mutate more if needed
     // A value of 1 will have an individual's parameters mutate at the scale of the variables below
-    double default_mutation_chance;
-    double duplicate_mutation_chance; 
+    double default_mutation_chance; 
     
     // Used in mutate(), affects the scale of change for the respective parameter values, in conjunction with annealing
     // Represents max bounds of mutation, mutation will never be +/- this value

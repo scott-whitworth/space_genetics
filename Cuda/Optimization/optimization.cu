@@ -18,6 +18,8 @@
 #include <iomanip>  // used for setw(), sets spaces between values output
 #include <random>   // for std::mt19937_64 object
 #include <vector>   // allows us to use vectors instead of just arrays
+#include <string>
+
 
 //----------------------------------------------------------------------------------------------------------------------------
 // ** Assumes pool is sorted array of Adults **
@@ -61,7 +63,6 @@ void reportGeneration (std::vector<Adult> & oldAdults, std::vector<Adult> & allA
 // - exits when individuals converge on tolerance defined in Constants
 double optimize(const cudaConstants* cConstants);
 
-
 //Temp function that adds up the number of each status in an adults array and outputs the result
 void countStatuses (const std::vector<Adult> & adultVec, const int & generation) {
     //Create ints for each status
@@ -80,6 +81,10 @@ void countStatuses (const std::vector<Adult> & adultVec, const int & generation)
         else if (adultVec[i].errorStatus == NAN_ERROR)
         {
             numNans ++;
+        }
+        else if (adultVec[i].errorStatus == DUPLICATE)
+        {
+            //numDuplicates++;
         }
         else if (adultVec[i].errorStatus == VALID)
         {
@@ -296,9 +301,6 @@ void calculateGenerationValues (const std::vector<Adult> & allAdults, const int 
     avgPosDiff = 0;
     avgSpeedDiff = 0;
 
-    //Reset the duplicate counter
-    //duplicateNum = 0;
-
     //Reset the age values
     avgAge = 0;
     avgBirthday = 0; 
@@ -320,14 +322,7 @@ void calculateGenerationValues (const std::vector<Adult> & allAdults, const int 
         if (allAdults[i].birthday < oldestBirthday) {
             oldestBirthday = allAdults[i].birthday; 
         }
-        
-        //Check to see if the adult is a duplicate and increment the counter if so
-        //removing this for now, this vesion will delete duplicates before this point
-        //if (allAdults[i].errorStatus == DUPLICATE) {
-            //duplicateNum++;
-        //}
-        
-
+           
         //Add to the avg distance
         avgDist += allAdults[i].distance;
 
@@ -470,6 +465,9 @@ double optimize(const cudaConstants* cConstants) {
     double maxDistance, minDistance, avgDistance, avgAge, avgBirthday;
     int oldestBirthday;
 
+    //this is to make sure the anneal does not jump backwards if the progress switches
+    double previousProgress;
+
     //Creates the individuals needed for the 0th generation
     //Need to make children, then callRK, then make into adults (not currently doing that)
     //oldAdults goes into this function empty and comes out filled with num_individuals Adults
@@ -526,7 +524,7 @@ double optimize(const cudaConstants* cConstants) {
         calculateGenerationValues(allAdults, generation, avgPositionDiff, avgSpeedDiff, duplicateNum, minDistance, avgDistance, maxDistance, avgAge, avgBirthday, oldestBirthday);
 
         //Assumes oldAdults is in rankDistance order
-        changeAnneal (oldAdults, cConstants, currentAnneal, oldestBirthday, dRate, generation);
+        changeAnneal (oldAdults, cConstants, currentAnneal, oldestBirthday, dRate, generation, previousProgress);
 
 
         //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE RECORD-_-_-_-_-_-_-_-_-_\n\n";

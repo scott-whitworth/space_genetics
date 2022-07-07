@@ -169,13 +169,13 @@ bool runGeneticsUnitTests(bool printThings){
     //creates a generation of parents and then creates children from these parents
     //then these children are sent through a function that verifies their tripTime values 
     //tripTime was chosen because it was the paramerter set in creating the parents and it is easiest to see if the children have the correct values for tripTime 
-    // if (firstFullGen(rng, utcConstants, printThings)){
-    //     cout << "PASSED: Successfully made the first generation of adults from another set of adults" << endl;
-    // }
-    // else{
-    //     cout << "FAILED: Could not successfully make the first generation of adults from another set of adults" << endl;
-    //     allWorking = false;
-    // }
+    if (firstFullGen(rng, utcConstants, printThings)){
+        cout << "PASSED: Successfully made the first generation of adults from another set of adults" << endl;
+    }
+    else{
+        cout << "FAILED: Could not successfully make the first generation of adults from another set of adults" << endl;
+        allWorking = false;
+    }
 
     delete utcConstants;
     delete launchCon;
@@ -500,12 +500,12 @@ bool checkReasonability(const Child& c1, const Child& c2, std::vector<int> & mas
             //if either of these are not the case, there is an issue
             if (getParamStuff(i,c2) != parentsValues[parValIndex] || getParamStuff(i,c1) != parentsValues[parValIndex+1]){ 
                 cout << parentsValues[parValIndex] << " should equal c2 " << getParamStuff(i,c2) << endl;
-                cout << "Error with ";
+                cout << "\tError with ";
                 skipPrint = false; //whether or not valid messages are being printed, it needs to print error message
                 noErrors = false;
             }
             else if (printThings){
-                cout << "Expected values for ";   
+                cout << "\tExpected values for ";   
             }
             else{
                 skipPrint = true;
@@ -517,12 +517,12 @@ bool checkReasonability(const Child& c1, const Child& c2, std::vector<int> & mas
             //if either of these are not the case, there is an issue
             if (getParamStuff(i,c2) != parentsValues[parValIndex+1] || getParamStuff(i,c1) != parentsValues[parValIndex]){
                 cout << parentsValues[parValIndex+1] << " should equal c2 " << getParamStuff(i,c2) << endl;
-                cout << "Error with ";
+                cout << "\tError with ";
                 skipPrint = false; //whether or not valid messages are being printed, it needs to print error message
                 noErrors = false;
             }
             else if (printThings){
-                cout << "Expected values for ";   
+                cout << "\tExpected values for ";   
             }
             else{
                 skipPrint = true;
@@ -532,19 +532,19 @@ bool checkReasonability(const Child& c1, const Child& c2, std::vector<int> & mas
         else if (mask[i] == AVG_RATIO && whichMethod == 2){
             //if the value is supposed to be an average, ensures it actually is -> only the first child generated is a true average, the second is a weigthed average
             if (getParamStuff(i,c1) != (parentsValues[parValIndex]+parentsValues[parValIndex+1])/2){
-                cout << "Error with ";
+                cout << "\tError with ";
                 skipPrint = false; //whether or not valid messages are being printed, it needs to print error message
                 noErrors = false;
             }
             //ensures that the random average ends up with something that is at least within the bounds of where it should be 
             else if ((getParamStuff(i,c2) > parentsValues[parValIndex] && getParamStuff(i,c2) > parentsValues[parValIndex+1]) || (getParamStuff(i,c2) < parentsValues[parValIndex] && getParamStuff(i,c2) < parentsValues[parValIndex+1])){
-                cout << "Error with ";
+                cout << "\tError with ";
                 skipPrint = false; //whether or not valid messages are being printed, it needs to print error message
                 noErrors = false;
             }
             
             else if (printThings){
-                cout << "Expected values for ";   
+                cout << "\tExpected values for ";   
             }
             else{
                 skipPrint = true;
@@ -552,7 +552,7 @@ bool checkReasonability(const Child& c1, const Child& c2, std::vector<int> & mas
         }
         //if the values in the mask does not correspond to PARTNER1,PARTNER2, or AVG_RATIO then there is an issue with the mask
         else{
-            cout << "Error with mask for ";
+            cout << "\tError with mask for ";
             noErrors = false;
             skipPrint = false; //whether or not valid messages are being printed, it needs to print error message
             //it is not an issue with the values for alpha, beta, zeta, or tripTime necessarily, so it will not print the cout about the type
@@ -749,27 +749,33 @@ bool verifyProperCloneSeparation(bool printThings, cudaConstants* utcConstants){
 
         //after the values have been rank distance sorted, the expected parents and expected clones appear they would fall in the following order
         //NOTE: if we begin comparing elements and not just posDiff and speedDiff these lists will change
-        expectedParents.push_back(Adult(Child(38000000.0, 0.14, 0.00192)));
-        expectedParents.push_back(Adult(Child(37400000.0, 0.012, 0.0042)));
-        expectedParents.push_back(Adult(Child(35000020.0, 0.048, 0.00234)));
-        expectedParents.push_back(Adult(Child(43000000.0, 0.02, 0.0034)));
-        expectedParents.push_back(Adult(Child(32000040.0, 0.025, 0.00354)));
-        expectedParents.push_back(Adult(Child(47000000.0, 0.122, 0.0034)));
-        expectedParents.push_back(Adult(Child(37400070.0, 0.017, 0.0042)));
-        expectedParents.push_back(Adult(Child(45200100.0, 0.299, 0.0034)));
-        expectedParents.push_back(Adult(Child(44300000.0, 0.053, 0.00414)));
-        expectedParents.push_back(Adult(Child(40000000.0, 0.02, 0.0043)));
-        expectedParents.push_back(Adult(Child(45200000.0, 0.098, 0.00432)));
 
-        expectedClones.push_back(Adult(Child(38000080.0, 0.14, 0.00192))); 
-        expectedClones.push_back(Adult(Child(35000000.0, 0.048, 0.00234)));
-        expectedClones.push_back(Adult(Child(43000060.0, 0.02, 0.0034)));
-        expectedClones.push_back(Adult(Child(44300090.0, 0.02, 0.0034)));
-        expectedClones.push_back(Adult(Child(47000050.0, 0.122, 0.0034)));
-        expectedClones.push_back(Adult(Child(32000000.0, 0.025, 0.00354)));
-        expectedClones.push_back(Adult(Child(41000000.0, 0.299, 0.0034)));
-        expectedClones.push_back(Adult(Child(40000010.0, 0.02, 0.0043)));
-        expectedClones.push_back(Adult(Child(41000030.0, 0.299, 0.0034)));
+        // The values in expectedParents and expectedClones if duplicates are removed
+        // expectedParents.push_back(Adult(Child(38000000.0, 0.14, 0.00192)));
+        // expectedParents.push_back(Adult(Child(37400000.0, 0.012, 0.0042)));
+        // expectedParents.push_back(Adult(Child(35000020.0, 0.048, 0.00234)));
+        // expectedParents.push_back(Adult(Child(43000000.0, 0.02, 0.0034)));
+        // expectedParents.push_back(Adult(Child(32000040.0, 0.025, 0.00354)));
+        // expectedParents.push_back(Adult(Child(47000000.0, 0.122, 0.0034)));
+        // expectedParents.push_back(Adult(Child(37400070.0, 0.017, 0.0042)));
+        // expectedParents.push_back(Adult(Child(45200100.0, 0.299, 0.0034)));
+        // expectedParents.push_back(Adult(Child(44300000.0, 0.053, 0.00414)));
+        // expectedParents.push_back(Adult(Child(40000000.0, 0.02, 0.0043)));
+        // expectedParents.push_back(Adult(Child(45200000.0, 0.098, 0.00432)));
+        // expectedClones.push_back(Adult(Child(38000080.0, 0.14, 0.00192))); 
+        // expectedClones.push_back(Adult(Child(35000000.0, 0.048, 0.00234)));
+        // expectedClones.push_back(Adult(Child(43000060.0, 0.02, 0.0034)));
+        // expectedClones.push_back(Adult(Child(44300090.0, 0.02, 0.0034)));
+        // expectedClones.push_back(Adult(Child(47000050.0, 0.122, 0.0034)));
+        // expectedClones.push_back(Adult(Child(32000000.0, 0.025, 0.00354)));
+        // expectedClones.push_back(Adult(Child(41000000.0, 0.299, 0.0034)));
+        // expectedClones.push_back(Adult(Child(40000010.0, 0.02, 0.0043)));
+        // expectedClones.push_back(Adult(Child(41000030.0, 0.299, 0.0034)));
+
+
+        //if we are not removing duplicates, then oldAdults rankDistance sorted
+        //should be the same as the expected parents
+        expectedParents = oldAdults;
         
         //checks the actual tripTimes against the expected tripTimes because this will allow us to see if these appear in the proper order or not
         for (int i = 0; i < parents.size(); i++){
@@ -918,10 +924,6 @@ bool verifyChildrenFromCrossover(std::mt19937_64& rng, bool printThings, cudaCon
             }
             noErrors = false;
         }
-        //if there wer no errors and printThings is true, it prints this
-        else if (printThings){
-            cout << "\n...generateChildrenFromCrossover() works" << endl;
-        }
 
         //identifies the next test being done
         if (printThings){
@@ -947,10 +949,6 @@ bool verifyChildrenFromCrossover(std::mt19937_64& rng, bool printThings, cudaCon
                 cout << "\n...generateChildrenFromCrossover() does not work as expected" << endl;
             }
             noErrors = false;
-        }
-        //if printThings is true and there were no errors, tells the user this
-        else if (printThings){
-            cout << "\n...generateChildrenFromCrossover() works" << endl;
         }
 
         // ===== NOTE =====
@@ -1013,7 +1011,6 @@ bool cfcAnswersMatchExpectations(const Child & endSpot, const int & numChildren,
         //if a pair of parents have generated 3 or more children
         if (currSet*crossoverChildrenCount + fullAvgOffset < numChildren){ 
             ableToCheckBothParents = true; //we will be able to identify two unique parents
-            cout << childrenGenerated[currSet*crossoverChildrenCount + fullAvgOffset].startParams.tripTime << endl;
             for (int i = 0; i < parents.size(); i++){
                 //a parent must have a partner to generate a Child, so it is counted as an error if a parent generates a Child by itself
                 for (int j = i+1; j < parents.size(); j++){ 
@@ -1024,13 +1021,13 @@ bool cfcAnswersMatchExpectations(const Child & endSpot, const int & numChildren,
                         //TODO: Run the code and make sure the output of this is as expected/looks nice
                         //prints the tripTimes of the parents and of any children they've made
                         if (printThings){
-                            cout << "Parent 1's tripTime: " << parents[prnt1].startParams.tripTime << "\t\t Parent 2's tripTime: " << parents[prnt2].startParams.tripTime;
+                            cout << std::fixed << std::setprecision(1) << "Parent 1's tripTime: " << parents[prnt1].startParams.tripTime << "\t\t Parent 2's tripTime: " << parents[prnt2].startParams.tripTime << endl;
 
                             int kids = 0; //how many children this parent set had
 
                             //loops until it has printed the tripTime for every Child a couple made
                             while(currSet*crossoverChildrenCount + kids < numChildren && kids < crossoverChildrenCount){
-                                cout << "Child " << kids+1 << "'s tripTime: " << childrenGenerated[currSet*crossoverChildrenCount+kids].startParams.tripTime;
+                                cout << std::fixed << std::setprecision(1) << "Child " << kids+1 << "'s tripTime: " << childrenGenerated[currSet*crossoverChildrenCount+kids].startParams.tripTime;
                                 //prints two Children's tripTimes per line, so only ends the line every other time
                                 if (kids%2 == 1){
                                     cout << endl;
@@ -1068,27 +1065,27 @@ bool cfcAnswersMatchExpectations(const Child & endSpot, const int & numChildren,
             }
             //if printThings is true, it will print the parents' and their children's tripTimes
             if (printThings){
-                cout << "Parent 1's tripTime: " << parents[prnt1].startParams.tripTime << "\t\t Parent 2's tripTime: ";
+                cout << std::fixed << std::setprecision(1) << "Parent 1's tripTime: " << parents[prnt1].startParams.tripTime << "\t\t Parent 2's tripTime: ";
                 //if the code identified two distinct parnets, print each of their tripTimes and their Children's
                 //to be able to identify two unique parents this way, there must be two Children so prints both
                 if (ableToCheckBothParents && prnt1 != prnt2){
-                    cout  << parents[prnt2].startParams.tripTime << endl;
-                    cout << "Child 1's tripTime: " << childrenGenerated[currSet*crossoverChildrenCount].startParams.tripTime;
-                    cout << "\t\t Child 2's tripTime: " << childrenGenerated[currSet*crossoverChildrenCount +1].startParams.tripTime << endl;
+                    cout << std::fixed << std::setprecision(1) << parents[prnt2].startParams.tripTime << endl;
+                    cout << std::fixed << std::setprecision(1) << "Child 1's tripTime: " << childrenGenerated[currSet*crossoverChildrenCount].startParams.tripTime;
+                    cout << std::fixed << std::setprecision(1) << "\t\t Child 2's tripTime: " << childrenGenerated[currSet*crossoverChildrenCount +1].startParams.tripTime << endl;
                 }
                 //if it somehow fails to detect to distinct parents, but has two different Children (this should never happen)
                 //prints both Children's tripTimes and identifies that the second parent's tripTime is unknown
                 else if (ableToCheckBothParents){
                     cout << "UNKNOWN" << endl;
-                    cout << "Child 1's tripTime: " << childrenGenerated[currSet*crossoverChildrenCount].startParams.tripTime;
-                    cout << "\t\t Child 2's tripTime: " << childrenGenerated[currSet*crossoverChildrenCount +1].startParams.tripTime << endl;
+                    cout << std::fixed << std::setprecision(1) << "Child 1's tripTime: " << childrenGenerated[currSet*crossoverChildrenCount].startParams.tripTime;
+                    cout << std::fixed << std::setprecision(1) << "\t\t Child 2's tripTime: " << childrenGenerated[currSet*crossoverChildrenCount +1].startParams.tripTime << endl;
                 }
                 //if there was only one child, it could not identify the second parent
                 //prints a message that it could not identify the second parent's tripTime 
                 //and prints the known Child's tripTime
                 else {
                     cout << "UNKNOWN" << endl;
-                    cout << "Child 1's tripTime: " << childrenGenerated[currSet*crossoverChildrenCount].startParams.tripTime << endl;
+                    cout << std::fixed << std::setprecision(1) << "Child 1's tripTime: " << childrenGenerated[currSet*crossoverChildrenCount].startParams.tripTime << endl;
                 }
                 cout << endl; //prints an extra blank line at the end
             }
@@ -1185,7 +1182,7 @@ bool verifyChildrenFromMutation(std::mt19937_64& rng, bool printThings, cudaCons
     //if all the parameters were mutated, this would definitely be an issue
     //this check does NOT ensure that none of the parameters were mutated, though if printThings is true
     //it is pretty easy to see that nothing is mutated when both mutation chances are set to 0
-    if (properMutationResults(duplicates, children, utcConstants, printThings)){
+    if (properMutationResults(duplicates, children, utcConstants, printThings) && duplicates.size() > 0){
         noErrors = false;
     }
 
@@ -1331,6 +1328,7 @@ bool properMutationResults(std::vector<Adult>& duplicates, Child* children, cons
 //so they will not be used in properMutationResults because 
 //because these compare functions do not appear to be used anywhere in our code and will not be used here, they are not fully tested here 
 bool testingCompareFunctions(bool printThings){
+    cout << "Testing compare functions from rkParameters and elements to see if they are suitable for using to verify mutations are occuring" << endl;
     bool working = true; //identifies whether or not the comparison functions will work for what I want them to do
     //sets up a bunch of doubles to fill two sets of rkParameters and elements
     double tripTime1 = 40000000.0, tripTime2 = 35000000.0, r1 = 0.5, r2 = 0.75, theta1 = 1.5, theta2 = 0.75, z1 = 0.1, z2 = 0.3;
@@ -1358,25 +1356,25 @@ bool testingCompareFunctions(bool printThings){
     double compE2vE2 = elems2.compare(elems2);
     if (printThings){
         //prints the result of the compare function if printThings is true
-        cout << "Result for e1 v e2 = " << compE1vE2 << endl;
-        cout << "Result for e2 v e2 = " << compE2vE2 << endl;
+        cout << "\tResult for e1 v e2 = " << compE1vE2 << endl;
+        cout << "\tResult for e2 v e2 = " << compE2vE2 << endl;
     }
 
     //prints whether or not it did what we wanted
     if ((elems1.compare(elems2))){
-        cout << "PASSED: Correctly identified two different sets of elements did not match" << endl;
+        cout << "\tPASSED: Correctly identified two different sets of elements did not match" << endl;
     }
     else{
-        cout << "FAILED: Said two very different sets of elements matched" << endl;
+        cout << "\tFAILED: Said two very different sets of elements matched" << endl;
         working = false;
     }
     //compares an element to itself
     if ((elems2.compare(elems2))){
-        cout << "FAILED: Said an element did not match itself" << endl;
+        cout << "\tFAILED: Said an element did not match itself" << endl;
         working = false;
     }
     else{
-        cout << "PASSED: Correctly identified an element matched itself" << endl;
+        cout << "\tPASSED: Correctly identified an element matched itself" << endl;
     }
 
     //makes two very different sets of rkParameters
@@ -1385,10 +1383,10 @@ bool testingCompareFunctions(bool printThings){
 
     //compares these two sets of rkParameters
     if ((rkP1.compare(rkP2))){
-        cout << "PASSED: Correctly identified two different sets of rkParameters did not match" << endl;
+        cout << "\tPASSED: Correctly identified two different sets of rkParameters did not match" << endl;
     }
     else{
-        cout << "FAILED: Said two very different sets of rkParameters matched" << endl;
+        cout << "\tFAILED: Said two very different sets of rkParameters matched" << endl;
         working = false;
     }
 
@@ -1398,24 +1396,24 @@ bool testingCompareFunctions(bool printThings){
     if (printThings){
         compE1vE2 = elems1.compare(elems2); 
         compE2vE2 = elems2.compare(elems2);
-        cout << "Result for e1 v e2 = " << compE1vE2 << endl;
-        cout << "Result for e2 v e2 = " << compE2vE2 << endl;  
+        cout << "\tResult for e1 v e2 = " << compE1vE2 << endl;
+        cout << "\tResult for e2 v e2 = " << compE2vE2 << endl;  
     } 
     //compares elems1 to elems2 and sees if it can identify that they do not match
     if ((elems1.compare(elems2))){
-        cout << "PASSED: Correctly identified two different sets of elements did not match" << endl;
+        cout << "\tPASSED: Correctly identified two different sets of elements did not match when there was a possibility of a nan error" << endl;
     }
     else{
-        cout << "FAILED: Said two very different sets of elements matched, likely because it does not work with nans" << endl;
+        cout << "\tFAILED: Said two very different sets of elements matched, likely because it does not work with nans" << endl;
         working = false;
     }
     //compares elems2 to itself and tries to verify it can tell that it matches itself
     if ((elems2.compare(elems2))){
-        cout << "FAILED: Said an element did not match itself, likely because it does not work with nans" << endl;
+        cout << "\tFAILED: Said an element did not match itself, likely because it does not work with nans" << endl;
         working = false;
     }
     else{
-        cout << "PASSED: Correctly identified an element matched itself" << endl;
+        cout << "\tPASSED: Correctly identified an element matched itself when there was a possibility of a nan error" << endl;
     }
 
     //makes a copy of rkP1 and edits one element of it to see if compare rkParameters can pick up on small changes
@@ -1423,10 +1421,10 @@ bool testingCompareFunctions(bool printThings){
     rkP3.alpha = 1.0e-6;
     //prints whether or not it was able to identify a difference between these sets of parameters
     if ((rkP1.compare(rkP3))){
-        cout << "PASSED: Correctly identified two slightly different sets of rkParameters did not match" << endl;
+        cout << "\tPASSED: Correctly identified two slightly different sets of rkParameters did not match" << endl;
     }
     else{
-        cout << "FAILED: Said two slighly different sets of rkParameters matched because it cannot sense changes small effectively" << endl;
+        cout << "\tFAILED: Said two slighly different sets of rkParameters matched because it cannot sense changes small effectively" << endl;
         working = false;
     }
 
@@ -1540,6 +1538,9 @@ int UTCopyOfNewGeneration(std::vector<Adult> & oldAdults, std::vector<Adult> & n
 
 //unit testing creating an entire generation of individuals
 bool firstFullGen(std::mt19937_64& rng, cudaConstants * utcConstants, bool printThings){
+    utcConstants->num_individuals = 10;
+    utcConstants->survivor_count = 3;
+
     bool noErrors = true;
 
     Child* genZero = new Child[utcConstants->num_individuals]; 
@@ -1578,7 +1579,6 @@ bool firstFullGen(std::mt19937_64& rng, cudaConstants * utcConstants, bool print
     std::vector<Adult> youngGen;
 
     //creates young a young generation with an annealing rate of 0.0 and the generation is set to 1 (the random 0.0 and 1)
-    //neither of these numbers should really affect the newGeneration being created, because mutation rate and annealing are both set to 0 
     newGeneration(parents, youngGen, 0.0, 1, rng, utcConstants);
 
     //verifies the children generated are as expected
@@ -1604,6 +1604,8 @@ bool firstFullGen(std::mt19937_64& rng, cudaConstants * utcConstants, bool print
 }
 
 // A function that is used to verify that firstFullGen is working correctly
+//Made this earlier before we started treating duplicates differently and so long as duplicates are handled the same as regular numbers
+//     this test should still work
 bool verifyFullGen(std::vector<Adult>& youngGen, std::vector<Adult>& possParents, const cudaConstants * utcConstants, bool printThings){
 
     cout << utcConstants->survivor_count << "; " << utcConstants->num_individuals << endl;
@@ -1611,18 +1613,16 @@ bool verifyFullGen(std::vector<Adult>& youngGen, std::vector<Adult>& possParents
 
     std::vector<int> parentIndexSets; //vector that holds the indices of sets of parents
 
-    int childrenPerSet = 6;
     //int setsOfChildren = (utcConstants->num_individuals)/childrenPerSet;
     int setNum = -1; //starts at negative 1 because incremented on the first run
 
-    int firstAvgInd = 2;
     int indexVecSize = 0;
     double tripTimeTol = 10e-6;
 
     //it checks which parents are being used and prints things if printThings is set to true
     for (int i = 0; i < utcConstants->num_individuals; i++){
         //when it has gone through a whole set generated by one set of parents, it increase setNum
-        if (i%childrenPerSet == 0){ 
+        if (i%crossoverChildrenCount == 0){ 
             setNum++;
         }
         printThings = true;
@@ -1650,7 +1650,7 @@ bool verifyFullGen(std::vector<Adult>& youngGen, std::vector<Adult>& possParents
         }
         //the averaging function is the best way to determine which two parents created a child
         //none of the survivor count individuals should have the same average
-        if (i == firstAvgInd + childrenPerSet*setNum){
+        if (i == fullAvgOffset + crossoverChildrenCount*setNum){
             indexVecSize += 2; //each time this occurs, two parents should be added to the parentIndexSets vector
             //if the average tripTime is equal to the copied value of parent, just one parent created the child and it is a clone
             if (youngGen[i].startParams.tripTime == youngGen[6*setNum].startParams.tripTime){ 
@@ -1669,7 +1669,6 @@ bool verifyFullGen(std::vector<Adult>& youngGen, std::vector<Adult>& possParents
                 for (int j = 0; j < utcConstants->survivor_count; j++){
                     for (int k = j+1; k < utcConstants->survivor_count; k++){
                         //checks the two parents
-                        cout << youngGen[i].startParams.tripTime << " vs " << (possParents[j].startParams.tripTime + possParents[k].startParams.tripTime)/2.0  << endl;
                         if (youngGen[i].startParams.tripTime <= ((possParents[j].startParams.tripTime + possParents[k].startParams.tripTime)/2.0 + tripTimeTol) && youngGen[i].startParams.tripTime >= ((possParents[j].startParams.tripTime + possParents[k].startParams.tripTime)/2.0 - tripTimeTol)){
                             cout << "Set " << setNum << " created by parent[" << j << "] and parent[" << k << "] " << endl;
                             parentIndexSets.push_back(j);
@@ -1710,17 +1709,17 @@ bool makeManyChildren(std::mt19937_64& rng, std::vector<Adult>& youngGen, std::v
         cout << "Generated 65 individuals from 7 parents" << endl;
     }
 
-    // utcConstants->survivor_count = 5;
-    // newGeneration(possParents, youngGen, 0.0, 1, rng, utcConstants);
-    // //verifies 
-    // noErrors = verifyFullGen(youngGen, possParents, utcConstants, false);
+    utcConstants->survivor_count = 5;
+    newGeneration(possParents, youngGen, 0.0, 1, rng, utcConstants);
+    //verifies 
+    noErrors = verifyFullGen(youngGen, possParents, utcConstants, false);
 
-    // if (!noErrors){
-    //     cout << "Problem with 65 individuals generated from 5 parents" << endl;
-    // }
-    // else if (printThings){
-    //     cout << "Generated 65 individuals from 5 parents" << endl;
-    // }
+    if (!noErrors){
+        cout << "Problem with 65 individuals generated from 5 parents" << endl;
+    }
+    else if (printThings){
+        cout << "Generated 65 individuals from 5 parents" << endl;
+    }
 
     return noErrors;
 }

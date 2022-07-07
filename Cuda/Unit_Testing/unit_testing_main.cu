@@ -4,6 +4,7 @@ using std::cout;
 using std::endl;
 #include "../Unit_Testing/testing_sorts.h"
 #include "../Unit_Testing/testing_genetics.h"
+// nvcc -ccbin "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.22.27905\bin\Hostx64\x64\cl.exe" -o unit_test unit_testing_main.cu -arch=compute_50 -code=sm_50 
 
 int main(){
     //determines whether or much of the workings of the unit tests will be printed or not

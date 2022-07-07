@@ -57,7 +57,24 @@ template <class T> void rk4sys(const T & timeInitial, const T & timeFinal, T *ti
         curTime += stepSize;
 
         // Choosing a constant max number of steps for high precision final output
-        stepSize = (timeFinal-timeInitial) / cConstant->cpu_numsteps;
+        //stepSize = (timeFinal-timeInitial) / cConstant->cpu_numsteps; //TODO: stepSize is calculated differently here than in the CUDA version
+
+        //This is the way that stepSize was calculated in rk4SimpleCUDA
+        stepSize *= calc_scalingFactor(u-error,error,absTol, cConstant->doublePrecThresh); // Alter the step size for the next iteration
+        // The step size cannot exceed the total time divided by 2 and cannot be smaller than the total time divided by 1000
+            if (stepSize > (timeFinal - timeInitial) / cConstant->min_numsteps) {
+                stepSize = (timeFinal - timeInitial) / cConstant->min_numsteps;
+            }
+            else if (stepSize < (timeFinal - timeInitial) / cConstant->max_numsteps) {
+                stepSize = (timeFinal - timeInitial) / cConstant->max_numsteps;
+            }
+
+            // if (stepSize > (threadRKParameters.tripTime - startTime) / cConstant->min_numsteps) {
+            //     stepSize = (threadRKParameters.tripTime - startTime) / cConstant->min_numsteps;
+            // }
+            // else if (stepSize < (threadRKParameters.tripTime - startTime) / cConstant->max_numsteps) {
+            //     stepSize = (threadRKParameters.tripTime - startTime) / cConstant->max_numsteps;
+            // }
         
         // shorten the last step to end exactly at time final
         if ( (curTime+stepSize) > timeFinal) {

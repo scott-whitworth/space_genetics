@@ -162,13 +162,30 @@ bool testingCompareFunctions(bool printThings);
 
 // Uses UTCopyOfNewGen to generate a vector of newAdults 
 // These Adults are then converted back into children so that the functions used to verify that mutation and crossover were working previously can be used again
-// Input: printThings - TRUE -> prints
+// Input: printThings - TRUE -> prints parents and the children they produced (a lot of stuff)
+//                      FALSE -> does not print anything except maybe an error message or so if applicable
+//        rng - needed for UTCopyOfNewGen to make masks and do mutations, etc
+//        utcConstants - allows us to access and edit num_individuals, survivor_count, mutation rates, etc.
+// Output: TRUE -> the newAdults (as Children) were generated in such a way that the verification methods say they were correctly generated
+//         FALSE-> newAdults (as Children) had an unexpected error
 bool testingCopyOfNewGen(bool printThings, std::mt19937_64 & rng, cudaConstants* utcConstants);
 
+// This function was creared to convert Adults back into children so they could be run through the old verification methods
+// Input: newAdult - the Adults that need to be converted to Children
+//        newChildren - initially an empty array, but wull be filled with all the adults that have been converted into children
+//        utcConstants - to access survivor_count and stuff like that
+// Output: newChildren is full of the newAdults, but as Children
 void convertBackToChildren(std::vector<Adult>& newAdult, Child* newChildren, const cudaConstants* utcConstants);
 
-//TODO: Write this function and test it
 //copied directly from ga_crossover.cpp, just doesn't mess with the whole callRK thing
+// Makes a new generation of Adults from a vector of old Adults
+// Inputs:  oldAdults - a vector of adults that will be used to pull random parents to generate children (should be at least survivor_size, preferably num_individuals size)
+//          newAdults - a vector of adults that will be filled by children that have been simulated and converted into adults (will be num_individuals size)
+//          annealing - a double that will be passed on to other functions; it determines how much a child's parameters are mutated
+//          generation - the generation that the algorithm is on; this will be passed on to other functions and is used for reporting
+//          rng - a random number generator that is both passed on to other functions and used to pull random parents
+//          utcConstants - the config constants; it is passed on to other functions and is used for constructing children and mutating their parameters
+// Outputs: newAdults will be filled with newly generated adults; it will be ready to be sorted and compared to other generations
 int UTCopyOfNewGeneration(std::vector<Adult> & oldAdults, std::vector<Adult> & newAdults, const double & annealing, const int & generation, std::mt19937_64 & rng, const cudaConstants* utcConstants);
 
 // Makes a set of parents and creates children from these parents -> uses callRK

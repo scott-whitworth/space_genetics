@@ -508,27 +508,4 @@ void generateChildrenFromCrossover(std::vector<Adult> &parents, Child *newChildr
     //std::cout << "\n_-_-_-_-_-_-_-_-_-Number of children generatated: " << numNewChildren << "_-_-_-_-_-_-_-_-_-\n";
 }
 
-//Generate mutated children from duplicate adults
-void generateChildrenFromMutation(std::vector<Adult> & duplicates, Child* newChildren, const int & startingIndex, std::mt19937_64 & rng, const double& currentAnneal, const int & generation, const cudaConstants* cConstants) {
 
-    if (cConstants -> num_individuals - startingIndex > duplicates.size()) 
-    {
-        std::cout << "\nERROR: Scott says this is an error (beginning of mutate children),\n\tDuplicates is too small!\n";
-    }
-
-    //Go through the duplicates vector and use the adults' info to generate children into newChildren
-    //NOTE: The index that is used to generate the child within newChildren depends on the size of the duplicates vector
-    //          The total number of new children that need to be created between both functions is num_individuals
-    //          generateChildrenFromCrossover has already filled newChildren with startingIndex number of children
-    //          Thus, the starting index until num_individuals is safe to be modified
-    /*
-    for (int i = 0; i < cConstants->num_individuals - startingIndex; i++) {
-        //Assign the starting parameters of a corresponding duplicate to a child
-        newChildren[startingIndex + i] = Child(duplicates[i].startParams, cConstants, generation, duplicates[i].progress);
-
-        //Now that the necessary child has been assigned starting parameters, go though and heavily mutate their parameters
-        //      Note: the mutation factor is set by duplicate_mutation_factor
-        newChildren[startingIndex + i].startParams = mutate(newChildren[startingIndex + i].startParams, rng, currentAnneal, cConstants, generation, cConstants->mutation_amplitude, cConstants->duplicate_mutation_chance);
-    }
-    */
-}

@@ -146,18 +146,6 @@ void generateChildrenPair(const Adult & parent1, const Adult & parent2, Child * 
 // Outputs: This function will fill the newChildren array up to childrenToGenerate with generated children, ready to be simulated
 void generateChildrenFromCrossover(std::vector<Adult> & parents, Child* newChildren, const int & childrenToGenerate, std::mt19937_64 & rng, const double & currentAnneal, const int & generation, const cudaConstants* cConstants);
 
-// This function will use duplicate adults to generate children using heavy mutation
-//      It will help ensure that genetic diversity is conserved by not creating children from the crossover between two duplicate parents
-// Inputs:  duplicates - a vector of adults that that will used to generate mutated children
-//          newChildren - the array that the generated children will be appended to
-//          startingIndex - lets the function know where within newChildren to start inserting mutated children
-//          rng - the random number generator, will be passed into the mutate function
-//          currentAnneal - the mutation anneal, will be passed into the mutate function 
-//          generation - the current generation, will be passed into the mutate function
-//          cConstants - the cuda constants
-// Outputs: Duplicate adults' starting parameters will have been copied into children in the newChildren array and mutated, filling up the rest of newChildren
-// NOTE: this function assumes (but isn't dependent on) that generateNewChildrenFromCrossover has been called previously
-void generateChildrenFromMutation(std::vector<Adult> & duplicates, Child* newChildren, const int & startingIndex, std::mt19937_64 & rng, const double& currentAnneal, const int & generation, const cudaConstants* cConstants);
 
 #include "ga_crossover.cpp"
 

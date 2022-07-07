@@ -2,25 +2,20 @@
 void newGeneration (std::vector<Adult> & oldAdults, std::vector<Adult> & newAdults, const double & annealing, const int & generation, std::mt19937_64 & rng, const cudaConstants* cConstants) {
 
     //Vector that will hold the adults who are potential parents
-    //The criteria for being a parent is being in the top survivor_count number of adults in the oldAdult pool and not being a duplicate (distance > 0)
-    //      Duplicate adults will generate children in a separate fashion
+    //The criteria for being a parent is being in the top survivor_count number of adults in the oldAdult pool
     std::vector<Adult> parents; 
 
-    //Vector for duplicates, based on the same criteria as above
-    std::vector<Adult> duplicates;
-
     parents.clear();
-    duplicates.clear();
 
-    //separates oldAdults into parents (full of unique individuals) and duplicates (anything whose posDiff and speedDiff are about the same as an Adult in parents)
-    separateDuplicates(oldAdults, parents, duplicates, generation, cConstants);
+    //separates oldAdults into parents (full of best N/4 individuals) 
+    fillParents(oldAdults, parents, generation, cConstants);
 
     //Import number of new individuals the GPU needs to fill its threads
     //Create a newChildren function to fill in with children generated from oldAdults
     Child* newChildren = new Child[cConstants->num_individuals]; 
 
-    //uses parents and duplicates to make children for the next generation
-    makeChildren(parents, duplicates, newChildren, annealing, generation, rng, cConstants);
+    //uses parents to make children for the next generation
+    makeChildren(parents, newChildren, annealing, generation, rng, cConstants);
     
     //Initialize variables needed for callRK
     //TODO: there is likely a better solution for this than just setting them as 0 here
@@ -44,12 +39,9 @@ void newGeneration (std::vector<Adult> & oldAdults, std::vector<Adult> & newAdul
     delete[] newChildren; 
 }
 
-//separates the duplicates from the unique individuals (parents)
-void separateDuplicates(std::vector<Adult> & oldAdults, std::vector<Adult> & parents, std::vector<Adult> & duplicates, const int & generation, const cudaConstants* cConstants){
-    //Clearing parents and duplicates before separating the parents and duplicates from a vector ensures parents
-    //      and duplicates are only filled with individuals from the oldAdults vector
+void fillParents(std::vector<Adult> & oldAdults, std::vector<Adult> & parents, const int & generation, const cudaConstants* cConstants){
+    //Clearing parents before separating the parents from a vector ensures parents
     parents.clear();
-    duplicates.clear();
 
     //If statement will check if the generation is 0 
     //      If so, it will assign all the surviving adults to parents
@@ -66,48 +58,36 @@ void separateDuplicates(std::vector<Adult> & oldAdults, std::vector<Adult> & par
         //sort all the oldAdults by rankDistance, so the best will be chosen as survivors/parents
         std::sort(oldAdults.begin(), oldAdults.end(), rankDistanceSort);
         
-        //Iterate through the best of oldAdults and sort the individuals into either the parent or the duplicate vectors
+        //Iterate through the best of oldAdults and sort the individuals into parents
         for (int i = 0; i < cConstants->survivor_count; i++)
         {
             if (oldAdults[i].errorStatus == VALID || oldAdults[i].errorStatus == DUPLICATE)
             {
                 parents.push_back(oldAdults[i]);
             }
-            /*
-            else if (oldAdults[i].errorStatus == DUPLICATE)
-            {
-                duplicates.push_back(oldAdults[i]);
-            }
-            */
         }
 
-        //Check to see if the size of parents + the size of duplicates is less then survivor_count
+        //Check to see if the size of parents is less then survivor_count
         //This means there were adults with additional errors that made it into the survivor range
-        if (parents.size() + duplicates.size() < cConstants->survivor_count)
+        if (parents.size() < cConstants->survivor_count)
         {
-            std::cout << "\nThere are less adults in parents & duplicates than desired!\n"; 
+            std::cout << "\nThere are less adults in parents than desired!\n"; 
         }
     }
 
 }
 
 //
-void makeChildren(std::vector<Adult> & parents, std::vector<Adult> & duplicates, Child * newChildren, const double & annealing, const int & generation, std::mt19937_64 & rng, const cudaConstants* cConstants){
+void makeChildren(std::vector<Adult> & parents, Child * newChildren, const double & annealing, const int & generation, std::mt19937_64 & rng, const cudaConstants* cConstants){
 
     //Variable that tracks the number of children that needs to be generated via the crossover method
-    //Set to the number of children that needs to be generated (num_individuals) minus the number of children that will be generated from duplicates via heavy mutation (size of duplicates)
-    int childrenFromCrossover = cConstants->num_individuals - duplicates.size();    
+    //Set to the number of children that needs to be generated (num_individuals)
+    int childrenFromCrossover = cConstants->num_individuals;
 
-    //Generate children with crossovers using non-duplicate parents
+    //Generate children with crossovers using parents
     generateChildrenFromCrossover(parents, newChildren, childrenFromCrossover, rng, annealing, generation, cConstants);
-    /*
+    
 
-    //See if there are any duplicate adults before generating children from mutations
-    if(duplicates.size() > 0){//TODO: Again, we have no duplicates going through this currently, is it worth keeping?
-        //Generate the rest of the children using heavy mutation of duplicate adults
-        generateChildrenFromMutation(duplicates, newChildren, childrenFromCrossover, rng, annealing, generation, cConstants); 
-    }
-    */
 }
 
 //Function that will convert the generated children into adults

@@ -28,25 +28,23 @@
 // NOTE: This function is called at the beginning of each generation within optimize() 
 void newGeneration(std::vector<Adult> & oldAdults, std::vector<Adult> & newAdults, const double & annealing, const int & generation, std::mt19937_64 & rng, const cudaConstants* cConstants);
 
-// Copies unique values from oldAdults into parents and any adults with the same posDiff and speedDiff as a parent gets copied into duplicates
-// Input: oldAdults - the potential parents from which we are selecting the best survivor_count parents and duplicates
-//        parents - the unique individuals or the first instance of a duplicate
-//        duplicates - individuals with the same posDiff or speedDiff as a parent
-//        generation - if it is the first generation, nothing will be set with duplicate error status yet, so everything is a parent
+// Copies unique values from oldAdults into parents (size N/4) and any adults with the same a non-duplicate error status are included
+// Input: oldAdults - the potential parents from which we are selecting the best survivor_count parents
+//        parents - the best individuals
+//        generation - if it is the first generation, everything is a parent
 //        cConstants - so we can access survivor_count
-// Output: parents and duplicates are filled with values copied over from oldAdults
-void separateDuplicates(std::vector<Adult> & oldAdults, std::vector<Adult> & parents, std::vector<Adult> & duplicates, const int & generation, const cudaConstants* cConstants);
+// Output: parents are filled with values copied over from oldAdults
+void fillParents(std::vector<Adult> & oldAdults, std::vector<Adult> & parents, const int & generation, const cudaConstants* cConstants);
 
-// Takes parents and duplicates and uses them to fill newChildren with the num_individuals children
-// Input: parents - the unique individuals or the first instance of a duplicate
-//        duplicates - individuals with the same posDiff or speedDiff as a parent
+// Takes parents and uses them to fill newChildren with the num_individuals children
+// Input: parents - the best N/4 individuals
 //        newChildren - the array of simulated children that will be transformed into adults
 //        annealing - a double that will be passed on to other functions; it determines how much a child's parameters are mutated
 //        generation - the generation that the algorithm is on; this will be passed on to other functions and is used for reporting
 //        rng - a random number generator that is both passed on to other functions and used to pull random parents
 //        cConstants - the config constants; it is passed on to other functions and is used for constructing children and mutating their parameters
 // Output: newChildren is filled with 
-void makeChildren(std::vector<Adult> & parents, std::vector<Adult> & duplicates, Child * newChildren, const double & annealing, const int & generation, std::mt19937_64 & rng, const cudaConstants* cConstants);
+void makeChildren(std::vector<Adult> & parents, Child * newChildren, const double & annealing, const int & generation, std::mt19937_64 & rng, const cudaConstants* cConstants);
 
 // Converts children previously simulated by callRK into adults
 //        It calculates the pos and speed diffs of the children and inserts the new children into the submitted adult vector

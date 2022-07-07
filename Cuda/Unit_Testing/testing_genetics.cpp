@@ -24,7 +24,6 @@ bool runGeneticsUnitTests(bool printThings){
     // Starting this off at 0 because to ensure that there are no mutations initially to verify that children are generated as expected
     // Changes to 1.0 later in the code so that we can ensure mutation is working
     utcConstants->default_mutation_chance = 0; 
-    utcConstants->duplicate_mutation_chance = 1.0;
     utcConstants->mutation_amplitude = 1;
    
     // Used in mutate(), affects the scale of change for the respective parameter values, in conjunction with annealing
@@ -681,124 +680,6 @@ void twentyAdultsPosAndSpeedDiffMade(bool printThings, std::vector<Adult>& allAd
     delete[] genZero; //cleans up dynamic memory
 }
 
-//ensures that clones and original/unique individuals are properly separated from one another
-bool verifyProperCloneSeparation(bool printThings, cudaConstants* utcConstants){
-    int testNum = 1; //there are two tests this function undergoes
-
-    //for this test, we want the survivor count to be the entire population to give us the best sample size
-    utcConstants->survivor_count = 20;
-    std::vector<Adult> oldAdults;
-
-    //will be returned at the end of the loop
-    bool noProblems = true;
-    bool printAllAdults = true;
-
-    while (testNum <= 2){
-        //fills oldAdults with the 20 adults who only have posDiff, speedDiff, and tripTime uniquely assigned to them
-        twentyAdultsPosAndSpeedDiffMade(printAllAdults, oldAdults, utcConstants);
-
-        //Vector that will hold the adults who are potential parents
-        //The criteria for being a parent is being in the top survivor_count number of adults in the oldAdult pool and not being a duplicate (distance > 0)
-        //      Duplicate adults will generate children in a separate fashion
-        std::vector<Adult> parents; 
-
-        //Vector for duplicates, based on the same criteria as above
-        std::vector<Adult> duplicates;
-
-        findDuplicates(oldAdults, parents, utcConstants, utcConstants->anneal_initial); 
-
-        //on the first test, they are not given a new rank and distance before being sorted
-        //but on the second they are
-        if (testNum == 2){
-            giveRank(oldAdults, utcConstants);
-            giveDistance(oldAdults, utcConstants);
-        }
-
-        //ensure the adults are sorted
-        std::sort(oldAdults.begin(), oldAdults.end(), rankDistanceSort);
-
-        //puts an Adult in parents to ensure that separateDuplicates won't break if a vector already has values in it when it is passed in
-        parents.push_back(Adult(Child()));
-        separateDuplicates(oldAdults, parents, duplicates, 1, utcConstants);
-
-
-        //these loops print all the useful identifying information contained by each thing in parents and in duplicates
-        if (printThings){
-            if (testNum == 1){
-                cout << "Not given new ranks and distances after being identified" << endl;
-            }
-            else{
-                cout << "\nGiven new ranks and distances after being identified" << endl;
-            }
-            for (int i = 0; i < parents.size(); i++){
-                cout << "parents[" << i << "]: " << parents[i].unitTestingRankDistanceStatusPrint() << "- posDiff: " << parents[i].posDiff << " & speedDiff: " << parents[i].speedDiff << " & tripTime: " << parents[i].startParams.tripTime<< endl;
-            }
-            for (int j = 0; j < duplicates.size(); j++){
-                cout << "duplicates[" << j << "]: " << duplicates[j].unitTestingRankDistanceStatusPrint() << "- posDiff: " << duplicates[j].posDiff << " & speedDiff: " << duplicates[j].speedDiff << " & tripTime: " << duplicates[j].startParams.tripTime << endl;
-            }
-        }
-
-        //the total number of individuals put into parents and duplicates by separateDuplicates should be the number of survivors
-        if (parents.size() + duplicates.size() !=  utcConstants->survivor_count){
-            cout << "ERROR: Things were not properly copied over and parents and duplicates are not the correct lengths" << endl;
-            return false;
-        }
-
-        std::vector<Adult> expectedClones;
-        std::vector<Adult> expectedParents;
-
-        //after the values have been rank distance sorted, the expected parents and expected clones appear they would fall in the following order
-        //NOTE: if we begin comparing elements and not just posDiff and speedDiff these lists will change
-
-        // The values in expectedParents and expectedClones if duplicates are removed
-        // expectedParents.push_back(Adult(Child(38000000.0, 0.14, 0.00192)));
-        // expectedParents.push_back(Adult(Child(37400000.0, 0.012, 0.0042)));
-        // expectedParents.push_back(Adult(Child(35000020.0, 0.048, 0.00234)));
-        // expectedParents.push_back(Adult(Child(43000000.0, 0.02, 0.0034)));
-        // expectedParents.push_back(Adult(Child(32000040.0, 0.025, 0.00354)));
-        // expectedParents.push_back(Adult(Child(47000000.0, 0.122, 0.0034)));
-        // expectedParents.push_back(Adult(Child(37400070.0, 0.017, 0.0042)));
-        // expectedParents.push_back(Adult(Child(45200100.0, 0.299, 0.0034)));
-        // expectedParents.push_back(Adult(Child(44300000.0, 0.053, 0.00414)));
-        // expectedParents.push_back(Adult(Child(40000000.0, 0.02, 0.0043)));
-        // expectedParents.push_back(Adult(Child(45200000.0, 0.098, 0.00432)));
-        // expectedClones.push_back(Adult(Child(38000080.0, 0.14, 0.00192))); 
-        // expectedClones.push_back(Adult(Child(35000000.0, 0.048, 0.00234)));
-        // expectedClones.push_back(Adult(Child(43000060.0, 0.02, 0.0034)));
-        // expectedClones.push_back(Adult(Child(44300090.0, 0.02, 0.0034)));
-        // expectedClones.push_back(Adult(Child(47000050.0, 0.122, 0.0034)));
-        // expectedClones.push_back(Adult(Child(32000000.0, 0.025, 0.00354)));
-        // expectedClones.push_back(Adult(Child(41000000.0, 0.299, 0.0034)));
-        // expectedClones.push_back(Adult(Child(40000010.0, 0.02, 0.0043)));
-        // expectedClones.push_back(Adult(Child(41000030.0, 0.299, 0.0034)));
-
-
-        //if we are not removing duplicates, then oldAdults rankDistance sorted
-        //should be the same as the expected parents
-        expectedParents = oldAdults;
-        
-        //checks the actual tripTimes against the expected tripTimes because this will allow us to see if these appear in the proper order or not
-        for (int i = 0; i < parents.size(); i++){
-            if (expectedParents[i].startParams.tripTime != parents[i].startParams.tripTime){
-                cout << "parents[" << i << "] did not match the expected value" << endl;
-                cout << parents[i].startParams.tripTime << " vs " << expectedParents[i].startParams.tripTime << endl;
-                noProblems = false;
-            }
-        }
-        for (int i = 0; i < duplicates.size(); i++){
-            if (expectedClones[i].startParams.tripTime != duplicates[i].startParams.tripTime){
-                cout << "duplicates[" << i << "] did not match the expected value" << endl;
-                cout << duplicates[i].startParams.tripTime << " vs " << expectedClones[i].startParams.tripTime << endl;
-                noProblems = false;
-            }
-        }
-        testNum++; //it has completed a test, so the number increments
-        printAllAdults = false; //the second time through, we don't need all the information printed again
-    }
-    //if the tests passed, this is TRUE, otherwise it is false
-    return noProblems;
-}
-
 //checks to make sure children are being generated the way we think they are
 bool verifyChildrenFromCrossover(std::mt19937_64& rng, bool printThings, cudaConstants* utcConstants){
     //holds the potential parents
@@ -822,6 +703,7 @@ bool verifyChildrenFromCrossover(std::mt19937_64& rng, bool printThings, cudaCon
 
     //loops 4 times the number of survivors is n/(2^exponent) -> survivor_count = n (20), n/2 (10), n/4 (5), n/8 (2)
     while (exponent < 4){
+        //ALL UNIQUE INDIVIDUALS    
         //if it going to be printing information, it tell the user the survivor size and population size 
         if (printThings){
             cout << "Survivor population: " << utcConstants->survivor_count << " out of " << utcConstants->num_individuals << " potential parents" << endl;
@@ -901,13 +783,6 @@ bool verifyChildrenFromCrossover(std::mt19937_64& rng, bool printThings, cudaCon
             printParents = false; //it will not do this large print next time 
         }
 
-        //separates the parents and duplicates into two different vectors -> the duplictes vector should be empty
-        separateDuplicates(oldAdults, parents, duplicates, 1, utcConstants);
-        if (!duplicates.empty() || parents.size() != utcConstants->survivor_count){
-            cout << "ERROR: There should not be any duplicates here and the number of parents should match the number of survivors" << endl;
-            noErrors = false;
-        }
-
         //no mutations should occur because anneal_initial is set to 0, as is the default_mutation_chance
         utcConstants->anneal_initial = 0;
         utcConstants->default_mutation_chance = 0;
@@ -925,6 +800,7 @@ bool verifyChildrenFromCrossover(std::mt19937_64& rng, bool printThings, cudaCon
             noErrors = false;
         }
 
+        //A MIX OF UNIQUE INDIVIDUALS AND DUPLICATES
         //identifies the next test being done
         if (printThings){
             cout << "In a pool that is a mix of unique individuals and duplicates...";
@@ -933,15 +809,11 @@ bool verifyChildrenFromCrossover(std::mt19937_64& rng, bool printThings, cudaCon
         twentyAdultsPosAndSpeedDiffMade(printParents, oldAdults, utcConstants);
         empty.clear();
         findDuplicates(oldAdults, empty, utcConstants, utcConstants->anneal_initial);
-        //seperates the parents and duplicates into two different vectors
-        separateDuplicates(oldAdults, parents, duplicates, 1, utcConstants);
-        //ensures that generateChildrenFromCrossover does not overwrite values it should not touch
-        occupiesLastSpace = children[utcConstants->num_individuals - duplicates.size()];
         
         //generates individuals based on solely the original/unique individuals from the population
         //generation is set to two to distinguish individuals created in this second call from those created in the first
-        generateChildrenFromCrossover(parents, children, utcConstants->num_individuals - duplicates.size(), rng, utcConstants->anneal_initial, 2, utcConstants);
-        goodThisTime = cfcAnswersMatchExpectations(occupiesLastSpace, utcConstants->num_individuals - duplicates.size(), children, utcConstants, parents, printThings);
+        generateChildrenFromCrossover(oldAdults, children, utcConstants->num_individuals, rng, utcConstants->anneal_initial, 2, utcConstants);
+        goodThisTime = cfcAnswersMatchExpectations(occupiesLastSpace, utcConstants->num_individuals, children, utcConstants, oldAdults, printThings);
         //if the function that is meant to check if the answers match our expectations returns false, there are errors
         if (!goodThisTime){
             //identifies that there were errors if printThings is true
@@ -951,38 +823,43 @@ bool verifyChildrenFromCrossover(std::mt19937_64& rng, bool printThings, cudaCon
             noErrors = false;
         }
 
-        // ===== NOTE =====
-        // Attempted having a pool of entirely duplicates 
-        // there was only 1 individual in parent and generateChildrenFromCrossover could not handle it
-        // it began an infinite loop of printing "In generateChildrenFromCrossover() we've cycled through the parentPool twice"
-        // the code for this test is commented out below
-        // TODO: What should I do with this code? We should never get this situation, but I thought I should test it
+        //ALL DUPLICATES
+        //identifies the next test being done
+        if (printThings){
+            cout << "In a pool that is entirely duplicates of one individual...";
+        }
+        //fill oldAdults entirely with duplicates 
+        for (int i = 0; i < oldAdults.size(); i++){
+            oldAdults[i] = Adult(Child(3.8e+07, 0.014, 0.00192));
+            //prints all the identifying information (including the error status for each Adult in oldAdults) if printParents is true
+            if (printParents){
+                cout << "oldAdults[" << i << "]: " << oldAdults[i].unitTestingRankDistanceStatusPrint() << "- posDiff: " << oldAdults[i].posDiff << ", speedDiff: " << oldAdults[i].speedDiff << " & tripTime: " << oldAdults[i].startParams.tripTime << endl;
+            }
+        }
+        //if it printed all these
+        if (printParents){
+            cout << endl;
+            printParents = false; //it will not do this large print next time 
+        }
+        //locates the duplicates
+        empty.clear();
+        findDuplicates(oldAdults, empty, utcConstants, utcConstants->anneal_initial);
 
-        // //fill oldAdults entirely with duplicates 
-        // for (int i = 0; i < oldAdults.size(); i++){
-        //     oldAdults[i] = Adult(Child(3.8e+07, 0.014, 0.00192));
-        // }
+        //generates individuals based on solely the original/unique individual from oldAdults
+        //can the code handle only one parent? If so, what does it do?
+        //generation is set to three to distinguish individuals created in this third call from those created in the first and second
+        generateChildrenFromCrossover(oldAdults, children, utcConstants->num_individuals - duplicates.size(), rng, utcConstants->anneal_initial, 3, utcConstants);
+        goodThisTime = cfcAnswersMatchExpectations(occupiesLastSpace, utcConstants->num_individuals - duplicates.size(), children, utcConstants, oldAdults, printThings);
+        cout << "got past third generate and check" << endl;
+        //if the function that is meant to check if the answers match our expectations returns false, there are errors
+        if (!goodThisTime){
+            //identifies that there were errors if printThings is true
+            if (printThings){
+                cout << "\n...generateChildrenFromCrossover() does not work as expected" << endl;
+            }
+            noErrors = false;
+        }
 
-        // //locates and separates the duplicates
-        // empty.clear();
-        // findDuplicates(oldAdults, empty, utcConstants, utcConstants->anneal_initial);
-        // separateDuplicates(oldAdults, parents, duplicates, 1, utcConstants);
-
-        // if (parents.size() != 1){
-        //     cout << "Location and seperation of duplicates did not work as expected" << endl;
-        // }
-
-        // occupiesLastSpace = children[utcConstants->num_individuals - duplicates.size()];
-
-        // //generates individuals based on solely the original/unique individual from oldAdults
-        // //can the code handle only one parent? If so, what does it do?
-        // //generation is set to three to distinguish individuals created in this third call from those created in the first and second
-        // generateChildrenFromCrossover(parents, children, utcConstants->num_individuals - duplicates.size(), rng, utcConstants->anneal_initial, 3, utcConstants);
-        // goodThisTime = cfcAnswersMatchExpectations(occupiesLastSpace, utcConstants->num_individuals - duplicates.size(), children, utcConstants, parents);
-        // cout << "got past third generate and check" << endl;
-        // if (!goodThisTime){
-        //     noErrors = false;
-        // }
         utcConstants->survivor_count /= 2; //Halves the survivor population
         exponent++; //increases the exponent
     }
@@ -1126,322 +1003,15 @@ bool cfcAnswersMatchExpectations(const Child & endSpot, const int & numChildren,
     return noErrors; //if all children had their parents identified and they seem good, this returns true
 }
 
-//attempts to verify that children are being correctly created from mutation
-bool verifyChildrenFromMutation(std::mt19937_64& rng, bool printThings, cudaConstants* utcConstants){
-    bool noErrors = true;
-
-    //starts the number of survivors and individuals at 20 so we can use all the duplicates to make children
-    utcConstants->num_individuals = 20;
-    utcConstants->survivor_count = 20;
-    //ensures anneal_initial is setm as well as the default and duplicate mutation chances
-    utcConstants->anneal_initial = 0.01;
-    utcConstants->default_mutation_chance = 0.0;
-    utcConstants->duplicate_mutation_chance = 1.0;
-
-    //holds the potential parents
-    std::vector<Adult> oldAdults;
-    //vectors to hold these potential parents based on whether or not they are duplicates or unique/original values
-    std::vector<Adult> parents;
-    std::vector<Adult> duplicates;
-    std::vector<Adult> empty;
-    //holds the children to be generated
-    Child* children = new Child[utcConstants->num_individuals]; 
-
-    //already printing the parents with the label oldAdults if printThings is true, so no reason to print this twice
-    twentyAdultsPosAndSpeedDiffMade(false, oldAdults, utcConstants);
-
-    //finds the duplicates and separates them from the original/unique individuals
-    findDuplicates(empty, oldAdults, utcConstants, utcConstants->anneal_initial);
-    separateDuplicates(oldAdults, parents, duplicates, 1, utcConstants);
-
-    //if the user wants things displayed in the terminal, it will print the pool of potential parents
-    //and how they are separated into parents (not used here) and duplicates (which will produce children)
-    if (printThings){
-        for (int i = 0; i < utcConstants->num_individuals; i++){
-            cout << "oldAdults[" << i << "]: " << oldAdults[i].unitTestingRankDistanceStatusPrint() << "- posDiff: " << oldAdults[i].posDiff << ", speedDiff: " << oldAdults[i].speedDiff << " & tripTime: " << oldAdults[i].startParams.tripTime << endl;
-        }
-        for (int i = 0; i < parents.size(); i++){
-            cout << "parents[" << i << "]: " << parents[i].unitTestingRankDistanceStatusPrint() << "- posDiff: " << parents[i].posDiff << ", speedDiff: " << parents[i].speedDiff << " & tripTime: " << parents[i].startParams.tripTime << endl;
-        }
-        for (int i = 0; i < duplicates.size(); i++){
-            cout << "duplicates[" << i << "]: " << duplicates[i].unitTestingRankDistanceStatusPrint() << "- posDiff: " << duplicates[i].posDiff << ", speedDiff: " << duplicates[i].speedDiff << " & tripTime: " << duplicates[i].startParams.tripTime << endl;
-        }
-        cout << endl;
-    }
-
-    //set the starting index to the place it usually would be and the generation to 1
-    //the duplicate mutation chance is set to 1.0, so it everything should be mutated 
-    generateChildrenFromMutation(duplicates, children, utcConstants->num_individuals - duplicates.size(), rng, utcConstants->anneal_initial, 1, utcConstants);
-    //the result of this run determines whether or not 
-    noErrors = properMutationResults(duplicates, children, utcConstants, printThings);
-
-    //set the duplicate mutation rate to 0 and now nothing should be mutated
-    utcConstants->duplicate_mutation_chance = 0.0;
-    //generates new children from mutation, overwriting the previously generated ones
-    generateChildrenFromMutation(duplicates, children, utcConstants->num_individuals - duplicates.size(), rng, utcConstants->anneal_initial, 1, utcConstants);
-    //if all the parameters were mutated, this would definitely be an issue
-    //this check does NOT ensure that none of the parameters were mutated, though if printThings is true
-    //it is pretty easy to see that nothing is mutated when both mutation chances are set to 0
-    if (properMutationResults(duplicates, children, utcConstants, printThings) && duplicates.size() > 0){
-        noErrors = false;
-    }
-
-    //if either test failed, this returns false
-    return noErrors;
-}
-
-bool properMutationResults(std::vector<Adult>& duplicates, Child* children, const cudaConstants* utcConstants, bool printThings){
-    bool foundMutationsForAll = true; //if every individual has had at least one element mutated this is true
-    double mutationSensingTolerance = 1e-10; //if a change at least this big has occurred on an element, then a mutation has occurred
-    
-    //loops until it has checked every duplicate's offspring
-    for (int i = 0; i < duplicates.size(); i++){
-        bool foundMutation = false; //when a parameter has been found to be mutated, this is set to true
-        //if printThings is true, it will print the gamma, tau, coast, alpha, beta, zeta, and tripTime values for a duplicate and its child
-        if (printThings){
-            //prints the mutation chance first
-            cout << "\nDuplicate mutation chance: " << utcConstants->duplicate_mutation_chance << endl;
-            //establishes columns for the output
-            cout << "duplicates[" << i << "] \t\tchildren[" << utcConstants->num_individuals - duplicates.size() + i << "]" << "\t\tElement" << endl;
-            double dupeAvg = 0, childAvg = 0; //if gamma, tau, or coast hasn't been mutated this hold the sum of all the values that will be averaged and displayed
-            int gammasDisplayed = 0, tausDisplayed = 0, coastsDisplayed = 0; //used to determine if average should be printed or not
-            for (int j = 0; j < GAMMA_ARRAY_SIZE; j++){
-                //adds the gamma values for each to their respective "averages" so this can be displayed if not all the gammas were mutated
-                dupeAvg += duplicates[i].startParams.coeff.gamma[j];
-                childAvg += children[utcConstants->num_individuals - duplicates.size() + i].startParams.coeff.gamma[j];
-                //if this gamma value has been mutated, prints it
-                if (children[utcConstants->num_individuals - duplicates.size() + i].startParams.coeff.gamma[j] <= (duplicates[i].startParams.coeff.gamma[j]  - mutationSensingTolerance)
-                || children[utcConstants->num_individuals - duplicates.size() + i].startParams.coeff.gamma[j] >= (duplicates[i].startParams.coeff.gamma[j]  + mutationSensingTolerance)){
-                    gammasDisplayed++;
-                    cout << std::fixed << std::setprecision(8) << duplicates[i].startParams.coeff.gamma[j] << "\t\t" <<  children[utcConstants->num_individuals - duplicates.size() + i].startParams.coeff.gamma[j] << "\t\tgamma[" << j << "]" << endl;
-                }
-            }
-            //if not all the gamma values were mutated and printed, prints the average gamma values instead
-            if (gammasDisplayed < GAMMA_ARRAY_SIZE){
-                cout << std::fixed << std::setprecision(8) << dupeAvg/GAMMA_ARRAY_SIZE << "\t\t" <<  childAvg/GAMMA_ARRAY_SIZE << "\t\tgamma (average)" << endl;
-            }
-            dupeAvg = childAvg = 0; //resets these values to 0 so the average will be just tau values, not tau and gamma
-            for (int j = 0; j < TAU_ARRAY_SIZE; j++){
-                //in case not all taus were mutated, adds up all the taus for each the child and the parent so they can be averaged
-                dupeAvg += duplicates[i].startParams.coeff.tau[j];
-                childAvg += children[utcConstants->num_individuals - duplicates.size() + i].startParams.coeff.tau[j];
-                //if the tau has been mutated, prints the parent and the child tau values
-                if (children[utcConstants->num_individuals - duplicates.size() + i].startParams.coeff.tau[j] <= (duplicates[i].startParams.coeff.tau[j]  - mutationSensingTolerance)
-                || children[utcConstants->num_individuals - duplicates.size() + i].startParams.coeff.tau[j] >= (duplicates[i].startParams.coeff.tau[j]  + mutationSensingTolerance)){
-                    tausDisplayed++;
-                    cout << std::fixed << std::setprecision(8) << duplicates[i].startParams.coeff.tau[j] << "\t\t" <<  children[utcConstants->num_individuals - duplicates.size() + i].startParams.coeff.tau[j] << "\t\ttau[" << j << "]" << endl;
-                }
-            }
-            //if not all the taus have already been printed, prints the averages
-            if (tausDisplayed < TAU_ARRAY_SIZE){
-                cout << std::fixed << std::setprecision(8) << dupeAvg/TAU_ARRAY_SIZE << "\t\t" <<  childAvg/TAU_ARRAY_SIZE << "\t\ttau (average)" << endl;
-            }
-            dupeAvg = childAvg = 0; //resets dupeAvg and childAvg so they will only have coast values
-            for (int j = 0; j < COAST_ARRAY_SIZE; j++){
-                //adds all the coast values for the child and the parent of these up so that they can be averaged
-                dupeAvg += duplicates[i].startParams.coeff.coast[j];
-                childAvg += children[utcConstants->num_individuals - duplicates.size() + i].startParams.coeff.coast[j];
-                //if the child's coast has been mutated from the parent's, prints both their coast values
-                if (children[utcConstants->num_individuals - duplicates.size() + i].startParams.coeff.coast[j] <= (duplicates[i].startParams.coeff.coast[j]  - mutationSensingTolerance)
-                || children[utcConstants->num_individuals - duplicates.size() + i].startParams.coeff.coast[j] >= (duplicates[i].startParams.coeff.coast[j]  + mutationSensingTolerance)){
-                    coastsDisplayed++;
-                    cout << std::fixed << std::setprecision(8) << duplicates[i].startParams.coeff.coast[j] << "\t\t" <<  children[utcConstants->num_individuals - duplicates.size() + i].startParams.coeff.coast[j] << "\t\tcoast[" << j << "]" << endl;
-                }
-            }
-            //if not all the coast values have been mutated, prints the average coast values for both the duplicate and its child
-            if (coastsDisplayed < COAST_ARRAY_SIZE){
-                cout << std::fixed << std::setprecision(8) << dupeAvg/COAST_ARRAY_SIZE << "\t\t" <<  childAvg/COAST_ARRAY_SIZE << "\t\tcoast (average)" << endl;
-            }
-            dupeAvg = childAvg = 0;
-            //prints the coast threshold
-            cout << std::fixed << std::setprecision(8) << duplicates[i].startParams.coeff.coastThreshold << "\t\t" <<  children[utcConstants->num_individuals - duplicates.size() + i].startParams.coeff.coastThreshold<< "\t\tcoastThreshold" << endl;
-            
-            //prints the tripTime to 1 decimal place
-            cout << std::fixed << std::setprecision(1) << duplicates[i].startParams.tripTime << "\t\t" <<  children[utcConstants->num_individuals - duplicates.size() + i].startParams.tripTime << "\t\ttripTime" << endl;
-            //prints alpha, beta, and zeta to 8 decimal places
-            cout << std::fixed << std::setprecision(8) << duplicates[i].startParams.alpha << "\t\t" <<  children[utcConstants->num_individuals - duplicates.size() + i].startParams.alpha << "\t\talpha" << endl;
-            cout << std::fixed << std::setprecision(8) << duplicates[i].startParams.beta << "\t\t" <<  children[utcConstants->num_individuals - duplicates.size() + i].startParams.beta << "\t\tbeta" << endl;
-            cout << std::fixed << std::setprecision(8) << duplicates[i].startParams.zeta << "\t\t" <<  children[utcConstants->num_individuals - duplicates.size() + i].startParams.zeta << "\t\tzeta" << endl;
-        }
-
-        //Starts params are not mutated, but are based on the alpha, beta, and zeta positions, so they do not need to be examined
-        //Ensures that there has been at least one mutation in gamma, tau, coast, tripTime, alpha, beta, or zeta
-
-        //checks all the gammas to see if they have been mutated
-        for (int j = 0; j < GAMMA_ARRAY_SIZE; j++){
-            //if there is a change of at least 1e-10 between the child and its parent, then there was a mutation
-            if (!(children[utcConstants->num_individuals - duplicates.size() + i].startParams.coeff.gamma[j] >= (duplicates[i].startParams.coeff.gamma[j]  - mutationSensingTolerance)
-            && children[utcConstants->num_individuals - duplicates.size() + i].startParams.coeff.gamma[j] <= (duplicates[i].startParams.coeff.gamma[j]  + mutationSensingTolerance))){
-                foundMutation = true;
-            }
-        }
-        //checks all the taus for a mutation
-        for (int j = 0; j < TAU_ARRAY_SIZE; j++){
-            //if there is a change of at least 1e-10 between the child and its parent, then there was a mutation
-            if (!(children[utcConstants->num_individuals - duplicates.size() + i].startParams.coeff.tau[j] >= (duplicates[i].startParams.coeff.tau[j]  - mutationSensingTolerance)
-            && children[utcConstants->num_individuals - duplicates.size() + i].startParams.coeff.tau[j] <= (duplicates[i].startParams.coeff.tau[j]  + mutationSensingTolerance))){
-                foundMutation = true;
-            }
-        }
-        //checks all the coasts for a mutation
-        for (int j = 0; j < COAST_ARRAY_SIZE; j++){
-            //if there is a change of at least 1e-10 between the child and its parent, then there was a mutation
-            if (!(children[utcConstants->num_individuals - duplicates.size() + i].startParams.coeff.coast[j] >= (duplicates[i].startParams.coeff.coast[j]  - mutationSensingTolerance)
-            && children[utcConstants->num_individuals - duplicates.size() + i].startParams.coeff.coast[j] <= (duplicates[i].startParams.coeff.coast[j]  + mutationSensingTolerance))){
-                foundMutation = true;
-            }
-        }
-        //checks alpha and if there is a change of at least 1e-10 between the child and its parent, then there was a mutation
-        if (!(children[utcConstants->num_individuals - duplicates.size() + i].startParams.alpha >= (duplicates[i].startParams.alpha  - mutationSensingTolerance)
-        && children[utcConstants->num_individuals - duplicates.size() + i].startParams.alpha <= (duplicates[i].startParams.alpha  + mutationSensingTolerance))){
-            foundMutation = true;
-        }
-        //checks beta and if there is a change of at least 1e-10 between the child and its parent, then there was a mutation
-        if (!(children[utcConstants->num_individuals - duplicates.size() + i].startParams.beta >= (duplicates[i].startParams.beta  - mutationSensingTolerance)
-        && children[utcConstants->num_individuals - duplicates.size() + i].startParams.beta <= (duplicates[i].startParams.beta  + mutationSensingTolerance))){
-            foundMutation = true;
-        }
-        //checks zeta and if there is a change of at least 1e-10 between the child and its parent, then there was a mutation
-        if (!(children[utcConstants->num_individuals - duplicates.size() + i].startParams.zeta >= (duplicates[i].startParams.zeta  - mutationSensingTolerance)
-        && children[utcConstants->num_individuals - duplicates.size() + i].startParams.zeta <= (duplicates[i].startParams.zeta  + mutationSensingTolerance))){
-            foundMutation = true;
-        }
-        //checks tripTime and if there is a change of at least 1e-10 between the child and its parent, then there was a mutation
-        if (!(children[utcConstants->num_individuals - duplicates.size() + i].startParams.tripTime >= (duplicates[i].startParams.tripTime  - mutationSensingTolerance)
-        && children[utcConstants->num_individuals - duplicates.size() + i].startParams.tripTime <= (duplicates[i].startParams.tripTime  + mutationSensingTolerance))){
-            foundMutation = true;
-        }
-
-        //if none of the parameters on this child have been mutated, then it could not have found mutations for every individual
-        if (!foundMutation){
-            foundMutationsForAll = false;
-        }
-    }
-
-    //the function worked as we wanted it to if all the duplicates' children were mutated
-    return foundMutationsForAll;
-}
-
-//to ensure they work well enough to use to use in properMutationResults
-//turns out that the compare functions will not work very well (even after I editted them so they could handle nans)
-//it does not do well with small changes in decimals and pretty much all the mutated numbers are decimals that will have small changes
-//so they will not be used in properMutationResults because 
-//because these compare functions do not appear to be used anywhere in our code and will not be used here, they are not fully tested here 
-bool testingCompareFunctions(bool printThings){
-    cout << "Testing compare functions from rkParameters and elements to see if they are suitable for using to verify mutations are occuring" << endl;
-    bool working = true; //identifies whether or not the comparison functions will work for what I want them to do
-    //sets up a bunch of doubles to fill two sets of rkParameters and elements
-    double tripTime1 = 40000000.0, tripTime2 = 35000000.0, r1 = 0.5, r2 = 0.75, theta1 = 1.5, theta2 = 0.75, z1 = 0.1, z2 = 0.3;
-    double vr1 = 0, vr2 = 0.001, vtheta1 = 0, vtheta2 = 0.001, vz1 = 0, vz2 = 0.001;
-    double gamma1[GAMMA_ARRAY_SIZE], gamma2[GAMMA_ARRAY_SIZE], tau1[TAU_ARRAY_SIZE], tau2[TAU_ARRAY_SIZE];
-    double coast1[COAST_ARRAY_SIZE], coast2[COAST_ARRAY_SIZE];
-    double alpha1 = 0, alpha2 = 3.12, beta1 = 0.1, beta2 = 1.56, zeta1 = -1.5, zeta2 = 1.5;
-    for (int i = 0; i < GAMMA_ARRAY_SIZE; i++){
-        gamma1[i] = -3.12;
-        gamma2[i] = 0;
-    }
-    for (int i = 0; i < TAU_ARRAY_SIZE; i++){
-        tau1[i] = -1.5;
-        tau2[i] = 1.5;
-    }
-    for (int i = 0; i < COAST_ARRAY_SIZE; i++){
-        coast1[i] = 3.12;
-        coast2[i] = 0;
-    } 
-
-    //sets up two different sets of elements
-    elements<double> elems1(r1, theta1, z1, vr1, vtheta1, vz1);
-    elements<double> elems2(r2, theta2, z2, vr2, vtheta2, vz2);
-    double compE1vE2 = elems1.compare(elems2); 
-    double compE2vE2 = elems2.compare(elems2);
-    if (printThings){
-        //prints the result of the compare function if printThings is true
-        cout << "\tResult for e1 v e2 = " << compE1vE2 << endl;
-        cout << "\tResult for e2 v e2 = " << compE2vE2 << endl;
-    }
-
-    //prints whether or not it did what we wanted
-    if ((elems1.compare(elems2))){
-        cout << "\tPASSED: Correctly identified two different sets of elements did not match" << endl;
-    }
-    else{
-        cout << "\tFAILED: Said two very different sets of elements matched" << endl;
-        working = false;
-    }
-    //compares an element to itself
-    if ((elems2.compare(elems2))){
-        cout << "\tFAILED: Said an element did not match itself" << endl;
-        working = false;
-    }
-    else{
-        cout << "\tPASSED: Correctly identified an element matched itself" << endl;
-    }
-
-    //makes two very different sets of rkParameters
-    rkParameters<double> rkP1(tripTime1, r1, theta1, z1, vr1, vtheta1, vz1, gamma1, tau1, coast1, alpha1, beta1, zeta1);
-    rkParameters<double> rkP2(tripTime2, r2, theta2, z2, vr2, vtheta2, vz2, gamma2, tau2, coast2, alpha2, beta2, zeta2);
-
-    //compares these two sets of rkParameters
-    if ((rkP1.compare(rkP2))){
-        cout << "\tPASSED: Correctly identified two different sets of rkParameters did not match" << endl;
-    }
-    else{
-        cout << "\tFAILED: Said two very different sets of rkParameters matched" << endl;
-        working = false;
-    }
-
-    //sets a part elems2 to 0 which is 0 in elems1 to try and cause a nans error
-    elems2.vr = 0;
-    //prints the results of these comparisons if printThings is true
-    if (printThings){
-        compE1vE2 = elems1.compare(elems2); 
-        compE2vE2 = elems2.compare(elems2);
-        cout << "\tResult for e1 v e2 = " << compE1vE2 << endl;
-        cout << "\tResult for e2 v e2 = " << compE2vE2 << endl;  
-    } 
-    //compares elems1 to elems2 and sees if it can identify that they do not match
-    if ((elems1.compare(elems2))){
-        cout << "\tPASSED: Correctly identified two different sets of elements did not match when there was a possibility of a nan error" << endl;
-    }
-    else{
-        cout << "\tFAILED: Said two very different sets of elements matched, likely because it does not work with nans" << endl;
-        working = false;
-    }
-    //compares elems2 to itself and tries to verify it can tell that it matches itself
-    if ((elems2.compare(elems2))){
-        cout << "\tFAILED: Said an element did not match itself, likely because it does not work with nans" << endl;
-        working = false;
-    }
-    else{
-        cout << "\tPASSED: Correctly identified an element matched itself when there was a possibility of a nan error" << endl;
-    }
-
-    //makes a copy of rkP1 and edits one element of it to see if compare rkParameters can pick up on small changes
-    rkParameters<double> rkP3(rkP1);
-    rkP3.alpha = 1.0e-6;
-    //prints whether or not it was able to identify a difference between these sets of parameters
-    if ((rkP1.compare(rkP3))){
-        cout << "\tPASSED: Correctly identified two slightly different sets of rkParameters did not match" << endl;
-    }
-    else{
-        cout << "\tFAILED: Said two slighly different sets of rkParameters matched because it cannot sense changes small effectively" << endl;
-        working = false;
-    }
-
-    //if the tests passed, this would return TRUE
-    return working;
-}
-
 bool testingCopyOfNewGen(bool printThings, std::mt19937_64 & rng, cudaConstants* utcConstants){
     //originally assumes that all the functions are working the way we expect them to
     bool allWorking = true;
     //starts the number of survivors and individuals at 20 so we can use all the duplicates to make children
     utcConstants->num_individuals = 20;
-    utcConstants->survivor_count = 20;
+    utcConstants->survivor_count = 10;
     //ensures anneal_initial is set as well as the default and duplicate mutation chances
     utcConstants->anneal_initial = 0.01;
     utcConstants->default_mutation_chance = 0.0;
-    utcConstants->duplicate_mutation_chance = 1.0;
 
     //holds the potential parents
     std::vector<Adult> oldAdults;
@@ -1466,28 +1036,12 @@ bool testingCopyOfNewGen(bool printThings, std::mt19937_64 & rng, cudaConstants*
     //the two verification functions (cfcAnswersMatchExpectations and properMutations need an array of Children as their inputs)
     convertBackToChildren(newAdults, newChildren, utcConstants);
 
-    //Holds the parents and duplicates -> these should be the same as the ones with the same name in UTCopyOfNewGeneration
-    std::vector<Adult> parents; 
-    std::vector<Adult> duplicates;
-    parents.clear();
-    duplicates.clear();
-
-    //separates oldAdults into parents (full of unique individuals) and duplicates (anything whose posDiff and speedDiff are about the same as an Adult in parents)
-    //This must be done again in this function because the checks require the Adults from which the children were generated
-    separateDuplicates(oldAdults, parents, duplicates, generation, utcConstants);
-
     //if the children from crossover were not correctly generted, it makes the values that will be returned false 
-    if (!cfcAnswersMatchExpectations(endSpot, endSpotHere, newChildren, utcConstants, parents, printThings)){
-        allWorking = false;
-    }
-    
-    //if the children from mutation were not correctly generated, it makes the values that will be returned false
-    //if printThings is true, it prints the statuses of all the parameteres in rkParameters for each Adult
-    if (!properMutationResults(duplicates, newChildren, utcConstants, printThings)){
+    if (!cfcAnswersMatchExpectations(endSpot, endSpotHere, newChildren, utcConstants, oldAdults, printThings)){
         allWorking = false;
     }
 
-    //if both tests worked as expected, returns TRUE
+    //if the test worked as expected, returns TRUE
     return allWorking;
 }
 
@@ -1508,32 +1062,28 @@ void convertBackToChildren(std::vector<Adult>& newAdult, Child* newChildren, con
 //made it return an int representing where the children from the unique individuals ended and the duplicates started
 int UTCopyOfNewGeneration(std::vector<Adult> & oldAdults, std::vector<Adult> & newAdults, const double & annealing, const int & generation, std::mt19937_64 & rng, const cudaConstants* utcConstants){
     //Vector that will hold the adults who are potential parents
-    //The criteria for being a parent is being in the top survivor_count number of adults in the oldAdult pool and not being a duplicate (distance > 0)
-    //      Duplicate adults will generate children in a separate fashion
+    //The criteria for being a parent is being in the top survivor_count number of adults in the oldAdult pool
     std::vector<Adult> parents; 
 
-    //Vector for duplicates, based on the same criteria as above
-    std::vector<Adult> duplicates;
-
-    //ensures both parents and duplicates are empty (as newly initialized vectors should be) before filling them
     parents.clear();
-    duplicates.clear();
 
-    //separates oldAdults into parents (full of unique individuals) and duplicates (anything whose posDiff and speedDiff are about the same as an Adult in parents)
-    separateDuplicates(oldAdults, parents, duplicates, generation, utcConstants);
+    //separates oldAdults into parents (full of best N/4 individuals) 
+    fillParents(oldAdults, parents, generation, utcConstants);
 
+    //Import number of new individuals the GPU needs to fill its threads
     //Create a newChildren function to fill in with children generated from oldAdults
     Child* newChildren = new Child[utcConstants->num_individuals]; 
 
-    //uses parents and duplicates to make children for the next generation
-    makeChildren(parents, duplicates, newChildren, annealing, generation, rng, utcConstants);
-
+    //uses parents to make children for the next generation
+    makeChildren(parents, newChildren, annealing, generation, rng, utcConstants);
+    
+    //Now that the children have been simulated, convert the children into adults
     //First, it will calculate the right pos and speed diffs for the children
     //This will also put the converted children into the newAdults vector
-    convertToAdults(newAdults, newChildren, utcConstants);  
+    convertToAdults(newAdults, newChildren, utcConstants); 
 
-    //returns the number of children that should have been generated using crossover
-    return (utcConstants->num_individuals - duplicates.size());
+    //Free the pointer's memory
+    delete[] newChildren; 
 }
 
 //unit testing creating an entire generation of individuals

@@ -82,16 +82,6 @@ double getParamStuff(const int & correspondingOffset, const Child& aChild);
 // Output: num_individuals is 20 and allAdults is filled with the 20 individuals that were created in this function
 void twentyAdultsPosAndSpeedDiffMade(bool printThings, std::vector<Adult>& allAdults, cudaConstants* utcConstants);
 
-// Checks if clones are being separated from original/unique values properly
-// Input: printThings - TRUE-> displays information on the values being held in duplicates
-//                      FALSE-> no cout statements are printed unless there is an issue with the code
-//        utcConstansts - used to access and change survivor_count, num_individuals, and to pass into the genetic algorithms
-// Output: The parents and duplictaes vectors are compared to the expected versions of these vectors 
-//         (these vectors were determined by looking at the order things ended up in after rankDistanceSort)
-//         Returns TRUE if the values match their expected order
-//         FALSE if not
-bool verifyProperCloneSeparation(bool printThings, cudaConstants* utcConstants);
-
 // Verifies that generateChildrenFromCrossover works as expected by using different parents
 //      and different proportions of these parents to generate children 
 //      these children have their unmutated tripTimes compared to their potential parents' to see if they match expectations
@@ -126,39 +116,6 @@ bool verifyChildrenFromCrossover(std::mt19937_64& rng, bool printThings, cudaCon
 //         FALSE - if any of the children do not match their expected values or if any of the elements of the array that are
 //                 supposed to remain constant change (if children are overwritten when they shouldn't be)
 bool cfcAnswersMatchExpectations(const Child & endSpot, const int & numChildren, const Child* childrenGenerated, const cudaConstants* utcConstants, std::vector<Adult>& parents, bool printThings);
-
-// Ensures generateChildrenFromMutation is working as expected
-// NOTE: while this function does pass make a set of children using this method when the mutation chance is 0 (both for the default and duplicates),
-//           it does NOT actually ensure that none of the parameters were mutated, just that not all of them were
-// Input: rng - used to create the mask
-//        printThings - determines if extra cout statements (including the status of all the parameters in duplicates and their children)
-//                      should be printed or not
-//        utcConstants - allows us to access and change anneal, mutation chances, survivor_count, etc
-//                       also needed for a lot of the genetic algorithms
-// Output: TRUE - all the tests passed successfully and returned the results we expected
-//         FALSE - at least one of the tests returned an unexpected value
-bool verifyChildrenFromMutation(std::mt19937_64& rng, bool printThings, cudaConstants* utcConstants);
-
-// Used to check the results from verifyChildrenFromMutation
-// Input: duplicates - all the duplicates that have produced children
-//        children - an array of children, where the last children were generated from the duplicates using generateChildrenFromMutation
-//        utcConstants - allows us to access num_individuals and those sorts of things
-//        printThings - TRUE -> the elements of startParams of the duplicate and its child that may be mutated are printed
-//                      FALSE -> no visual output from this function, you rely more heavily on it being coded correctly
-// Output: TRUE - every child has been mutated at least somewhat from the duplicate is was created from
-//         FALSE - at least one Child is a duplicate of the duplicate it was created from
-bool properMutationResults(std::vector<Adult>& duplicates, Child* children, const cudaConstants* utcConstants, bool printThings);
-
-// Made to ensure they work well enough to use to use in properMutationResults
-// Turns out that the compare functions will not work very well (even after I editted them so they could handle nans)
-//      it does not do well with small changes in decimals and pretty much all the mutated numbers are decimals that may have small changes
-//      so they will not be used in properMutationResults  
-// Because these compare functions do not appear to be used anywhere in our code and will not be used here, they are not fully tested here 
-// Input: printThings: TRUE - prints a the actual values for compare in a couple places
-//                     FALSE - only prints whether or not it worked as expected in a given scenario
-// Output: FALSE - these will not work well in properMutationResults
-//         TRUE - these would work well in properMutationResults 
-bool testingCompareFunctions(bool printThings);
 
 // Uses UTCopyOfNewGen to generate a vector of newAdults 
 // These Adults are then converted back into children so that the functions used to verify that mutation and crossover were working previously can be used again

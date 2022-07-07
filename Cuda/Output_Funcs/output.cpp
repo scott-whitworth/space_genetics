@@ -125,8 +125,8 @@ void trajectoryPrint( double x[], int generation, const cudaConstants* cConstant
   double timeInitial=0; 
   double timeFinal=cConstants->orbitalPeriod; // Orbital period of asteroid(s)
   double deltaT; // time step
-  int numSteps = 5000; // initial guess for the number of time steps, guess for the memory allocated 
-  deltaT = (timeFinal-timeInitial) / cConstants->max_numsteps; // initial guess for time step, small is preferable
+  int numSteps = cConstants->max_numsteps; // initial guess for the number of time steps, guess for the memory allocated 
+  deltaT = (timeFinal-timeInitial) / numSteps; // initial guess for time step, small is preferable
 
   // setup of thrust angle calculations based off of optimized coefficients
   coefficients<double> coeff;

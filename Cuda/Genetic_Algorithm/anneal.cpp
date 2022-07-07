@@ -42,7 +42,7 @@ void changeAnneal (const std::vector<Adult>& oldAdults, const cudaConstants* cCo
             currentAnneal = cConstants->anneal_initial*.04; 
         } 
         else if(curProgress >= 1e-4 && curProgress < 1e-3){ 
-            currentAnneal = cConstants->anneal_initial*.008; 
+            currentAnneal = cConstants->anneal_initial*.004; 
         }
         else{ 
             currentAnneal = (cConstants->anneal_initial * pow((1 - pow((curProgress), 0.07)) ,5)); 
@@ -53,7 +53,7 @@ void changeAnneal (const std::vector<Adult>& oldAdults, const cudaConstants* cCo
 
         //Check to see if the new progress is worse than previous generations
         //  This means that a new best rank-distance adult has been found with a lower progress, increasing the anneal to a figure that is too large
-        if(previousProgress > curProgress){
+        if(previousProgress < curProgress){
             //reset the anneal so it does not jump back up
             currentAnneal = previousAnneal;  
         }

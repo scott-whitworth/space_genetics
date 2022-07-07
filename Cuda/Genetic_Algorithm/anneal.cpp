@@ -53,7 +53,7 @@ void changeAnneal (const std::vector<Adult>& oldAdults, const cudaConstants* cCo
             currentAnneal = cConstants->anneal_initial*.04; 
         } 
         else if(curProgress >= 1e-4 && curProgress < 1e-3){ 
-            currentAnneal = cConstants->anneal_initial*.008; 
+            currentAnneal = cConstants->anneal_initial*.004; 
         }
         else{ 
             currentAnneal = (cConstants->anneal_initial * pow((1 - pow((curProgress), 0.07)) ,5)); 
@@ -62,8 +62,6 @@ void changeAnneal (const std::vector<Adult>& oldAdults, const cudaConstants* cCo
             } 
         }
 
-        
-        
         //Modify the current anneal by a sinusoidal multiplier
         //  This will allow some variability to occur within the anneal
         //  So, if the simulation is stuck, this will hopefully change things enough to move the simulation along

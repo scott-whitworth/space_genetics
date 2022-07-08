@@ -466,7 +466,7 @@ double optimize(const cudaConstants* cConstants) {
     int oldestBirthday;
 
     //this is to make sure the anneal does not jump backwards if the progress switches
-    double previousProgress;
+    double previousProgress = cConstants->speed_threshold;
 
     //Creates the individuals needed for the 0th generation
     //Need to make children, then callRK, then make into adults (not currently doing that)
@@ -549,7 +549,7 @@ double optimize(const cudaConstants* cConstants) {
     // for the annealing argument, set to -1 (since the anneal is only relevant to the next generation and so means nothing for the last one)
     // for the numFront argument, set to -1 (just because)
     if (cConstants->record_mode == true) {
-        recordGenerationPerformance(cConstants, oldAdults, generation, currentAnneal, cConstants->num_individuals, anneal_min, avgPositionDiff, avgSpeedDiff, duplicateNum, minDistance, avgDistance, maxDistance, avgAge, oldestBirthday, avgBirthday, generation+oldestBirthday);
+        recordGenerationPerformance(cConstants, oldAdults, generation, currentAnneal, cConstants->num_individuals, anneal_min, avgPositionDiff, avgSpeedDiff, duplicateNum, minDistance, avgDistance, maxDistance, avgAge, generation-oldestBirthday, avgBirthday, oldestBirthday);
     }
     // Only call finalRecord if the results actually converged on a solution
     // also display last generation onto terminal

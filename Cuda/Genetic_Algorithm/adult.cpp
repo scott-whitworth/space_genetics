@@ -64,6 +64,7 @@ bool dominationCheck(Adult& personA, Adult& personB, const cudaConstants* cConst
     bool AisBetter = false;
 
     //TODO:Might want to consider deleting most of this function
+    //      Update: will redo this when implimenting factorized objectives
 
     //pos and speed variables used for comparing adutls to eachother
     double posTolerance = cConstants->posDominationTolerance;
@@ -153,31 +154,6 @@ bool rankSort(const Adult& personA, const Adult& personB){
     }
 }
 
-//TODO: this is outdated now, do we delete?
-//Compare two adults based on their distance, sorting the lowest distances first
-//  This function will be used to detect duplicates within mutateAdults in ga_crossover
-//input:  PersonA - First adult to be compared
-//        PersonB - Second adult to be compared
-//output: True if personA's distance is less than personB's or if personB's status isn't valid
-//        Fale if personB's distance is less than personA's or if personA's status isn't valid
-//              Note: personA's status is checked before personB's, so if neither person is valid, it will return false
-//  NOTE: This function assumes that the distance for both adults have already been calculated
-bool lowerDistanceSort(const Adult& personA, const Adult& personB) {
-    if(personA.errorStatus != VALID && personA.errorStatus != DUPLICATE){ //if personA has nan values or other errors they are set as worse than other adults (even other adults with errors)
-        return false;
-    }
-    else if (personB.errorStatus != VALID && personB.errorStatus != DUPLICATE){ //if personA is not a nan, but personB is, personA is better
-        return true;
-    }
-    if (personA.distance < personB.distance) {
-        return true;
-    }
-    else {
-        return false;
-    }
-}
-
-
 //Compare two individuals by their rank and distance
 //input: two individuals
 //output: if person A's rank is lower than person B's rank, return true
@@ -202,25 +178,17 @@ bool rankDistanceSort(const Adult& personA, const Adult& personB) {
 
 }
 
-bool duplicateCheck(const Adult& personA, const Adult& personB, const cudaConstants* cConstants, const double& currentAnneal){
+bool duplicateCheck(const Adult& personA, const Adult& personB, const cudaConstants* cConstants){
 
     //true if A posDiff "equals" B posDiff
     bool APosEqualsB = false;
     //true if A speedDiff "equals" B speedDiff
     bool ASpeedEqualsB = false;
 
-    //TODO: Remove reliance on anneal, just use posDominationTolerance / speed
-
     //tolerances used to determine the range of values considered equal
     //these are both currently set to 1e-14 AU, I don't think these need to be modified 
-    double posTolerance = cConstants->pos_threshold*currentAnneal;
-    double speedTolerance = cConstants->speed_threshold*currentAnneal;
-    if(posTolerance < cConstants->posDominationTolerance){
-        posTolerance = cConstants->posDominationTolerance;
-    }
-    if(speedTolerance < cConstants->speedDominationTolerance){
-        speedTolerance = cConstants->speedDominationTolerance;
-    }
+    double posTolerance = cConstants->posDominationTolerance;
+    double speedTolerance = cConstants->speedDominationTolerance;
 
     //True is A posdiff is equal to B posDiff +- posTolerance
     if ((personA.posDiff < personB.posDiff + posTolerance) && (personA.posDiff > personB.posDiff - posTolerance)){
@@ -270,7 +238,7 @@ void findDuplicates (std::vector<Adult>& newAdults, std::vector<Adult>& oldAdult
             //only true if it is both a duplicate and has not been previous marked as a duplicate
             // [j].duplicate check is for the second time an Adult is flagged as a duplicate
             //CHecks for a valid error status, so duplicates can be reset to valid without worry of overriding other error statuses
-            if(duplicateCheck(tempAllAdults[i], tempAllAdults[j], cConstants, currentAnneal) && tempAllAdults[j].errorStatus == VALID) {
+            if(duplicateCheck(tempAllAdults[i], tempAllAdults[j], cConstants) && tempAllAdults[j].errorStatus == VALID) {
                 tempAllAdults[j].errorStatus = DUPLICATE;
             }
         }

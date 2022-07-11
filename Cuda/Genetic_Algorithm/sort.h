@@ -5,6 +5,12 @@
 #include "..\Genetic_Algorithm\adult.h" //allows us to use adults
 #include <vector>   // allows us to use vectors instead of just arrays
 
+///////////////////////////////////////////////////////////////
+// Sort Functions                                            //
+///////////////////////////////////////////////////////////////
+
+// --- This file includes functions that handle assigning rank and distance to adults so they can be sorted ---
+
 //----------------------------------------------------------------------------------------------------------------------------
 //Used to give rankings for sorting based on non-dominated sorting method. Used for rendezvous mission
 //Assigns suitability rank to all adults.

@@ -240,10 +240,6 @@ void cudaConstants::FileRead(std::string fileName) {
                 else if (variableName == "alpha_mutate_scale") {
                     this->alpha_mutate_scale = std::stod(variableValue);
                 }
-
-                else if (variableName == "anneal_factor") {
-                    this->anneal_factor = std::stod(variableValue);
-                }
                 else if (variableName == "anneal_initial") {
                     this->anneal_initial = std::stod(variableValue);
                 }
@@ -252,9 +248,6 @@ void cudaConstants::FileRead(std::string fileName) {
                 }
                 else if (variableName == "change_check") {
                     this->change_check = std::stoi(variableValue);
-                }
-                else if (variableName == "max_age"){
-                    this->max_age = std::stoi(variableValue);
                 }
 
 
@@ -361,7 +354,7 @@ std::ostream& operator<<(std::ostream& os, const cudaConstants& object) {
     os << "==========CONFIG=DATA===============================================================================\n";
     os << "Genetic Algorithm Related Values:\n";
     os << "\ttime_seed: "       << object.time_seed       << "\trandom_start: "   << object.random_start   << "\t\tnon_r_start_address: " << object.initial_start_file_address << "\n";
-    os << "\tanneal_factor: "   << object.anneal_factor   << "\tanneal_initial: " << object.anneal_initial <<   "\tchange_check: "        << object.change_check << "\n";
+    os << "\tanneal_initial: " << object.anneal_initial <<   "\tchange_check: "        << object.change_check << "\n";
     os << "\tnum_individuals: " << object.num_individuals << "\tthread_block_size: "     << object.thread_block_size << "\n";
     os << "\tsurvivor_count: "  << object.survivor_count  << "\tsortingRatio: "    << object.sortingRatio;
     os << "\tbest_count: "      << object.best_count      << "\t\tmax_generations: "<< object.max_generations<< "\trun_count: " << object.run_count << "\n\n";

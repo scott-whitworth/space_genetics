@@ -445,11 +445,6 @@ double optimize(const cudaConstants* cConstants) {
 
     // number of current generation
     int generation = 0;    
-              
-    // distinguishable rate used in changeAnneal()
-    //  - used to help decrease anneal when the oldest adult gets over 500 generations
-    //  - Gets smaller when no change is detected
-    double dRate = 1.0;
 
     // Flag for finishing the genetic process
     // set by checkTolerance()
@@ -464,9 +459,6 @@ double optimize(const cudaConstants* cConstants) {
     int duplicateNum = 0;
     double maxDistance, minDistance, avgDistance, avgAge, avgBirthday;
     int oldestBirthday;
-
-    //this is to make sure the anneal does not jump backwards if the progress switches
-    double previousProgress = cConstants->speed_threshold;
 
     //Creates the individuals needed for the 0th generation
     //Need to make children, then callRK, then make into adults (not currently doing that)
@@ -524,7 +516,7 @@ double optimize(const cudaConstants* cConstants) {
         calculateGenerationValues(allAdults, generation, avgPositionDiff, avgSpeedDiff, duplicateNum, minDistance, avgDistance, maxDistance, avgAge, avgBirthday, oldestBirthday);
 
         //Assumes oldAdults is in rankDistance order
-        changeAnneal (oldAdults, cConstants, currentAnneal, oldestBirthday, dRate, generation, previousProgress);
+        changeAnneal (oldAdults, cConstants, currentAnneal, oldestBirthday, generation);
 
 
         //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE RECORD-_-_-_-_-_-_-_-_-_\n\n";

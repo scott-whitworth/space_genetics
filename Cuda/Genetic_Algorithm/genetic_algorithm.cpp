@@ -223,7 +223,21 @@ void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& 
     findDuplicates(newAdults, oldAdults, cConstants, currentAnneal);
 
     //get rid of any invalid or old adults, as well as adults with bad posDiffs or speedDiffs that are too small
-    eliminateBadAdults(allAdults, newAdults, oldAdults, numNans, duplicateNum, cConstants, generation);
+    //check the errorStatus of all the newAdults and add them to allAdults
+    for (int i = 0; i < newAdults.size(); i++){ 
+        //copies all the elements of newAdults into allAdults
+        addToAllAdults(newAdults, allAdults, i, numNans, duplicateNum);
+    }
+    //check the errorStatus of all the oldAdults and add them to allAdults
+    for (int i = 0; i < oldAdults.size(); i++){ //copies over all the elements of oldAdults into allAdults
+        addToAllAdults(oldAdults, allAdults, i, numNans, duplicateNum);
+    }
+
+    if(allAdults.size() < cConstants->num_individuals){
+        std::cout << "The size of allAdults is smaller than N (num_individuals)" << std::endl;
+    }else if(allAdults.size() < cConstants->survivor_count){
+        std::cout << "ERROR: The size of allAdults is smaller than survivor count!" << std::endl;
+    }
 
     
 
@@ -259,63 +273,18 @@ void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& 
     //countStatuses(oldAdults, generation);
 }
 
-//TODO: Do we need eliminateBadAdults at all? Consider for removal
-
-//eliminates unwanted adults from allAdults
-void eliminateBadAdults(std::vector<Adult>& allAdults, std::vector<Adult>& newAdults, std::vector<Adult>& oldAdults, int& numNans, int& duplicateNum, const cudaConstants* cConstants, const int & generation){
-    double posTolerance = cConstants->pos_threshold/100;
-    double speedTolerance = cConstants->speed_threshold/100;
-    int ageTolerance = cConstants->max_age;
+void addToAllAdults(std::vector<Adult> & adultPool, std::vector<Adult> & allAdults, const int & index, int& numNans, int& duplicateNum){
     //if we ever want to eliminate duplicates again, this is the place to do it
-
-    //TODO: Classic copy/pasting. This needs to be functionalized. 
-    //      I know why we have two for loops, and by this design, we need to keep them.
-    //      This issue is that modifying one variable in one loop while debugging leaves open the probablility of *not* changing the other
-
-    //TODO: Also some of the following comments don't seem to track (i.e. talking about checking NaNs when there is no NaNs being checked)
-
-    for (int i = 0; i < newAdults.size(); i++){ //copies all the elements of newAdults into allAdults
-        if(newAdults[i].errorStatus != VALID && newAdults[i].errorStatus != DUPLICATE) { 
-            //tallies the number of nans in allAdults by checking if the adult being passed into newAdult is a Nan or not
-            numNans++;
-            //TODO: This is confusing. This will be true for an individual that is not valid and not duplicate. It may not be a NaN, it could be something else
-        }else if( (newAdults[i].posDiff < posTolerance && newAdults[i].speedDiff > speedTolerance) || //Good posDiff, Bad speedDiff
-                  (newAdults[i].posDiff > posTolerance && newAdults[i].speedDiff < speedTolerance) ) { //Good speedDiff, bas posDiff
-            //check if the adult is too good in one aspect
-
-            //do nothing and don't add them to all adults
-            //TODO: Why? I don't understand in this context why you would not want to add them
-            //      There is an issue that posTolerance and speedTolerance are both constants,
-            //               this means this will only trigger nearing the end of a run (or nearing whatever the tollerance is set)
-            //               I am pretty sure the logic behind this would want these tollerances to be dynamic based on the population
-            //      Nearing the end of the sumulation, won't this set up a gate where the only individul
-        }else if(newAdults[i].errorStatus == DUPLICATE){
-            duplicateNum++;
-            allAdults.push_back(newAdults[i]);//remove this if we want to remove duplicates
-        }
-        else {
-            allAdults.push_back(newAdults[i]);
-        }
+    
+    if(adultPool[index].errorStatus != VALID && adultPool[index].errorStatus != DUPLICATE) { 
+        //tallies the number of nans in allAdults by checking if the adult being passed into newAdult is a Nan or not
+        numNans++;
+        //TODO: This is confusing. This will be true for an individual that is not valid and not duplicate. It may not be a NaN, it could be something else
+    }else if(adultPool[index].errorStatus == DUPLICATE){
+        duplicateNum++;
+        allAdults.push_back(adultPool[index]);//remove this if we want to remove duplicates
     }
-    for (int i = 0; i < oldAdults.size(); i++){ //copies over all the elements of oldAdults into allAdults
-        if(oldAdults[i].errorStatus != VALID && oldAdults[i].errorStatus != DUPLICATE){//tallies the number of nans in allAdults by checking if the adult being passed into newAdult is a Nan or not
-            numNans++;
-            //If a cout error is put here, make sure its not generation 0
-        }else if(generation - oldAdults[i].birthday > ageTolerance){
-            //make sure there are no adults that are too old (older than max_age generations)
-            //do nothing and don't add them 
-        }else if(oldAdults[i].errorStatus == DUPLICATE){
-            duplicateNum++;
-            allAdults.push_back(oldAdults[i]);//remove this if we want to remove duplicates
-        }
-        else {
-            allAdults.push_back(oldAdults[i]);
-        }
-    }
-    //just for debugging to make sure we are not getting rid of too many adults
-    if(allAdults.size() < cConstants->num_individuals){
-        std::cout << "The size of allAdults is smaller than N (num_individuals)" << std::endl;
-    }else if(allAdults.size() < cConstants->survivor_count){
-        std::cout << "ERROR: The size of allAdults is smaller than survivor count!" << std::endl;
+    else{
+        allAdults.push_back(adultPool[index]);
     }
 }

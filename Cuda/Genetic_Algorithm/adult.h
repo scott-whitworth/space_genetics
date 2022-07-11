@@ -7,9 +7,15 @@
 #include <vector>
 #include <string> //used for the unitTestingRankDistanceStatusPrint method so we can get rank, distance, and status easily during unit testing
 
+///////////////////////////////////////////////////////////////
+// Adult Class & Functions                                   //
+///////////////////////////////////////////////////////////////
+
+// --- This file includes the definitions for the Adult class and associated functions ---
+
 //NOTE FOR FUTURE UNDERSTANDING: the term individuals within comments is used as a general term for both adults and children.
 //                               Individual most often refers to adults.
-//                               A good rule of thumb: Adults will never be simulated, Children will never be sorted
+//                               A good rule of thumb: Adults should never be simulated, Children should never be sorted
 
 // Adult is a structure member of the genetic algorithm's population and has set of parameters and the resulting position and velocity
 // Adult is inheriting startParams, errorStatus, posDiff, speedDiff, and finalPos from Child
@@ -98,16 +104,6 @@ bool dominationCheck(Adult& personA, Adult& personB, const cudaConstants* cConst
 //output: if person A's rank is lower than person B's rank, return true
 bool rankSort(const Adult& personA, const Adult& personB);
 
-//Compare two adults based on their distance, sorting the lowest distance sort
-//  This function will be used to detect duplicates within mutateAdults in ga_crossover
-//input:  PersonA - First adult to be compared
-//        PersonB - Second adult to be compared
-//output: True if personA's distance is less than personB's or if personB's status isn't valid
-//        Fale if personB's distance is less than personA's or if personA's status isn't valid
-//              Note: personA's status is checked before personB's, so if neither person is valid, it will return false
-//  NOTE: This function assumes that the distance for both adults have already been calculated
-bool lowerDistanceSort(const Adult& personA, const Adult& personB);
-
 //Compare two individuals by their rank and distance
 //input: two individuals
 //output: if person A's rank is lower than person B's rank, return true
@@ -118,9 +114,9 @@ bool lowerDistanceSort(const Adult& personA, const Adult& personB);
 bool rankDistanceSort(const Adult& personA, const Adult& personB);
 
 //compares two adults to see if they have the same posDiff and speedDiff
-//Input: Two adults and cConstants for the tolerances, currentAnneal for the tolerance adjustment
+//Input: Two adults and cConstants for the tolerances
 //Output: true if they have the same posDiff and speedDiff, false if they don't
-bool duplicateCheck(const Adult& personA, const Adult& personB, const cudaConstants* cConstants, const double& currentAnneal);
+bool duplicateCheck(const Adult& personA, const Adult& personB, const cudaConstants* cConstants);
 
 //Will take the given adult vector and find any duplicate adults
 //Input:    adults - Vector of adults that will be searched through

@@ -9,21 +9,27 @@ using std::endl;
 int main(){
     //determines whether or much of the workings of the unit tests will be printed or not
     bool lotsOfCouts = true; 
-    if (compareTwoAdults()){ //if it sucessfully makes it through compareTwoAdults, it prints a confirmation message for the user 
-    // TODO: The above comment, while correct, is not as helpful as something like:
-    //       Check: <parameters of the unit test (I still don't really know exactly what this is testing)>
+
+    // Completes a series of comparisons on different pairs of Adults to ensure that rankSort and rankDistance sort are working as expected
+    //      e.g. rankSort can identify which individual has a higher rank
+    if (compareTwoAdults()){ 
         cout << "PASSED: Differentiated the better of two adults" << endl;
     }
     else{
         cout << "Could not correctly differentiate between two adults in all instances" << endl;
     }
-    if (sortAdultVec(lotsOfCouts)){ //if it successfully makes it through sortAdultVec, it tells the user it was sucessful
-    //TODO: Same thing... what does 'successfully' mean here? We can see 'tell the user' based on the following cout 
+
+    // Completes 6 test where a vector is sorted both by rankSort and rankDistanceSort
+    // The results of these tests are compared to the expected order these vectors should appear in
+    if (sortAdultVec(lotsOfCouts)){
       cout << "PASSED: Sorted a vector of adults as expected" << endl;
     } 
     else{
         cout << "Completed everything in sortAdultVec, but some of the tests FAILED" << endl;
     }
+
+    // Calls a function that initializes a set of cConstants for unit testing and completes tests to verify
+    //      different aspects of the genetic algorithm, ga_crossover, and annealing
     if (runGeneticsUnitTests(lotsOfCouts)){
         cout << "PASSED: All the genetics tests passed" << endl;
     }

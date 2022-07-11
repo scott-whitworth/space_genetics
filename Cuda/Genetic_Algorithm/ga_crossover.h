@@ -11,11 +11,11 @@
 
 //TODO: Many of the headers here need to be updated to reflect new changes
 
-//TODO: It would also be helpful to have an overarching comment in each .h outlining what functions are defined below
-
 ///////////////////////////////////////////////////////////////
 // Crossover Functions                                       //
 ///////////////////////////////////////////////////////////////
+
+// --- This file includes functions that deal with creating crossover masks and generating children based on the masks ---
 
 //Enumeration Documentation
 // PARTNER1 (1) - At this index of the OPTIM_VARS array, accept the gene value from parent 1

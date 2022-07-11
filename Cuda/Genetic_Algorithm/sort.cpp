@@ -114,6 +114,8 @@ void giveRank(std::vector<Adult> & allAdults, const cudaConstants* cConstants) {
 void giveDistance(std::vector<Adult> & allAdults, const cudaConstants* cConstants){
     //int that counts the number of the valid adults
     int validAdults = 0;
+    int underPosThreshold = 0;
+    int underSpeedThreshold = 0;
     //starting rankSort to make sure nans are at the end of the array.
     std::sort(allAdults.begin(), allAdults.end(), rankSort);
 
@@ -133,8 +135,16 @@ void giveDistance(std::vector<Adult> & allAdults, const cudaConstants* cConstant
     
     //Sort by the first objective function, posDiff
     std::sort(allAdults.begin(), allAdults.begin() + validAdults, LowerPosDiff);
+    while(allAdults[underPosThreshold].posDiff < cConstants->pos_threshold && underPosThreshold < allAdults.size()){
+        underPosThreshold++;
+    }
+    //add one to each of the adults distance under threshold
+    for(int i = 0; i < underPosThreshold; i++){
+        allAdults[i].distance += MAX_DISTANCE;
+    }
+
     //Set the boundaries
-    allAdults[0].distance += MAX_DISTANCE; //+=1
+    allAdults[underPosThreshold].distance += MAX_DISTANCE; //+=1
     allAdults[validAdults - 1].distance += MAX_DISTANCE; //+=1
 
 
@@ -142,7 +152,7 @@ void giveDistance(std::vector<Adult> & allAdults, const cudaConstants* cConstant
     //the current distance + the absolute normalized difference in the function values of two adjacent individuals.
     double normalPosDiffLeft;
     double normalPosDiffRight;
-    for(int i = 1; i < validAdults - 1; i++){
+    for(int i = underPosThreshold + 1; i < validAdults - 1; i++){
         //Divide left and right individuals by the worst individual to normalize
         normalPosDiffLeft = allAdults[i+1].posDiff/allAdults[validAdults - 1].posDiff;
         normalPosDiffRight = allAdults[i-1].posDiff/allAdults[validAdults - 1].posDiff;
@@ -152,22 +162,18 @@ void giveDistance(std::vector<Adult> & allAdults, const cudaConstants* cConstant
     //Repeat above process for speedDiff
     if(cConstants->missionType == Rendezvous){//only do this for the rendezvous mission since it has 2 objectives
         std::sort(allAdults.begin(), allAdults.begin() + validAdults, LowerSpeedDiff);
-        //if an individual has a speedDiff in the convergence range, then these individuals will be sorted by their posDiff as well
-        int sortUsingPosDiff = 0;
-        while(allAdults[sortUsingPosDiff].speedDiff < cConstants->speed_threshold && sortUsingPosDiff < allAdults.size()){
-            sortUsingPosDiff++;
+        //if an individual has a speedDiff in the convergence range, then these individuals will have 1 added to their distance
+        while(allAdults[underSpeedThreshold].speedDiff < cConstants->speed_threshold && underSpeedThreshold < allAdults.size()){
+            underSpeedThreshold++;
         }
-
-        //TODO: This needs to probably be setting the individuals who have met the objective to be given MAX_DISTANCE and removed from the neighbor distance calculation
-        
-
-        //Sort all adults who meet the speed threshold by position
-        //Ideally, this will help to prioritize position a little more since position is having more issues meeting the threshold
-        std::sort(allAdults.begin(), allAdults.begin() + sortUsingPosDiff, LowerPosDiff);
+        //add one to each of the adults distance under threshold
+        for(int i = 0; i < underSpeedThreshold; i++){
+            allAdults[i].distance += MAX_DISTANCE;
+        }
 
         //Add the max distance (usually should be 1) to the extreme adults
         //Setting the distance boundaries
-        allAdults[0].distance += MAX_DISTANCE;
+        allAdults[underSpeedThreshold].distance += MAX_DISTANCE;
         allAdults[validAdults - 1].distance += MAX_DISTANCE;
 
     
@@ -175,7 +181,7 @@ void giveDistance(std::vector<Adult> & allAdults, const cudaConstants* cConstant
         //the current distance + the absolute normalized difference in the function values of two adjacent individuals.
         double normalSpeedDiffLeft;
         double normalSpeedDiffRight;
-        for(int i = 1; i < validAdults - 1; i++){
+        for(int i = underSpeedThreshold + 1; i < validAdults - 1; i++){
             //Divide left and right individuals by the worst individual to normalize
             normalSpeedDiffLeft = allAdults[i+1].speedDiff/allAdults[validAdults - 1].speedDiff;
             normalSpeedDiffRight = allAdults[i-1].speedDiff/allAdults[validAdults - 1].speedDiff;

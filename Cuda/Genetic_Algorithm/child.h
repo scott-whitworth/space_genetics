@@ -8,6 +8,12 @@
 //TODO: Big step: think about where in the code we rely on numeric data to determine errors (like checking for NAN)
 //TODO: Is ERROR_STATUS necessary? We have statuses for it, but they aren't used... we only use STATUS as of 6/28/22
 
+///////////////////////////////////////////////////////////////
+// Child Class & Functions                                   //
+///////////////////////////////////////////////////////////////
+
+// --- This file includes the definition for the child class and associated functions ---
+
 // Child is a structure member of the genetic algorithm's population and has set of parameters and the resulting position and velocity
 //once a child is created it will then be copied to an adult with some added parameters
 struct Child {

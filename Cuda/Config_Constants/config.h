@@ -34,7 +34,6 @@ struct cudaConstants {
     int change_check;      // How often it checks for if the best individual has changed, used in the basis of Jeremy's method of anneal value dependent on if there was no change
     double anneal_initial; // initial value for annealing, meant to replace the previously used calculation involving ANNEAL_MIN and ANNEAL_MAX with something more simple
     double anneal_final;   // final value for annealing, anneal cannot be reduced beyond this point
-    double anneal_factor;  // factor by which annealing is multiplied with when there is no change in the best individual over 100 generations
 
     double mutation_amplitude; // The percentage for probability of mutating a gene in a new individual, called iteratively to mutate more genes until the check fails
     double sortingRatio; // A percentage for how much of selectSurvivors() chooses individuals that are bestPosDiff rather than bestSpeedDiff (0.95 = more posDiff, 0.05 = more speedDiff)
@@ -116,9 +115,6 @@ struct cudaConstants {
 
     //Flag for what type of landing you want. Current modes: "soft"=1, "hard"=2
     int missionType;
-
-    //maximum age for an adult used in the genetic algorithim
-    int max_age;
 
     // Default constructor, sets the config file path to be "genetic.config" for geneticFileRead()
     cudaConstants(){}

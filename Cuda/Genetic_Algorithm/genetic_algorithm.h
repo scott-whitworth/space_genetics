@@ -13,6 +13,12 @@
 #include "..\Genetic_Algorithm\ga_crossover.h"
 #include "..\Genetic_Algorithm\sort.h"
 
+///////////////////////////////////////////////////////////////
+// Genetic Algorithim Functions                              //
+///////////////////////////////////////////////////////////////
+
+// --- This file includes functions which handle generation management, such as selecting parents and generation creation ---
+
 // newGeneration will generate a mask and use random adults from oldAdults to generate new children
 //      It will then simulate the newChildren.
 //      Finally, it will convert the new children into adults and insert them into the newAdults vector
@@ -92,16 +98,15 @@ void firstGeneration(Child* initialChildren, std::vector<Adult>& oldAdults, cons
 //         newAdults remains the same (size of N and unsorted)
 void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& newAdults, std::vector<Adult>& oldAdults, int& numNans, int& duplicateNum, const cudaConstants* cConstants, const int & generation, const double& currentAnneal);
 
-//function that sorts the adults in newAdults and oldAdults and puts them in allAdults while excluding unwanted adults
-//the unwanted adults are those with nans, uneven genes (really good speedDiff, but worst posDiff), and adults that are older than 50 generations
-//Input: allAdults - holds the adults we want to keep
-//       newAdults - the adults that were just created and need to be checked
+//function that decides whether or not to add an adult to allAdults based on its errorStatus
+//Input: adultPool - This is either new or oldAdults and an adult from the vector will be checked for errorStatus and added to allAdults
+//       allAdults - holds the adults we want to keep
+//       index - index of the Adult being checked
 //       numNans - this function tallies the nans (and other errors) that occur in this population of adults
-//       cConstants - needed for the pos_threshold and speed_threshold
-//       generation - to check the current generation to eliminate the old adults
-//Output: allAdults is filled with the adults we want 
+//       duplicateNum - counts the duplicates in both new and oldAdults
+//Output: allAdults is filled with the adults we want and counts are updated
 //this is called in preparePotentialParents()
-void eliminateBadAdults(std::vector<Adult>& allAdults, std::vector<Adult>& newAdults, std::vector<Adult>& oldAdults, int& numNans, int& duplicateNum, const cudaConstants* cConstants, const int & generation);
+void addToAllAdults(std::vector<Adult> & adultPool, std::vector<Adult> & allAdults, const int & index, int& numNans, int& duplicateNum);
 
 #include "genetic_algorithm.cpp"
 

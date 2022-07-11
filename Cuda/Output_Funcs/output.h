@@ -112,8 +112,9 @@ void recordAllIndividuals(std::string name, const cudaConstants * cConstants, co
 //        solution - best individual parameters from the final pool
 //        fuelSpent - total fuel spent
 //        best - To access the best individual (pool[0])
+//        seed - the seed of the current run
 // output: fuelOutput.csv - output file holding fuel consumption and impact data
-void recordFuelOutput(const cudaConstants* cConstants, double solution[], double fuelSpent, const Adult best);
+void recordFuelOutput(const cudaConstants* cConstants, double solution[], double fuelSpent, const Adult best, const int & seed);
 
 
 #include "output.cpp"

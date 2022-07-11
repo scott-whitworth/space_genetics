@@ -18,7 +18,6 @@ bool runGeneticsUnitTests(bool printThings){
     //values taken directly from the genetic config file
     utcConstants->anneal_initial = 0.0; // initial value for annealing, was 0.1 in config, set to 0 because no mutations wanted at first
     utcConstants->anneal_final = 1.0e-7;   // final value for annealing, was 1.0e-7 in config, set to 0 because no mutations wanted at first
-    utcConstants->anneal_factor = 0.75;  // factor by which annealing is multiplied with when there is no change in the best individual over 100 generations -should be tested as-is
 
     // The percentage for probability of mutating a gene in a new individual, called iteratively to mutate more genes until the check fails
     // Starting this off at 0 because to ensure that there are no mutations initially to verify that children are generated as expected
@@ -56,10 +55,6 @@ bool runGeneticsUnitTests(bool printThings){
     //additionally, mission type should have little impact on the genetics algorithms
     utcConstants->missionType = 2; 
 
-    //the maximum age an individual in this unit test can hit 
-    //chose 3 because this will allow us to minimize run while ensuring old Adults are properly removed
-    utcConstants->max_age = 3;
-
     //STUFF SO RUNGE_KUTTACUDA.CU CAN RUN
     utcConstants->thread_block_size =32;
     utcConstants->orbitalPeriod = 3.772645011085093e+07; // orbital period time of 1999RQ36 Bennu (s) 
@@ -81,6 +76,7 @@ bool runGeneticsUnitTests(bool printThings){
     // Various values that impact runge kutta
     utcConstants->rk_tol=1e-12;
     utcConstants->doublePrecThresh=1e-12;
+    //utcConstants->GuessMaxPossibleSteps=1000000; //TODO: Long term, I think we need to get rid of this, we use max_numsteps instead
     utcConstants->max_numsteps=1000;
     utcConstants->min_numsteps=400;
 
@@ -853,6 +849,8 @@ bool verifyChildrenFromCrossover(std::mt19937_64& rng, bool printThings, cudaCon
         // Attempted having a pool of entirely duplicates 
         // there was only 1 individual in parent and generateChildrenFromCrossover could not handle it
         // it began an infinite loop of printing "In generateChildrenFromCrossover() we've cycled through the parentPool twice"
+        // the code for this test is commented out below
+        // TODO: What should I do with this code? We should never get this situation, but I thought I should test it
 
         if (printThings){
             cout << "In a pool full of duplicates of one individual..." << endl;
@@ -936,6 +934,7 @@ bool cfcAnswersMatchExpectations(const int & numChildren, const Child* childrenG
                         correctParents = true;
                         prnt1 = i;
                         prnt2 = j;
+                        //TODO: Run the code and make sure the output of this is as expected/looks nice
                         //prints the tripTimes of the parents and of any children they've made
                         if (!skipPrint){
                             cout << std::fixed << std::setprecision(1) << "Parent 1's tripTime: " << parents[prnt1].startParams.tripTime << "\t\t Parent 2's tripTime: " << parents[prnt2].startParams.tripTime << endl;
@@ -1212,8 +1211,8 @@ bool firstFullGen(std::mt19937_64& rng, cudaConstants * utcConstants, bool print
 }
 
 // A function that is used to verify that firstFullGen is working correctly
-//Made this earlier before we started treating duplicates differently and so long as duplicates are handled the same as regular numbers
-//     this test should still work
+// Made this earlier before we started treating duplicates differently and 
+//   so long as duplicates are handled the same as regular numbers this test should work
 bool verifyFullGen(std::vector<Adult>& youngGen, std::vector<Adult>& possParents, const cudaConstants * utcConstants, bool printThings){
     bool noErrors = true;
 
@@ -1282,12 +1281,33 @@ bool verifyFullGen(std::vector<Adult>& youngGen, std::vector<Adult>& possParents
                     }
                 }
             }
-            //if the two parents have not been added, this is an issue and it prints error messages, then pushes back -1s so we will be able to detect if this happens again
+            //if the parent has not been added, this is an issue and it prints error messages, 
+            //  then pushes back -1 so parentIndexSets will be the proper size so we can detect if this happens again
             if(indexVecSize != parentIndexSets.size()){
                 noErrors = false;
                 //cout << indexVecSize << " vs " << parentIndexSets.size() << endl;
                 cout << "Unknown parents for set #" << setNum << " of children" << endl;
                 parentIndexSets.push_back(-1);
+                parentIndexSets.push_back(-1);
+
+            }
+        }
+        //if there are no other ways to determine the parents, determines t
+        else if ((i == crossoverChildrenCount*setNum || i == 1 + crossoverChildrenCount*setNum) && crossoverChildrenCount*setNum + fullAvgOffset > youngGen.size()) {
+            indexVecSize++;
+            //attempts to find a parent whose tripTime values match the first child's tripTimes values because this child is generated by the crossOver_wholeRandom method
+            for (int j = 0; j < utcConstants->survivor_count; j++){
+                //if a parent's tripTime matches the first Child's tripTime, it was a parent of this incomplete set of children
+                if (youngGen[i].startParams.tripTime == possParents[j].startParams.tripTime){
+                    parentIndexSets.push_back(j);
+                }
+            }
+            //if the parent has not been added, this is an issue and it prints error messages, 
+            //  then pushes back -1 so parentIndexSets will be the proper size so we can detect if this happens again
+            if(indexVecSize != parentIndexSets.size()){
+                noErrors = false;
+                //cout << indexVecSize << " vs " << parentIndexSets.size() << endl;
+                cout << "Unknown parents for set #" << setNum << " of children" << endl;
                 parentIndexSets.push_back(-1);
 
             }
@@ -1377,6 +1397,7 @@ void UTmutateMask(std::mt19937_64 & rng, bool * mutateMask, double mutation_rate
     //make sure this matched how many are set to true
     cout << "Final geneCount: " << geneCount << endl;
 }
+
 
 
 // bool runGeneticsUnitTests(bool printThings){

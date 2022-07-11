@@ -95,7 +95,6 @@ struct cudaConstants {
 
     double rk_tol;       // The relative/absolute (not sure which one it is) tolerance for the runge kutta algorithm
     double doublePrecThresh; // The smallest allowed double value for runge-kutta
-    int GuessMaxPossibleSteps; // Used as a large value to ensure adequate memory allocation in the arrays that record information in rk4sys() in output.cpp
     int cpu_numsteps;    // Constant higher precision for final CPU RK method, set to be equal to max_numsteps
     int min_numsteps;    // Minimum number of steps in runge kutta 
     int max_numsteps;    // Maximum number of steps in runge kutta 

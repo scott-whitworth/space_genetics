@@ -107,9 +107,6 @@ void cudaConstants::FileRead(std::string fileName) {
                 else if (variableName == "doublePrecThresh") {
                     this->doublePrecThresh = std::stod(variableValue);
                 }
-                else if (variableName == "GuessMaxPossibleSteps") {
-                    this->GuessMaxPossibleSteps = std::stoi(variableValue);
-                }
                 else if (variableName == "max_numsteps") {
                     this->max_numsteps = std::stoi(variableValue);
                 }
@@ -370,7 +367,7 @@ std::ostream& operator<<(std::ostream& os, const cudaConstants& object) {
     os << "\tbest_count: "      << object.best_count      << "\t\tmax_generations: "<< object.max_generations<< "\trun_count: " << object.run_count << "\n\n";
 
     os << "Runge-Kutta Related Values:\n";
-    os << "\trk_tol: " << object.rk_tol << "\tdoublePrecThresh: " << object.doublePrecThresh << "\ttimeRes: " << object.timeRes << "\tGuessMaxPossibleSteps: " << object.GuessMaxPossibleSteps << "\n";
+    os << "\trk_tol: " << object.rk_tol << "\tdoublePrecThresh: " << object.doublePrecThresh << "\ttimeRes: " << object.timeRes << "\n";
     os << "\tmax_numsteps: " << object.max_numsteps << "\tmin_numsteps: "  << object.min_numsteps << "\tcpu_numsteps: " << object.cpu_numsteps << "\tsun_r_min: " << object.sun_r_min << "\n\n";
 
     os << "Output Variables:\n";

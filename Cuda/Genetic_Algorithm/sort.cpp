@@ -158,6 +158,9 @@ void giveDistance(std::vector<Adult> & allAdults, const cudaConstants* cConstant
             sortUsingPosDiff++;
         }
 
+        //TODO: This needs to probably be setting the individuals who have met the objective to be given MAX_DISTANCE and removed from the neighbor distance calculation
+        
+
         //Sort all adults who meet the speed threshold by position
         //Ideally, this will help to prioritize position a little more since position is having more issues meeting the threshold
         std::sort(allAdults.begin(), allAdults.begin() + sortUsingPosDiff, LowerPosDiff);

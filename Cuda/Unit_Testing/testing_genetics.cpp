@@ -63,7 +63,6 @@ bool runGeneticsUnitTests(bool printThings){
     //STUFF SO RUNGE_KUTTACUDA.CU CAN RUN
     utcConstants->thread_block_size =32;
     utcConstants->orbitalPeriod = 3.772645011085093e+07; // orbital period time of 1999RQ36 Bennu (s) 
-    //utcConstants->GuessMaxPossibleSteps = 1000000;
 
     //ALL THE STUFF SO EARTH'S INITIAL POSITION CAN BE CALCULATED
     utcConstants->triptime_max=2.0* SECONDS_IN_YEAR;
@@ -81,7 +80,6 @@ bool runGeneticsUnitTests(bool printThings){
     // Various values that impact runge kutta
     utcConstants->rk_tol=1e-12;
     utcConstants->doublePrecThresh=1e-12;
-    //utcConstants->GuessMaxPossibleSteps=1000000; //TODO: Long term, I think we need to get rid of this, we use max_numsteps instead
     utcConstants->max_numsteps=1000;
     utcConstants->min_numsteps=400;
 

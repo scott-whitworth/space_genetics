@@ -259,6 +259,8 @@ void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& 
     //countStatuses(oldAdults, generation);
 }
 
+//TODO: Do we need eliminateBadAdults at all? Consider for removal
+
 //eliminates unwanted adults from allAdults
 void eliminateBadAdults(std::vector<Adult>& allAdults, std::vector<Adult>& newAdults, std::vector<Adult>& oldAdults, int& numNans, int& duplicateNum, const cudaConstants* cConstants, const int & generation){
     double posTolerance = cConstants->pos_threshold/100;
@@ -266,11 +268,27 @@ void eliminateBadAdults(std::vector<Adult>& allAdults, std::vector<Adult>& newAd
     int ageTolerance = cConstants->max_age;
     //if we ever want to eliminate duplicates again, this is the place to do it
 
+    //TODO: Classic copy/pasting. This needs to be functionalized. 
+    //      I know why we have two for loops, and by this design, we need to keep them.
+    //      This issue is that modifying one variable in one loop while debugging leaves open the probablility of *not* changing the other
+
+    //TODO: Also some of the following comments don't seem to track (i.e. talking about checking NaNs when there is no NaNs being checked)
+
     for (int i = 0; i < newAdults.size(); i++){ //copies all the elements of newAdults into allAdults
-        if(newAdults[i].errorStatus != VALID && newAdults[i].errorStatus != DUPLICATE) { //tallies the number of nans in allAdults by checking if the adult being passed into newAdult is a Nan or not
+        if(newAdults[i].errorStatus != VALID && newAdults[i].errorStatus != DUPLICATE) { 
+            //tallies the number of nans in allAdults by checking if the adult being passed into newAdult is a Nan or not
             numNans++;
-        }else if((newAdults[i].posDiff < posTolerance && newAdults[i].speedDiff > speedTolerance) || (newAdults[i].posDiff > posTolerance && newAdults[i].speedDiff < speedTolerance)){//check if the adult is too good in one aspect
+            //TODO: This is confusing. This will be true for an individual that is not valid and not duplicate. It may not be a NaN, it could be something else
+        }else if( (newAdults[i].posDiff < posTolerance && newAdults[i].speedDiff > speedTolerance) || //Good posDiff, Bad speedDiff
+                  (newAdults[i].posDiff > posTolerance && newAdults[i].speedDiff < speedTolerance) ) { //Good speedDiff, bas posDiff
+            //check if the adult is too good in one aspect
+
             //do nothing and don't add them to all adults
+            //TODO: Why? I don't understand in this context why you would not want to add them
+            //      There is an issue that posTolerance and speedTolerance are both constants,
+            //               this means this will only trigger nearing the end of a run (or nearing whatever the tollerance is set)
+            //               I am pretty sure the logic behind this would want these tollerances to be dynamic based on the population
+            //      Nearing the end of the sumulation, won't this set up a gate where the only individul
         }else if(newAdults[i].errorStatus == DUPLICATE){
             duplicateNum++;
             allAdults.push_back(newAdults[i]);//remove this if we want to remove duplicates

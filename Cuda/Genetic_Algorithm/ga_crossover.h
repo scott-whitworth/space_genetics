@@ -9,6 +9,10 @@
 #include "..\Genetic_Algorithm\adult.h"
 #include "..\Genetic_Algorithm\child.h"
 
+//TODO: Many of the headers here need to be updated to reflect new changes
+
+//TODO: It would also be helpful to have an overarching comment in each .h outlining what functions are defined below
+
 ///////////////////////////////////////////////////////////////
 // Crossover Functions                                       //
 ///////////////////////////////////////////////////////////////

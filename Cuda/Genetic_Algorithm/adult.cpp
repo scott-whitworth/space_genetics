@@ -77,11 +77,13 @@ bool dominationCheck(Adult& personA, Adult& personB, const cudaConstants* cConst
     bool ASpeedEqualsB = false;
 
     //True is A posdiff is equal to B posDiff +- posTolerance
-    if (((personA.posDiff < personB.posDiff + posTolerance) && (personA.posDiff > personB.posDiff - posTolerance)) || (personA.posDiff < pos_threshold && personB.posDiff < pos_threshold)){
+    if ( ( (personA.posDiff < personB.posDiff + posTolerance) && (personA.posDiff > personB.posDiff - posTolerance) ) || 
+         (  personA.posDiff < pos_threshold && personB.posDiff < pos_threshold)){
         APosEqualsB = true;
     }
     //True is A speeddiff is equal to B speedDiff +- speedTolerance
-    if (((personA.speedDiff < personB.speedDiff + speedTolerance) && (personA.speedDiff > personB.speedDiff - speedTolerance)) || (personA.speedDiff < speed_threshold && personB.speedDiff < speed_threshold)){
+    if ( ( (personA.speedDiff < personB.speedDiff + speedTolerance) && (personA.speedDiff > personB.speedDiff - speedTolerance)) || 
+         ( personA.speedDiff < speed_threshold && personB.speedDiff < speed_threshold)){
         ASpeedEqualsB = true;
     }
     //If the mission type is a rendezvous, A's speed diff needs to be lower for it to be equal or better
@@ -206,6 +208,8 @@ bool duplicateCheck(const Adult& personA, const Adult& personB, const cudaConsta
     bool APosEqualsB = false;
     //true if A speedDiff "equals" B speedDiff
     bool ASpeedEqualsB = false;
+
+    //TODO: Remove reliance on anneal, just use posDominationTolerance / speed
 
     //tolerances used to determine the range of values considered equal
     //these are both currently set to 1e-14 AU, I don't think these need to be modified 

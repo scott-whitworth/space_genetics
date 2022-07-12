@@ -15,6 +15,10 @@
 #define constG 1.99349603314131e-44 // gravitational constant- used to calculate the gravitational force (AU^3/(s^2 * kg)) 
 #define massSun 1.988500e30 // mass of the sun (kg)
 
+//Definitions for config file destinations (with the assumption that they are being called from the same folder)
+#define genetic_config "genetic.config"
+#define mission_config "mission.config"
+
 //Definitions for mission type
 #define Rendezvous 2 //Solving for speed and position
 #define Impact 1 //Solving for just position
@@ -45,6 +49,27 @@
 
 // OPTIM_VARS = Number of variables (array sizes plus 4 for alpha, beta, zeta, and triptime)
 #define OPTIM_VARS (GAMMA_ARRAY_SIZE + TAU_ARRAY_SIZE + COAST_ARRAY_SIZE + 4)
+
+//Constants used accessing info stored in the mission objectives vector for cConstants
+#define MISSION_PARAMETER_OFFSET 0 //Where in the array the target parameter is stored
+#define MISSION_OBJECTIVE_OFFSET 1 //Where in the array that the objective is stored
+#define MISSION_GOAL_OFFSET 2      //Where in the array the target value is stored
+
+//Enumerations for storing mission objectives within cConstants
+//First enumeration is for identifying parameters
+//  Will be used to grab the correct parameter from individuals
+enum MISSION_PARAMETERS {
+    POS_DIFF = 0,       //The posDiff of an individual
+    SPEED_DIFF = 1,     //The speedDiff of an individual
+    FUEL_BURNED = 2,    //The amount of fuel burned by an individual
+    TRIP_TIME = 3,      //The time an individual takes to complete its mission
+};
+
+//Second enumeration assists with identifying how the program should optimize the parameters
+enum MISSION_OPTIMIZATION_TYPES {
+    OPTIMIZE_LOW_VALUES = 1,  //Program favors lower values for a parameter
+    OPTIMIZE_HIGH_VALUES = 2, //Program favors higher values for a parameter
+}
 
 //This is used in both Child and Adult
 //enumeration to make error status easier to keep track of, as opposed to using hard-coded numbers 

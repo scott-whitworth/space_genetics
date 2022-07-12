@@ -4,6 +4,9 @@
 #include <iostream> // For << operator, fileRead, and std::cout
 #include <random>
 #include <string>
+#include <vector>
+
+#include "objective.h" // for storing objectives
 
 // Structure that holds constant values related/used for the genetic algorithm that can be configured within a file 
 // (as of August 5th 2020, that file address is hardcoded in main to be "../Config_Constants/genetic.config")
@@ -31,12 +34,10 @@ struct cudaConstants {
     int disp_freq;        // Determine how many generations between calling terminalDisplay() method (defined in Output_Funcs/output.cpp)
 
     int best_count;        // Number of individuals that needs to be within the acceptable condition before ending the algorithm, also how many of the top individuals are recorded
-    int change_check;      // How often it checks for if the best individual has changed, used in the basis of Jeremy's method of anneal value dependent on if there was no change
     double anneal_initial; // initial value for annealing, meant to replace the previously used calculation involving ANNEAL_MIN and ANNEAL_MAX with something more simple
     double anneal_final;   // final value for annealing, anneal cannot be reduced beyond this point
 
     double mutation_amplitude; // The percentage for probability of mutating a gene in a new individual, called iteratively to mutate more genes until the check fails
-    double sortingRatio; // A percentage for how much of selectSurvivors() chooses individuals that are bestPosDiff rather than bestSpeedDiff (0.95 = more posDiff, 0.05 = more speedDiff)
 
     // Scalars used to modify the mutate_scales below, used to assist in making adults mutate more if needed
     // A value of 1 will have an individual's parameters mutate at the scale of the variables below
@@ -116,6 +117,10 @@ struct cudaConstants {
     //Flag for what type of landing you want. Current modes: "soft"=1, "hard"=2
     int missionType;
 
+    //Vector of objectives that will be solved by the program
+    //  For more information of what the objective class holds, look at it's header file
+    std::vector<objective> missionObjectives; 
+
     // Default constructor, sets the config file path to be "genetic.config" for geneticFileRead()
     cudaConstants(){}
 
@@ -127,6 +132,11 @@ struct cudaConstants {
     // Output: Properties explicitly set in the config file are set to values following equal sign, ignores comments or empty lines in files 
     // Notice: This does not verify much, if anything, about the config file!
     void FileRead(std::string fileName);
+
+    // Transfers information from a config file line to the mission objectives vector
+    //  Input:  a line taken from the mission config file that holds information on a desired mission objective
+    //  Output: a new objective is pushed to the end of the missionObjectives vector
+    void importObjective(std::string line);
 };
 
 // Output function to stream, with some formatting to help be more legible on terminal

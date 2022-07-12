@@ -70,7 +70,7 @@ On WU System & Personal Computers:
        1. Outputs the GPU device name and intial values read from genetic.config that is in Config_Constants folder.
        2. Calculate the Earth data with a visible loading bar.  The range of this data is based on triptime_min and triptime_max in config file
        3. Outputs the number of threads and blocks that will be used in the optimize function and starts the algorithm.
-       4. On the terminal, displays a "." for every generation calculated and sorted.  Every disp_freq generation it displays the current generation number (how many have been calculated up to this point minus 1) and best speed, position and cost individuals in the pool.  Also displays change in anneal size every change_check generations.
+       4. On the terminal, displays a "." for every generation calculated and sorted.  Every disp_freq generation it displays the current generation number (how many have been calculated up to this point minus 1) and best speed, position and cost individuals in the pool.
        5. Along with terminal display, there are serveral file outputs made during the program's run.
        6. Once the best individual in the pool has passed the tolerance, the algorithm has "succeeded" and will output files that describe that individual's parameters that can be used in PostProcessing to observe.
        7. Perform steps 2-6 again with different time_seed value if the number of runs performed is less than the run value in the config.

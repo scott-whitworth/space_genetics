@@ -25,6 +25,17 @@ void giveRank(std::vector<Adult> & allAdults, const cudaConstants* cConstants);
 //        poolSize - the poolSize of all the adults excluding NaNs
 void giveDistance(std::vector<Adult> & allAdults, const cudaConstants* cConstants);
 
+//----------------------------------------------------------------------------------------------------------------------------
+// Assist function for objectives that sorts an adult vector based on the goal 
+//  This will specifically look at the objective's goal and choose a non-rank/rankDistance sort based on it 
+//  As of writing this function, it is only used for outputs and calculating distance
+// Inputs: adults - the vector of adults that will be sorted based on the objective
+//         sortObjective - the objective the sort will be derived from
+//         sortSize - how many adults of the passed in vector will be sorted 
+//              The sorting range will span from the beginning of adult to adult.begin() + sortSize
+// Output: the adult vector will be sorted with the parameter and order based on the goal of the objective
+void parameterSort(std::vector<Adult> & adults, const objective& sortObjective, const int & sortSize);
+
 #include "sort.cpp"
 
 #endif

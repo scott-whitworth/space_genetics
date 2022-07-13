@@ -1,16 +1,27 @@
 #include <string>
 #include <iomanip>
 #include "math.h"
+#include "..\Genetic_Algorithm\sort.h"
 
 // Utility function to display the currently best individual onto the terminal while the algorithm is still running
 // input: Individual to be displayed (assumed to be the best individual of the pool) and the value for the current generation iterated
 // output: onto the console termina, generation is displayed and best individual's posDiff, speedDiff, and progress values
-void terminalDisplay(const Adult& individual, unsigned int currentGeneration) {
+void terminalDisplay(const Adult& individual, const std::vector<objective> objectives) {
+    
+  //Print the parameters for each of the objectives for the passed in individual
+  for (int i = 0; i < objectives.size(); i++) {
+    //Print the name and value of the data of the objective
+    std::cout << "\n\t" << objectives[i].name << ": " << individual.getParameters(objectives[i]);
+  }
+    
+
+  /*
     std::cout << "\nGeneration: " << currentGeneration << std::endl;
     std::cout << "Best individual:" << std::endl;
     std::cout << "\tposDiff: " << individual.posDiff << std::endl;
     std::cout << "\tspeedDiff: " << individual.speedDiff << std::endl;
-    //std::cout << "\tprogress: "    << individual.progress << std::endl;
+  */
+  //std::cout << "\tprogress: "    << individual.progress << std::endl;
 }
 
 // mutateFile[time_seed].csv is given a header row, now ready to be used by recordMutateFile()
@@ -264,7 +275,7 @@ void progressiveAnalysis(int generation, int numStep, double *start, elements<do
   //Set up file
   std::ofstream output;
   output.open("..\\Output_Files\\progressiveAnalysis.csv", std::ios_base::app);
-  output << "\ntime_seed,numStep,posDiff,speedDiff,tripTime,alpha,beta,zeta,";
+  output << "\ntime_seed,numStep,posDiff,speedDiff,tripTime,alpha,beta,zeta,";  
 
   //Headers
   for (int i = 0; i < GAMMA_ARRAY_SIZE; i++) {
@@ -335,7 +346,16 @@ void initializeRecord(const cudaConstants * cConstants) {
   std::string fileId = std::to_string(seed);
   excelFile.open("..\\Output_Files\\genPerformance-" + fileId + ".csv", std::ios_base::app);
 
-  excelFile << "gen,bestOverallPosDiff,bestOverallSpeedDiff,lowestPosPosDiff,lowestPosSpeedDiff,lowestSpeedPosDiff,lowestSpeedSpeedDiff,avgPosDiff,avgSpeedDiff,alpha,beta,zeta,tripTime,";
+  excelFile << "gen,";
+  for (int i = 0; i < cConstants->missionObjectives.size(); i++) {
+    excelFile << "rankDistance" << cConstants->missionObjectives[i].name << ",";
+  }
+  for (int i = 0; i < cConstants->missionObjectives.size(); i++) {
+    excelFile << "best" << cConstants->missionObjectives[i].name << ",";
+    excelFile << "avg" << cConstants->missionObjectives[i].name << ",";
+  }
+  //excelFile << "bestOverallPosDiff,bestOverallSpeedDiff,lowestPosPosDiff,lowestPosSpeedDiff,lowestSpeedPosDiff,lowestSpeedSpeedDiff,avgPosDiff,avgSpeedDiff,";
+  excelFile << "alpha,beta,zeta,tripTime,";
   
   for (int i = 0; i < GAMMA_ARRAY_SIZE; i++) {
     excelFile << "gamma"; 
@@ -380,7 +400,7 @@ void initializeRecord(const cudaConstants * cConstants) {
 
 //!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Take in the current state of the generation and appends to excel file, assumes initializeRecord() had already been called before (no need to output a header row)
-void recordGenerationPerformance(const cudaConstants * cConstants, std::vector<Adult>& pool, int generation, double new_anneal, int poolSize, double anneal_min, double avgPosDiff, double avgSpeedDiff, int duplicateNum, double minDist,  double avgDist, double maxDist, double avgAge, int oldestAge, double avgBirthday, int oldestBirthday) {
+void recordGenerationPerformance(const cudaConstants * cConstants, std::vector<Adult>& pool, const std::vector<double>& objectiveAvgValues, const int& generation, const double& new_anneal, const int& poolSize, const int& duplicateNum, const double& minDist, const double& avgDist, const double& maxDist, const double& avgAge, const int& oldestAge, const double& avgBirthday, const int& oldestBirthday) {
   std::ofstream excelFile;
   int seed = cConstants->time_seed;
   std::string fileId = std::to_string(seed);
@@ -390,6 +410,24 @@ void recordGenerationPerformance(const cudaConstants * cConstants, std::vector<A
   // Record best individuals best posDiff and speedDiff of this generation
   excelFile << generation << ",";
 
+  //Output the best rank distance adult's parameters
+  for (int i = 0; i < cConstants->missionObjectives.size(); i++) {
+    excelFile << pool[0].getParameters(cConstants->missionObjectives[i]) << ",";
+  }
+  //Output the objective parameter for the best adult and the average for each objective
+  for (int i = 0; i < cConstants->missionObjectives.size(); i++) {
+    //Sort the pool by the parameter
+    parameterSort(pool, cConstants->missionObjectives[i], pool.size()); 
+    
+    //Output the 1st adult's value for that parameter, which will be the best of that value in the pool
+    excelFile << pool[0].getParameters(cConstants->missionObjectives[i]) << ",";
+    //Output the average value for this parameter
+    excelFile << objectiveAvgValues[i] << ",";
+  }
+
+  std::sort(pool.begin(), pool.end(), rankDistanceSort); //Reset the sort for the next outputs
+  
+/*
   excelFile << pool[0].posDiff << "," << pool[0].speedDiff << ","; //Record the best rank distance individual
   std::sort(pool.begin(), pool.end(), LowerPosDiff); //Sort the pool to get the best pos diff
   excelFile << pool[0].posDiff << "," << pool[0].speedDiff << ","; //Record the lowest posdiff adult
@@ -398,6 +436,7 @@ void recordGenerationPerformance(const cudaConstants * cConstants, std::vector<A
   std::sort(pool.begin(), pool.end(), rankDistanceSort); //Reset the sort for future functions
   excelFile << avgPosDiff << ","; //Record the generation's average pos and speed diffs
   excelFile << avgSpeedDiff << ","; 
+*/
 
   // Record best individual's parameters
   excelFile << pool[0].startParams.alpha << ",";
@@ -417,7 +456,7 @@ void recordGenerationPerformance(const cudaConstants * cConstants, std::vector<A
 
   //New anneal every gen
   excelFile << new_anneal << ",";
-  //excelFile << anneal_min << ",";
+
   //Distance values
   excelFile << minDist << ",";
   excelFile << avgDist << ",";
@@ -462,8 +501,10 @@ void recordAllIndividuals(std::string name, const cudaConstants * cConstants, co
   for (int i = 0; i < COAST_ARRAY_SIZE; i++) {
     entirePool << "coast" << i << ",";
   }
-  entirePool << "posDiff,";
-  entirePool << "speedDiff,";
+  for (int i = 0; i < cConstants->missionObjectives.size(); i++) {
+    entirePool << cConstants->missionObjectives[i].name << ",";
+  }
+  
   entirePool << "birthday,rank,distance,avgParentProgress,progress,parentChildProgressRatio";
   entirePool << '\n';
 
@@ -488,8 +529,11 @@ void recordAllIndividuals(std::string name, const cudaConstants * cConstants, co
     for (int j = 0; j < COAST_ARRAY_SIZE; j++) {
       entirePool << pool[i].startParams.coeff.coast[j] << ",";
     }
-    entirePool << pool[i].posDiff << ",";
-    entirePool << pool[i].speedDiff << ",";
+    for (int j = 0; j < cConstants->missionObjectives.size(); j++)
+    {
+      entirePool << pool[j].getParameters(cConstants->missionObjectives[j]) << ",";
+    }
+    
     entirePool << pool[i].birthday << ",";
     entirePool << pool[i].rank << ",";
     entirePool << pool[i].distance << ",";
@@ -530,8 +574,13 @@ void finalRecord(const cudaConstants* cConstants, const std::vector<Adult>pool, 
 
   // Test outputs
   std::cout << "Comparison\n";
-  std::cout << "CUDA posDiff: " << pool[0].posDiff << std::endl;
-  std::cout << "CUDA speedDiff: " << pool[0].speedDiff << std::endl;
+  for (int i = 0; i < cConstants->missionObjectives.size(); i++) {
+      std::cout << "CUDA " << cConstants->missionObjectives[i].name << ": ";
+      std::cout << pool[0].getParameters(cConstants->missionObjectives[i]) << "\n";
+  }
+  
+  // std::cout << "CUDA posDiff: " << pool[0].posDiff << std::endl;
+  // std::cout << "CUDA speedDiff: " << pool[0].speedDiff << std::endl;
 
   // Evaluate and print this solution's information to binary files
   trajectoryPrint(start, generation, cConstants, pool[0]);

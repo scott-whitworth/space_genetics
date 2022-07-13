@@ -5,10 +5,10 @@
 #include <vector> //allows for using vectors instead of just dynamic arrays
 
 // Utility function to display the currently best individual onto the terminal while the algorithm is still running
-// input: Individual to be displayed (assumed to be the best individual of the pool) 
-//        and the value for the current generation iterated
-// output: display: generation, individual's posDiff, speedDiff
-void terminalDisplay(const Adult& individual, unsigned int currentGeneration);
+// input:  Individual to be displayed (assumed to be the best individual of the pool) 
+//         objectives - the program's current list of objectives
+// output: display each objective's parameters for the passed in individual
+void terminalDisplay(const Adult& individual, const std::vector<objective> objectives);
 
 // Records error in energy conservation due to thrust calculations
 // For a single set of rkParameters
@@ -70,7 +70,7 @@ void initializeRecord(const cudaConstants * cConstants);
 //        oldestAge - the generation-adjusted oldest generation age
 //        oldestBirthday - the non-generation-adjusted oldest generation age
 // output: genPerformanceT-[time_seed].csv is appended parameter information on the best individual in pool
-void recordGenerationPerformance(const cudaConstants * cConstants, std::vector<Adult>& pool, int generation, double new_anneal, int poolSize, double anneal_min, double avgPosDiff, double avgSpeedDiff, int duplicateNum, double minDist,  double avgDist, double maxDist, double avgAge, int oldestAge, double avgBirthday, int oldestBirthday);
+void recordGenerationPerformance(const cudaConstants * cConstants, std::vector<Adult>& pool, const std::vector<double>& objectiveAvgValues, const int& generation, const double& new_anneal, const int& poolSize, const int& duplicateNum, const double& minDist, const double& avgDist, const double& maxDist, const double& avgAge, const int& oldestAge, const double& avgBirthday, const int& oldestBirthday);
 
 // Method for doing recording information at the end of the optimization process
 // input: cConstants - to access config info

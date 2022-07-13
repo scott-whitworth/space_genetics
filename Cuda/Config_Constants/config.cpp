@@ -28,9 +28,9 @@ cudaConstants::cudaConstants() {
 // Asteroid file is determined within configFile
 cudaConstants::cudaConstants() {
     // Get values from the genetic config file
-    FileRead(genetic_config);
+    FileRead("../Config_Constants/genetic.config");
     // Get values from the mission config file
-    FileRead(mission_config); 
+    FileRead("../Config_Constants/mission.config"); 
 
     //get the destination
     FileRead("../Config_Constants/" + this->destination);
@@ -73,6 +73,9 @@ void cudaConstants::FileRead(std::string fileName) {
                     while (line != "" && line.find("//") != 0 ) {
                         //Call the import objective function to import the info from the objective line
                         importObjective(line); 
+
+                        //Get the next objective
+                        std::getline(configFile, line); 
                     }
                 }
                 //Import a normal config file variable
@@ -274,9 +277,6 @@ void cudaConstants::FileRead(std::string fileName) {
                     else if (variableName == "coast_threshold") {
                         this->coast_threshold = std::stod(variableValue);
                     }
-                    else if (variableName == "dominationTolerance") {
-                        this->dominationTolerance = std::stod(variableValue);
-                    }
 
 
 /////////////////////////////////////////////////////////////////////////// -- ASTEROID -- //////////////////////////////////////////////////////////////////////////////////
@@ -340,50 +340,65 @@ void cudaConstants::FileRead(std::string fileName) {
 
 // Transfers information from a config file line to the mission objectives vector
 void cudaConstants::importObjective(std::string line) {
+    
     //Create two pivot points to get information between the comma-based boundaries
     int beginningPivot, endPivot; 
 
     //temp storage variables that will be used to create the new objective object
     std::string name;
     parameterGoals goal; 
-    double convergenceThreshold, dominationThreshold; 
+    double convergenceThreshold, dominationThreshold, equateTolerance; 
+
+    //Temp string will assist with eliminating spaces from the line and identifying the goal
+    std::string tempStr; 
+
+
+    //Remove any spaces from the line using the temp string
+    for (int i = 0; i < line.size(); i++) {
+        if (line[i] != ' ') {
+            tempStr.push_back(line[i]);
+        }
+    }
+    //temp string now equals line without the spaces, make equate line to temp string
+    line = tempStr;
 
     //Find the first end pivot to get the name
     endPivot = line.find(",");
 
     //Pull the name from the substring of the line
-    name = line.substr(0, endPivot-1);
+    name = line.substr(0, endPivot);
 
-    //Convert the rest of the string to lower case for easier decernment of parameter goals
-    for (int i = endPivot; i < line.size(); i++) {
+    //Convert the string to lower case for easier decernment of parameter goals
+    //Name has already been taken, so no issue if it is changed in the line
+    for (int i = 0; i < line.size(); i++) {
         std::tolower(line[i]); 
     }
-    
+
     //Get the next pivot points
-    beginningPivot = endPivot;
+    beginningPivot = endPivot+1;
     endPivot = line.find(",", beginningPivot);
 
-    //Create temp string for the parameter goal
-    std::string tempGoal = line.substr(beginningPivot+1, endPivot-1); 
+    //temp string used for the parameter goal
+    tempStr = line.substr(beginningPivot, endPivot - beginningPivot); 
 
     //Determine the parameter goal based on the next segment of the imported line
-    if (tempGoal == "min_pos_diff") {
+    if (tempStr == "min_pos_diff") {
         //Will optimize for minimum position difference
         goal = MIN_POS_DIFF;
     }
-    else if (tempGoal == "min_speed_diff") {
+    else if (tempStr == "min_speed_diff") {
         //optimize for the minimum speed difference
         goal = MIN_SPEED_DIFF; 
     }
-    else if (tempGoal == "min_fuel_spent") {
+    else if (tempStr == "min_fuel_spent") {
         //optimize for minimal fuel usage
         goal = MIN_FUEL_SPENT;
     }
-    else if (tempGoal == "min_trip_time") {
+    else if (tempStr == "min_trip_time") {
         //Optimize for minimal trip time
         goal = MIN_TRIP_TIME;
     }
-    else if (tempGoal == "max_speed_diff") {
+    else if (tempStr == "max_speed_diff") {
         //Optimize for highest speed
         goal = MAX_SPEED_DIFF; 
     }
@@ -391,23 +406,30 @@ void cudaConstants::importObjective(std::string line) {
         //No parameter goal identified
         goal = UNKNOWN; 
     }
-    
+
     //Find the next pivot point for the convergence tolerance
-    beginningPivot = endPivot;
+    beginningPivot = endPivot+1;
     endPivot = line.find(",", beginningPivot); 
 
     //Pull the convergence tolerance from the substring
-    convergenceThreshold = std::stod(line.substr(beginningPivot+1, endPivot-1));
+    convergenceThreshold = std::stod(line.substr(beginningPivot, endPivot - beginningPivot + 1));
+
+    //Find the next pivot point for the domination tolerance
+    beginningPivot = endPivot+1;
+    endPivot = line.find(",", beginningPivot);
+    
+    //Get the domination threshold from the last substring
+    dominationThreshold = std::stod(line.substr(beginningPivot, endPivot - beginningPivot + 1));
 
     //Find the last pivot points
-    beginningPivot = endPivot; 
-    endPivot = line.size() - 1; 
+    beginningPivot = endPivot+1; 
+    endPivot = line.size(); 
 
-    //Get the domination threshold from the last substring
-    dominationThreshold = std::stod(line.substr(beginningPivot+1, endPivot));
-    
+    //Pull the equateTolerance
+    equateTolerance = std::stod(line.substr(beginningPivot, endPivot - beginningPivot + 1));
+
     //Add the objective to the mission objectives vector using the gathered information
-    missionObjectives.push_back(objective(name, goal, convergenceThreshold, dominationThreshold)); 
+    missionObjectives.push_back(objective(name, goal, convergenceThreshold, dominationThreshold, equateTolerance)); 
 }
 
 // Output cudaConstant contents with formatting for better readibility when doing a run in main()
@@ -451,7 +473,11 @@ std::ostream& operator<<(std::ostream& os, const cudaConstants& object) {
     os << "\t R: " << object.r_fin_earth  << "\t 0: " << object.theta_fin_earth  << "\t Z: " << object.z_fin_earth  << "\n";
     os << "\tvR: " << object.vr_fin_earth << "\tv0: " << object.vtheta_fin_earth << "\tvZ: " << object.vz_fin_earth << "\n\n";
 
-    os << "Mission Type: " << object.missionType << "\n";
+    os << "Mission Goals: ";
+    for (int i = 0; i < object.missionObjectives.size(); i++) {
+        os << "\n\tObjective: " << object.missionObjectives[i].name << "\tConvergence Threshold: " << object.missionObjectives[i].convergenceThreshold << "\tDomination Threshold: " << object.missionObjectives[i].dominationThreshold; 
+    }
+    os << "\n";
     os << "====================================================================================================\n";
     
     return os;

@@ -18,8 +18,6 @@ struct cudaConstants {
     bool random_start;   // If set to false, the initial generation has individuals initialized from a file instead of randomly generated within a range
     bool record_mode;    // If set to true, functions that record information onto files such as genPerformance.csv.  The code still records a valid solution regardless of this setting
     std::string initial_start_file_address; // If random_start is false, use file_address to find what file is being used for the initial start
-    
-    double dominationTolerance; //Tolerance for how close 2 adults' parameters need to be to be considered equal
 
     int write_freq;       // Determine how many generations between calling recordGenerationPerformance() method (defined in Output_Funcs/output.cpp)
     int all_write_freq;   // Determine how many generations between calling recordAllIndividuals() method (defined in Output_Funcs/output.cpp)

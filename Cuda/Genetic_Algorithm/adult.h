@@ -52,9 +52,6 @@ struct Adult: public Child {
     // NOTE: This will be called by convertToAdults within newGeneration & ga_crossover.cu. Children that have just been simulated will be converted from a child into an adult
     Adult(const Child& c): Child(c), rank(INT_MAX), distance(-1){}
 
-    //Getter for a parameter dependent on the objective that is passed in
-    double getParameters (objective requestObjective);
-
     #ifdef UNITTEST //this should be defined in unit testing
 
     // Constructor used ONLY FOR UNIT TESTING!!!

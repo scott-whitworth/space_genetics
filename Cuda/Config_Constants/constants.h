@@ -15,10 +15,6 @@
 #define constG 1.99349603314131e-44 // gravitational constant- used to calculate the gravitational force (AU^3/(s^2 * kg)) 
 #define massSun 1.988500e30 // mass of the sun (kg)
 
-//Definitions for config file destinations (with the assumption that they are being called from the same folder)
-#define genetic_config "genetic.config"
-#define mission_config "mission.config"
-
 //Definitions for mission type
 #define Rendezvous 2 //Solving for speed and position
 #define Impact 1 //Solving for just position

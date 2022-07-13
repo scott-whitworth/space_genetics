@@ -58,7 +58,7 @@ Child:: Child(const Child& other){
 }
 
 //Getter for a parameter dependent on the objective that is passed in
-__host__ __device__ double Child::getParameters (const objective & requestObjective) {
+__host__ double Child::getParameters (const objective & requestObjective) const {
     //if/esle tree will go find the parameter goal of the request objective and return the associated value
     if (requestObjective.goal == MIN_POS_DIFF) {
         return posDiff;
@@ -113,7 +113,7 @@ __host__ __device__ double Child::getSpeedDiff(const cudaConstants* cConstants) 
     return speedDiff;
 }
 
-__host__ __device__ void Child::getProgress(const cudaConstants* cConstants) {
+__host__ void Child::getProgress(const cudaConstants* cConstants) {
 
 //Holds the progress of the child before it is actually assigned to the child
 //  The relative costs of each objective will be added to it
@@ -162,7 +162,7 @@ for (int i = 0; i < cConstants->missionObjectives.size(); i++) {
 
 //The total cost has been calculated
 //It needs to be divided by the number of objectives to find the weighted average progress for each objective
-calcProgress /= cConstants->missionObjectives.size(); 
+calcProgress = cConstants->missionObjectives.size()/calcProgress;
 
 //Assign the weighted progress to the child
 progress = calcProgress; 

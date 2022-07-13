@@ -46,7 +46,7 @@ bool checkTolerance(const std::vector<Adult> & oldAdults, const cudaConstants* c
 //          avgBirthday - average birth generation for the adults
 //          oldestBirthday - the oldest adult's birth generation
 // Outputs: The arguments will be filled in with the up-to-date values for this generation
-void calculateGenerationValues (const std::vector<Adult> & allAdults, const int & generation, double & avgPosDiff, double & avgSpeedDiff, int & duplicateNum, double & minDist, double & avgDist, double & maxDist, double & avgAge, double & avgBirthday, int & oldestBirthday);
+void calculateGenerationValues (const std::vector<Adult> & allAdults, const std::vector<objective> & objectives, std::vector<double> & objectiveAvgValues, int & duplicateNum, double & minDist, double & avgDist, double & maxDist, const int & generation, double & avgAge, double & avgBirthday, int & oldestBirthday);
 
 //----------------------------------------------------------------------------------------------------------------------------
 //Input: all the updated parameters of the current generation
@@ -257,36 +257,39 @@ int main () {
 
 //Returns true if top best_count adults within the oldAdults vector are within the tolerance
 bool checkTolerance(const std::vector<Adult>& oldAdults, const cudaConstants* cConstants) {
-//The function needs to check if the best adult meets the convergence tolerance for each objective
-//Iterate through the objectives
-for (int i = 0; i < cConstants->missionObjectives.size(); i++) {
-    //Check to see if the goal for this objective is to minimize or maximize the parameter 
-    if (cConstants->missionObjectives[i].goal < 0) {//Minimization
-        
-        //Check to see if the adult's parameter is larger than the convergence 
-        if (oldAdults[0].getParameters(cConstants->missionObjectives[i]) > cConstants->missionObjectives[i].convergenceThreshold) {
-            //Return false as a parameter that needs to be minimized is larger than the convergence threshold
-            return false;
-        }
-    }
-    else if (cConstants->missionObjectives[i].goal > 0) {//Maximization
+    //The function needs to check if the best adult meets the convergence tolerance for each objective
+    //Iterate through the objectives
+    for (int i = 0; i < cConstants->missionObjectives.size(); i++) {
+        //Check to see if the goal for this objective is to minimize or maximize the parameter 
+        if (cConstants->missionObjectives[i].goal < 0) {//Minimization
 
-        //Check to see if the adult's parameter is smaller than the convergence 
-        if (oldAdults[0].getParameters(cConstants->missionObjectives[i]) < cConstants->missionObjectives[i].convergenceThreshold) {
-            //Return false as a parameter that needs to be maximized is smaller than the convergence threshold
-            return false;
+            //Check to see if the adult's parameter is larger than the convergence 
+            if (oldAdults[0].getParameters(cConstants->missionObjectives[i]) > cConstants->missionObjectives[i].convergenceThreshold) {
+                //Return false as a parameter that needs to be minimized is larger than the convergence threshold
+                return false;
+            }
         }
-    }
-    //No mission type was identified 
-    else {
-        std::cout << "\n_-_-_-_-_-_-_-_-_-Error Identifying Parameter Goal_-_-_-_-_-_-_-_-_-\n";
+        else if (cConstants->missionObjectives[i].goal > 0) {//Maximization
+
+            //Check to see if the adult's parameter is smaller than the convergence 
+            if (oldAdults[0].getParameters(cConstants->missionObjectives[i]) < cConstants->missionObjectives[i].convergenceThreshold) {
+                //Return false as a parameter that needs to be maximized is smaller than the convergence threshold
+                return false;
+            }
+        }
+        //No mission type was identified 
+        else {
+            std::cout << "\n_-_-_-_-_-_-_-_-_-Error Identifying Parameter Goal_-_-_-_-_-_-_-_-_-\n";
+        }
+
+        //If the program reaches this spot, it means all of the adult's parameters have met the convergence threshold
+        //  Otherwise, the function would have already returned false
+        //  Thus, the adult has converged and it is appropriate to return true
+        return true; 
     }
 
-    //If the program reaches this spot, it means all of the adult's parameters have met the convergence threshold
-    //  Otherwise, the function would have already returned false
-    //  Thus, the adult has converged and it is appropriate to return true
-    return true; 
-}
+    //Code should never get here, return is here as a precaution
+    return false; 
 
 //------------------------------------------ OLD CODE ------------------------------------------//
 /*
@@ -322,16 +325,19 @@ for (int i = 0; i < cConstants->missionObjectives.size(); i++) {
 }
 
 //Function that will calculate distance and birthday values for a generation
-void calculateGenerationValues (const std::vector<Adult> & allAdults, const int & generation, double & avgPosDiff, double & avgSpeedDiff, int & duplicateNum, double & minDist, double & avgDist, double & maxDist, double & avgAge, double & avgBirthday, int & oldestBirthday){
+void calculateGenerationValues (const std::vector<Adult> & allAdults, const std::vector<objective> & objectives, std::vector<double> & objectiveAvgValues, int & duplicateNum, double & minDist, double & avgDist, double & maxDist, const int & generation, double & avgAge, double & avgBirthday, int & oldestBirthday){
     //Reset the dist values
     minDist = 2; //Set the min dist to the maximum possible value, so that it will be changed
     avgDist = 0; 
     maxDist = 0; //Set the max dist to the min possible value, so that it is garunteed to be changed
 
-    //Reset the diff values
-    avgPosDiff = 0;
-    avgSpeedDiff = 0;
-
+    //Reset the average parameter values
+    objectiveAvgValues.clear();
+    //Prep the avg value vector to have an index for each objective
+    for (int i = 0; i < objectives.size(); i++) {
+        objectiveAvgValues.push_back(0.0); 
+    }
+    
     //Reset the age values
     avgAge = 0;
     avgBirthday = 0; 
@@ -357,10 +363,11 @@ void calculateGenerationValues (const std::vector<Adult> & allAdults, const int 
         //Add to the avg distance
         avgDist += allAdults[i].distance;
 
-        //Add to the avg diffs
-        avgPosDiff += allAdults[i].posDiff;
-        avgSpeedDiff += allAdults[i].speedDiff; 
-
+        //Add the adult's parameter values to the necessary spot in the objective average value vector
+        for (int j = 0; j < objectives.size(); j++) {
+            objectiveAvgValues[j] += allAdults[i].getParameters(objectives[j]);
+        }
+        
         //Add to the avg age values
         //avgAge measures the age relative to the current generation (how many generations old), so it is generation minus the adults' birthdays 
         avgBirthday += allAdults[i].birthday;
@@ -369,24 +376,40 @@ void calculateGenerationValues (const std::vector<Adult> & allAdults, const int 
 
     //Divide the averages by the number of adults to get the averages
     avgDist /= allAdults.size();
-    avgPosDiff /= allAdults.size();
-    avgSpeedDiff /= allAdults.size(); 
+    for (int i = 0; i < objectiveAvgValues.size(); i++) {
+        objectiveAvgValues[i] /= allAdults.size();
+    }
     avgAge /= allAdults.size(); 
     avgBirthday /= allAdults.size(); 
     
 }
 
 //Function that writes the results of the inserted generation
-void reportGeneration (std::vector<Adult> & oldAdults, std::vector<Adult> & allAdults, const cudaConstants* cConstants, const double & currentAnneal, const double & anneal_min, const int & generation, int & numNans, double & avgPosDiff, double & avgSpeedDiff, int & duplicateNum, double minDist,  double avgDist, double maxDist, double avgAge, double avgBirthday, int oldestBirthday){
+void reportGeneration (std::vector<Adult> & oldAdults, std::vector<Adult> & allAdults, const cudaConstants* cConstants, const std::vector<double> & objectiveAvgValues, const double & currentAnneal, const int & generation, int & numNans, const int & duplicateNum, const double & minDist, const double & avgDist, const double & maxDist, const double & avgAge, const double & avgBirthday, const int & oldestBirthday){
     // If in recording mode and write_freq reached, call the record method
     if (static_cast<int>(generation) % cConstants->write_freq == 0 && cConstants->record_mode == true) {
-        recordGenerationPerformance(cConstants, oldAdults, generation, currentAnneal, cConstants->num_individuals, anneal_min, avgPosDiff, avgSpeedDiff, duplicateNum, minDist, avgDist, maxDist, avgAge, generation-oldestBirthday, avgBirthday, oldestBirthday);
+        recordGenerationPerformance(cConstants, oldAdults, objectiveAvgValues, generation, currentAnneal, cConstants->num_individuals, duplicateNum, minDist, avgDist, maxDist, avgAge, generation-oldestBirthday, avgBirthday, oldestBirthday);
     }
 
     // Only call terminalDisplay every DISP_FREQ, not every single generation
     if ( static_cast<int>(generation) % cConstants->disp_freq == 0) {
         // Prints the best individual's posDiff / speedDiff
 
+        //Print the generation
+        std::cout << "\nGeneration " << generation << " data:\n";
+
+        //Print the best adult for each objective
+        for (int i = 0; i < cConstants->missionObjectives.size(); i++) {
+            //Sort the oldAdults array by the correct parameter & order
+            parameterSort(oldAdults, cConstants->missionObjectives[i], oldAdults.size());
+
+            //Print the name of the objective
+            std::cout << "\nBest " << cConstants->missionObjectives[i].name << " Individual:";
+            //Display the info to the terminal
+            terminalDisplay(oldAdults[0], cConstants->missionObjectives);
+        }
+        
+        /*
         //best position individual
         std::cout << "\n\nBest Position Individual:";
         std::sort(oldAdults.begin(), oldAdults.end(), LowerPosDiff);
@@ -404,10 +427,12 @@ void reportGeneration (std::vector<Adult> & oldAdults, std::vector<Adult> & allA
             std::sort(oldAdults.begin(), oldAdults.end(), HigherSpeedDiff);
             terminalDisplay(oldAdults[0], generation);
         }
+        */
+
         //display to the terminal the best individual based on rankDistance
         std::cout << "\nBest Rank Distance Individual:";
         std::sort(oldAdults.begin(), oldAdults.end(), rankDistanceSort);
-        terminalDisplay(oldAdults[0], generation);
+        terminalDisplay(oldAdults[0], cConstants->missionObjectives);
 
         //Display number of errors
         std::cout << "\n# of errors this generation: " << numNans << "\n";
@@ -418,7 +443,8 @@ void reportGeneration (std::vector<Adult> & oldAdults, std::vector<Adult> & allA
         //display the oldest individual
         std::cout << "\nOldest age adult: " << generation - oldestBirthday << "\n";
 
-        std::cout << "\nCurrent Progress: " << oldAdults[0].progress << "\n\n";
+        //Display the progress of the best rank distance individual 
+        std::cout << "\nBest rank-distance adult progress: " << oldAdults[0].progress << "\n\n";
         
         //Reset the tally of nans.
         numNans = 0;
@@ -426,7 +452,7 @@ void reportGeneration (std::vector<Adult> & oldAdults, std::vector<Adult> & allA
 
     //Record the parent pool for the next generation
     if (static_cast<int>(generation) % cConstants->all_write_freq == 0 && cConstants->record_mode == true) {
-        recordAllIndividuals("NextParents", cConstants, allAdults, allAdults.size(), generation);
+        recordAllIndividuals("allAdults", cConstants, allAdults, allAdults.size(), generation);
     }
 }
 
@@ -455,9 +481,6 @@ double optimize(const cudaConstants* cConstants) {
 
     // Initial genetic anneal scalar
     double currentAnneal = cConstants->anneal_initial;
-
-    //lower bound for anneal so it does not get too small. Only used with rendezvous mission.
-    double anneal_min = cConstants->anneal_initial;
     
     // Main set of parameters for Genetic Algorithm
     // contains all thread unique input parameters
@@ -485,11 +508,13 @@ double optimize(const cudaConstants* cConstants) {
     //  couting all adults in the generation - includes oldAdults and newAdults that have nan values
     int numNans = 0;
 
-    //Initialize variables needed for distance, average differences, number of duplicate adults, and birthday reporting
-    double avgPositionDiff, avgSpeedDiff;
+    //Initialize variables needed for distance, number of duplicate adults, and birthday reporting
     int duplicateNum = 0;
     double maxDistance, minDistance, avgDistance, avgAge, avgBirthday;
     int oldestBirthday;
+
+    //Vector used to report the average parameter value for each objective
+    std::vector<double> objectiveAvgValues; 
 
     //Creates the individuals needed for the 0th generation
     //Need to make children, then callRK, then make into adults (not currently doing that)
@@ -544,14 +569,14 @@ double optimize(const cudaConstants* cConstants) {
         //Perform utitlity tasks (adjusting anneal and reporting data)
 
         //Calculate variables for birthdays and distances
-        calculateGenerationValues(allAdults, generation, avgPositionDiff, avgSpeedDiff, duplicateNum, minDistance, avgDistance, maxDistance, avgAge, avgBirthday, oldestBirthday);
+        calculateGenerationValues(allAdults, cConstants->missionObjectives, objectiveAvgValues, duplicateNum, minDistance, avgDistance, maxDistance, generation, avgAge, avgBirthday, oldestBirthday);
 
         //Assumes oldAdults is in rankDistance order
         changeAnneal (oldAdults, cConstants, currentAnneal, oldestBirthday, generation);
 
 
         //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE RECORD-_-_-_-_-_-_-_-_-_\n\n";
-        reportGeneration (oldAdults, allAdults, cConstants, currentAnneal, anneal_min, generation, numNans, avgPositionDiff, avgSpeedDiff, duplicateNum, minDistance, avgDistance, maxDistance, avgAge, avgBirthday, oldestBirthday);
+        reportGeneration (oldAdults, allAdults, cConstants, objectiveAvgValues, currentAnneal, generation, numNans, duplicateNum, minDistance, avgDistance, maxDistance, avgAge, avgBirthday, oldestBirthday);
 
         //Test function that will display the size and likely sort of each adult vector
         //      TODO: What should the states be? We should report them here to reference with the actual test
@@ -572,12 +597,12 @@ double optimize(const cudaConstants* cConstants) {
     // for the annealing argument, set to -1 (since the anneal is only relevant to the next generation and so means nothing for the last one)
     // for the numFront argument, set to -1 (just because)
     if (cConstants->record_mode == true) {
-        recordGenerationPerformance(cConstants, oldAdults, generation, currentAnneal, cConstants->num_individuals, anneal_min, avgPositionDiff, avgSpeedDiff, duplicateNum, minDistance, avgDistance, maxDistance, avgAge, generation-oldestBirthday, avgBirthday, oldestBirthday);
+        recordGenerationPerformance(cConstants, oldAdults, objectiveAvgValues, generation, currentAnneal, cConstants->num_individuals, duplicateNum, minDistance, avgDistance, maxDistance, avgAge, generation-oldestBirthday, avgBirthday, oldestBirthday);
     }
     // Only call finalRecord if the results actually converged on a solution
     // also display last generation onto terminal
     if (convergence) {
-        terminalDisplay(oldAdults[0], generation);
+        terminalDisplay(oldAdults[0], cConstants->missionObjectives);
         finalRecord(cConstants, oldAdults, generation);
     }
 

@@ -96,7 +96,7 @@ struct Child {
     //Getter for a parameter dependent on the objective that is passed in
     //It will return the parameter needed for comparisons and the eventual sorting of adults
     //  Parameters include diffs, fuel spent, and triptime
-    __host__ __device__ double getParameters (const objective & requestObjective);
+    __host__ double getParameters (const objective & requestObjective) const;
 
     // Calculates a posDiff value
     // Input: cConstants in accessing properties for the final position of the target (such as r_fin_ast, theta_fin_ast, and z_fin_ast)
@@ -112,7 +112,7 @@ struct Child {
     // Input: cConstants for the tolerances, and the child's posDiff and speedDiff are used
     //        NOTE: This function assumes that the pos/speed diffs have already been calculated
     // Output: the child has been assigned a progress value betweeen 0 and 1
-    __host__ __device__ void getProgress(const cudaConstants* cConstants);
+    __host__ void getProgress(const cudaConstants* cConstants);
 };
 
 #include "child.cpp"

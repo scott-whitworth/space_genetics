@@ -54,9 +54,6 @@ Table 2. Genetic Algorithm Values
 | alpha_mutate_scale           	| double     	| Radians  	| Affects the maximum mutation range for alpha values (maximum mutation for the corresponding parameter is annealing * [this scale])                                                |   	|
 | beta_mutate_scale           	| double     	| Radians  	| Affects the maximum mutation range for beta values (maximum mutation for the corresponding parameter is annealing * [this scale])                                                 |   	|
 | destination                 	| string       	| None  	| used to switch between asteroid files.                                                                                                                                              |     |
-| posDominationTolerance        | double        | None    | Used in the domination method to determine in what range of tolerance two individuals' posDiffs are equal                                                                           |     |
-| speedDominationTolerance        | double        | None    | Used in the domination method to determine in what range of tolerance two individuals speedDiffs are equal                                                                                  |
-
 
 Table 3. Mission Values
 | Variable Name              	| Data Type  	| Units 	| Usage                                                                                                                                                      	                    |   	|

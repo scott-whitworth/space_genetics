@@ -135,38 +135,9 @@ void giveDistance(std::vector<Adult> & allAdults, const cudaConstants* cConstant
 
     //Iterate through the objectives
     for (int i = 0; i < cConstants->missionObjectives.size(); i++) {
-        //Switch statement determines the type of sort needed to be done for the objective
-        switch (static_cast<int>(cConstants->missionObjectives[i].goal)) {
-            case MIN_POS_DIFF:
-                //Sort by lowest pos diff
-                std::sort(allAdults.begin(), allAdults.begin()+validAdults, LowerPosDiff);
-                break;
-
-            case MIN_SPEED_DIFF:
-                //Sort by lowest speed diff
-                std::sort(allAdults.begin(), allAdults.begin()+validAdults, LowerSpeedDiff);
-                break;
-
-            case MIN_FUEL_SPENT:
-                //Sort by the lowest fuel spent
-                std::sort(allAdults.begin(), allAdults.begin()+validAdults, LowerFuelSpent);
-                break;
-
-            case MIN_TRIP_TIME:
-                //sort by the lowest trip time
-                std::sort(allAdults.begin(), allAdults.begin()+validAdults, LowerTripTime);
-                break;
-
-            case MAX_SPEED_DIFF:
-                //Sort by maximum speed diff
-                std::sort(allAdults.begin(), allAdults.begin()+validAdults, HigherSpeedDiff);
-                break;
-
-            default:
-                //No goal identified
-                std::cout << "\n_-_-_-_-_-_-_-_-_-Error Identifying Parameter Goal_-_-_-_-_-_-_-_-_-\n";
-                break;
-        }
+        
+        //Sort allAdults based on the objective's goal
+        parameterSort(allAdults, cConstants->missionObjectives[i], validAdults); 
 
         //Correct sort has been applied, apply the max distance to the extreme valid adults
         allAdults[0].distance = MAX_DISTANCE; 
@@ -178,18 +149,18 @@ void giveDistance(std::vector<Adult> & allAdults, const cudaConstants* cConstant
         double normalParamRight;
 
         //Assign the non-extreme adults distances
-        for(int k = 1; k < validAdults - 1; i++) {
+        for(int j = 1; j < validAdults - 1; j++) {
             //Check to see if the adult's parameter is under convergence
-            if (allAdults[k].getParameters(cConstants->missionObjectives[i]) < cConstants->missionObjectives[i].convergenceThreshold) {
+            if (allAdults[j].getParameters(cConstants->missionObjectives[i]) < cConstants->missionObjectives[i].convergenceThreshold) {
                 //Assign adults who have met the threshold for this parameter the max distance
-                allAdults[k].distance += MAX_DISTANCE;
+                allAdults[j].distance += MAX_DISTANCE;
             }
             //The adults who have not met the convergence threshold have their distances calculated by the normalized difference method
             else {
                 //TODO: are the signs for the =/- 1 right here?
                 //Divide left and right individuals by the worst individual to normalize
-                normalParamLeft = allAdults[k+1].getParameters(cConstants->missionObjectives[i]) / allAdults[validAdults - 1].getParameters(cConstants->missionObjectives[i]);
-                normalParamRight = allAdults[k-1].getParameters(cConstants->missionObjectives[i]) / allAdults[validAdults - 1].getParameters(cConstants->missionObjectives[i]);
+                normalParamLeft = allAdults[j+1].getParameters(cConstants->missionObjectives[i]) / allAdults[validAdults - 1].getParameters(cConstants->missionObjectives[i]);
+                normalParamRight = allAdults[j-1].getParameters(cConstants->missionObjectives[i]) / allAdults[validAdults - 1].getParameters(cConstants->missionObjectives[i]);
 
                 //distance += abs((i+1) - (i-1))
                 allAdults[i].distance += abs((normalParamLeft - normalParamRight));
@@ -253,4 +224,40 @@ void giveDistance(std::vector<Adult> & allAdults, const cudaConstants* cConstant
         }
     }
 */
+}
+
+// Assist function for objectives that sorts an adult vector based on the goal 
+void parameterSort(std::vector<Adult> & adults, const objective& sortObjective, const int & sortSize) {
+    //Switch statement determines the type of sort needed to be done for the objective
+    switch (static_cast<int>(sortObjective.goal)) {
+        case MIN_POS_DIFF:
+            //Sort by lowest pos diff
+            std::sort(adults.begin(), adults.begin()+sortSize, LowerPosDiff);
+            break;
+
+        case MIN_SPEED_DIFF:
+            //Sort by lowest speed diff
+            std::sort(adults.begin(), adults.begin()+sortSize, LowerSpeedDiff);
+            break;
+
+        case MIN_FUEL_SPENT:
+            //Sort by the lowest fuel spent
+            std::sort(adults.begin(), adults.begin()+sortSize, LowerFuelSpent);
+            break;
+
+        case MIN_TRIP_TIME:
+            //sort by the lowest trip time
+            std::sort(adults.begin(), adults.begin()+sortSize, LowerTripTime);
+            break;
+
+        case MAX_SPEED_DIFF:
+            //Sort by maximum speed diff
+            std::sort(adults.begin(), adults.begin()+sortSize, HigherSpeedDiff);
+            break;
+
+        default:
+            //No goal identified
+            std::cout << "\n_-_-_-_-_-_-_-_-_-Error Identifying Parameter Goal_-_-_-_-_-_-_-_-_-\n";
+            break;
+    }
 }

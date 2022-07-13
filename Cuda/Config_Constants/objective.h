@@ -39,12 +39,15 @@ struct objective {
     //      If two individuals compared in a domination check have parameter values better than the domination check, the parameter will not be considered for domination
     double dominationThreshold; 
 
+    //equateTolerance determines the differentiation needed for two parameters to be considered not equal
+    double equateTolerance;
+
     //Default constructor, will set the goal as an error
     objective(): goal(UNKNOWN){}
 
     //Constructor that accepts the information for an objective, should be the only constructor used
-    objective(std::string _name, parameterGoals _goal, double _convergenceThreshold, double _dominationThreshold):
-        name(_name), goal(_goal), convergenceThreshold(_convergenceThreshold), dominationThreshold(_dominationThreshold) {}
+    objective(std::string _name, parameterGoals _goal, double _convergenceThreshold, double _dominationThreshold, double _equateTolerance):
+        name(_name), goal(_goal), convergenceThreshold(_convergenceThreshold), dominationThreshold(_dominationThreshold), equateTolerance(_equateTolerance) {}
 };
 
 #endif

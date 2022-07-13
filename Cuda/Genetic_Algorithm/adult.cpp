@@ -130,19 +130,21 @@ bool dominationCheck(Adult& personA, Adult& personB, const cudaConstants* cConst
                 
                 //Means they haven't met the parameters
                 //First check to see if A's parameter is less than B's parameter (within a tolerance)
-                if (aParam < (bParam - cConstants->dominationTolerance)) {
+                if (aParam < (bParam - cConstants->missionObjectives[i].equateTolerance)) {
                     //Since A is better in at least one parameter, set the aParamBetter flag to true
                     aParamBetter = true;
                 }
                 //If here, it means that the adults haven't met the threshold and that A's parameter is not better than B's
                 //Now there is a check for if A's parameters are worse/larger than B's (within a tolerance)
-                else if (aParam > (bParam + cConstants->dominationTolerance)) {
+                else if (aParam > (bParam + cConstants->missionObjectives[i].equateTolerance)) {
                     //Since a parameter for A is worse than B, A doesn't dominate B, so return false
                     return false; 
                 }
                 //If here (without triggering the first if statement), it must mean that A's and B's params are the same (within a tolerance)
                 //Now, the program will continue on to the next objective (if there are any)
             }
+            // else: both parameters are past the dominationThreshold
+            //       this means: we are ignoring that parameter for domination check
             
         }
         //The maximization objectives operate very similarly to minimization, except that the signs are flipped
@@ -153,13 +155,13 @@ bool dominationCheck(Adult& personA, Adult& personB, const cudaConstants* cConst
                 
                 //Means they haven't met the parameter's tolerance
                 //First check to see if A's parameter is greater than B's parameter (within a tolerance)
-                if (aParam > (bParam + cConstants->dominationTolerance)) {
+                if (aParam > (bParam + cConstants->missionObjectives[i].equateTolerance)) {
                     //Since A is better in at least one parameter, set the aParamBetter flag to true
                     aParamBetter = true;
                 }
                 //If here, it means that the adults haven't met the threshold and that A's parameter is not better than B's
                 //Now there is a check for if A's parameters are worse/smaller than B's (within a tolerance)
-                else if (aParam < (bParam - cConstants->dominationTolerance)) {
+                else if (aParam < (bParam - cConstants->missionObjectives[i].equateTolerance)) {
                     //Since a parameter for A is worse than B, A doesn't dominate B, so return false
                     return false; 
                 }
@@ -172,7 +174,7 @@ bool dominationCheck(Adult& personA, Adult& personB, const cudaConstants* cConst
         }
     }
     //The program have compared the parameters for the adults
-    //  Now, if the program is here it means that A is at least as good as B
+    //  Now, if the program is here it means that A is at least as good as B (for all parameters)
     //  But, this could mean that either A truly dominates B, or they could be duplicates
     //  So, it is necessary to return the status of aParamBetter
     //      If it's true, it means one of A's parameters are better than B, and since the other parameters are at least as good, A dominates B
@@ -303,14 +305,14 @@ bool rankDistanceSort(const Adult& personA, const Adult& personB) {
 bool duplicateCheck(const Adult& personA, const Adult& personB, const cudaConstants* cConstants){
 
 //For loop will iterate through all objectives/parameters
-for (int i = 0; i < cConstants->missionObjectives[i].size(); i++) {
+for (int i = 0; i < cConstants->missionObjectives.size(); i++) {
     //First check to see if A's parameter for this objective is lower than B's within a tolerance
-    if (personA.getParameters(cConstants->missionObjectives[i]) < (personB.getParameters(cConstants->missionObjectives[i]) - cConstants->dominationTolerance)) {
+    if (personA.getParameters(cConstants->missionObjectives[i]) < (personB.getParameters(cConstants->missionObjectives[i]) - cConstants->missionObjectives[i].equateTolerance)) {
         //Means that one of A's parameters doesn't equal B, so return false
         return false;
     }
     //Now there is a need to check if A's parameter is larger than B's
-    else if (personA.getParameters(cConstants->missionObjectives[i]) > (personB.getParameters(cConstants->missionObjectives[i]) + cConstants->dominationTolerance)) {
+    else if (personA.getParameters(cConstants->missionObjectives[i]) > (personB.getParameters(cConstants->missionObjectives[i]) + cConstants->missionObjectives[i].equateTolerance)) {
         //If here, it means that A's parameter is larger than B's, so they aren't duplicates 
         return false;
     }

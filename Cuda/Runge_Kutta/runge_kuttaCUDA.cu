@@ -140,6 +140,9 @@ __global__ void rk4SimpleCUDA(Child *children, double *timeInitial, double *star
         //Give the child its final calculated position
         children[threadId].finalPos = curPos;
 
+        //Assign how much fuel was spent to the child
+        children[threadId].fuelSpent = massFuelSpent;
+
         //if it is not a SUN_ERROR then it is valid
         children[threadId].errorStatus = VALID;
 

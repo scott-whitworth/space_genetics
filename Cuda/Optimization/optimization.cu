@@ -24,12 +24,10 @@
 //----------------------------------------------------------------------------------------------------------------------------
 // ** Assumes pool is sorted array of Adults **
 // Used in determining if main optimize loop continues
-// Input: posTolerance - posDiff threshold, determines max target distance
-//        speedTolerance - speedDiff threshold, determines max speed at target
-//        oldAdults - this generation of Adults, defined/initialized in optimimize
+// Input: oldAdults - this generation of Adults, defined/initialized in optimimize
 //        cConstants - struct holding config values, used for accessing best_count value
 // Output: Returns true if top best_count adults within the pool are within the tolerance
-bool checkTolerance(double posTolerance, double speedTolerance, const std::vector<Adult> & oldAdults, const cudaConstants* cConstants);
+bool checkTolerance(const std::vector<Adult> & oldAdults, const cudaConstants* cConstants);
 
 //----------------------------------------------------------------------------------------------------------------------------
 // TEST / LIKELY TEMPORARY FUNCTION
@@ -221,7 +219,7 @@ int main () {
     cudaSetDevice(0);
 
     // Declare the genetic constants used, with file path being used to receive initial values
-    cudaConstants * cConstants = new cudaConstants("../Config_Constants/genetic.config"); 
+    cudaConstants * cConstants = new cudaConstants(); 
 
     //test_main();
 
@@ -258,8 +256,40 @@ int main () {
 }
 
 //Returns true if top best_count adults within the oldAdults vector are within the tolerance
-bool checkTolerance(double posTolerance, double speedTolerance, const std::vector<Adult>& oldAdults, const cudaConstants* cConstants) {
+bool checkTolerance(const std::vector<Adult>& oldAdults, const cudaConstants* cConstants) {
+//The function needs to check if the best adult meets the convergence tolerance for each objective
+//Iterate through the objectives
+for (int i = 0; i < cConstants->missionObjectives.size(); i++) {
+    //Check to see if the goal for this objective is to minimize or maximize the parameter 
+    if (cConstants->missionObjectives[i].goal < 0) {//Minimization
+        
+        //Check to see if the adult's parameter is larger than the convergence 
+        if (oldAdults[0].getParameters(cConstants->missionObjectives[i]) > cConstants->missionObjectives[i].convergenceThreshold) {
+            //Return false as a parameter that needs to be minimized is larger than the convergence threshold
+            return false;
+        }
+    }
+    else if (cConstants->missionObjectives[i].goal > 0) {//Maximization
 
+        //Check to see if the adult's parameter is smaller than the convergence 
+        if (oldAdults[0].getParameters(cConstants->missionObjectives[i]) < cConstants->missionObjectives[i].convergenceThreshold) {
+            //Return false as a parameter that needs to be maximized is smaller than the convergence threshold
+            return false;
+        }
+    }
+    //No mission type was identified 
+    else {
+        std::cout << "\n_-_-_-_-_-_-_-_-_-Error Identifying Parameter Goal_-_-_-_-_-_-_-_-_-\n";
+    }
+
+    //If the program reaches this spot, it means all of the adult's parameters have met the convergence threshold
+    //  Otherwise, the function would have already returned false
+    //  Thus, the adult has converged and it is appropriate to return true
+    return true; 
+}
+
+//------------------------------------------ OLD CODE ------------------------------------------//
+/*
     //Check what type of mission is running to use the correct posDiff function
     if (cConstants->missionType == Rendezvous){
         // Iterate to check best_count number of 'top' individuals
@@ -288,6 +318,7 @@ bool checkTolerance(double posTolerance, double speedTolerance, const std::vecto
 
     // If iterated through and all were within tolerance, success
     return true;
+*/
 }
 
 //Function that will calculate distance and birthday values for a generation
@@ -529,7 +560,7 @@ double optimize(const cudaConstants* cConstants) {
         // Before replacing new adults, determine whether all are within tolerance
         // Determines when loop is finished
         //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE CONVERGENCE CHECK-_-_-_-_-_-_-_-_-_\n\n";
-        convergence = checkTolerance(cConstants->pos_threshold, cConstants->speed_threshold, oldAdults, cConstants);
+        convergence = checkTolerance(oldAdults, cConstants);
         
         //Increment the generation counter
         ++generation;

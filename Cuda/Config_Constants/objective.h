@@ -17,7 +17,7 @@ enum parameterGoals {
     UNKNOWN = 0, 
 
     //Maximization goals
-    MAX_SPEED_DIFF = 1, 
+    MAX_SPEED_DIFF = 2, 
 };
 
 //This structure holds the necessary information for a program objective

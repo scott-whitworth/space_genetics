@@ -23,6 +23,8 @@ struct Child {
 
     double posDiff; // in AU, difference in position between spacecraft and center of asteroid at end of run
     double speedDiff; // in AU/s, difference in velocity between spacecraft and asteroid at end of run
+    double fuelSpent; // in kg, the amount of fuel spent by the individual during its simulation
+
     double progress; //progress of the individual's posDiff and speedDiff. 0 to 1 scale with 0 being poor and 1 meaning that the individual have completed all objectives
     double avgParentProgress; //The average of the two parents progress
 
@@ -91,6 +93,11 @@ struct Child {
 
 //!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  
+    //Getter for a parameter dependent on the objective that is passed in
+    //It will return the parameter needed for comparisons and the eventual sorting of adults
+    //  Parameters include diffs, fuel spent, and triptime
+    __host__ __device__ double getParameters (const objective & requestObjective);
+
     // Calculates a posDiff value
     // Input: cConstants in accessing properties for the final position of the target (such as r_fin_ast, theta_fin_ast, and z_fin_ast)
     // Output: Assigns and returns this individual's posDiff value

@@ -10,15 +10,15 @@ Adult::Adult(){
 //!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Compare two individuals by their positional difference values, used in standard sort to have array contain lowest posDiff individual at start
 // input: two individuals
-// output: returns true if personB has a higher positional difference than personA
+// output: returns true if personB has a higher positional difference than personA or true/false based on the adults' error statuses
 bool LowerPosDiff(Adult& personA, Adult& personB) {
     if(personA.errorStatus !=  VALID && personA.errorStatus != DUPLICATE){
         return false;
     }
-    if(personB.errorStatus !=  VALID && personB.errorStatus != DUPLICATE){
+    else if(personB.errorStatus !=  VALID && personB.errorStatus != DUPLICATE){
         return true;
     }
-    if (personA.posDiff < personB.posDiff) {
+    else if (personA.posDiff < personB.posDiff) {
         return true;
     }
     else {
@@ -31,7 +31,13 @@ bool LowerPosDiff(Adult& personA, Adult& personB) {
 // input: two individuals
 // output: returns true if personB has a lower velocity difference than personA
 bool HigherSpeedDiff(const Adult& personA, const Adult& personB) {
-    if (personA.speedDiff > personB.speedDiff) {
+    if(personA.errorStatus !=  VALID && personA.errorStatus != DUPLICATE){
+        return false;
+    }
+    else if(personB.errorStatus !=  VALID && personB.errorStatus != DUPLICATE){
+        return true;
+    }
+    else if (personA.speedDiff > personB.speedDiff) {
         return true;
     }
     else {
@@ -43,13 +49,54 @@ bool HigherSpeedDiff(const Adult& personA, const Adult& personB) {
 // input: two individuals
 // output: returns true if personA has a lower velocity difference than personB
 bool LowerSpeedDiff(const Adult& personA, const Adult& personB) {
-    if (personA.speedDiff < personB.speedDiff) {
+    if(personA.errorStatus !=  VALID && personA.errorStatus != DUPLICATE){
+        return false;
+    }
+    else if(personB.errorStatus !=  VALID && personB.errorStatus != DUPLICATE){
+        return true;
+    }
+    else if (personA.speedDiff < personB.speedDiff) {
         return true;
     }
     else {
         return false;
     }
+}
 
+// Compare two individuals by their spent fuel values, used in standard sort to have array contain lowest fuel spent individual at start
+// input: two individuals
+// output: returns true if personA has a smaller amount of fuel used than personB
+bool LowerFuelSpent(const Adult& personA, const Adult& personB) {
+    if(personA.errorStatus !=  VALID && personA.errorStatus != DUPLICATE){
+        return false;
+    }
+    else if(personB.errorStatus !=  VALID && personB.errorStatus != DUPLICATE){
+        return true;
+    }
+    else if (personA.fuelSpent < personB.fuelSpent) {
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
+// Compare two individuals by their triptime values, used in standard sort to have array contain lowest triptime individual at start
+// input: two individuals
+// output: returns true if personA has a lower triptime than personB
+bool LowerTripTime(const Adult& personA, const Adult& personB) {
+    if(personA.errorStatus !=  VALID && personA.errorStatus != DUPLICATE){
+        return false;
+    }
+    else if(personB.errorStatus !=  VALID && personB.errorStatus != DUPLICATE){
+        return true;
+    }
+    else if (personA.startParams.tripTime < personB.startParams.tripTime) {
+        return true;
+    }
+    else {
+        return false;
+    }
 }
 
 //!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -57,7 +104,83 @@ bool LowerSpeedDiff(const Adult& personA, const Adult& personB) {
 //Returns true if personA dominates personB.
 //returns false if personA does not dominate personB.
 bool dominationCheck(Adult& personA, Adult& personB, const cudaConstants* cConstants) {
+    //Tracks if person A is better than person B in at least some compared parameter
+    //  Domination requires only one parameter to be better for A to be better than B (as long as the others are at least equal)
+    //  Thus, bool will start as false, so any parameter where A is better than B makes the bool true
+    bool aParamBetter = false;
+
+    //For loop will run through the objectives to check all necessary parameters against eachother
+    //  If it is found that A has worse parameters than B (when tolerance has not been met), it will return false since A needs to be at least equal to dominate
+    for (int i = 0; i < cConstants->missionObjectives.size(); i++) {
+
+        //Create temp doubles to store the adults' parameters that will be compared
+        double aParam = personA.getParameters(cConstants->missionObjectives[i]);
+        double bParam = personB.getParameters(cConstants->missionObjectives[i]);
+        
+        //First check determines if the goal is to favor higher values or if it is to favor lower values
+        //  This is done by looking at the value of the objective's goal
+        //  If it is below 0, it means that the program seeks to minimize
+        //  Otherwise, if it is above 0, the program seeks to maximize
+        //  A value of 0 means there is an error with the goal
+        //This is needed because the signs of the comparisons need to be changed
+        if (cConstants->missionObjectives[i].goal < 0) {
+            //While not converged ...
+            if ( !(aParam < cConstants->missionObjectives[i].dominationThreshold
+                && bParam < cConstants->missionObjectives[i].dominationThreshold) ) {
+                
+                //Means they haven't met the parameters
+                //First check to see if A's parameter is less than B's parameter (within a tolerance)
+                if (aParam < (bParam - cConstants->dominationTolerance)) {
+                    //Since A is better in at least one parameter, set the aParamBetter flag to true
+                    aParamBetter = true;
+                }
+                //If here, it means that the adults haven't met the threshold and that A's parameter is not better than B's
+                //Now there is a check for if A's parameters are worse/larger than B's (within a tolerance)
+                else if (aParam > (bParam + cConstants->dominationTolerance)) {
+                    //Since a parameter for A is worse than B, A doesn't dominate B, so return false
+                    return false; 
+                }
+                //If here (without triggering the first if statement), it must mean that A's and B's params are the same (within a tolerance)
+                //Now, the program will continue on to the next objective (if there are any)
+            }
+            
+        }
+        //The maximization objectives operate very similarly to minimization, except that the signs are flipped
+        else if (cConstants->missionObjectives[i].goal > 0) {
+            //Check to see if see if the parameters are both above/better than the tolerence, which means that no comparison will be necessary
+            if ( !(aParam > cConstants->missionObjectives[i].dominationThreshold
+                && bParam > cConstants->missionObjectives[i].dominationThreshold) ) {
+                
+                //Means they haven't met the parameter's tolerance
+                //First check to see if A's parameter is greater than B's parameter (within a tolerance)
+                if (aParam > (bParam + cConstants->dominationTolerance)) {
+                    //Since A is better in at least one parameter, set the aParamBetter flag to true
+                    aParamBetter = true;
+                }
+                //If here, it means that the adults haven't met the threshold and that A's parameter is not better than B's
+                //Now there is a check for if A's parameters are worse/smaller than B's (within a tolerance)
+                else if (aParam < (bParam - cConstants->dominationTolerance)) {
+                    //Since a parameter for A is worse than B, A doesn't dominate B, so return false
+                    return false; 
+                }
+                //If here (without triggering the first if statement), it must mean that A's and B's params are the same (within a tolerance)
+                //Now, the program will continue on to the next objective (if there are any)
+            }
+        }
+        else {
+            std::cout << "\n_-_-_-_-_-_-_-_-_-Error Identifying Parameter Goal_-_-_-_-_-_-_-_-_-\n";
+        }
+    }
+    //The program have compared the parameters for the adults
+    //  Now, if the program is here it means that A is at least as good as B
+    //  But, this could mean that either A truly dominates B, or they could be duplicates
+    //  So, it is necessary to return the status of aParamBetter
+    //      If it's true, it means one of A's parameters are better than B, and since the other parameters are at least as good, A dominates B
+    //      If it is fale, all of A's values are the same as B, which means they are duplicates
+    return aParamBetter; 
     
+//------------------------------------------ OLD CODE ------------------------------------------//
+    /*
     //Is true if A is at least equally as good as B for all objectives
     bool AisEqual = false;
     //Is true if A is better than B for at least one objective
@@ -129,7 +252,6 @@ bool dominationCheck(Adult& personA, Adult& personB, const cudaConstants* cConst
         //std::cout << "\n\nDomination check returns FALSE";
         return false;
     }
-    /*
     */
 }
 
@@ -139,7 +261,7 @@ bool dominationCheck(Adult& personA, Adult& personB, const cudaConstants* cConst
 //         For example, if all the individuals are rank 1, sorting them using this method will do nothing. 
 //input: two individuals
 //output: if person A's rank is lower than person B's rank, return true
-bool rankSort(const Adult& personA, const Adult& personB){
+bool rankSort(const Adult& personA, const Adult& personB) {
     if(personA.errorStatus != VALID && personA.errorStatus != DUPLICATE){ //if personA has nan values or other errors they are set as worse than other adults (even other adults with errors)
         return false;
     }
@@ -180,6 +302,27 @@ bool rankDistanceSort(const Adult& personA, const Adult& personB) {
 
 bool duplicateCheck(const Adult& personA, const Adult& personB, const cudaConstants* cConstants){
 
+//For loop will iterate through all objectives/parameters
+for (int i = 0; i < cConstants->missionObjectives[i].size(); i++) {
+    //First check to see if A's parameter for this objective is lower than B's within a tolerance
+    if (personA.getParameters(cConstants->missionObjectives[i]) < (personB.getParameters(cConstants->missionObjectives[i]) - cConstants->dominationTolerance)) {
+        //Means that one of A's parameters doesn't equal B, so return false
+        return false;
+    }
+    //Now there is a need to check if A's parameter is larger than B's
+    else if (personA.getParameters(cConstants->missionObjectives[i]) > (personB.getParameters(cConstants->missionObjectives[i]) + cConstants->dominationTolerance)) {
+        //If here, it means that A's parameter is larger than B's, so they aren't duplicates 
+        return false;
+    }
+}
+
+//If the program is here, it means that it has gone through all of A's and B's parameters without returning false
+//  This measn that it didn't find any differences in the parameters, so they are duplicates
+//  Thus, we need to return true
+return true; 
+
+//------------------------------------------ OLD CODE ------------------------------------------//
+    /*
     //true if A posDiff "equals" B posDiff
     bool APosEqualsB = false;
     //true if A speedDiff "equals" B speedDiff
@@ -206,6 +349,7 @@ bool duplicateCheck(const Adult& personA, const Adult& personB, const cudaConsta
         
         return false;
     }
+    */
 }
 
 //Find the duplicates within the imported vector

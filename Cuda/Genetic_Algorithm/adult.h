@@ -52,6 +52,9 @@ struct Adult: public Child {
     // NOTE: This will be called by convertToAdults within newGeneration & ga_crossover.cu. Children that have just been simulated will be converted from a child into an adult
     Adult(const Child& c): Child(c), rank(INT_MAX), distance(-1){}
 
+    //Getter for a parameter dependent on the objective that is passed in
+    double getParameters (objective requestObjective);
+
     #ifdef UNITTEST //this should be defined in unit testing
 
     // Constructor used ONLY FOR UNIT TESTING!!!
@@ -90,6 +93,16 @@ bool HigherSpeedDiff(const Adult& personA, const Adult& personB);
 // output: returns true if personB has a lower velocity difference than personA
 bool LowerSpeedDiff(const Adult& personA, const Adult& personB);
 
+// Compare two individuals by their spent fuel values, used in standard sort to have array contain lowest fuel spent individual at start
+// input: two individuals
+// output: returns true if personA has a smaller amount of fuel used than personB
+bool LowerFuelSpent(const Adult& personA, const Adult& personB);
+
+// Compare two individuals by their triptime values, used in standard sort to have array contain lowest triptime individual at start
+// input: two individuals
+// output: returns true if personA has a lower triptime than personB
+bool LowerTripTime(const Adult& personA, const Adult& personB);
+
 //!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 //Compare two adults to see if the first adult dominates the second adult
 //Returns true if personA dominates personB.
@@ -113,6 +126,7 @@ bool rankSort(const Adult& personA, const Adult& personB);
 //      It is used in reportGeneration to print the best performing individual 
 bool rankDistanceSort(const Adult& personA, const Adult& personB);
 
+//!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 //compares two adults to see if they have the same posDiff and speedDiff
 //Input: Two adults and cConstants for the tolerances
 //Output: true if they have the same posDiff and speedDiff, false if they don't

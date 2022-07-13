@@ -19,15 +19,7 @@ struct cudaConstants {
     bool record_mode;    // If set to true, functions that record information onto files such as genPerformance.csv.  The code still records a valid solution regardless of this setting
     std::string initial_start_file_address; // If random_start is false, use file_address to find what file is being used for the initial start
     
-    double pos_threshold; // maximum distance for how close the spacecraft must be to the asteroid at end of its trajectory (AU) in the algorithm, also is what determines if a trajectory is considered a solution
-    double speed_threshold; // maximum distance for how fast the spacecraft must be going when it reaches the asteroid
-    double posDominationTolerance; //Tolerance for individual posDiff equality in dominates function
-    double speedDominationTolerance; //Tolerance for individual speedDiff equality in dominates function
-    double posDominationThreshold; //The limit of how low posDiff can be before it stops dominating others with posDiffs just as low
-    double speedDominationThreshold; //The limit of how low speedDiff can be before it stops dominating others with speedDiffs just as low
-    double distanceTolerance; //Tolerance for how small an adult's distance has to be for it to be considered a duplicate
-
-    double costThreshold; // Determines the goal for the generation's cost; it is used to to calculate anneal
+    double dominationTolerance; //Tolerance for how close 2 adults' parameters need to be to be considered equal
 
     int write_freq;       // Determine how many generations between calling recordGenerationPerformance() method (defined in Output_Funcs/output.cpp)
     int all_write_freq;   // Determine how many generations between calling recordAllIndividuals() method (defined in Output_Funcs/output.cpp)
@@ -122,7 +114,7 @@ struct cudaConstants {
     std::vector<objective> missionObjectives; 
 
     // Default constructor, sets the config file path to be "genetic.config" for geneticFileRead()
-    cudaConstants(){}
+    cudaConstants();
 
     // Constructor, accepts a string argument for the config file path
     cudaConstants(std::string configFile);

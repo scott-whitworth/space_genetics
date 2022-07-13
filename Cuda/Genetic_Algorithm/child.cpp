@@ -48,12 +48,35 @@ Child:: Child(const Child& other){
     finalPos = other.finalPos;
     posDiff = other.posDiff; 
     speedDiff = other.speedDiff;
+    fuelSpent = other.fuelSpent;
     funcStatus = other.funcStatus;
     errorStatus = other.errorStatus;
     birthday = other.birthday;
     avgParentProgress = other.avgParentProgress;
     progress = other.progress;
 
+}
+
+//Getter for a parameter dependent on the objective that is passed in
+__host__ __device__ double Child::getParameters (const objective & requestObjective) {
+    //if/esle tree will go find the parameter goal of the request objective and return the associated value
+    if (requestObjective.goal == MIN_POS_DIFF) {
+        return posDiff;
+    }
+    else if (requestObjective.goal == MIN_SPEED_DIFF || requestObjective.goal == MAX_SPEED_DIFF) {
+        return speedDiff;
+    }
+    else if (requestObjective.goal == MIN_FUEL_SPENT) {
+        return fuelSpent;
+    }
+    else if (requestObjective.goal == MIN_TRIP_TIME) {
+        return startParams.tripTime; 
+    }
+    else {
+        //Inducates error
+        std::cout << "\n_-_-_-_-_-_-_-_-_-Error Identifying Parameter Goal_-_-_-_-_-_-_-_-_-\n";
+        return -1;
+    }
 }
 
 //!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -66,9 +89,6 @@ __host__ __device__ double Child::getPosDiff(const cudaConstants* cConstants) {
     if (errorStatus == VALID || errorStatus == DUPLICATE) {
         //posDiff = sqrt(delta(r)^2 + delta(theta)^2 - r*fmod(theta, 2pi) + delta(z)^2 ) -> magnitude of delta(position)
         posDiff = sqrt(pow(cConstants->r_fin_ast - finalPos.r, 2) + pow( (cConstants->r_fin_ast * cConstants->theta_fin_ast) - (finalPos.r * fmod(finalPos.theta, 2 * M_PI)), 2) + pow(cConstants->z_fin_ast - finalPos.z, 2));
-    }
-    else {
-        posDiff = BAD_POSDIFF;
     }
 
     return posDiff;
@@ -89,22 +109,67 @@ __host__ __device__ double Child::getSpeedDiff(const cudaConstants* cConstants) 
         //                    vDiff = abs(v_ast - v_pos)?
         speedDiff = sqrt(pow(cConstants->vr_fin_ast - finalPos.vr, 2) + pow(cConstants->vtheta_fin_ast - finalPos.vtheta, 2) + pow(cConstants->vz_fin_ast - finalPos.vz, 2)); 
     }
-    else {
-        //The bad speedDiff is dependent on the type of mission; a high speedDiff is bad for rendezvous missions and a low speedDiff is bad for impact missions
-        if (cConstants -> missionType == Impact)
-        {
-            speedDiff = BAD_IMPACT_SPEEDDIFF;
-        }
-        else {
-            speedDiff = BAD_RENDEV_SPEEDDIFF;
-        }
-        
-    }
+
     return speedDiff;
 }
 
 __host__ __device__ void Child::getProgress(const cudaConstants* cConstants) {
 
+//Holds the progress of the child before it is actually assigned to the child
+//  The relative costs of each objective will be added to it
+//  It will then be divided by the number of objectives and assigned to the child
+double calcProgress = 0; 
+
+//Iterate through the objectives
+for (int i = 0; i < cConstants->missionObjectives.size(); i++) {
+    //Check to see if the goal for this objective is to minimize or maximize the parameter 
+    //  Necessary because the progress values are calculated differently depending on the direction 
+    //  See the objective header for details on how objective direction is determined
+    if (cConstants->missionObjectives[i].goal < 0) {//Minimization
+        
+        //See if the child has met the the convergence threshold for this parameter
+        if (getParameters(cConstants->missionObjectives[i]) < cConstants->missionObjectives[i].convergenceThreshold) {
+            //Add one to the progress to signify that the parameter has met the goal
+            calcProgress += 1; 
+        }
+        //The child hasn't met the parameter goal
+        else {
+            //Add the progress for this parameter to the goal
+            //For minimization, the progress is the parameter divided by the threshold
+            calcProgress += (getParameters(cConstants->missionObjectives[i])/cConstants->missionObjectives[i].convergenceThreshold); 
+        }
+    }
+    //Maximization is very similar minimization, but the signs are flipped and an inverse fraction is used
+    else if (cConstants->missionObjectives[i].goal > 0) {//Maximization
+        
+        //See if the child has met the the convergence threshold for this parameter
+        if (getParameters(cConstants->missionObjectives[i]) > cConstants->missionObjectives[i].convergenceThreshold) {
+            //Add one to the progress to signify that the parameter has met the goal
+            calcProgress += 1; 
+        }
+        //The child hasn't met the parameter goal
+        else {
+            //Add the progress for this parameter to the goal
+            //For maximization, the progress is the threshold divided by the parameter
+            calcProgress += (cConstants->missionObjectives[i].convergenceThreshold/getParameters(cConstants->missionObjectives[i])); 
+        }
+    }
+    //No mission type was identified 
+    else {
+        std::cout << "\n_-_-_-_-_-_-_-_-_-Error Identifying Parameter Goal_-_-_-_-_-_-_-_-_-\n";
+    }
+}
+
+//The total cost has been calculated
+//It needs to be divided by the number of objectives to find the weighted average progress for each objective
+calcProgress /= cConstants->missionObjectives.size(); 
+
+//Assign the weighted progress to the child
+progress = calcProgress; 
+
+
+//------------------------------------------ OLD CODE ------------------------------------------//
+/*
     //Variables will be used to calculate progress
     //      They both will specifically be used to calculate the adult's diff / goal diff
     //      This prevents a excellent speed diff causing the adult's diff / goal diff to be less than 1
@@ -163,6 +228,7 @@ __host__ __device__ void Child::getProgress(const cudaConstants* cConstants) {
     
     //End the function
     return; 
+*/
 }
 
 //TODO: Long term we need to consider the velocity vector, not just the magnitude

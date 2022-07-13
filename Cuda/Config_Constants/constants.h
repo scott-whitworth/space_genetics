@@ -69,7 +69,7 @@ enum MISSION_PARAMETERS {
 enum MISSION_OPTIMIZATION_TYPES {
     OPTIMIZE_LOW_VALUES = 1,  //Program favors lower values for a parameter
     OPTIMIZE_HIGH_VALUES = 2, //Program favors higher values for a parameter
-}
+};
 
 //This is used in both Child and Adult
 //enumeration to make error status easier to keep track of, as opposed to using hard-coded numbers 

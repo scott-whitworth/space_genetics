@@ -112,10 +112,10 @@ void giveRank(std::vector<Adult> & allAdults, const cudaConstants* cConstants) {
 
 //gives each adult in the allAdults a distance representing how different it is from other individuals
 void giveDistance(std::vector<Adult> & allAdults, const cudaConstants* cConstants){
+    
     //int that counts the number of the valid adults
     int validAdults = 0;
-    int underPosThreshold = 0;
-    int underSpeedThreshold = 0;
+
     //starting rankSort to make sure nans are at the end of the array.
     std::sort(allAdults.begin(), allAdults.end(), rankSort);
 
@@ -132,6 +132,79 @@ void giveDistance(std::vector<Adult> & allAdults, const cudaConstants* cConstant
         //reset each individual's distance
         allAdults[i].distance = 0.0;
     }
+
+    //Iterate through the objectives
+    for (int i = 0; i < cConstants->missionObjectives.size(); i++) {
+        //Switch statement determines the type of sort needed to be done for the objective
+        switch (static_cast<int>(cConstants->missionObjectives[i].goal)) {
+            case MIN_POS_DIFF:
+                //Sort by lowest pos diff
+                std::sort(allAdults.begin(), allAdults.begin()+validAdults, LowerPosDiff);
+                break;
+
+            case MIN_SPEED_DIFF:
+                //Sort by lowest speed diff
+                std::sort(allAdults.begin(), allAdults.begin()+validAdults, LowerSpeedDiff);
+                break;
+
+            case MIN_FUEL_SPENT:
+                //Sort by the lowest fuel spent
+                std::sort(allAdults.begin(), allAdults.begin()+validAdults, LowerFuelSpent);
+                break;
+
+            case MIN_TRIP_TIME:
+                //sort by the lowest trip time
+                std::sort(allAdults.begin(), allAdults.begin()+validAdults, LowerTripTime);
+                break;
+
+            case MAX_SPEED_DIFF:
+                //Sort by maximum speed diff
+                std::sort(allAdults.begin(), allAdults.begin()+validAdults, HigherSpeedDiff);
+                break;
+
+            default:
+                //No goal identified
+                std::cout << "\n_-_-_-_-_-_-_-_-_-Error Identifying Parameter Goal_-_-_-_-_-_-_-_-_-\n";
+                break;
+        }
+
+        //Correct sort has been applied, apply the max distance to the extreme valid adults
+        allAdults[0].distance = MAX_DISTANCE; 
+        allAdults[validAdults-1].distance = MAX_DISTANCE;
+
+        //For each individual besides the upper and lower bounds, make their distance equal to
+        //the current distance + the absolute normalized difference in the function values of two adjacent individuals.
+        double normalParamLeft;
+        double normalParamRight;
+
+        //Assign the non-extreme adults distances
+        for(int k = 1; k < validAdults - 1; i++) {
+            //Check to see if the adult's parameter is under convergence
+            if (allAdults[k].getParameters(cConstants->missionObjectives[i]) < cConstants->missionObjectives[i].convergenceThreshold) {
+                //Assign adults who have met the threshold for this parameter the max distance
+                allAdults[k].distance += MAX_DISTANCE;
+            }
+            //The adults who have not met the convergence threshold have their distances calculated by the normalized difference method
+            else {
+                //TODO: are the signs for the =/- 1 right here?
+                //Divide left and right individuals by the worst individual to normalize
+                normalParamLeft = allAdults[k+1].getParameters(cConstants->missionObjectives[i]) / allAdults[validAdults - 1].getParameters(cConstants->missionObjectives[i]);
+                normalParamRight = allAdults[k-1].getParameters(cConstants->missionObjectives[i]) / allAdults[validAdults - 1].getParameters(cConstants->missionObjectives[i]);
+
+                //distance += abs((i+1) - (i-1))
+                allAdults[i].distance += abs((normalParamLeft - normalParamRight));
+            }
+        }
+        //Distance for this objective has been added to the adults, next objective (if any) will be iterated to
+    }
+    
+    
+    
+//------------------------------------------ OLD CODE ------------------------------------------//
+/*
+
+    int underPosThreshold = 0;
+    int underSpeedThreshold = 0;
     
     //Sort by the first objective function, posDiff
     std::sort(allAdults.begin(), allAdults.begin() + validAdults, LowerPosDiff);
@@ -148,17 +221,7 @@ void giveDistance(std::vector<Adult> & allAdults, const cudaConstants* cConstant
     allAdults[validAdults - 1].distance += MAX_DISTANCE; //+=1
 
 
-    //For each individual besides the upper and lower bounds, make their distance equal to
-    //the current distance + the absolute normalized difference in the function values of two adjacent individuals.
-    double normalPosDiffLeft;
-    double normalPosDiffRight;
-    for(int i = underPosThreshold + 1; i < validAdults - 1; i++){
-        //Divide left and right individuals by the worst individual to normalize
-        normalPosDiffLeft = allAdults[i+1].posDiff/allAdults[validAdults - 1].posDiff;
-        normalPosDiffRight = allAdults[i-1].posDiff/allAdults[validAdults - 1].posDiff;
-        //distance = distance + abs((i+1) - (i-1))
-        allAdults[i].distance = allAdults[i].distance + abs((normalPosDiffLeft - normalPosDiffRight));// /(allAdults[validAdults - 1].posDiff - allAdults[0].posDiff));
-    }
+    
     //Repeat above process for speedDiff
     if(cConstants->missionType == Rendezvous){//only do this for the rendezvous mission since it has 2 objectives
         std::sort(allAdults.begin(), allAdults.begin() + validAdults, LowerSpeedDiff);
@@ -189,4 +252,5 @@ void giveDistance(std::vector<Adult> & allAdults, const cudaConstants* cConstant
             allAdults[i].distance = allAdults[i].distance + abs((normalSpeedDiffLeft - normalSpeedDiffRight));// /(allAdults[validAdults - 1].speedDiff - allAdults[0].speedDiff));
         }
     }
+*/
 }

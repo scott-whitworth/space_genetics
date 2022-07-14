@@ -104,7 +104,7 @@ bool LowerTripTime(const Adult& personA, const Adult& personB);
 //Compare two adults to see if the first adult dominates the second adult
 //Returns true if personA dominates personB.
 //returns false if personA does not dominate personB.
-//used for rendezvous mission in optimization
+//  This could mean A is worse in some way from B or A and B are duplicates
 bool dominationCheck(Adult& personA, Adult& personB, const cudaConstants* cConstants);
 
 //Compare two adults by their rank
@@ -131,6 +131,7 @@ bool duplicateCheck(const Adult& personA, const Adult& personB, const cudaConsta
 
 //Will take the given adult vector and find any duplicate adults
 //Input:    adults - Vector of adults that will be searched through
+//          cConstants - the cuda constants
 //          currentAnneal - for changeing the duplicate tolerance
 //Output:   Duplicate individuals within the adults array will have their error status set to duplicate
 //NOTE: Ideally, this function should be used after combining old/newAdults into allAdults
@@ -138,10 +139,10 @@ bool duplicateCheck(const Adult& personA, const Adult& personB, const cudaConsta
 //NOTE: This function does not assume the adults have been sorted
 void findDuplicates (std::vector<Adult>& adults, const cudaConstants* cConstants, const double& currentAnneal);
 
+//!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 //test version of duplicateCheck that does not use cConstants
 bool duplicateCheckTest(const Adult& personA, const Adult& personB);
 
-//!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 //Compare two adults to see if the first adult dominates the second adult
 //Returns true if personA dominates personB.
 //returns false if personA does not dominate personB.

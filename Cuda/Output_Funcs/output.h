@@ -55,19 +55,18 @@ void initializeRecord(const cudaConstants * cConstants);
 // assumes initializeRecord() had already been called before (therefore no need to output a header row)
 // input: cConstants - access time_seed to derive file name
 //        pool - access individuals of current generation, assumed to be ordered by cost
+//        objectiveAvgValues - a vectors with a size matching the number of objectives
+//              Each index holds the average generation value of the parameter associated with the matching objective
 //        generation - record current generation
 //        new_anneal - outputs the current generation's anneal
-//        anneal_min - outputs the current generation's anneal_min
 //        poolSize - to know size of the pool, currently unused
-//        avgPosDiff - the generation-wide average position difference
-//        avgSpeedDiff - the generation-wide average speed difference
 //        duplicateNum - the number of duplicate adults found
 //        minDist - minimum distance for the generation
 //        avgDist - average distance for the generation
 //        maxDist - the max distance for the generation
 //        avgAge - the generation-adjusted average generation age
-//        avgBirthday - the non-generation-adjusted average generation age
 //        oldestAge - the generation-adjusted oldest generation age
+//        avgBirthday - the non-generation-adjusted average generation age
 //        oldestBirthday - the non-generation-adjusted oldest generation age
 // output: genPerformanceT-[time_seed].csv is appended parameter information on the best individual in pool
 void recordGenerationPerformance(const cudaConstants * cConstants, std::vector<Adult>& pool, const std::vector<double>& objectiveAvgValues, const int& generation, const double& new_anneal, const int& poolSize, const int& duplicateNum, const double& minDist, const double& avgDist, const double& maxDist, const double& avgAge, const int& oldestAge, const double& avgBirthday, const int& oldestBirthday);

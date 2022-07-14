@@ -28,13 +28,13 @@ struct Child {
     double progress; //progress of the individual's posDiff and speedDiff. 0 to 1 scale with 0 being poor and 1 meaning that the individual have completed all objectives
     double avgParentProgress; //The average of the two parents progress
 
+    int birthday; //keeps track of the generation this individual was created in 
+
     //Both status and error_status are defined in constants.h
 
     STATUS funcStatus;//flag that keeps track of the status of the child (and eventually adult)
     
     ERROR_STATUS errorStatus; //record of if child is computed correctly, should be set in callRK
-
-    int birthday; //keeps track of the generation this individual was created in 
 
 
 //!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -96,6 +96,9 @@ struct Child {
     //Getter for a parameter dependent on the objective that is passed in
     //It will return the parameter needed for comparisons and the eventual sorting of adults
     //  Parameters include diffs, fuel spent, and triptime
+    // Inputs: requestObjective - the objective which will be used to grab the right parameter from the child
+    // Output: the parameter that is relevent to the objective
+    //              Could be posDiff, fuelSpent, tripTime, etc
     __host__ double getParameters (const objective & requestObjective) const;
 
     // Calculates a posDiff value

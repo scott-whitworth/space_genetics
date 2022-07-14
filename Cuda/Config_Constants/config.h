@@ -104,14 +104,11 @@ struct cudaConstants {
     //asteroid orbital constant
     double orbitalPeriod;
 
-    //Flag for what type of landing you want. Current modes: "soft"=1, "hard"=2
-    int missionType;
-
     //Vector of objectives that will be solved by the program
     //  For more information of what the objective class holds, look at it's header file
     std::vector<objective> missionObjectives; 
 
-    // Default constructor, sets the config file path to be "genetic.config" for geneticFileRead()
+    // Default constructor, assumes the files being pulled are genetic.config and mission.config
     cudaConstants();
 
     // Constructor, accepts a string argument for the config file path

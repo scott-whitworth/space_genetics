@@ -14,15 +14,17 @@
 //----------------------------------------------------------------------------------------------------------------------------
 //Used to give rankings for sorting based on non-dominated sorting method. Used for rendezvous mission
 //Assigns suitability rank to all adults.
-//Input: pool - this generation of adults, defined/initialized in optimimize
-//       cConstants
+//Inputs: allAdults - this generation of adults, will be compared to eachother to find rank
+//        cConstants - the cuda constants
+//Output: the adults in allAdults will have been assigned a rank
 void giveRank(std::vector<Adult> & allAdults, const cudaConstants* cConstants);
 
 //----------------------------------------------------------------------------------------------------------------------------
 // Gives a distance value to each adult. A higher distance indicates that it is more diverse from other adults
 // The distance is how different an adult is from the two adults closest to it for each objective function.
-// Input: pool - the full pool of 2N adults excluding NaNs
-//        poolSize - the poolSize of all the adults excluding NaNs
+// Inputs: allAdults - the vector of adults which will have their distances calculated
+//         cConstants - the cuda constants
+// Output: Calculates the distance for all individuals in the pool
 void giveDistance(std::vector<Adult> & allAdults, const cudaConstants* cConstants);
 
 //----------------------------------------------------------------------------------------------------------------------------

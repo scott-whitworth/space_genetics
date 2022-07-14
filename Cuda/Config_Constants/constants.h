@@ -15,15 +15,6 @@
 #define constG 1.99349603314131e-44 // gravitational constant- used to calculate the gravitational force (AU^3/(s^2 * kg)) 
 #define massSun 1.988500e30 // mass of the sun (kg)
 
-//Definitions for mission type
-#define Rendezvous 2 //Solving for speed and position
-#define Impact 1 //Solving for just position
-
-//Definitions for the number of mission paramters per mission type
-//      NOTE: Long-term, these should be dependent on settings within each mission's parameters, this is a temportary measure
-#define RENDEZVOUS_MISSION_PARAMETER_COUNT 2 
-#define IMPACT_MISSION_PARAMETER_COUNT 1 
-
 // Starting location and sizes in the optimization array for navigation to access specific values
 // Note: array sizes must be odd, coinciding with their use in computing Fourier series
 // Reason why these 3 values are not in config is due to need for static expected memory with the GPU,
@@ -61,12 +52,6 @@ enum MISSION_PARAMETERS {
     TRIP_TIME = 3,      //The time an individual takes to complete its mission
 };
 
-//Second enumeration assists with identifying how the program should optimize the parameters
-enum MISSION_OPTIMIZATION_TYPES {
-    OPTIMIZE_LOW_VALUES = 1,  //Program favors lower values for a parameter
-    OPTIMIZE_HIGH_VALUES = 2, //Program favors higher values for a parameter
-};
-
 //This is used in both Child and Adult
 //enumeration to make error status easier to keep track of, as opposed to using hard-coded numbers 
 //could be removed in the future, included for now to check if the default constructor is being used
@@ -86,11 +71,6 @@ enum ERROR_STATUS{
     OTHER_ERROR = 5,   //any nans not caught during callRk are set to this error status in optimization
 };
 
-
-//Error values for nans to be changed to, used in callRK and optimization when finding nans
-#define BAD_POSDIFF          10 //a bad posDiff for either mission to have (10 AU)
-#define BAD_RENDEV_SPEEDDIFF 10 //a bad speedDiff for a rendezvous mission to have (10 AU/s)
-#define BAD_IMPACT_SPEEDDIFF 0  //a bad speedDiff for an impact mission to have (0 AU/s)
 #define MAX_DISTANCE         1  //max distance for giveDistance, assigned to adults on the boundaries (AKA best and worst adults) - used to be 1.0e+12
 
 

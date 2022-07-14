@@ -12,10 +12,14 @@
 // --- This file includes functions used to calculate anneal ---
 
 //----------------------------------------------------------------------------------------------------------------------------
-//Input: current anneal and dRate
-//Output: an update of the anneal and dRate based on the tolerance and changeInBest
-//Function that adjusts the anneal based on the current circumstances
-void changeAnneal (const std::vector<Adult>& oldAdults, const cudaConstants* cConstants, double & currentAnneal, int & oldestBirthday, const int & generation);
+//This function will calculate a new anneal based on the current progress of the 0th (best) individual
+//  NOTE: this function assumes that the inputted vector is sorted in rank-distance order
+//Input:  oldAdults - the array of adults from which the best adult will be referenced from
+//        cCOnstants - the cuda constants
+//        currentAnneal - the generation's anneal value, which will be modified by the function
+//        generation - the current generation
+// Output: an update of the anneal based on the best current progress
+void changeAnneal (const std::vector<Adult>& oldAdults, const cudaConstants* cConstants, double & currentAnneal, const int & generation);
 
 #include "anneal.cpp"
 

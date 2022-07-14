@@ -25,7 +25,7 @@
 // ** Assumes pool is sorted array of Adults **
 // Used in determining if main optimize loop continues
 // Input: oldAdults - this generation of Adults, defined/initialized in optimimize
-//        cConstants - struct holding config values, used for accessing best_count value
+//        cConstants - struct holding config values, used for accessing best_count value and objectives list
 // Output: Returns true if top best_count adults within the pool are within the tolerance
 bool checkTolerance(const std::vector<Adult> & oldAdults, const cudaConstants* cConstants);
 
@@ -35,13 +35,13 @@ bool checkTolerance(const std::vector<Adult> & oldAdults, const cudaConstants* c
 //                         the avg age, and the avg and max birthdays of the individuals in allAdults, which will then be used for reporting
 // 
 // Inputs:  allAdults - array of adults that will be considered
-//          generation - the current generation
-//          avgPosDiff - the average generation position difference
-//          avgSpeedDiff - the average generation speed difference
+//          objectives - the vector of this run's objectives
+//          objectiveAvgValues - a vector which will hold the generations's average parameter values for each of the objectives
 //          duplicateNum - the number of duplicate adults found
 //          minDist - minimum distance that will be calculated
 //          avgDist - the average distance that will be calculated
 //          maxDist - the maximum distance that will be calculated
+//          generation - the current generation
 //          avgAge  - the avegrage age of the adults, relative to the current generation
 //          avgBirthday - average birth generation for the adults
 //          oldestBirthday - the oldest adult's birth generation
@@ -52,7 +52,7 @@ void calculateGenerationValues (const std::vector<Adult> & allAdults, const std:
 //Input: all the updated parameters of the current generation
 //Output: calls the various terminal display functions when needed
 //Function that handles the reporting of a generation's performance
-void reportGeneration (std::vector<Adult> & oldAdults, std::vector<Adult> & allAdults, const cudaConstants* cConstants, const double & currentAnneal, const double & anneal_min, const int & generation, int & numNans, double & avgPosDiff, double & avgSpeedDiff, int & duplicateNum, double minDist, double avgDist, double maxDist, double avgAge, double avgBirthday, int oldestBirthday);
+void reportGeneration (std::vector<Adult> & oldAdults, std::vector<Adult> & allAdults, const cudaConstants* cConstants, const std::vector<double> & objectiveAvgValues, const double & currentAnneal, const int & generation, int & numNans, const int & duplicateNum, const double & minDist, const double & avgDist, const double & maxDist, const double & avgAge, const double & avgBirthday, const int & oldestBirthday);
 
 //----------------------------------------------------------------------------------------------------------------------------
 // Main processing function for Genetic Algorithm
@@ -396,7 +396,7 @@ void reportGeneration (std::vector<Adult> & oldAdults, std::vector<Adult> & allA
         // Prints the best individual's posDiff / speedDiff
 
         //Print the generation
-        std::cout << "\nGeneration " << generation << " data:\n";
+        std::cout << "\n\nGeneration " << generation << " data:\n";
 
         //Print the best adult for each objective
         for (int i = 0; i < cConstants->missionObjectives.size(); i++) {
@@ -572,7 +572,7 @@ double optimize(const cudaConstants* cConstants) {
         calculateGenerationValues(allAdults, cConstants->missionObjectives, objectiveAvgValues, duplicateNum, minDistance, avgDistance, maxDistance, generation, avgAge, avgBirthday, oldestBirthday);
 
         //Assumes oldAdults is in rankDistance order
-        changeAnneal (oldAdults, cConstants, currentAnneal, oldestBirthday, generation);
+        changeAnneal (oldAdults, cConstants, currentAnneal, generation);
 
 
         //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE RECORD-_-_-_-_-_-_-_-_-_\n\n";

@@ -6,25 +6,7 @@
 #include <math.h> // for sqrt() in constructor to derive v_escape from c3energy
 #include "constants.h" // for AU
 
-// Constructors uses geneticFileRead() to set the struct's properties from a default config file located in same folder as executable
-/*
-//This function is not used
-cudaConstants::cudaConstants() {
-    // Get values from the file
-    FileRead("genetic.config");
-    //get the destination
-    FileRead(this->destination);
-    // Now that dry_mass and fuel_mass have been acquired, derive wet_mass
-    this->wet_mass = this->dry_mass + this->fuel_mass;
-    // Now that c3scale and c3energy have been assigned values, derive the final c3energy and v_escape
-    this->c3energy *= this->c3scale;
-    this->v_escape = sqrt(this->c3energy)/AU;
-    // Assign cpu_numsteps to be equivalent to max_numsteps
-    this->cpu_numsteps = this->max_numsteps;
-}
-*/
-
-// Operates same as default, however uses configFile as address for where the config file to be used is located
+// Default constructor which assumes that genetic.config and mission.config are the files being pulled from
 // Asteroid file is determined within configFile
 cudaConstants::cudaConstants() {
     // Get values from the genetic config file
@@ -62,7 +44,7 @@ void cudaConstants::FileRead(std::string fileName) {
         while ( std::getline(configFile, line) ) {
             // If line is not empty and the line is not staring as a comment, then the line is expected to be a variable constant being assigned 
             if (line != "" && ( line.find("//") != 0 )) {
-                
+
                 //First check to see if mission objectives are being imported, since that will be a different process than other config variables
                 if (line == "Mission_Objectives:")
                 {

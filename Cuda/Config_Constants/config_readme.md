@@ -69,8 +69,7 @@ Table 3. Mission Values
 | v_impact                 	    | double     	| AU/s  	| NASA's official mission impact velocity difference the spacecraft will collide with Dimorphos, does not impact the performance of the code	                                    |   	|
 | pos_threshold              	| double     	| AU      	| Sets the maximum positional difference of the spacecraft to the target at end of its trajectory path                                                    	                        |   	|
 | speed_threshold              	| double     	| AU      	| Sets the maximum velocity difference of the spacecraft to the target at end of its trajectory path                                                    	                        |   	|
-| sun_r_min                 	| double       	| AU      	| determines how close the spacecraft can get to the sun.               	                                                                                                 |      |
-| MissionType                	| double       	| None      	| Indicates what type of mission to run. 1 for rendezvous, 2 for impact.                                                                                                  |
+| sun_r_min                 	| double       	| AU      	| determines how close the spacecraft can get to the sun.               	                                                                                                 |      |                                                                                              |
 
 Table 3a. Impact Position & Velocity Values
 | Variable Name              	| Data Type  	| Units 	| Usage                                                                                                                                                      	                    |   	|

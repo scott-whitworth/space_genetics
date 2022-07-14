@@ -13,6 +13,8 @@ void terminalDisplay(const Adult& individual, const std::vector<objective> objec
     //Print the name and value of the data of the objective
     std::cout << "\n\t" << objectives[i].name << ": " << individual.getParameters(objectives[i]);
   }
+
+  std::cout << std::endl;
     
 
   /*

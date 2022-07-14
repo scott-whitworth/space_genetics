@@ -140,33 +140,78 @@ void giveDistance(std::vector<Adult> & allAdults, const cudaConstants* cConstant
         parameterSort(allAdults, cConstants->missionObjectives[i], validAdults); 
 
         //Correct sort has been applied, apply the max distance to the extreme valid adults
-        allAdults[0].distance = MAX_DISTANCE; 
-        allAdults[validAdults-1].distance = MAX_DISTANCE;
+        allAdults[0].distance += MAX_DISTANCE; 
+        allAdults[validAdults-1].distance += MAX_DISTANCE;
 
         //For each individual besides the upper and lower bounds, make their distance equal to
         //the current distance + the absolute normalized difference in the function values of two adjacent individuals.
         double normalParamLeft;
         double normalParamRight;
 
-        //Assign the non-extreme adults distances
-        for(int j = 1; j < validAdults - 1; j++) {
-            //Check to see if the adult's parameter is under convergence
-            if (allAdults[j].getParameters(cConstants->missionObjectives[i]) < cConstants->missionObjectives[i].convergenceThreshold) {
-                //Assign adults who have met the threshold for this parameter the max distance
-                allAdults[j].distance += MAX_DISTANCE;
-            }
-            //The adults who have not met the convergence threshold have their distances calculated by the normalized difference method
-            else {
-                //TODO: are the signs for the =/- 1 right here?
-                //Divide left and right individuals by the worst individual to normalize
-                normalParamLeft = allAdults[j+1].getParameters(cConstants->missionObjectives[i]) / allAdults[validAdults - 1].getParameters(cConstants->missionObjectives[i]);
-                normalParamRight = allAdults[j-1].getParameters(cConstants->missionObjectives[i]) / allAdults[validAdults - 1].getParameters(cConstants->missionObjectives[i]);
+        //Tracks how many individuals have met the objective's threshold
+        int metThreshold = 0;
 
-                //distance += abs((i+1) - (i-1))
-                allAdults[i].distance += abs((normalParamLeft - normalParamRight));
+        //Stores the value of the parameter which will be used to normalize the distances of the non-converged individuals
+        //Value should be set to the largest valid value for the objective, which will be located at different points depending on the objective
+        double normalizationValue = 0;
+
+        //Find how many adults have met the threshold
+        //Need to determine the optimization direction for the right comparison operator
+        if (cConstants->missionObjectives[i].goal < 0) { //Minimize
+            //For minimizations, the normalization value will be set to the last valid value
+            normalizationValue = allAdults[validAdults-1].getParameters(cConstants->missionObjectives[i]);
+
+            //Go through the valid adults and see if they have met the threshold
+            for (int j = 0; j < validAdults-1; j++) {
+                if (allAdults[j].getParameters(cConstants->missionObjectives[i]) < cConstants->missionObjectives[i].convergenceThreshold) {
+                    //Add one to the metThreshold tracker
+                    metThreshold++;
+
+                    //Add the max distance to the adult's distance to further promote it
+                    allAdults[j].distance += MAX_DISTANCE;
+                }
+                else {
+                    //Since the allAdults vector is sorted for this objective, if the code is here, it means all adults who meet the threshold have been passed
+                    //So it is safe to break the for loop
+                    break;
+                }
+            }
+            
+        }
+        else if (cConstants->missionObjectives[i].goal > 0) { //Maximize
+            //Go through the valid adults and see if they have met the threshold
+            for (int j = 0; j < validAdults-1; j++) {
+                if (allAdults[j].getParameters(cConstants->missionObjectives[i]) > cConstants->missionObjectives[i].convergenceThreshold) {
+                    //Add one to the metThreshold tracker
+                    metThreshold++;
+
+                    //Add the max distance to the adult's distance to further promote it
+                    allAdults[j].distance += MAX_DISTANCE;
+                }
+                else {
+                    //Since the allAdults vector is sorted for this objective, if the code is here, it means all adults who meet the threshold have been passed
+                    //First, set the normalization value to the highest non-converged value, which is the metThreshold'th individual
+                    normalizationValue = allAdults[metThreshold].getParameters(cConstants->missionObjectives[i]);
+
+                    //Next it is safe to break the for loop
+                    break;
+                }
             }
         }
-        //Distance for this objective has been added to the adults, next objective (if any) will be iterated to
+        else {
+            //Error getting the goal
+            std::cout << "\n_-_-_-_-_-_-_-_-_-Error Identifying Parameter Goal_-_-_-_-_-_-_-_-_-\n";
+        }
+        
+        //Add the distance to all non-converged individuals for this objective
+        for(int j = metThreshold + 1; j < validAdults - 1; j++) {
+            //Divide left and right individuals by the largest value individual to normalize
+            normalParamLeft = allAdults[j+1].getParameters(cConstants->missionObjectives[i]) / normalizationValue;
+            normalParamRight = allAdults[j-1].getParameters(cConstants->missionObjectives[i]) / normalizationValue;
+
+            //distance += abs((i+1) - (i-1))
+            allAdults[j].distance += abs((normalParamLeft - normalParamRight));
+        }
     }
     
     

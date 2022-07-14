@@ -27,7 +27,7 @@
 // Input: oldAdults - this generation of Adults, defined/initialized in optimimize
 //        cConstants - struct holding config values, used for accessing best_count value and objectives list
 // Output: Returns true if top best_count adults within the pool are within the tolerance
-bool checkTolerance(const std::vector<Adult> & oldAdults, const cudaConstants* cConstants);
+bool checkTolerance(std::vector<Adult> & oldAdults, const cudaConstants* cConstants);
 
 //----------------------------------------------------------------------------------------------------------------------------
 // TEST / LIKELY TEMPORARY FUNCTION
@@ -256,7 +256,12 @@ int main () {
 }
 
 //Returns true if top best_count adults within the oldAdults vector are within the tolerance
-bool checkTolerance(const std::vector<Adult>& oldAdults, const cudaConstants* cConstants) {
+bool checkTolerance(std::vector<Adult>& oldAdults, const cudaConstants* cConstants) {
+    //Sort the vector by rank distance to make sure the program checks the correct adult
+    std::sort(oldAdults.begin(), oldAdults.end(), rankDistanceSort); 
+
+    //TODO: make this compatable with bestCount again
+
     //The function needs to check if the best adult meets the convergence tolerance for each objective
     //Iterate through the objectives
     for (int i = 0; i < cConstants->missionObjectives.size(); i++) {
@@ -281,15 +286,12 @@ bool checkTolerance(const std::vector<Adult>& oldAdults, const cudaConstants* cC
         else {
             std::cout << "\n_-_-_-_-_-_-_-_-_-Error Identifying Parameter Goal_-_-_-_-_-_-_-_-_-\n";
         }
-
-        //If the program reaches this spot, it means all of the adult's parameters have met the convergence threshold
-        //  Otherwise, the function would have already returned false
-        //  Thus, the adult has converged and it is appropriate to return true
-        return true; 
     }
 
-    //Code should never get here, return is here as a precaution
-    return false; 
+    //If the program reaches this spot, it means all of the adult's parameters have met the convergence threshold
+    //  Otherwise, the function would have already returned false
+    //  Thus, the adult has converged and it is appropriate to return true
+    return true; 
 
 //------------------------------------------ OLD CODE ------------------------------------------//
 /*
@@ -373,7 +375,8 @@ void calculateGenerationValues (const std::vector<Adult> & allAdults, const std:
         avgBirthday += allAdults[i].birthday;
         avgAge += (generation - allAdults[i].birthday);   
     }
-
+    //Possible floating point roundoff error
+    //  Shouldn't matter, as we don't ever compared averages to individuals
     //Divide the averages by the number of adults to get the averages
     avgDist /= allAdults.size();
     for (int i = 0; i < objectiveAvgValues.size(); i++) {

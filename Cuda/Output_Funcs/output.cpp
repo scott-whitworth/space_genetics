@@ -533,7 +533,7 @@ void recordAllIndividuals(std::string name, const cudaConstants * cConstants, co
     }
     for (int j = 0; j < cConstants->missionObjectives.size(); j++)
     {
-      entirePool << pool[j].getParameters(cConstants->missionObjectives[j]) << ",";
+      entirePool << pool[i].getParameters(cConstants->missionObjectives[j]) << ",";
     }
     
     entirePool << pool[i].birthday << ",";

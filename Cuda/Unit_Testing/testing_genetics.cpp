@@ -5,12 +5,12 @@ bool runGeneticsUnitTests(bool printThings){
 
     //sets these tolerances so that the domination in stolenGiveRank works properly
     //if these are not set, it gives the wrong rank to one Adult from each of the lower ranks (it promotes them to the next rank)
-    utcConstants->posDominationTolerance = 1.0e-14;
-    utcConstants->speedDominationTolerance = 1.0e-14;
+    //utcConstants->posDominationTolerance = 1.0e-14;
+    //utcConstants->speedDominationTolerance = 1.0e-14;
 
     //chose pos_threshold and speed_threshold so anything past the first significant figure in the clone separation test is trivial
-    utcConstants->pos_threshold = 1.0e-11;
-    utcConstants->speed_threshold = 1.0e-11;
+    //utcConstants->pos_threshold = 1.0e-11;
+    //utcConstants->speed_threshold = 1.0e-11;
 
     // Seed used for randomization rng things, using seed 0 for consistancy / tracability 
     utcConstants->time_seed = 0; 
@@ -53,7 +53,7 @@ bool runGeneticsUnitTests(bool printThings){
     //Flag for what type of landing you want. Current modes: "soft"=2, "hard"=1
     //testing for soft because as of 2022 that is the main mission type we are exploring 
     //additionally, mission type should have little impact on the genetics algorithms
-    utcConstants->missionType = 2; 
+    //utcConstants->missionType = 2; 
 
     //STUFF SO RUNGE_KUTTACUDA.CU CAN RUN
     utcConstants->thread_block_size =32;
@@ -81,7 +81,7 @@ bool runGeneticsUnitTests(bool printThings){
     utcConstants->min_numsteps=400;
 
     //New ga_crossover stuff
-    utcConstants->distanceTolerance=1.0e-14;
+    //utcConstants->distanceTolerance=1.0e-14;
     //default_mutation_factor=1.0         //Set at one to allow for the mutation scales below to be applied normally/to children at face value
     //duplicate_mutation_factor=1.0;       //Set at 10; when duplicate adults are mutated, they will undergo stronger mutations
 

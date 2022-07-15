@@ -161,8 +161,8 @@ void giveDistance(std::vector<Adult> & allAdults, const cudaConstants* cConstant
             //For minimizations, the normalization value will be set to the last valid value
             normalizationValue = allAdults[validAdults-1].getParameters(cConstants->missionObjectives[i]);
 
-            //Go through the valid adults and see if they have met the threshold
-            for (int j = 0; j < validAdults-1; j++) {
+            //Go through the non-extreme valid adults and see if they have met the threshold
+            for (int j = 1; j < validAdults-1; j++) {
                 if (allAdults[j].getParameters(cConstants->missionObjectives[i]) < cConstants->missionObjectives[i].convergenceThreshold) {
                     //Add one to the metThreshold tracker
                     metThreshold++;
@@ -179,8 +179,8 @@ void giveDistance(std::vector<Adult> & allAdults, const cudaConstants* cConstant
             
         }
         else if (cConstants->missionObjectives[i].goal > 0) { //Maximize
-            //Go through the valid adults and see if they have met the threshold
-            for (int j = 0; j < validAdults-1; j++) {
+            //Go through the non-extreme valid adults and see if they have met the threshold
+            for (int j = 1; j < validAdults-1; j++) {
                 if (allAdults[j].getParameters(cConstants->missionObjectives[i]) > cConstants->missionObjectives[i].convergenceThreshold) {
                     //Add one to the metThreshold tracker
                     metThreshold++;
@@ -213,62 +213,6 @@ void giveDistance(std::vector<Adult> & allAdults, const cudaConstants* cConstant
             allAdults[j].distance += abs((normalParamLeft - normalParamRight));
         }
     }
-    
-    
-    
-//------------------------------------------ OLD CODE ------------------------------------------//
-/*
-
-    int underPosThreshold = 0;
-    int underSpeedThreshold = 0;
-    
-    //Sort by the first objective function, posDiff
-    std::sort(allAdults.begin(), allAdults.begin() + validAdults, LowerPosDiff);
-    while(allAdults[underPosThreshold].posDiff < cConstants->pos_threshold && underPosThreshold < allAdults.size()){
-        underPosThreshold++;
-    }
-    //add one to each of the adults distance under threshold
-    for(int i = 0; i < underPosThreshold; i++){
-        allAdults[i].distance += MAX_DISTANCE;
-    }
-
-    //Set the boundaries
-    allAdults[underPosThreshold].distance += MAX_DISTANCE; //+=1
-    allAdults[validAdults - 1].distance += MAX_DISTANCE; //+=1
-
-
-    
-    //Repeat above process for speedDiff
-    if(cConstants->missionType == Rendezvous){//only do this for the rendezvous mission since it has 2 objectives
-        std::sort(allAdults.begin(), allAdults.begin() + validAdults, LowerSpeedDiff);
-        //if an individual has a speedDiff in the convergence range, then these individuals will have 1 added to their distance
-        while(allAdults[underSpeedThreshold].speedDiff < cConstants->speed_threshold && underSpeedThreshold < allAdults.size()){
-            underSpeedThreshold++;
-        }
-        //add one to each of the adults distance under threshold
-        for(int i = 0; i < underSpeedThreshold; i++){
-            allAdults[i].distance += MAX_DISTANCE;
-        }
-
-        //Add the max distance (usually should be 1) to the extreme adults
-        //Setting the distance boundaries
-        allAdults[underSpeedThreshold].distance += MAX_DISTANCE;
-        allAdults[validAdults - 1].distance += MAX_DISTANCE;
-
-    
-        //For each individual besides the upper and lower bounds, make their distance equal to
-        //the current distance + the absolute normalized difference in the function values of two adjacent individuals.
-        double normalSpeedDiffLeft;
-        double normalSpeedDiffRight;
-        for(int i = underSpeedThreshold + 1; i < validAdults - 1; i++){
-            //Divide left and right individuals by the worst individual to normalize
-            normalSpeedDiffLeft = allAdults[i+1].speedDiff/allAdults[validAdults - 1].speedDiff;
-            normalSpeedDiffRight = allAdults[i-1].speedDiff/allAdults[validAdults - 1].speedDiff;
-            //distance = distance + abs((i+1) - (i-1))
-            allAdults[i].distance = allAdults[i].distance + abs((normalSpeedDiffLeft - normalSpeedDiffRight));// /(allAdults[validAdults - 1].speedDiff - allAdults[0].speedDiff));
-        }
-    }
-*/
 }
 
 // Assist function for objectives that sorts an adult vector based on the goal 

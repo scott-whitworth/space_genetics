@@ -410,6 +410,21 @@ void cudaConstants::importObjective(std::string line) {
     //Pull the equateTolerance
     equateTolerance = std::stod(line.substr(beginningPivot, endPivot - beginningPivot + 1));
 
+    //Checks for the user to make sure they entered the goal, the convergence threshold, and the domination threshold correctly
+    //See if the goal is set correctly
+    if (goal == 0) {
+        std::cout << "\n-----BAD OBJECTIVE GOAL PULLED; BAD OBJECTIVE: " << name << "-----\n";
+    }
+    //Check to see if the goal is to minimize, but the domination threshold is set higher than the convergence threshold
+    else if (goal < 0 && dominationThreshold > convergenceThreshold) {
+        std::cout << "\n-----DOMINATION THRESHOLD SET TOO HIGH; BAD OBJECTIVE: " << name << "-----\n";
+    }
+    //Check to see if the goal is to maximize, but the domination threshold is set lower than the convergence threshold
+    else if (goal > 0 && dominationThreshold < convergenceThreshold) {
+        std::cout << "\n-----DOMINATION THRESHOLD SET TOO LOW; BAD OBJECTIVE: " << name << "-----\n";
+    }
+    
+
     //Add the objective to the mission objectives vector using the gathered information
     missionObjectives.push_back(objective(name, goal, convergenceThreshold, dominationThreshold, equateTolerance)); 
 }
@@ -417,38 +432,37 @@ void cudaConstants::importObjective(std::string line) {
 // Output cudaConstant contents with formatting for better readibility when doing a run in main()
 std::ostream& operator<<(std::ostream& os, const cudaConstants& object) {
     os << std::setprecision(12);
-    os << "==========CONFIG=DATA===============================================================================\n";
+    os << "\n==========CONFIG=DATA===============================================================================\n";
     os << "Genetic Algorithm Related Values:\n";
-    os << "\ttime_seed: "       << object.time_seed       << "\trandom_start: "   << object.random_start   << "\t\tnon_r_start_address: " << object.initial_start_file_address << "\n";
-    os << "\tanneal_initial: " << object.anneal_initial << "\n";
-    os << "\tnum_individuals: " << object.num_individuals << "\tthread_block_size: "     << object.thread_block_size << "\n";
-    os << "\tsurvivor_count: "  << object.survivor_count;
-    os << "\tbest_count: "      << object.best_count      << "\t\tmax_generations: "<< object.max_generations<< "\trun_count: " << object.run_count << "\n\n";
+    os << "\ttime_seed: "      << object.time_seed      << "\trandom_start: "    << object.random_start    << "\tnon_r_start_address: " << object.initial_start_file_address << "\n";
+    os << "\tanneal_initial: " << object.anneal_initial << "\tnum_individuals: " << object.num_individuals << "\tthread_block_size: "   << object.thread_block_size          << "\n";
+    os << "\tsurvivor_count: " << object.survivor_count << "\tbest_count: "      << object.best_count      << "\tmax_generations: "     << object.max_generations            << "\trun_count: " << object.run_count << "\n\n";
 
     os << "Runge-Kutta Related Values:\n";
-    os << "\trk_tol: " << object.rk_tol << "\tdoublePrecThresh: " << object.doublePrecThresh << "\ttimeRes: " << object.timeRes << "\n";
-    os << "\tmax_numsteps: " << object.max_numsteps << "\tmin_numsteps: "  << object.min_numsteps << "\tcpu_numsteps: " << object.cpu_numsteps << "\tsun_r_min: " << object.sun_r_min << "\n\n";
+    os << "\trk_tol: "       << object.rk_tol       << "\tdoublePrecThresh: " << object.doublePrecThresh << "\ttimeRes: "      << object.timeRes       << "\tsun_r_min: " << object.sun_r_min << "\n";
+    os << "\tmax_numsteps: " << object.max_numsteps << "\tmin_numsteps: "     << object.min_numsteps     << "\tcpu_numsteps: " << object.cpu_numsteps  << "\n\n";
 
     os << "Output Variables:\n";
     os << "\trecord_mode: " << object.record_mode << "\twrite_freq: " << object.write_freq << "\tdisp_freq: " << object.disp_freq << "\n\n";
 
     os << "Random Start Range Values:\n";
-    os << "\tgamma: "  << object.gamma_random_start_range << "\ttau: " << object.tau_random_start_range << "\tcoast: " << object.coast_random_start_range << "\n";
-    os << "\ttriptime min - max: " << object.triptime_min << " - "  << object.triptime_max << "\talpha: " << object.alpha_random_start_range << "\tbeta: " << object.beta_random_start_range << "\tzeta: " << object.zeta_random_start_range << "\n\n";
+    os << "\tgamma: "        << object.gamma_random_start_range << "\ttau: "  << object.tau_random_start_range  << "\tcoast: " << object.coast_random_start_range << "\n";
+    os << "\talpha: "        << object.alpha_random_start_range << "\tbeta: " << object.beta_random_start_range << "\tzeta: "  << object.zeta_random_start_range  << "\n";
+    os << "\ttriptime min: " << object.triptime_min             << "\tmax: "  << object.triptime_max            << "\n\n";
     
     os << "Mutation & Scales:\n";
     os << "\tmutation_amplitude: " << object.mutation_amplitude << "\n";
-    os << "\tgamma_scale: "   << object.gamma_mutate_scale    << "\ttau_m_scale: "   << object.tau_mutate_scale   << "\tcoast_m_scale: " << object.coast_mutate_scale << "\n";
-    os << "\talpha_m_scale: " << object.alpha_mutate_scale << "\tbeta_m_scale: "  << object.beta_mutate_scale  << "\tzeta_m_scale: " << object.zeta_mutate_scale << "\ttriptime_m_scale: "<< object.triptime_mutate_scale << "\n\n";
+    os << "\tgamma_scale: "        << object.gamma_mutate_scale << "\ttau_m_scale: "  << object.tau_mutate_scale  << "\tcoast_m_scale: " << object.coast_mutate_scale << "\n";
+    os << "\talpha_m_scale: "      << object.alpha_mutate_scale << "\tbeta_m_scale: " << object.beta_mutate_scale << "\tzeta_m_scale: "  << object.zeta_mutate_scale  << "\ttriptime_m_scale: " << object.triptime_mutate_scale << "\n\n";
 
     os << "Spacecraft Info:\n";
-    os << "\tthruster_type: " << object.thruster_type << "\tdry_mass: " << object.dry_mass << "\t\tfuel_mass: " << object.fuel_mass << "\t\twet_mass: " << object.wet_mass << "\n";
+    os << "\tthruster_type: "   << object.thruster_type   << "\tdry_mass: " << object.dry_mass << "\t\tfuel_mass: " << object.fuel_mass << "\t\twet_mass: " << object.wet_mass << "\n";
     // Display the c3energy assignment, showing c3scale to help clarify that it is not directly from config
-    os << "\tc3energy (" << (object.c3scale * 100)    << "%): " << object.c3energy      << "\tv_escape: " << object.v_escape << "\t\tv_impact: " << object.v_impact << "\n";
-    os << "\tcoast_threshold: "<< object.coast_threshold<< "\n\n";
+    os << "\tc3energy ("        << (object.c3scale * 100) << "%): "         << object.c3energy << "\tv_escape: "    << object.v_escape  << "\t\tv_impact: " << object.v_impact << "\n";
+    os << "\tcoast_threshold: " << object.coast_threshold << "\n\n";
 
     os << "Asteriod Info:\n";
-    os << "\t R: " << object.r_fin_ast  << "\t 0: " << object.theta_fin_ast << "\t Z: " << object.z_fin_ast << "\n";
+    os << "\t R: " << object.r_fin_ast  << "\t 0: " << object.theta_fin_ast  << "\t Z: " << object.z_fin_ast  << "\n";
     os << "\tvR: " << object.vr_fin_ast << "\tv0: " << object.vtheta_fin_ast << "\tvZ: " << object.vz_fin_ast << "\n\n";
 
     os << "Earth Info:\n";
@@ -457,7 +471,8 @@ std::ostream& operator<<(std::ostream& os, const cudaConstants& object) {
 
     os << "Mission Goals: ";
     for (int i = 0; i < object.missionObjectives.size(); i++) {
-        os << "\n\tObjective: " << object.missionObjectives[i].name << "\tConvergence Threshold: " << object.missionObjectives[i].convergenceThreshold << "\tDomination Threshold: " << object.missionObjectives[i].dominationThreshold; 
+        os << "\n\tObjective: " << object.missionObjectives[i].name << "\tIdentified Goal: " << object.missionObjectives[i].goal << "\tConvergence Threshold: " << object.missionObjectives[i].convergenceThreshold 
+           << "\tDomination Threshold: " << object.missionObjectives[i].dominationThreshold << "\tEquate Tolerance: " << object.missionObjectives[i].equateTolerance; 
     }
     os << "\n";
     os << "====================================================================================================\n";

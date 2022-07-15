@@ -23,8 +23,14 @@ enum parameterGoals {
 //This structure holds the necessary information for a program objective
 //This will allow for the program to handle dynamic program objectives
 
-//TODO: When this is complete, write out a quick guide on what to build where when implementing a new objective
-//      Specifically, things will need to be added to the adult function that returns the right value and new sorts will need to be added
+//NOTE: When adding a new objective, make sure to complete these steps:
+//  1) Make sure the parameter is accessible from within the child class
+//  2) Add the goal to the parameterGoals enum, making sure that if its a minimization objective, the set number is negative and vice versa
+//  3) Add the new objective goal to the importObjective function within config.cpp
+//  4) Add to child's getParameter function so that it returns the correct parameter
+//  5) Add a new sort function to the adult.cpp to allow the program to sort by the objective's parameter in the desired order
+//  6) Add to the parameterSort() function in sort.cpp so that the program uses the new sort when the function is called with the new goal
+
 struct objective {
     //The name the program will use for the objective
     std::string name;

@@ -180,81 +180,6 @@ bool dominationCheck(Adult& personA, Adult& personB, const cudaConstants* cConst
     //      If it's true, it means one of A's parameters are better than B, and since the other parameters are at least as good, A dominates B
     //      If it is fale, all of A's values are the same as B, which means they are duplicates
     return aParamBetter; 
-    
-//------------------------------------------ OLD CODE ------------------------------------------//
-    /*
-    //Is true if A is at least equally as good as B for all objectives
-    bool AisEqual = false;
-    //Is true if A is better than B for at least one objective
-    bool AisBetter = false;
-
-    //TODO:Might want to consider deleting most of this function
-    //      Update: will redo this when implimenting factorized objectives
-
-    //pos and speed variables used for comparing adutls to eachother
-    double posTolerance = cConstants->posDominationTolerance;
-    double speedTolerance = cConstants->speedDominationTolerance;
-    double pos_threshold = cConstants-> posDominationThreshold;
-    double speed_threshold = cConstants-> speedDominationThreshold;
-
-    //true if A posDiff "equals" B posDiff
-    bool APosEqualsB = false;
-    //true if A speedDiff "equals" B speedDiff
-    bool ASpeedEqualsB = false;
-
-    //True is A posdiff is equal to B posDiff +- posTolerance
-    if ( ( (personA.posDiff < personB.posDiff + posTolerance) && (personA.posDiff > personB.posDiff - posTolerance) ) || 
-         (  personA.posDiff < pos_threshold && personB.posDiff < pos_threshold)){
-        APosEqualsB = true;
-    }
-    //True is A speeddiff is equal to B speedDiff +- speedTolerance
-    if ( ( (personA.speedDiff < personB.speedDiff + speedTolerance) && (personA.speedDiff > personB.speedDiff - speedTolerance)) || 
-         ( personA.speedDiff < speed_threshold && personB.speedDiff < speed_threshold)){
-        ASpeedEqualsB = true;
-    }
-    //If the mission type is a rendezvous, A's speed diff needs to be lower for it to be equal or better
-    if (cConstants -> missionType == Impact) {
-        //For impact, only optimizing for one objective
-        if ((personA.posDiff < personB.posDiff || APosEqualsB)) {
-            AisEqual = true; 
-        }  
-        //If A has a better posDiff or speedDiff than B, then A is better than B
-        if (personA.posDiff < personB.posDiff) {
-            AisBetter = true;
-        }
-    }
-    //If the mission type is a impact, A's speed diff needs to be higher than B's for it to be equal or better
-    else {
-        //If A.posDiff is approximately/better than B.posDiff, and A.speedDiff is approximately/better than B.speedDiff, then A is equal to B.
-        if ((personA.posDiff < personB.posDiff || APosEqualsB) && (personA.speedDiff < personB.speedDiff || ASpeedEqualsB)) {
-            AisEqual = true;
-        }
-        //If A has a better posDiff or speedDiff than B, then A is better than B
-        if (personA.posDiff < personB.posDiff || personA.speedDiff < personB.speedDiff){
-            AisBetter = true;
-        }
-        
-    }
-
-    //A Dominates B
-    //A only dominates B if:
-        //A.posDiff - posTolerance < B.posDiff <= A.posDiff, and A.speedDiff < B.speedDiff
-        //A.posDiff < B.posDiff, and A.speedDiff - speedTolerance < B.speedDiff <= A.speedDiff
-        //A.posDiff < B.posDiff and A.speedDiff < B.speedDiff (better in every way)
-    if (AisEqual && AisBetter){
-        //std::cout << "\n\nDomination check returns TRUE";
-        return true;
-    }
-    //A and B are codominant if:
-        //A.posDiff < B.posDiff & A.speedDiff > B.speedDiff
-        //A.posDiff > B.posDiff & A.speedDiff < B.speedDiff
-        //A.posDiff = B.posDiff & A.speedDiff = B.speedDiff (Unlikely since they're doubles, unless A & B are clones or genetically similar)
-    //B dominates A if any of the conditions for "A dominates B", when reversed, are true.
-    else {
-        //std::cout << "\n\nDomination check returns FALSE";
-        return false;
-    }
-    */
 }
 
 //!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -304,54 +229,25 @@ bool rankDistanceSort(const Adult& personA, const Adult& personB) {
 
 bool duplicateCheck(const Adult& personA, const Adult& personB, const cudaConstants* cConstants){
 
-//For loop will iterate through all objectives/parameters
-for (int i = 0; i < cConstants->missionObjectives.size(); i++) {
-    //First check to see if A's parameter for this objective is lower than B's within a tolerance
-    if (personA.getParameters(cConstants->missionObjectives[i]) < (personB.getParameters(cConstants->missionObjectives[i]) - cConstants->missionObjectives[i].equateTolerance)) {
-        //Means that one of A's parameters doesn't equal B, so return false
-        return false;
-    }
-    //Now there is a need to check if A's parameter is larger than B's
-    else if (personA.getParameters(cConstants->missionObjectives[i]) > (personB.getParameters(cConstants->missionObjectives[i]) + cConstants->missionObjectives[i].equateTolerance)) {
-        //If here, it means that A's parameter is larger than B's, so they aren't duplicates 
-        return false;
-    }
-}
-
-//If the program is here, it means that it has gone through all of A's and B's parameters without returning false
-//  This measn that it didn't find any differences in the parameters, so they are duplicates
-//  Thus, we need to return true
-return true; 
-
-//------------------------------------------ OLD CODE ------------------------------------------//
-    /*
-    //true if A posDiff "equals" B posDiff
-    bool APosEqualsB = false;
-    //true if A speedDiff "equals" B speedDiff
-    bool ASpeedEqualsB = false;
-
-    //tolerances used to determine the range of values considered equal
-    //these are both currently set to 1e-14 AU, I don't think these need to be modified 
-    double posTolerance = cConstants->posDominationTolerance;
-    double speedTolerance = cConstants->speedDominationTolerance;
-
-    //True is A posdiff is equal to B posDiff +- posTolerance
-    if ((personA.posDiff < personB.posDiff + posTolerance) && (personA.posDiff > personB.posDiff - posTolerance)){
-        APosEqualsB = true;
-    }
-    //True is A speeddiff is equal to B speedDiff +- speedTolerance
-    if ((personA.speedDiff < personB.speedDiff + speedTolerance) && (personA.speedDiff > personB.speedDiff - speedTolerance)){
-        ASpeedEqualsB = true;
+    //For loop will iterate through all objectives/parameters
+    for (int i = 0; i < cConstants->missionObjectives.size(); i++) {
+        //First check to see if A's parameter for this objective is lower than B's within a tolerance
+        if (personA.getParameters(cConstants->missionObjectives[i]) < (personB.getParameters(cConstants->missionObjectives[i]) - cConstants->missionObjectives[i].equateTolerance)) {
+            //Means that one of A's parameters doesn't equal B, so return false
+            return false;
+        }
+        //Now there is a need to check if A's parameter is larger than B's
+        else if (personA.getParameters(cConstants->missionObjectives[i]) > (personB.getParameters(cConstants->missionObjectives[i]) + cConstants->missionObjectives[i].equateTolerance)) {
+            //If here, it means that A's parameter is larger than B's, so they aren't duplicates 
+            return false;
+        }
     }
 
-    //if they are both true then we found a duplicate
-    if(APosEqualsB == true && ASpeedEqualsB == true){
-        return true;
-    }else{//a dulplicate was not found
-        
-        return false;
-    }
-    */
+    //If the program is here, it means that it has gone through all of A's and B's parameters without returning false
+    //  This measn that it didn't find any differences in the parameters, so they are duplicates
+    //  Thus, we need to return true
+    return true; 
+
 }
 
 //Find the duplicates within the imported vector

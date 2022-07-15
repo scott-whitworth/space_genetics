@@ -260,26 +260,29 @@ bool checkTolerance(std::vector<Adult>& oldAdults, const cudaConstants* cConstan
     //Sort the vector by rank distance to make sure the program checks the correct adult
     std::sort(oldAdults.begin(), oldAdults.end(), rankDistanceSort); 
 
-    //TODO: make this compatable with bestCount again
-
     //The function needs to check if the best adult meets the convergence tolerance for each objective
     //Iterate through the objectives
     for (int i = 0; i < cConstants->missionObjectives.size(); i++) {
-        //Check to see if the goal for this objective is to minimize or maximize the parameter 
-        if (cConstants->missionObjectives[i].goal < 0) {//Minimization
 
-            //Check to see if the adult's parameter is larger than the convergence 
-            if (oldAdults[0].getParameters(cConstants->missionObjectives[i]) > cConstants->missionObjectives[i].convergenceThreshold) {
-                //Return false as a parameter that needs to be minimized is larger than the convergence threshold
-                return false;
+        if (cConstants->missionObjectives[i].goal < 0) {//Minimization
+            //Check to see if the top best_count adults have met convergence for this parameter
+            for (int i = 0; i < cConstants->best_count; i++) {
+
+                //Check to see if the adult's parameter is larger than the convergence 
+                if (oldAdults[0].getParameters(cConstants->missionObjectives[i]) > cConstants->missionObjectives[i].convergenceThreshold) {
+                    //Return false as a parameter that needs to be minimized is larger than the convergence threshold
+                    return false;
+                }
             }
         }
         else if (cConstants->missionObjectives[i].goal > 0) {//Maximization
-
-            //Check to see if the adult's parameter is smaller than the convergence 
-            if (oldAdults[0].getParameters(cConstants->missionObjectives[i]) < cConstants->missionObjectives[i].convergenceThreshold) {
-                //Return false as a parameter that needs to be maximized is smaller than the convergence threshold
-                return false;
+            //Check to see if the top best_count adults have met convergence for this parameter
+            for (int i = 0; i < cConstants->best_count; i++) {
+                //Check to see if the adult's parameter is smaller than the convergence 
+                if (oldAdults[0].getParameters(cConstants->missionObjectives[i]) < cConstants->missionObjectives[i].convergenceThreshold) {
+                    //Return false as a parameter that needs to be maximized is smaller than the convergence threshold
+                    return false;
+                }
             }
         }
         //No mission type was identified 
@@ -292,38 +295,6 @@ bool checkTolerance(std::vector<Adult>& oldAdults, const cudaConstants* cConstan
     //  Otherwise, the function would have already returned false
     //  Thus, the adult has converged and it is appropriate to return true
     return true; 
-
-//------------------------------------------ OLD CODE ------------------------------------------//
-/*
-    //Check what type of mission is running to use the correct posDiff function
-    if (cConstants->missionType == Rendezvous){
-        // Iterate to check best_count number of 'top' individuals
-        for (int i = 0; i < cConstants->best_count; i++) {
-            //both objectives need to be within tolerance
-            //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE CON POS CHECK-_-_-_-_-_-_-_-_-_\n\n";
-            if (oldAdults[i].posDiff >= posTolerance){
-                return false;
-            }
-            //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE CON SPEED CHECK-_-_-_-_-_-_-_-_-_\n\n";
-            if (oldAdults[i].speedDiff >= speedTolerance){
-                return false;
-            }
-        }
-    }
-    else if(cConstants->missionType == Impact){
-        // Iterate to check best_count number of 'top' individuals
-        for (int i = 0; i < cConstants->best_count; i++) {
-            
-            if(oldAdults[i].posDiff >= posTolerance) {
-                //One was not within 
-                return false;
-            }
-        }  
-    }
-
-    // If iterated through and all were within tolerance, success
-    return true;
-*/
 }
 
 //Function that will calculate distance and birthday values for a generation

@@ -266,10 +266,10 @@ bool checkTolerance(std::vector<Adult>& oldAdults, const cudaConstants* cConstan
 
         if (cConstants->missionObjectives[i].goal < 0) {//Minimization
             //Check to see if the top best_count adults have met convergence for this parameter
-            for (int i = 0; i < cConstants->best_count; i++) {
+            for (int j = 0; j < cConstants->best_count; j++) {
 
                 //Check to see if the adult's parameter is larger than the convergence 
-                if (oldAdults[0].getParameters(cConstants->missionObjectives[i]) > cConstants->missionObjectives[i].convergenceThreshold) {
+                if (oldAdults[j].getParameters(cConstants->missionObjectives[i]) > cConstants->missionObjectives[i].convergenceThreshold) {
                     //Return false as a parameter that needs to be minimized is larger than the convergence threshold
                     return false;
                 }
@@ -277,9 +277,9 @@ bool checkTolerance(std::vector<Adult>& oldAdults, const cudaConstants* cConstan
         }
         else if (cConstants->missionObjectives[i].goal > 0) {//Maximization
             //Check to see if the top best_count adults have met convergence for this parameter
-            for (int i = 0; i < cConstants->best_count; i++) {
+            for (int j = 0; j < cConstants->best_count; j++) {
                 //Check to see if the adult's parameter is smaller than the convergence 
-                if (oldAdults[0].getParameters(cConstants->missionObjectives[i]) < cConstants->missionObjectives[i].convergenceThreshold) {
+                if (oldAdults[j].getParameters(cConstants->missionObjectives[i]) < cConstants->missionObjectives[i].convergenceThreshold) {
                     //Return false as a parameter that needs to be maximized is smaller than the convergence threshold
                     return false;
                 }

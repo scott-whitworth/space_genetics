@@ -2,7 +2,7 @@
 
 //TODO: Clarify complexities of the include paths
 //TODO: What / why we are including
-#include "../Earth_calculations/earthInfo.h"  // For launchCon and EarthInfo()
+#include "../Planet_calculations/planetInfo.h"  // For launchCon and EarthInfo()
 #include "../Genetic_Algorithm/adult.h" // For adult structs, paths to rkParameters for randomParameters()
 #include "../Genetic_Algorithm/child.h" // For child structs, paths to rkParameters for randomParameters()
 #include "../Output_Funcs/output.h" // For terminalDisplay(), recordGenerationPerformance(), and finalRecord()
@@ -11,7 +11,8 @@
 #include "../Genetic_Algorithm/genetic_algorithm.h" //For functions that set up new generations
 #include "../Genetic_Algorithm/sort.h" //For functions that will allow for sorting of the adult arrays by giving them ranks and distances
 #include "../Genetic_Algorithm/anneal.h" //For all the annealing functions
-//
+#include "../Runge_Kutta/gpuMem.cuh" // for initializing and deallocating memory
+
 //#include "../Unit_Testing/testing_sorts.cpp"
 
 #include <iostream> // cout
@@ -53,15 +54,15 @@ void calculateGenerationValues (const std::vector<Adult> & allAdults, const std:
 // - manages memory needs for genetic algorithm
 // - deals with processing calls to CUDA callRK
 // - exits when individuals converge on tolerance defined in Constants
-double optimize(const cudaConstants* cConstants);
+double optimize(const cudaConstants* cConstants, GPUMem & gpuValues);
 
 //Temp function that adds up the number of each status in an adults array and outputs the result
 void countStatuses (const std::vector<Adult> & adultVec, const int & generation) {
     //Create ints for each status
-    int numSuns, numErrors, numValid, numOther;
+    int numSuns, numErrors, numValid, numMars, numOther;
 
     //Make them equal 0
-    numSuns = numErrors = numValid = numOther = 0;
+    numSuns = numErrors = numValid = numMars = numOther = 0;
 
     //Go thru the vector and add up the statuses
     for (int i = 0; i < adultVec.size(); i++)
@@ -73,6 +74,10 @@ void countStatuses (const std::vector<Adult> & adultVec, const int & generation)
         else if (adultVec[i].errorStatus == NAN_ERROR)
         {
             numErrors ++;
+        }
+        else if (adultVec[i].errorStatus == MARS_ERROR)
+        {
+            numMars++;
         }
         else if (adultVec[i].errorStatus == DUPLICATE)
         {
@@ -215,6 +220,16 @@ int main () {
     // Declare the genetic constants used, with file path being used to receive initial values
     cudaConstants * cConstants = new cudaConstants(); 
 
+    //preallocates all the memory for the varaibles used by the GPU
+    //also allows the GPU to access the marsLaunchCon without reloading it everytime
+    GPUMem gpuValues;
+
+    std::cout << sizeof(double) << std::endl;
+    std::cout << sizeof(Child) << std::endl;
+    std::cout << sizeof(elements<double>) << std::endl;
+    std::cout << sizeof(rkParameters<double>) << std::endl;
+    std::cout << sizeof(cudaConstants) << std::endl;
+
     //test_main();
 
     // Sets run0 seed, used to change seed between runs
@@ -231,13 +246,33 @@ int main () {
 
         // pre-calculate a table of Earth's position within possible mission time range
         // defined as global variable
-        // accessed on the CPU when individuals are initilized
-        launchCon = new EarthInfo(cConstants); 
+        // accessed on the CPU when individuals are initialized
+        launchCon = new PlanetInfo(cConstants, EARTH); 
+        marsLaunchCon = new PlanetInfo(cConstants, MARS);
+        int marsConSize = getPlanetSize(cConstants);
+        gpuValues.initialize(cConstants, marsConSize, marsLaunchCon->getAllPositions());
+
+        std::cout << "sizeof(launchCon->planetCon): " << sizeof(*(launchCon->planetCon)) << std::endl;
+        std::cout << "sizeof(marsLaunchCon->getAllPositions()): " << sizeof(*(marsLaunchCon->getAllPositions())) << std::endl;
+        std::cout << "marsConSize: " << marsConSize/6 << std::endl;
+
+        elements<double>* aTest = marsLaunchCon->getAllPositions();
+
+        if (aTest[5].r == marsLaunchCon->planetCon[5].r){
+            std::cout << "getAllPositions seems to be working?" << std::endl;
+            std::cout << aTest[5].r << std::endl;
+        }else{
+            std::cout << "Fail" << std::endl;
+        }
+
+        //setMars(cConstants);
 
         // Call optimize with the current parameters in cConstants
-        optimize(cConstants);
+        optimize(cConstants, gpuValues);
 
         delete launchCon; // Deallocate launchCon info for this run as it may be using a different time range in the next run
+        delete marsLaunchCon;
+        gpuValues.free();
     }
     // Now that the optimize function is done (assumed that optimize() also records it), deallocate memory of the cudaConstants
     delete cConstants;
@@ -349,7 +384,7 @@ void calculateGenerationValues (const std::vector<Adult> & allAdults, const std:
 }
 
 //Function that will facilitate the process of finding an optimal flight path
-double optimize(const cudaConstants* cConstants) {
+double optimize(const cudaConstants* cConstants, GPUMem & gpuValues) {
     // Not used, previously used for reporting computational performance
     double calcPerS = 0;
 
@@ -388,7 +423,10 @@ double optimize(const cudaConstants* cConstants) {
     std::vector<Adult> allAdults;
 
     // number of current generation
-    int generation = 0;    
+    int generation = 0;
+
+    genOutputs.recordMarsData(cConstants,generation);
+    genOutputs.recordEarthData(cConstants,generation);
 
     // Flag for finishing the genetic process
     // set by checkTolerance()
@@ -397,6 +435,7 @@ double optimize(const cudaConstants* cConstants) {
     //number of errors, specifically used for diagnostic recording
     //  couting all adults in the generation - includes oldAdults and newAdults that have nan values
     int numErrors = 0;
+    int marsErrors = 0;
 
     //Initialize variables needed for distance, number of duplicate adults, and birthday reporting
     int duplicateNum = 0;
@@ -410,7 +449,7 @@ double optimize(const cudaConstants* cConstants) {
     //Need to make children, then callRK, then make into adults (not currently doing that)
     //oldAdults goes into this function empty and comes out filled with num_individuals Adults
     //      these adults are either randomly generated or pulled from a file
-    createFirstGeneration(oldAdults, cConstants, rng, generation); 
+    createFirstGeneration(oldAdults, cConstants, rng, generation, gpuValues); 
 
     //verifyVectors(newAdults, oldAdults, allAdults, "Post First Generation");
 
@@ -423,7 +462,7 @@ double optimize(const cudaConstants* cConstants) {
         //      after the run, oldAdults should remain the same
         //newAdults is empty and will be filled with the "grown" children generated in this method
         //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE NEW GEN-_-_-_-_-_-_-_-_-_\n\n";
-        newGeneration(oldAdults, newAdults, currentAnneal, generation, rng, cConstants);
+        newGeneration(oldAdults, newAdults, currentAnneal, generation, rng, cConstants, gpuValues);
         //Test function that will display the size and likely sort of each adult vector
         //      newAdults: should be N size & unsorted
         //      oldAdults: should be N size & rankDistance sorted
@@ -438,7 +477,7 @@ double optimize(const cudaConstants* cConstants) {
         //      by the end of the function, it is cleared
         //oldAdults goes in with the pool of potential parents that may have generated the newAdults
         //      by the end of the function, it is filled with the best num_individuals adults from allAdults (sorted by rankDistanceSort) 
-        preparePotentialParents(allAdults, newAdults, oldAdults, numErrors, duplicateNum, cConstants, generation, currentAnneal);
+        preparePotentialParents(allAdults, newAdults, oldAdults, numErrors, duplicateNum, cConstants, generation, currentAnneal, marsErrors);
 
         //Test function that will display the size and likely sort of each adult vector
         //      TODO: What should the states be? We should report them here to reference with the actual test

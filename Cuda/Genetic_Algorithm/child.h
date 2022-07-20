@@ -2,7 +2,7 @@
 #define CHILD_H
 
 #include "../Runge_Kutta/rkParameters.h"
-#include "../Earth_calculations/earthInfo.h"
+#include "../Planet_calculations/planetInfo.h"
 #include "../Config_Constants/constants.h"
 
 //TODO: Big step: think about where in the code we rely on numeric data to determine errors (like checking for NAN)
@@ -29,6 +29,8 @@ struct Child {
     double avgParentProgress; //The average of the two parents progress
 
     int birthday; //keeps track of the generation this individual was created in 
+
+    int testCount;
 
     //Both status and error_status are defined in constants.h
 

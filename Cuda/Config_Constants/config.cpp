@@ -256,6 +256,12 @@ void cudaConstants::FileRead(std::string fileName) {
                     else if (variableName == "best_count") {
                         this->best_count = std::stoi(variableValue);
                     }
+                    else if (variableName == "orbitalRadius"){
+                        this->orbitalRadius = std::stod(variableValue);
+                    }
+                    else if (variableName == "orbitalSpeed"){
+                        this->orbitalSpeed = std::stod(variableValue);
+                    }  
                     else if (variableName == "coast_threshold") {
                         this->coast_threshold = std::stod(variableValue);
                     }
@@ -283,6 +289,9 @@ void cudaConstants::FileRead(std::string fileName) {
                     else if (variableName == "orbitalPeriod") {
                         this->orbitalPeriod = stod(variableValue);
                     }
+                    else if (variableName == "gravAssistDist") {
+                        this->gravAssistDist = stod(variableValue);
+                    }
 
 
 /////////////////////////////////////////////////////////////////////////// -- EARTH -- //////////////////////////////////////////////////////////////////////////////////
@@ -305,6 +314,25 @@ void cudaConstants::FileRead(std::string fileName) {
                         this->vz_fin_earth = std::stod(variableValue);
                     }
 
+/////////////////////////////////////////////////////////////////////////// -- MARS -- //////////////////////////////////////////////////////////////////////////////////
+                    else if (variableName == "r_fin_mars") {
+                        this->r_fin_mars = std::stod(variableValue);
+                    }
+                    else if (variableName == "theta_fin_mars") {
+                        this->theta_fin_mars = std::stod(variableValue);
+                    }
+                    else if (variableName == "z_fin_mars") {
+                        this->z_fin_mars = std::stod(variableValue);
+                    }
+                    else if (variableName == "vr_fin_mars") {
+                        this->vr_fin_mars = std::stod(variableValue);
+                    }
+                    else if (variableName == "vtheta_fin_mars") {
+                        this->vtheta_fin_mars = std::stod(variableValue);
+                    }
+                    else if (variableName == "vz_fin_mars") {
+                        this->vz_fin_mars = std::stod(variableValue);
+                    }
 
 /////////////////////////////////////////////////////////////////////////// -- ERROR -- //////////////////////////////////////////////////////////////////////////////////
                     else {
@@ -468,6 +496,10 @@ std::ostream& operator<<(std::ostream& os, const cudaConstants& object) {
     os << "Earth Info:\n";
     os << "\t R: " << object.r_fin_earth  << "\t 0: " << object.theta_fin_earth  << "\t Z: " << object.z_fin_earth  << "\n";
     os << "\tvR: " << object.vr_fin_earth << "\tv0: " << object.vtheta_fin_earth << "\tvZ: " << object.vz_fin_earth << "\n\n";
+
+    os << "Mars Info:\n";
+    os << "\t R: " << object.r_fin_mars  << "\t 0: " << object.theta_fin_mars  << "\t Z: " << object.z_fin_mars  << "\n";
+    os << "\tvR: " << object.vr_fin_mars << "\tv0: " << object.vtheta_fin_mars << "\tvZ: " << object.vz_fin_mars << "\n\n";
 
     os << "Mission Goals: ";
     for (int i = 0; i < object.missionObjectives.size(); i++) {

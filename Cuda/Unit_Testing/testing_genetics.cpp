@@ -48,12 +48,7 @@ bool runGeneticsUnitTests(bool printThings){
     // Chose 3 because that is approximately a quarter of 10
     // This also allows us to see if the shuffling and new parent pairing works as expected
     // This will likely be changed in other sections of the code as well
-    utcConstants->survivor_count = 3;  
-
-    //Flag for what type of landing you want. Current modes: "soft"=2, "hard"=1
-    //testing for soft because as of 2022 that is the main mission type we are exploring 
-    //additionally, mission type should have little impact on the genetics algorithms
-    //utcConstants->missionType = 2; 
+    utcConstants->survivor_count = 3;
 
     //STUFF SO RUNGE_KUTTACUDA.CU CAN RUN
     utcConstants->thread_block_size =32;
@@ -91,12 +86,10 @@ bool runGeneticsUnitTests(bool printThings){
     std::mt19937_64 rng(utcConstants->time_seed);
 
     //VERY complicated part of the code with some possibility of errors -> just needed for the child constructor with rkParameters and cConstants as its arguments
-    launchCon = new EarthInfo(utcConstants); 
+    launchCon = new PlanetInfo(utcConstants, EARTH); 
 
 // CALLING THE DIFFERENT UNIT TESTING ALGORITHMS
     bool allWorking = true;
-
-    std::vector<Adult> aAdults;
     
     //firstParentsTest takes in the cuda constants and will verify that children can be converted into parents and sorted using rankDistanceSort
     if (firstParentsTest(utcConstants, printThings)){

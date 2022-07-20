@@ -23,7 +23,6 @@
 //      accel: spacecraft's acceleration (au/s^2)
 //      wetMass: mass of the spacecraft including fuel (kg)
 
-
 // 1.
     // Extra parameters:
     //      Primarily used for file output
@@ -37,12 +36,6 @@
 template <class T> void rk4sys(const T & timeInitial, const T & timeFinal, T *times, const elements<T> & y0, T stepSize, elements<T> *y_new, 
                                 const T & absTol, coefficients<T> coeff, T *gamma,  T *tau, int & lastStep, T *accel_output, T *fuelSpent, const T & wetMass, const cudaConstants* cConstant);
 
-// 2.
-    // Output: writes in y the final position  of the spacecraft
-    // ** Currently not used **
-template <class T> void rk4Simple(const T & timeInitial, const T & timeFinal, const elements<T> & y0,
-                                    T stepSize, elements<T> & y_new, const T & absTol, coefficients<T> coeff, T & accel, const T & wetMass, const cudaConstants * cConstants);
-
 //3.
     // Comment on stepsize: Expected to be negative due to reverse integration
     // Output: writes in y the initial position of earth at the time of spacecraft launch based on an optimized trip time
@@ -50,17 +43,13 @@ template <class T> void rk4Simple(const T & timeInitial, const T & timeFinal, co
 template <class T> void rk4Reverse(const T & timeInitial, const T & timeFinal, const elements<T> & y0, 
                                     T stepSize, elements<T> & y_new, const T & absTol, const cudaConstants * cConstants);
 
-
-
 // calculates k values 1 - 7 from equation and uses k values to find current and previous values of y
 // error = y_new - y_prev, calculated analytically using k values
 // error used in calc_scalingFactor
 template <class T> __host__ __device__ void rkCalc(T & curTime, const T & timeFinal, T stepSize, elements<T> & y_new, coefficients<T> & coeff, const T & accel, 
-                                                    elements<T> & error);
+                                                    elements<T> & error, const elements<T> & mars, T & marsCraftDist);
 
-
-
-template <class T> void rkCalcEarth(T & curTime, const T & timeFinal, T stepSize, elements<T> & y_new, elements<T> & error);
+template <class T> void rkCalcPlanet(T & curTime, const T & timeFinal, T stepSize, elements<T> & y_new, elements<T> & error);
 
 
 /**********************************************************************************************************************************/

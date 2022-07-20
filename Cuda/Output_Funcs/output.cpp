@@ -491,6 +491,168 @@ void output::trajectoryPrint( double x[], int generation, const cudaConstants* c
   // setting landing conditions of the asteroid (Sept 30, 2022)
   elements<double> asteroid = elements<double>(cConstants->r_fin_ast, cConstants->theta_fin_ast, cConstants->z_fin_ast, cConstants->vr_fin_ast, cConstants->vtheta_fin_ast, cConstants->vz_fin_ast);
 
+// setting the final position of Mars based on the landing date
+  elements<double> mars = elements<double>(cConstants->r_fin_mars, cConstants->theta_fin_mars, cConstants->z_fin_mars, cConstants->vr_fin_mars, cConstants->vtheta_fin_mars, cConstants->vz_fin_mars);
+
+  // setting initial conditions of earth based off of the impact date (Sept 30, 2022) minus the trip time (optimized).
+  elements<double> earth =  launchCon->getCondition(x[TRIPTIME_OFFSET]);
+  
+  // setting initial conditions of the spacecraft
+  elements<double> spaceCraft = elements<double>(earth.r+ESOI*cos(x[ALPHA_OFFSET]),
+                                                 earth.theta + asin(sin(M_PI-x[ALPHA_OFFSET])*ESOI/earth.r),
+                                                 earth.z,
+                                                 earth.vr + cos(x[ZETA_OFFSET])*sin(x[BETA_OFFSET])*cConstants->v_escape,
+                                                 earth.vtheta + cos(x[ZETA_OFFSET])*cos(x[BETA_OFFSET])*cConstants->v_escape,
+                                                 earth.vz + sin(x[ZETA_OFFSET])*cConstants->v_escape);
+
+  // setting time parameters
+  double timeInitial=0; 
+  double timeFinal=cConstants->triptime_min; // Orbital period of asteroid(s)
+  double deltaT; // time step
+  int numSteps = cConstants->max_numsteps*2; // initial guess for the number of time steps, guess for the memory allocated 
+  deltaT = (timeFinal-timeInitial) / cConstants->max_numsteps; // initial guess for time step, small is preferable
+
+  // setup of thrust angle calculations based off of optimized coefficients
+  coefficients<double> coeff;
+  initCoefficient(x,coeff, cConstants);
+  // Assigning coast threshold (now done in coefficients because is a constant)
+
+  // Assigning wetMass
+  double wetMass = cConstants->wet_mass;
+  // setting Runge-Kutta tolerance
+  double absTol = cConstants->rk_tol;
+  // set optmization minimum
+  // double Fmin = cConstants->f_min;
+
+  // Initialize memory for the solution vector of the dependant solution
+  elements<double>* yp = new elements<double>[numSteps];
+  
+  double *times, *gamma, *tau, *accel_output, *fuelSpent, *work, *dE, *Etot_avg;
+  times = new double[numSteps]; // Initialize memory for time array
+  gamma = new double[numSteps]; // Initialize memory for gamma array
+  tau = new double[numSteps]; // Initialize memory for tau array
+  accel_output = new double[numSteps]; // Initialize memory for acceleration array
+  fuelSpent = new double[numSteps];  // Initialize memory for fuelSpent array
+  work = new double[numSteps];  // Initialize memory for work array
+  dE = new double[numSteps];  // Initialize memory for delta-E array
+  Etot_avg = new double[numSteps];  // Initialize memory for average mechanical energy array
+
+  // used to track the cost function throughout a run via output and outputs to a binary
+  int lastStepInt;
+
+  // integrate the trajectory of the input starting conditions
+  rk4sys(timeInitial, x[TRIPTIME_OFFSET] , times, spaceCraft, deltaT, yp, absTol, coeff, gamma, tau, lastStepInt, accel_output, fuelSpent, wetMass, cConstants);
+
+  // store the number of steps as a double for binary output
+  double lastStep = lastStepInt;
+
+  // gets the final y values of the spacecrafts for the cost function.
+  elements<double> yOut = yp[lastStepInt];
+
+  // calculate the error in conservation of mechanical energy due to the thruster
+  errorCheck(times, yp, gamma, tau, lastStepInt, accel_output, fuelSpent, wetMass, work, dE, Etot_avg, cConstants);
+
+
+  //Get the seed for outputs
+  int seed = cConstants->time_seed;
+
+  // This function is used to compare the final best thread with other runs
+  // append this thread's info to a csv file
+  //if (cConstants->record_mode == true) {
+    // Record initial and final fuel masses along with tripTime and relative velocity at impact
+    //recordFuelOutput(cConstants, x, fuelSpent[lastStepInt], best, seed);
+    //progressiveAnalysis(generation, lastStepInt, x, yOut, cConstants);
+  //}
+
+  // binary outputs
+  std::ofstream output;
+  
+  output.open(outputPath + "orbitalMotion-"+std::to_string(seed)+".bin", std::ios::binary);
+  // output.open("orbitalMotion-"+std::to_string(static_cast<int>(seed))+"-"+std::to_string(threadRank)+".bin", std::ios::binary);
+  for(int i = 0; i <= lastStepInt; i++) {
+  // Output this thread's data at each time step
+    output.write((char*)&yp[i], sizeof (elements<double>));
+    output.write((char*)&times[i], sizeof (double));
+    output.write((char*)&gamma[i], sizeof (double));
+    output.write((char*)&tau[i], sizeof (double));
+    output.write((char*)&accel_output[i], sizeof (double));
+    output.write((char*)&fuelSpent[i], sizeof (double));
+    output.write((char*)&work[i], sizeof(double));
+    output.write((char*)&dE[i], sizeof(double));
+    output.write((char*)&Etot_avg[i], sizeof(double));
+  }
+  output.close();
+
+
+  double gsize = GAMMA_ARRAY_SIZE, tsize = TAU_ARRAY_SIZE, csize = COAST_ARRAY_SIZE;
+  output.open(outputPath + "finalOptimization-" + std::to_string(seed)+".bin", std::ios::binary);
+  // output.open ("finalOptimization-"+std::to_string(static_cast<int>(seed))+"-"+std::to_string(threadRank)+".bin", std::ios::binary);
+
+  // Impact conditions
+  output.write((char*)&cConstants->r_fin_ast, sizeof(double));
+  output.write((char*)&cConstants->theta_fin_ast, sizeof(double));
+  output.write((char*)&cConstants->z_fin_ast, sizeof(double));
+  output.write((char*)&cConstants->vr_fin_ast, sizeof(double));
+  output.write((char*)&cConstants->vtheta_fin_ast, sizeof(double));
+  output.write((char*)&cConstants->vz_fin_ast, sizeof(double));
+
+  output.write((char*)&cConstants->r_fin_mars, sizeof(double));
+  output.write((char*)&cConstants->theta_fin_mars, sizeof(double));
+  output.write((char*)&cConstants->z_fin_mars, sizeof(double));
+  output.write((char*)&cConstants->vr_fin_mars, sizeof(double));
+  output.write((char*)&cConstants->vtheta_fin_mars, sizeof(double));
+  output.write((char*)&cConstants->vz_fin_mars, sizeof(double));
+
+  output.write((char*)&cConstants->r_fin_earth, sizeof(double));
+  output.write((char*)&cConstants->theta_fin_earth, sizeof(double));
+  output.write((char*)&cConstants->z_fin_earth, sizeof(double));
+  output.write((char*)&cConstants->vr_fin_earth, sizeof(double));
+  output.write((char*)&cConstants->vtheta_fin_earth, sizeof(double));
+  output.write((char*)&cConstants->vz_fin_earth, sizeof(double));
+
+  // Launch conditions
+  output.write((char*)&earth.r, sizeof(double));
+  output.write((char*)&earth.theta, sizeof(double));
+  output.write((char*)&earth.z, sizeof(double));
+  
+  // Thruster info
+  output.write((char*)&cConstants->fuel_mass, sizeof(double));
+  output.write((char*)&cConstants->coast_threshold, sizeof(double));
+  output.write((char*)&gsize, sizeof(double));
+  output.write((char*)&tsize, sizeof(double));
+  output.write((char*)&csize, sizeof(double));
+
+  // Optimized variables
+  for (int j = 0; j < OPTIM_VARS; j++) {
+    output.write((char*)&x[j], sizeof (double));
+  }
+  
+  // Number of steps taken in final RK calculation
+  output.write((char*)&lastStep, sizeof (double));
+
+  output.close();
+  
+  // cleaning up dynamic memory
+  delete [] yp;
+  delete [] times;
+  delete [] gamma;
+  delete [] tau;
+  delete [] accel_output;
+  delete [] fuelSpent;
+  delete [] work;
+  delete [] dE;
+  delete [] Etot_avg;
+  
+  /*set the asteroid and inital conditions for the earth and spacecraft:
+  constructor takes in radial position(au), angluar position(rad), axial position(au),
+  radial velocity(au/s), tangential velocity(au/s), axial velocity(au/s)*/
+  /*
+  // setting landing conditions of the asteroid (Sept 30, 2022)
+  elements<double> asteroid = elements<double>(cConstants->r_fin_ast, cConstants->theta_fin_ast, cConstants->z_fin_ast, cConstants->vr_fin_ast, cConstants->vtheta_fin_ast, cConstants->vz_fin_ast);
+
+  // setting the final position of Mars based on the landing date
+  elements<double> mars = elements<double>(cConstants->r_fin_mars, cConstants->theta_fin_mars, cConstants->z_fin_mars, cConstants->vr_fin_mars, cConstants->vtheta_fin_mars, cConstants->vz_fin_mars);
+
   // setting initial conditions of earth based off of the impact date (Sept 30, 2022) minus the trip time (optimized).
   elements<double> earth =  launchCon->getCondition(x[TRIPTIME_OFFSET]);
   
@@ -584,6 +746,13 @@ void output::trajectoryPrint( double x[], int generation, const cudaConstants* c
   output.write((char*)&cConstants->vtheta_fin_ast, sizeof(double));
   output.write((char*)&cConstants->vz_fin_ast, sizeof(double));
 
+  output.write((char*)&cConstants->r_fin_mars, sizeof(double));
+  output.write((char*)&cConstants->theta_fin_mars, sizeof(double));
+  output.write((char*)&cConstants->z_fin_mars, sizeof(double));
+  output.write((char*)&cConstants->vr_fin_mars, sizeof(double));
+  output.write((char*)&cConstants->vtheta_fin_mars, sizeof(double));
+  output.write((char*)&cConstants->vz_fin_mars, sizeof(double));
+
   output.write((char*)&cConstants->r_fin_earth, sizeof(double));
   output.write((char*)&cConstants->theta_fin_earth, sizeof(double));
   output.write((char*)&cConstants->z_fin_earth, sizeof(double));
@@ -623,6 +792,7 @@ void output::trajectoryPrint( double x[], int generation, const cudaConstants* c
   delete [] work;
   delete [] dE;
   delete [] Etot_avg;
+  */
 }
 
 // Records error in energy conservation due to thrust calculations
@@ -655,6 +825,45 @@ void output::errorCheck(double *time, elements<double> *yp,  double *gamma,  dou
   // cleaning up dynamic memory
   delete [] mass;
   delete [] Etot;
+}
+
+void output::recordEarthData(const cudaConstants * cConstants, const int & generation) {
+  double timeStamp = cConstants->triptime_min; // Start the timeStamp at the triptime min (closest to impact)
+  // seed to hold time_seed value to identify the file
+  int seed = cConstants->time_seed;
+  // Open file
+  std::ofstream planetValues;
+  planetValues.open(outputPath + "earthCheckValues-"+ std::to_string(seed)+ "-gen#" + std::to_string(generation) + ".csv");
+  // Set header row for the table to record values, with timeStamp
+  planetValues << "TimeStamp, Radius, Theta, Z, vRadius, vTheta, vZ\n";
+  // Fill in rows for elements of launchCon across the time range going backwards until triptime max
+  while (timeStamp < cConstants->triptime_max) {
+      planetValues << timeStamp << "," << launchCon->getCondition(timeStamp);
+      timeStamp += cConstants->timeRes; // Increment to next hour as timeRes is assumed to be set to every hour in this output
+  }
+  
+  // Done recording earth calculations, close file
+  planetValues.close();
+}
+
+// Stores information of launchCon of timeRes (was timeRes*24) resolution in EarthCheckValues-[time_seed].csv
+void output::recordMarsData(const cudaConstants * cConstants, const int & generation) {
+  double timeStamp = 0.0; // Start the timeStamp at the triptime min (closest to impact)
+  // seed to hold time_seed value to identify the file
+  int seed = cConstants->time_seed;
+  // Open file
+  std::ofstream planetValues;
+  planetValues.open(outputPath + "marsCheckValues-"+ std::to_string(seed)+ "-gen#" + std::to_string(generation) + ".csv");
+  // Set header row for the table to record values, with timeStamp
+  planetValues << "TimeStamp, Radius, Theta, Z, vRadius, vTheta, vZ\n";
+  // Fill in rows for elements of launchCon across the time range going backwards until triptime max
+  while (timeStamp < cConstants->triptime_max) {
+      planetValues << timeStamp << "," << marsLaunchCon->getCondition(timeStamp);
+      timeStamp += cConstants->timeRes; // Increment to next hour as timeRes is assumed to be set to every hour in this output
+  }
+  
+  // Done recording earth calculations, close file
+  planetValues.close();
 }
 
 //!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

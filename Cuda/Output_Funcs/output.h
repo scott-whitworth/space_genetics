@@ -137,6 +137,18 @@ struct output
     //         Etot_avg - array of average mechanical energy between time steps (J)
     // Used to fill orbitalMotion{}.bin
     void errorCheck(double *time, elements<double> *yp,  double *gamma,  double *tau, int & lastStep, double *accel, double *fuelSpent, const double & wetMass, double *work, double *dE, double *Etot_avg, const cudaConstants* config);
+
+    // method that stores information of launchCon of timeRes*24 resolution
+    // input: cConstants - access time range and resolution info
+    //        launchCon (global variable) - access elements of planet 
+    // output: PlanetCheckValues.csv is created and holds rows of element info on planet with timeStamp on each row
+    void recordMarsData(const cudaConstants * cConstants, const int & generation);
+    
+    // method that stores information of launchCon of timeRes*24 resolution
+    // input: cConstants - access time range and resolution info
+    //        launchCon (global variable) - access elements of planet 
+    // output: PlanetCheckValues.csv is created and holds rows of element info on planet with timeStamp on each row
+    void recordEarthData(const cudaConstants * cConstants, const int & generation);
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -19,6 +19,10 @@ struct cudaConstants {
     bool record_mode;    // If set to true, functions that record information onto files such as genPerformance.csv.  The code still records a valid solution regardless of this setting
     std::string initial_start_file_address; // If random_start is false, use file_address to find what file is being used for the initial start
 
+    //TODO: Convert these orbit thresholds to the new objective system
+    double orbitalRadius; // the radius of the orbit around a body
+    double orbitalSpeed; // the 
+
     int write_freq;       // Determine how many generations between calling recordGenerationPerformance() method (defined in Output_Funcs/output.cpp)
     int all_write_freq;   // Determine how many generations between calling recordAllIndividuals() method (defined in Output_Funcs/output.cpp)
     int disp_freq;        // Determine how many generations between calling terminalDisplay() method (defined in Output_Funcs/output.cpp)
@@ -81,6 +85,14 @@ struct cudaConstants {
     double vtheta_fin_earth; // AU/s
     double vz_fin_earth;     // AU/s
 
+    // The final position and velocity of Mars at impact date to be used as reference point
+    double r_fin_mars;      // AU
+    double theta_fin_mars;  // Radians
+    double z_fin_mars;      // AU
+    double vr_fin_mars;     // AU/s
+    double vtheta_fin_mars; // AU/s
+    double vz_fin_mars;     // AU/s
+
     double v_impact; // AU/s, the official DART mission data, used in cost function of individuals to sort individuals with posDiff < pos_threshold
 
     double rk_tol;       // The relative/absolute (not sure which one it is) tolerance for the runge kutta algorithm
@@ -103,6 +115,8 @@ struct cudaConstants {
 
     //asteroid orbital constant
     double orbitalPeriod;
+
+    double gravAssistDist;
 
     //Vector of objectives that will be solved by the program
     //  For more information of what the objective class holds, look at it's header file

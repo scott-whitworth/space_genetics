@@ -14,6 +14,11 @@
 #define AU 1.49597870691e11 // used to convert meters to astronomical units (m) 
 #define constG 1.99349603314131e-44 // gravitational constant- used to calculate the gravitational force (AU^3/(s^2 * kg)) 
 #define massSun 1.988500e30 // mass of the sun (kg)
+#define massMars 6.41691e23 // mass of Mars (kg) -> source: https://ssd.jpl.nasa.gov/planets/phys_par.html#refs
+#define marsPeriod 1.8808476*SECONDS_IN_YEAR //Orbital period of Mars around the Sun (s) -> source: https://ssd.jpl.nasa.gov/planets/phys_par.html#refs
+#define marsRadius (3.38892E+06/AU) //radius of mars (au)
+#define marsSunRadius (2.27940000000E+11/AU) //Distance of mars from the sun
+#define MSOI (marsSunRadius*pow(((massMars)/massSun),0.4)) // escape sphere of influence (au)
 
 // Starting location and sizes in the optimization array for navigation to access specific values
 // Note: array sizes must be odd, coinciding with their use in computing Fourier series
@@ -65,13 +70,19 @@ enum STATUS {
 enum ERROR_STATUS{
     VALID = 0,   //not a nan, no problems with any of the parameter values
     SUN_ERROR = 1,   //flew too close to the sun, the posDiff and speedDiff are set to bad values during callRK
-    DUPLICATE = 2,  //an adult has been found to be a duplicate of another, original adult
-    NOT_RUN = 3, //child has not been run through callRK (this is the default when created)
-    NAN_ERROR = 4, //there was an issue during the simulation of the child, causing its final pos to be nan
-    OTHER_ERROR = 5,   //any nans not caught during callRk are set to this error status in optimization
+    MARS_ERROR = 2, //the spacecraft gets too close to Mars
+    DUPLICATE = 3,  //an adult has been found to be a duplicate of another, original adult
+    NOT_RUN = 4, //child has not been run through callRK (this is the default when created)
+    NAN_ERROR = 6, //there was an issue during the simulation of the child, causing its final pos to be nan
+    OTHER_ERROR = 7,   //any nans not caught during callRk are set to this error status in optimization
 };
 
-#define MAX_DISTANCE         1  //max distance for giveDistance, assigned to adults on the boundaries (AKA best and worst adults) - used to be 1.0e+12
+enum PLANET{
+    EARTH = 0,
+    MARS = 1,
+};
+
+#define MAX_DISTANCE 1  //max distance for giveDistance, assigned to adults on the boundaries (AKA best and worst adults) - used to be 1.0e+12
 
 
 #endif

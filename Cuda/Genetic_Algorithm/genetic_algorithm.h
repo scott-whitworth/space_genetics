@@ -30,9 +30,10 @@
 //          generation - the generation that the algorithm is on; this will be passed on to other functions and is used for reporting
 //          rng - a random number generator that is both passed on to other functions and used to pull random parents
 //          cConstants - the config constants; it is passed on to other functions and is used for constructing children and mutating their parameters
+//          gpuValues - allows callRK to access the the GPU memory that has been allocated and the set values for Mars and the cConstants
 // Outputs: newAdults will be filled with newly generated adults; it will be ready to be sorted and compared to other generations
 // NOTE: This function is called at the beginning of each generation within optimize() 
-void newGeneration(std::vector<Adult> & oldAdults, std::vector<Adult> & newAdults, const double & annealing, const int & generation, std::mt19937_64 & rng, const cudaConstants* cConstants);
+void newGeneration(std::vector<Adult> & oldAdults, std::vector<Adult> & newAdults, const double & annealing, const int & generation, std::mt19937_64 & rng, const cudaConstants* cConstants, GPUMem & gpuValues);
 
 // Copies unique values from oldAdults into parents (size N/4) and any adults with the same a non-duplicate error status are included
 // Input: oldAdults - the potential parents from which we are selecting the best survivor_count parents
@@ -67,16 +68,18 @@ void convertToAdults(std::vector<Adult> & newAdults, Child* newChildren, const c
 //        cConstants - allows us to access num_individuals and other important information
 //        rng - a random number generator so we can get random parameters for the children that will become the first generation of adults
 //        generation - child constructor needs a creation generation for its birthday
+//        gpuValues - needs to be passed into firstGeneration so callRK can use it to access GPU memory that has already been allocated
 // Output: oldAdults is filled with the first generation of adults with random parameters
 //         calls firstGeneration to turn the randomly generated children into Adults  
-void createFirstGeneration(std::vector<Adult>& oldAdults, const cudaConstants* cConstants, std::mt19937_64 rng, const int & generation);
+void createFirstGeneration(std::vector<Adult>& oldAdults, const cudaConstants* cConstants, std::mt19937_64 rng, const int & generation, GPUMem & gpuValues);
 
 // Creates the first generation of adults by taking in an array of children with randomly generated parameters
 // Input: initialChildren - children with randomly generated parameters whose runge kutta values have not yet been computed (from createFirstGeneration)
 //        oldAdults - a vector that will be filled with the children once they've gone through callRK and are converted into adults
 //        cConstants - passed on into callRK and convertToAdults
+//        gpuValues - allows callRK to access the the GPU memory that has been allocated and the set values for Mars and the cConstants
 // Output: oldAdults is full of the random children that have been converted into adults -> this will be num_individuals adults
-void firstGeneration(Child* initialChildren, std::vector<Adult>& oldAdults, const cudaConstants* cConstants);
+void firstGeneration(Child* initialChildren, std::vector<Adult>& oldAdults, const cudaConstants* cConstants, GPUMem & gpuValues);
 
 // Sorts the adults from oldAdults and newAdults into allAdults
 // Input: allAdults - holds the oldAdults and newAdults from the last generation initially (this is where oldAdults was selected from). 
@@ -96,7 +99,7 @@ void firstGeneration(Child* initialChildren, std::vector<Adult>& oldAdults, cons
 //         allAdults is filled with 2N - number of duplicates + errors adults from the combination of the inputted old/newAdults vectors
 //              It is sorted by rankDistance
 //         newAdults remains the same (size of N and unsorted)
-void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& newAdults, std::vector<Adult>& oldAdults, int& numErrors, int& duplicateNum, const cudaConstants* cConstants, const int & generation, const double& currentAnneal);
+void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& newAdults, std::vector<Adult>& oldAdults, int& numErrors, int& duplicateNum, const cudaConstants* cConstants, const int & generation, const double& currentAnneal, int& marsErrors);
 
 //function that decides whether or not to add an adult to allAdults based on its errorStatus
 //Input: adultPool - This is either new or oldAdults and an adult from the vector will be checked for errorStatus and added to allAdults
@@ -106,7 +109,7 @@ void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& 
 //       duplicateNum - counts the duplicates in both new and oldAdults
 //Output: allAdults is filled with the adults we want and counts are updated
 //this is called in preparePotentialParents()
-void addToAllAdults(std::vector<Adult> & adultPool, std::vector<Adult> & allAdults, const int & index, int& numErrors, int& duplicateNum);
+void addToAllAdults(std::vector<Adult> & adultPool, std::vector<Adult> & allAdults, const int & index, int& numErrors, int& duplicateNum, int& marsErrors);
 
 #include "genetic_algorithm.cpp"
 

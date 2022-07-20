@@ -3,7 +3,7 @@
 
 #include "../Genetic_Algorithm/child.h"
 #include "../Runge_Kutta/rkParameters.h"
-#include "../Earth_calculations/earthInfo.h"
+#include "../Planet_calculations/planetInfo.h"
 #include <vector>
 #include <string> //used for the unitTestingRankDistanceStatusPrint method so we can get rank, distance, and status easily during unit testing
 
@@ -99,6 +99,8 @@ bool LowerFuelSpent(const Adult& personA, const Adult& personB);
 // input: two individuals
 // output: returns true if personA has a lower triptime than personB
 bool LowerTripTime(const Adult& personA, const Adult& personB);
+
+bool LowerProgress(const Adult& personA, const Adult& personB);
 
 //!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 //Compare two adults to see if the first adult dominates the second adult

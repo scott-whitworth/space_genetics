@@ -1,5 +1,5 @@
 // Creates the next pool to be used in the optimize function in opimization.cu
-void newGeneration (std::vector<Adult> & oldAdults, std::vector<Adult> & newAdults, const double & annealing, const int & generation, std::mt19937_64 & rng, const cudaConstants* cConstants) {
+void newGeneration (std::vector<Adult> & oldAdults, std::vector<Adult> & newAdults, const double & annealing, const int & generation, std::mt19937_64 & rng, const cudaConstants* cConstants, GPUMem & gpuValues) {
 
     //Vector that will hold the adults who are potential parents
     //The criteria for being a parent is being in the top survivor_count number of adults in the oldAdult pool
@@ -27,8 +27,7 @@ void newGeneration (std::vector<Adult> & oldAdults, std::vector<Adult> & newAdul
     // Will fill in the final variables (final position & speed, posDiff, speedDiff) for each child
     //    stepSize -> (cConstants->orbitalPeriod / cConstants->max_numsteps): 
     //                good first guess as to step size, if too small/large RK will always scale to error tolerance
-    //TODO: Perhaps we should just import cCOnstants and newChildren into callRk, since most of the arguments come from cConstants regardless
-    callRK(cConstants->num_individuals, cConstants->thread_block_size, newChildren, timeInitial, (cConstants->orbitalPeriod / cConstants->max_numsteps), cConstants->rk_tol, calcPerS, cConstants); 
+    callRK(calcPerS, newChildren, cConstants, gpuValues, timeInitial);
 
     //Now that the children have been simulated, convert the children into adults
     //First, it will calculate the right pos and speed diffs for the children
@@ -130,7 +129,7 @@ void convertToAdults(std::vector<Adult> & newAdults, Child* newChildren, const c
 
 
 //Creating a generation either randomly or based on values from a file
-void createFirstGeneration(std::vector<Adult>& oldAdults, const cudaConstants* cConstants, std::mt19937_64 rng, const int & generation){
+void createFirstGeneration(std::vector<Adult>& oldAdults, const cudaConstants* cConstants, std::mt19937_64 rng, const int & generation, GPUMem & gpuValues){
     //int generation = 0; //these are loaded from a file or randomly, so set gen to 0
     Child* initialChildren = new Child[cConstants->num_individuals]; 
     // Initialize individuals randomly or from a file
@@ -190,12 +189,12 @@ void createFirstGeneration(std::vector<Adult>& oldAdults, const cudaConstants* c
             initialChildren[i] = Child(example, cConstants, generation, 0);
         }
     }
-    firstGeneration(initialChildren, oldAdults, cConstants);
+    firstGeneration(initialChildren, oldAdults, cConstants, gpuValues);
     delete[] initialChildren;
 }
 
 //Will create the first generation of adults from random parameters so that future generations have a pre-existing base of adults
-void firstGeneration(Child* initialChildren, std::vector<Adult>& oldAdults, const cudaConstants* cConstants){
+void firstGeneration(Child* initialChildren, std::vector<Adult>& oldAdults, const cudaConstants* cConstants, GPUMem & gpuValues){
     double timeIntial = 0;
     double calcPerS  = 0;
 
@@ -203,7 +202,7 @@ void firstGeneration(Child* initialChildren, std::vector<Adult>& oldAdults, cons
         // GPU based runge kutta process determines final position and velocity based on parameters
     //Will fill in the final variables (final position & speed, posDiff, speedDiff) for each child
     //TODO: Perhaps we should just import cCOnstants and newChildren into callRk, since most of the arguments come from cConstants regardless
-    callRK(cConstants->num_individuals, cConstants->thread_block_size, initialChildren, timeIntial, (cConstants->orbitalPeriod / cConstants->max_numsteps), cConstants->rk_tol, calcPerS, cConstants); 
+    callRK(calcPerS, initialChildren, cConstants, gpuValues, timeIntial); 
 
     //Now that the children have been simulated, convert the children into adults
     //This will calc the posDiff and speedDiff for each child
@@ -212,10 +211,11 @@ void firstGeneration(Child* initialChildren, std::vector<Adult>& oldAdults, cons
 }
 
 //fills oldAdults with the best adults from this generation and the previous generation so that the best parents can be selected
-void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& newAdults, std::vector<Adult>& oldAdults, int& numErrors, int& duplicateNum, const cudaConstants* cConstants, const int & generation, const double& currentAnneal){
+void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& newAdults, std::vector<Adult>& oldAdults, int& numErrors, int& duplicateNum, const cudaConstants* cConstants, const int & generation, const double& currentAnneal, int & marsErrors){
     std::vector<Adult>().swap(allAdults); //ensures this vector is empty and ready for new inputs
     //Reset duplicate and error count variables
     numErrors = 0;
+    marsErrors = 0;
     duplicateNum = 0;
 
     //countStatuses(newAdults, generation);
@@ -227,11 +227,11 @@ void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& 
     //check the errorStatus of all the newAdults and add them to allAdults
     for (int i = 0; i < newAdults.size(); i++){ 
         //copies all the elements of newAdults into allAdults
-        addToAllAdults(newAdults, allAdults, i, numErrors, duplicateNum);
+        addToAllAdults(newAdults, allAdults, i, numErrors, duplicateNum, marsErrors);
     }
     //check the errorStatus of all the oldAdults and add them to allAdults
     for (int i = 0; i < oldAdults.size(); i++){ //copies over all the elements of oldAdults into allAdults
-        addToAllAdults(oldAdults, allAdults, i, numErrors, duplicateNum);
+        addToAllAdults(oldAdults, allAdults, i, numErrors, duplicateNum, marsErrors);
     }
 
     if(allAdults.size() < cConstants->num_individuals){
@@ -274,13 +274,17 @@ void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& 
     //countStatuses(oldAdults, generation);
 }
 
-void addToAllAdults(std::vector<Adult> & adultPool, std::vector<Adult> & allAdults, const int & index, int& numErrors, int& duplicateNum){
+void addToAllAdults(std::vector<Adult> & adultPool, std::vector<Adult> & allAdults, const int & index, int& numErrors, int& duplicateNum, int& marsErrors){
     //if we ever want to eliminate duplicates again, this is the place to do it
     
     if(adultPool[index].errorStatus != VALID && adultPool[index].errorStatus != DUPLICATE) { 
         //tallies the number of nans in allAdults by checking if the adult being passed into newAdult is a Nan or not
         numErrors++;
-        //TODO: This is confusing. This will be true for an individual that is not valid and not duplicate. It may not be a NaN, it could be something else
+        
+        if (adultPool[index].errorStatus == MARS_ERROR){
+            marsErrors++;
+        }
+
     }else if(adultPool[index].errorStatus == DUPLICATE){
         duplicateNum++;
         allAdults.push_back(adultPool[index]);//remove this if we want to remove duplicates

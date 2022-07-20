@@ -8,15 +8,19 @@ function [] = plotData(cR,y0A,y0E,sizeC,tripTime,coast,coast_threshold,gammaCoef
     timeFinal=(3.772645011085093e+07); % orbital period for Bennu
     %timeFinal=(6.653820100923719e+07); % orbital period for Didymos
     tspan=[tripTime 0];
+    %Orbial elements of Mars at t=0 (Psyche values)
+    y0M=[1.40507402123; 5.21660512793; -4.24258126284e-02;-9.21299683135e-09; 1.74054657652e-07; -1.69653719932e-09];
     options = odeset('RelTol',1e-13);
     [tE, yE] = ode45(@orbitalMotion,tspan,y0E,options,gammaCoeff,tauCoeff,tripTime,0);
     [tA, yA] = ode45(@orbitalMotion,tspan,y0A,options,gammaCoeff,tauCoeff,tripTime,0);
+    [tM, yM] = ode45(@orbitalMotion,tspan,y0M,options,gammaCoeff,tauCoeff,tripTime,0);
     
     % Transform to cartesian coordinates for position and velocity of asteroid and earth
     [cX,cY,cZ]= pol2cart(cR(2,:),cR(1,:),cR(3,:));
     [eX,eY,eZ]= pol2cart(yE(:,2),yE(:,1),yE(:,3));
     [eX_launch,eY_launch,eZ_launch]= pol2cart(launchPos(2),launchPos(1),launchPos(3));
     [aX,aY,aZ]= pol2cart(yA(:,2),yA(:,1),yA(:,3));
+    [mX,mY,mZ]= pol2cart(yM(:,2),yM(:,1),yM(:,3));
     % Acceleration vector in cartesian coordinates
     [accelX,accelY,accelZ] = getAccel(cR,tripTime,gammaCoeff,tauCoeff,sizeC);
     
@@ -36,6 +40,8 @@ function [] = plotData(cR,y0A,y0E,sizeC,tripTime,coast,coast_threshold,gammaCoef
     polarplot(yA(:,2),yA(:,1),'.')
     %rlim([0 1.5])
     hold on
+    polarplot(yM(:,2),yM(:,1),'.')
+    hold on 
     polarplot(cR(2,1),cR(1,1),'r*')
     %rlim([0 1.5])
     hold on
@@ -58,11 +64,14 @@ function [] = plotData(cR,y0A,y0E,sizeC,tripTime,coast,coast_threshold,gammaCoef
 %    plot((tA-(timeFinal-tripTime))/(3600*24),yA(:,1).*yA(:,5),'.')
     plot(tA/(3600*24),yA(:,1).*yA(:,5),'.')
     hold on
+    plot(tM/(3600*24),yM(:,1).*yM(:,5),'.')
+    hold on
     plot(cR(7,:)/(3600*24),cR(1,:).*cR(5,:),'Color',[0.4660, 0.6740, 0.1880],'LineWidth', 2)
     ylabel('h (AU^{2}/s)')
     xlabel('t (days)')
     xlim([0 tripTime/(3600*24)])
-    legend({'earth','asteroid','spacecraft'},'Location','east')
+    legend({'Earth','asteroid','Mars','spacecraft'},'Location','east')
+    %legend({'earth','asteroid','spacecraft'},'Location','east')
     title('Specific angular momentum')
     hold off
     
@@ -71,6 +80,8 @@ function [] = plotData(cR,y0A,y0E,sizeC,tripTime,coast,coast_threshold,gammaCoef
     plot(yE(:,1).*cos(yE(:,2)),yE(:,3),'.')
     hold on
     plot(yA(:,1).*cos(yA(:,2)),yA(:,3),'.')
+    hold on
+    plot(yM(:,1).*cos(yM(:,2)),yM(:,3),'.')
     hold on
     plot(cR(1,:).*cos(cR(2,:)), cR(3,:),'Color',[0.4660, 0.6740, 0.1880],'LineWidth', 2)
     xlim([-2.25 2.25])
@@ -88,6 +99,8 @@ function [] = plotData(cR,y0A,y0E,sizeC,tripTime,coast,coast_threshold,gammaCoef
     hold on
     plot(tA/(3600*24),yA(:,1),'.')
     hold on
+    plot(tM/(3600*24),yM(:,1),'.')
+    hold on
     plot(cR(7,:)/(3600*24),cR(1,:),'Color',[0.4660, 0.6740, 0.1880],'LineWidth', 2)
     ylabel('r (AU)')
     xlabel('t (days)')
@@ -101,6 +114,8 @@ function [] = plotData(cR,y0A,y0E,sizeC,tripTime,coast,coast_threshold,gammaCoef
     hold on
     plot(tA/(3600*24),mod(yA(:,2), 2*pi),'.')
     hold on
+    plot(tM/(3600*24),mod(yM(:,2), 2*pi),'.')
+    hold on
     plot(cR(7,:)/(3600*24),mod(cR(2,:), 2*pi),'Color',[0.4660, 0.6740, 0.1880],'LineWidth', 2)
     ylabel('\theta (rad)')
     xlim([0 tripTime/(3600*24)])
@@ -113,6 +128,8 @@ function [] = plotData(cR,y0A,y0E,sizeC,tripTime,coast,coast_threshold,gammaCoef
     plot(tE/(3600*24),yE(:,3),'.')
     hold on
     plot(tA/(3600*24),yA(:,3),'.')
+    hold on
+    plot(tM/(3600*24),yM(:,3),'.')
     hold on
     plot(cR(7,:)/(3600*24),cR(3,:),'Color',[0.4660, 0.6740, 0.1880],'LineWidth', 2)
     ylabel('z (AU)')
@@ -297,9 +314,9 @@ function [] = plotData(cR,y0A,y0E,sizeC,tripTime,coast,coast_threshold,gammaCoef
     %a=figure(3); % plot with vectors
     figure(5) % plot with vectors
     plot3(cX,cY,cZ,'LineWidth', 3,'Color',[0.4660, 0.6740, 0.1880])
-    xlim([-2.25 2.25])
-    ylim([-2.25 2.25])
-    zlim([-0.15 0.15])
+    xlim([-3.35 3.35])
+    ylim([-3.35 3.35])
+    zlim([-0.25 0.25])
     xlabel('x (AU)')
     ylabel('y (AU)')
     zlabel('z (AU)')
@@ -307,6 +324,8 @@ function [] = plotData(cR,y0A,y0E,sizeC,tripTime,coast,coast_threshold,gammaCoef
    
     hold on
     plot3(aX,aY,aZ,'LineWidth', 1, 'Color',	[0.6350, 0.0780, 0.1840])
+    hold on
+    plot3(mX,mY,mZ,'LineWidth', 1, 'Color',	[0.9290 0.6940 0.1250])
     %zlim([-2 2])
     hold on
     %plot3(eX,eY,eZ,'LineWidth', 1,'Color',[.61 .51 .74])
@@ -323,7 +342,8 @@ function [] = plotData(cR,y0A,y0E,sizeC,tripTime,coast,coast_threshold,gammaCoef
     dim = [.2 .5 .3 .3];
     annotation('textbox',dim,'String',txt,'FitBoxToText','on');
     title('3-D Orbits')
-    legend('Spacecraft','Asteroid','Earth','Thrust')
+    legend('Spacecraft','Asteroid','Mars','Earth','Thrust')
+    % legend('Spacecraft','Asteroid','Earth','Thrust')
     
     %r_sun = 6.96e-3; % radius of the sun in AU
     %Sun=1.0;%NOT to scale, for visualization only

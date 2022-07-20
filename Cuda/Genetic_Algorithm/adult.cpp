@@ -99,6 +99,25 @@ bool LowerTripTime(const Adult& personA, const Adult& personB) {
     }
 }
 
+// Compare two individuals by their positional difference values, used in standard sort to have array contain lowest posDiff individual at start
+// input: two individuals
+// output: returns true if personB has a higher positional difference than personA
+bool LowerProgress(const Adult& personA, const Adult& personB) {
+    if(personA.errorStatus !=  VALID && personA.errorStatus != DUPLICATE){
+        return false;
+    }
+    if(personB.errorStatus !=  VALID && personB.errorStatus != DUPLICATE){
+        return true;
+    }
+    if (personA.progress > personB.progress) {
+        return true;
+    }
+    else {
+        return false;
+    }
+
+}
+
 //!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 //Compare two individuals to see if the first individual dominates the second individual
 //Returns true if personA dominates personB.

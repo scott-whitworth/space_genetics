@@ -4,6 +4,7 @@ using std::cout;
 using std::endl;
 #include "../Unit_Testing/testing_sorts.h"
 #include "../Unit_Testing/testing_genetics.h"
+#include "../Unit_Testing/testing_planet.cpp"
 // nvcc -ccbin "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.22.27905\bin\Hostx64\x64\cl.exe" -o unit_test unit_testing_main.cu -arch=compute_50 -code=sm_50 
 
 int main(){
@@ -31,6 +32,13 @@ int main(){
     // Calls a function that initializes a set of cConstants for unit testing and completes tests to verify
     //      different aspects of the genetic algorithm, ga_crossover, and annealing
     if (runGeneticsUnitTests(lotsOfCouts)){
+        cout << "PASSED: All the genetics tests passed" << endl;
+    }
+    else{
+        cout << "Completed all the genetics units tests, but some FAILED" << endl;
+    }
+    
+    if (runPlanetTests(lotsOfCouts)){
         cout << "PASSED: All the genetics tests passed" << endl;
     }
     else{

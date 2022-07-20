@@ -49,15 +49,21 @@ template <class T> void rk4sys(const T & timeInitial, const T & timeFinal, T *ti
         if (curTime == timeFinal) {
             break;
         }
-        
+
+        elements<double> mars = (*marsLaunchCon).getCondition(timeFinal - curTime); //gets Mars' position relative to the Sun
+
+        //calculate the distance between the spacecraft and Mars
+        double marsCraftDist = sqrt(pow(mars.r, 2) + pow(u.r, 2) + pow(u.z - mars.z, 2) - (2*u.r*mars.r*cos(mars.theta-u.theta)));
+
         //calculate new position
-        rkCalc(curTime, timeFinal, stepSize, u, coeff, accel_output[n], error);
+        rkCalc(curTime, timeFinal, stepSize, u, coeff, accel_output[n], error, mars, marsCraftDist);
 
         //array of time output as t         
         curTime += stepSize;
 
         //This is the way that stepSize was calculated in rk4SimpleCUDA
         stepSize *= calc_scalingFactor(u-error,error,absTol, cConstant->doublePrecThresh); // Alter the step size for the next iteration
+        
         // The step size cannot exceed the total time divided by 2 and cannot be smaller than the total time divided by 1000
             if (stepSize > (timeFinal - timeInitial) / cConstant->min_numsteps) {
                 stepSize = (timeFinal - timeInitial) / cConstant->min_numsteps;
@@ -65,13 +71,6 @@ template <class T> void rk4sys(const T & timeInitial, const T & timeFinal, T *ti
             else if (stepSize < (timeFinal - timeInitial) / cConstant->max_numsteps) {
                 stepSize = (timeFinal - timeInitial) / cConstant->max_numsteps;
             }
-
-            // if (stepSize > (threadRKParameters.tripTime - startTime) / cConstant->min_numsteps) {
-            //     stepSize = (threadRKParameters.tripTime - startTime) / cConstant->min_numsteps;
-            // }
-            // else if (stepSize < (threadRKParameters.tripTime - startTime) / cConstant->max_numsteps) {
-            //     stepSize = (threadRKParameters.tripTime - startTime) / cConstant->max_numsteps;
-            // }
         
         // shorten the last step to end exactly at time final
         if ( (curTime+stepSize) > timeFinal) {
@@ -87,80 +86,16 @@ template <class T> void rk4sys(const T & timeInitial, const T & timeFinal, T *ti
     std::cout << "rk4sys speedDiff: " << sqrt(pow(cConstant->vr_fin_ast - y_new[lastStep].vr, 2) + pow(cConstant->vtheta_fin_ast - y_new[lastStep].vtheta, 2) + pow(cConstant->vz_fin_ast - y_new[lastStep].vz, 2));
 }
 
-// ** Currently not used **
-template <class T> void rk4Simple(const T & timeInitial, const T & timeFinal, const elements<T> & y0,
-                                    T stepSize, elements<T> & y_new, const T & absTol, coefficients<T> coeff, T & accel, const T & wetMass, const cudaConstants * cConstants) {
-    // Set the first element of the solution vector to the initial conditions of the spacecraft
-    y_new = y0;
-
-    thruster<T> thrust(cConstants);
-
-    T curTime = timeInitial; // setting time equal to the start time
-
-    //mass of fuel expended (kg)
-    //set to 0 initially
-    T massFuelSpent = 0;
-
-    // Setting step size to be used until the last step
-    stepSize = (timeFinal-timeInitial) / cConstants->cpu_numsteps;
-    
-    elements<T> error;
-    bool coast;
-    
-    while (curTime < timeFinal) {  // iterate until time is equal to the stop time
-
-        // Check the thruster type before performing calculations
-        if (cConstants->thruster_type == thruster<double>::NO_THRUST) {
-            coast = accel = 0;
-        }
-        else {
-            // defining coast using calc_coast()
-            coast = calc_coast(coeff, curTime, timeFinal, thrust);
-            // defining acceleration using calc_accel()
-            accel = calc_accel(y_new.r,y_new.z, thrust, massFuelSpent, stepSize, coast, wetMass);
-        }
-
-        //calculate k values
-        rkCalc(curTime, timeFinal, stepSize, y_new, coeff, accel, error); 
-
-        //array of time output as t         
-        curTime += stepSize;
-
-        //Alter the step size for the next iteration
-        stepSize *= calc_scalingFactor(y_new-error,error,absTol, cConstants->doublePrecThresh);
-
-        //The step size cannot exceed the total time divided by 10 and cannot be smaller than the total time divided by 1000
-        if (stepSize > (timeFinal-timeInitial) / cConstants->min_numsteps) {
-            stepSize = (timeFinal-timeInitial) / cConstants->min_numsteps;
-        }
-        else if (stepSize < ((timeFinal-timeInitial) / cConstants->max_numsteps)) {
-            stepSize = (timeFinal-timeInitial) / cConstants->max_numsteps;
-        }
-
-        // shorten the last step to end exactly at time final
-        if ((curTime+stepSize) > timeFinal) {
-            stepSize = (timeFinal-curTime);
-        }
-
-        // if the spacecraft is within 0.5 au of the sun, the radial position of the spacecraft increases to 1000, so that path is not used for optimization.
-        if (sqrt( pow(y_new.r,2) + pow(y_new.z,2) ) < 0.5) {
-            y_new.r = 1000;
-            return;
-        }
-        
-    }  //end of while 
-}
-
 template <class T> void rk4Reverse(const T & timeInitial, const T & timeFinal, const elements<T> & y0, 
                                    T stepSize, elements<T> & y_new, const T & absTol, const cudaConstants * cConstants) {
-    // Set the first element of the solution vector to the conditions of earth on impact date (Oct. 5, 2022)
+    // Set the first element of the solution vector to the conditions of the Planet on impact date (Oct. 5, 2022 for Earth)
     y_new = y0;
     elements<T> error;
     T curTime = timeFinal; // setting time equal to the start time
 
     while( curTime > timeInitial) {  // iterates in reverse
         //calculate k values
-        rkCalcEarth(curTime, timeFinal, stepSize, y_new, error);
+        rkCalcPlanet(curTime, timeFinal, stepSize, y_new, error);
 
         //array of time output as t         
         curTime -= stepSize;
@@ -184,19 +119,20 @@ template <class T> void rk4Reverse(const T & timeInitial, const T & timeFinal, c
 }
 
 template <class T> __host__ __device__ void rkCalc(T & curTime, const T & timeFinal, T stepSize, elements<T> & y_new, coefficients<T> & coeff, const T & accel, 
-                                                    elements<T> & error) {
+                                                    elements<T> & error, const elements<T> & mars, T & marsCraftDist) {
 
     // k variables for Runge-Kutta calculation of y_new
     elements<T> k1, k2, k3, k4, k5, k6, k7;
     // Coefficients from MATLAB's implementation of ode45
     // Our calculation of k has the time step built into it (see motion_equations.cpp)
-    k1 = calc_k(stepSize, y_new, coeff, accel, curTime, timeFinal); 
-    k2 = calc_k(stepSize, y_new+k1*(static_cast <double> (1)/static_cast <double> (5)), coeff, accel, curTime+((static_cast <double> (1)/static_cast <double> (5))*stepSize), timeFinal); 
-    k3 = calc_k(stepSize, y_new+k1*(static_cast <double> (3)/static_cast <double> (40))+k2*(static_cast <double> (9)/static_cast <double> (40)), coeff, accel, curTime+((static_cast <double> (3)/static_cast <double> (10))*stepSize), timeFinal);   
-    k4 = calc_k(stepSize, y_new+k1*(static_cast <double> (44)/static_cast <double> (45))+k2*(static_cast <double> (-56)/static_cast <double> (15))+k3*(static_cast <double> (32)/static_cast <double> (9)), coeff, accel, curTime+((static_cast <double> (4)/static_cast <double> (5))*stepSize), timeFinal); 
-    k5 = calc_k(stepSize, y_new+k1*(static_cast <double> (19372)/static_cast <double> (6561))+k2*(static_cast <double> (-25360)/static_cast <double> (2187))+k3*(static_cast <double> (64448)/static_cast <double> (6561))+k4*(static_cast <double> (-212)/static_cast <double> (729)), coeff, accel, curTime+((static_cast <double> (8)/static_cast <double> (9))*stepSize), timeFinal); 
-    k6 = calc_k(stepSize, y_new+k1*(static_cast <double> (9017)/static_cast <double> (3168))+k2*(static_cast <double> (-355)/static_cast <double> (33))+k3*(static_cast <double> (46732)/static_cast <double> (5247))+k4*(static_cast <double> (49)/static_cast <double> (176))+k5*(static_cast <double> (-5103)/static_cast <double> (18656)), coeff, accel, curTime+stepSize, timeFinal);  
-    k7 = calc_k(stepSize, y_new+k1*(static_cast <double> (35)/static_cast <double> (384))+k3*(static_cast <double> (500)/static_cast <double> (1113))+k4*(static_cast <double> (125)/static_cast <double> (192))+k5*(static_cast <double> (-2187)/static_cast <double> (6784))+k6*(static_cast <double> (11)/static_cast <double> (84)), coeff, accel, curTime+stepSize, timeFinal);  
+    //marsCraftDist = calcMarsCraftDist(y_new, mars);
+    k1 = calc_k(stepSize, y_new, coeff, accel, curTime, timeFinal, mars, marsCraftDist); 
+    k2 = calc_k(stepSize, y_new+k1*(static_cast <double> (1)/static_cast <double> (5)), coeff, accel, curTime+((static_cast <double> (1)/static_cast <double> (5))*stepSize), timeFinal, mars, marsCraftDist); 
+    k3 = calc_k(stepSize, y_new+k1*(static_cast <double> (3)/static_cast <double> (40))+k2*(static_cast <double> (9)/static_cast <double> (40)), coeff, accel, curTime+((static_cast <double> (3)/static_cast <double> (10))*stepSize), timeFinal, mars, marsCraftDist);   
+    k4 = calc_k(stepSize, y_new+k1*(static_cast <double> (44)/static_cast <double> (45))+k2*(static_cast <double> (-56)/static_cast <double> (15))+k3*(static_cast <double> (32)/static_cast <double> (9)), coeff, accel, curTime+((static_cast <double> (4)/static_cast <double> (5))*stepSize), timeFinal, mars, marsCraftDist); 
+    k5 = calc_k(stepSize, y_new+k1*(static_cast <double> (19372)/static_cast <double> (6561))+k2*(static_cast <double> (-25360)/static_cast <double> (2187))+k3*(static_cast <double> (64448)/static_cast <double> (6561))+k4*(static_cast <double> (-212)/static_cast <double> (729)), coeff, accel, curTime+((static_cast <double> (8)/static_cast <double> (9))*stepSize), timeFinal, mars, marsCraftDist); 
+    k6 = calc_k(stepSize, y_new+k1*(static_cast <double> (9017)/static_cast <double> (3168))+k2*(static_cast <double> (-355)/static_cast <double> (33))+k3*(static_cast <double> (46732)/static_cast <double> (5247))+k4*(static_cast <double> (49)/static_cast <double> (176))+k5*(static_cast <double> (-5103)/static_cast <double> (18656)), coeff, accel, curTime+stepSize, timeFinal, mars, marsCraftDist);  
+    k7 = calc_k(stepSize, y_new+k1*(static_cast <double> (35)/static_cast <double> (384))+k3*(static_cast <double> (500)/static_cast <double> (1113))+k4*(static_cast <double> (125)/static_cast <double> (192))+k5*(static_cast <double> (-2187)/static_cast <double> (6784))+k6*(static_cast <double> (11)/static_cast <double> (84)), coeff, accel, curTime+stepSize, timeFinal, mars, marsCraftDist);  
 
     // New value
     y_new = y_new + k1*(static_cast <double> (35)/static_cast <double> (384)) + k3*(static_cast <double> (500)/static_cast <double> (1113)) + k4*(static_cast <double> (125)/static_cast <double> (192)) - k5*(static_cast <double> (2187)/static_cast <double> (6784)) + k6*(static_cast <double> (11)/static_cast <double> (84)) + k7*(static_cast <double> (0)/static_cast <double> (40));  
@@ -218,7 +154,7 @@ template <class T> __host__ __device__ void rkCalc(T & curTime, const T & timeFi
 }
 
 // The stepSize value that is inputted is assumed to be a positive value
-template <class T> void rkCalcEarth(T & curTime, const T & timeFinal, T stepSize, elements<T> & y_new, elements<T> & error) {
+template <class T> void rkCalcPlanet(T & curTime, const T & timeFinal, T stepSize, elements<T> & y_new, elements<T> & error) {
     // Runge-Kutta algorithm    
     // k variables for Runge-Kutta calculation of y_new
     elements<T> k1, k2, k3, k4, k5, k6, k7;
@@ -226,13 +162,13 @@ template <class T> void rkCalcEarth(T & curTime, const T & timeFinal, T stepSize
     stepSize *= -1; // Make this copy of stepSize negative as it goes backwards
 
     //calc_k multiplies all values by the stepSize internally.
-    k1 = calc_kEarth(stepSize, y_new, curTime, timeFinal);        
-    k2 = calc_kEarth(stepSize, y_new+(k1*(static_cast <double> (1)/static_cast <double> (5))), curTime+((static_cast <double> (1)/static_cast <double> (5))*stepSize), timeFinal);   
-    k3 = calc_kEarth(stepSize, y_new+(k1*(static_cast <double> (3)/static_cast <double> (40)))+(k2*(static_cast <double> (9)/static_cast <double> (40))), curTime+((static_cast <double> (3)/static_cast <double> (10))*stepSize), timeFinal);   
-    k4 = calc_kEarth(stepSize, y_new+(k1*(static_cast <double> (44)/static_cast <double> (45)))+(k2*(static_cast <double> (-56)/static_cast <double> (15)))+(k3*(static_cast <double> (32)/static_cast <double> (9))), curTime+((static_cast <double> (4)/static_cast <double> (5))*stepSize), timeFinal);    
-    k5 = calc_kEarth(stepSize, y_new+(k1*(static_cast <double> (19372)/static_cast <double> (6561)))+(k2*(static_cast <double> (-25360)/static_cast <double> (2187)))+(k3*(static_cast <double> (64448)/static_cast <double> (6561)))+(k4*(static_cast <double> (-212)/static_cast <double> (729))), curTime+((static_cast <double> (8)/static_cast <double> (9))*stepSize), timeFinal);        
-    k6 = calc_kEarth(stepSize, y_new+(k1*(static_cast <double> (9017)/static_cast <double> (3168)))+(k2*(static_cast <double> (-355)/static_cast <double> (33)))+(k3*(static_cast <double> (46732)/static_cast <double> (5247)))+(k4*(static_cast <double> (49)/static_cast <double> (176)))+(k5*(static_cast <double> (-5103)/static_cast <double> (18656))), curTime+stepSize, timeFinal);        
-    k7 = calc_kEarth(stepSize, y_new+(k1*(static_cast <double> (35)/static_cast <double> (384)))+(k3*(static_cast <double> (500)/static_cast <double> (1113)))+(k4*(static_cast <double> (125)/static_cast <double> (192)))+(k5*(static_cast <double> (-2187)/static_cast <double> (6784)))+(k6*(static_cast <double> (11)/static_cast <double> (84))), curTime+stepSize, timeFinal);  
+    k1 = calc_kPlanet(stepSize, y_new, curTime, timeFinal);        
+    k2 = calc_kPlanet(stepSize, y_new+(k1*(static_cast <double> (1)/static_cast <double> (5))), curTime+((static_cast <double> (1)/static_cast <double> (5))*stepSize), timeFinal);   
+    k3 = calc_kPlanet(stepSize, y_new+(k1*(static_cast <double> (3)/static_cast <double> (40)))+(k2*(static_cast <double> (9)/static_cast <double> (40))), curTime+((static_cast <double> (3)/static_cast <double> (10))*stepSize), timeFinal);   
+    k4 = calc_kPlanet(stepSize, y_new+(k1*(static_cast <double> (44)/static_cast <double> (45)))+(k2*(static_cast <double> (-56)/static_cast <double> (15)))+(k3*(static_cast <double> (32)/static_cast <double> (9))), curTime+((static_cast <double> (4)/static_cast <double> (5))*stepSize), timeFinal);    
+    k5 = calc_kPlanet(stepSize, y_new+(k1*(static_cast <double> (19372)/static_cast <double> (6561)))+(k2*(static_cast <double> (-25360)/static_cast <double> (2187)))+(k3*(static_cast <double> (64448)/static_cast <double> (6561)))+(k4*(static_cast <double> (-212)/static_cast <double> (729))), curTime+((static_cast <double> (8)/static_cast <double> (9))*stepSize), timeFinal);        
+    k6 = calc_kPlanet(stepSize, y_new+(k1*(static_cast <double> (9017)/static_cast <double> (3168)))+(k2*(static_cast <double> (-355)/static_cast <double> (33)))+(k3*(static_cast <double> (46732)/static_cast <double> (5247)))+(k4*(static_cast <double> (49)/static_cast <double> (176)))+(k5*(static_cast <double> (-5103)/static_cast <double> (18656))), curTime+stepSize, timeFinal);        
+    k7 = calc_kPlanet(stepSize, y_new+(k1*(static_cast <double> (35)/static_cast <double> (384)))+(k3*(static_cast <double> (500)/static_cast <double> (1113)))+(k4*(static_cast <double> (125)/static_cast <double> (192)))+(k5*(static_cast <double> (-2187)/static_cast <double> (6784)))+(k6*(static_cast <double> (11)/static_cast <double> (84))), curTime+stepSize, timeFinal);  
 
     //Error 
     //See the original algorithm by J.R. Dormand and P.J. Prince, JCAM 1980 and its implementation in MATLAB's ode45

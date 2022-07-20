@@ -20,6 +20,8 @@ enum parameterGoals {
     MAX_SPEED_DIFF = 2, 
 };
 
+//TODO: add orbital objective
+
 //This structure holds the necessary information for a program objective
 //This will allow for the program to handle dynamic program objectives
 

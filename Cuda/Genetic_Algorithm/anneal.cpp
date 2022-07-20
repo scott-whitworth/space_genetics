@@ -11,11 +11,17 @@ void changeAnneal (const std::vector<Adult>& oldAdults, const cudaConstants* cCo
     //This method currently has the fastest and most consistent convergence rate
     //Once it reaches 1e-3, the anneal will be function based on a power curve
     //TODO: This should be defined in the config file
-    if(curProgress < 1e-8){ 
+    if(curProgress < 1e-10){ 
         currentAnneal = cConstants->anneal_initial; 
     } 
+    else if(curProgress >= 1e-10 && curProgress < 1e-9){ 
+        currentAnneal = cConstants->anneal_initial*.8; 
+    } 
+    else if(curProgress >= 1e-9 && curProgress < 1e-8){ 
+        currentAnneal = cConstants->anneal_initial*.7; 
+    } 
     else if(curProgress >= 1e-8 && curProgress < 1e-7){ 
-        currentAnneal = cConstants->anneal_initial*.4; 
+        currentAnneal = cConstants->anneal_initial*.3; 
     } 
     else if(curProgress >= 1e-7 && curProgress < 1e-6){ 
         currentAnneal = cConstants->anneal_initial*.2; 

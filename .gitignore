@@ -5,6 +5,7 @@
 *.csv
 *.exp
 *.lib
+*.bin
 #**/CUDA/**/*.lib
 #**/CUDA/**/*.exp
 *final-optimization.bin

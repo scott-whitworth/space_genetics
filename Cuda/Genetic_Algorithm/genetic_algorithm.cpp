@@ -212,9 +212,10 @@ void firstGeneration(Child* initialChildren, std::vector<Adult>& oldAdults, cons
 }
 
 //fills oldAdults with the best adults from this generation and the previous generation so that the best parents can be selected
-void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& newAdults, std::vector<Adult>& oldAdults, int& numNans, int& duplicateNum, const cudaConstants* cConstants, const int & generation, const double& currentAnneal){
+void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& newAdults, std::vector<Adult>& oldAdults, int& numErrors, int& duplicateNum, const cudaConstants* cConstants, const int & generation, const double& currentAnneal){
     std::vector<Adult>().swap(allAdults); //ensures this vector is empty and ready for new inputs
-    numNans = 0;
+    //Reset duplicate and error count variables
+    numErrors = 0;
     duplicateNum = 0;
 
     //countStatuses(newAdults, generation);
@@ -226,11 +227,11 @@ void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& 
     //check the errorStatus of all the newAdults and add them to allAdults
     for (int i = 0; i < newAdults.size(); i++){ 
         //copies all the elements of newAdults into allAdults
-        addToAllAdults(newAdults, allAdults, i, numNans, duplicateNum);
+        addToAllAdults(newAdults, allAdults, i, numErrors, duplicateNum);
     }
     //check the errorStatus of all the oldAdults and add them to allAdults
     for (int i = 0; i < oldAdults.size(); i++){ //copies over all the elements of oldAdults into allAdults
-        addToAllAdults(oldAdults, allAdults, i, numNans, duplicateNum);
+        addToAllAdults(oldAdults, allAdults, i, numErrors, duplicateNum);
     }
 
     if(allAdults.size() < cConstants->num_individuals){
@@ -273,12 +274,12 @@ void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& 
     //countStatuses(oldAdults, generation);
 }
 
-void addToAllAdults(std::vector<Adult> & adultPool, std::vector<Adult> & allAdults, const int & index, int& numNans, int& duplicateNum){
+void addToAllAdults(std::vector<Adult> & adultPool, std::vector<Adult> & allAdults, const int & index, int& numErrors, int& duplicateNum){
     //if we ever want to eliminate duplicates again, this is the place to do it
     
     if(adultPool[index].errorStatus != VALID && adultPool[index].errorStatus != DUPLICATE) { 
         //tallies the number of nans in allAdults by checking if the adult being passed into newAdult is a Nan or not
-        numNans++;
+        numErrors++;
         //TODO: This is confusing. This will be true for an individual that is not valid and not duplicate. It may not be a NaN, it could be something else
     }else if(adultPool[index].errorStatus == DUPLICATE){
         duplicateNum++;

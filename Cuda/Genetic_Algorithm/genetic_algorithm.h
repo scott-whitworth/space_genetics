@@ -87,7 +87,7 @@ void firstGeneration(Child* initialChildren, std::vector<Adult>& oldAdults, cons
 //                    After, this holds the best num_individuals adults from allAdults in rankDistanceSort order (the new parents)
 //        newAdults - initially is full of the most recently generated set of children (num_individuals size)
 //                    After the function is complete it is empty and ready to hold more children
-//        numNans - this function tallies the nans (and other errors) that occur in this population of adults
+//        numErrors - this function tallies the nans (and other errors) that occur in this population of adults
 //        cConstants - allows us to access num_individuals
 //        generation - this is needed for eliminateBadAdults
 //        currentAnneal - this is used in findDuplicate to change the tolerance for finding a duplicate
@@ -96,17 +96,17 @@ void firstGeneration(Child* initialChildren, std::vector<Adult>& oldAdults, cons
 //         allAdults is filled with 2N - number of duplicates + errors adults from the combination of the inputted old/newAdults vectors
 //              It is sorted by rankDistance
 //         newAdults remains the same (size of N and unsorted)
-void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& newAdults, std::vector<Adult>& oldAdults, int& numNans, int& duplicateNum, const cudaConstants* cConstants, const int & generation, const double& currentAnneal);
+void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& newAdults, std::vector<Adult>& oldAdults, int& numErrors, int& duplicateNum, const cudaConstants* cConstants, const int & generation, const double& currentAnneal);
 
 //function that decides whether or not to add an adult to allAdults based on its errorStatus
 //Input: adultPool - This is either new or oldAdults and an adult from the vector will be checked for errorStatus and added to allAdults
 //       allAdults - holds the adults we want to keep
 //       index - index of the Adult being checked
-//       numNans - this function tallies the nans (and other errors) that occur in this population of adults
+//       numErrors - this function tallies the nans (and other errors) that occur in this population of adults
 //       duplicateNum - counts the duplicates in both new and oldAdults
 //Output: allAdults is filled with the adults we want and counts are updated
 //this is called in preparePotentialParents()
-void addToAllAdults(std::vector<Adult> & adultPool, std::vector<Adult> & allAdults, const int & index, int& numNans, int& duplicateNum);
+void addToAllAdults(std::vector<Adult> & adultPool, std::vector<Adult> & allAdults, const int & index, int& numErrors, int& duplicateNum);
 
 #include "genetic_algorithm.cpp"
 

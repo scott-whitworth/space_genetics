@@ -49,12 +49,6 @@ bool checkTolerance(std::vector<Adult> & oldAdults, const cudaConstants* cConsta
 void calculateGenerationValues (const std::vector<Adult> & allAdults, const std::vector<objective> & objectives, std::vector<double> & objectiveAvgValues, int & duplicateNum, double & minDist, double & avgDist, double & maxDist, const int & generation, double & avgAge, double & avgBirthday, int & oldestBirthday);
 
 //----------------------------------------------------------------------------------------------------------------------------
-//Input: all the updated parameters of the current generation
-//Output: calls the various terminal display functions when needed
-//Function that handles the reporting of a generation's performance
-void reportGeneration (std::vector<Adult> & oldAdults, std::vector<Adult> & allAdults, const cudaConstants* cConstants, const std::vector<double> & objectiveAvgValues, const double & currentAnneal, const int & generation, int & numNans, const int & duplicateNum, const double & minDist, const double & avgDist, const double & maxDist, const double & avgAge, const double & avgBirthday, const int & oldestBirthday);
-
-//----------------------------------------------------------------------------------------------------------------------------
 // Main processing function for Genetic Algorithm
 // - manages memory needs for genetic algorithm
 // - deals with processing calls to CUDA callRK
@@ -64,10 +58,10 @@ double optimize(const cudaConstants* cConstants);
 //Temp function that adds up the number of each status in an adults array and outputs the result
 void countStatuses (const std::vector<Adult> & adultVec, const int & generation) {
     //Create ints for each status
-    int numSuns, numNans, numValid, numOther;
+    int numSuns, numErrors, numValid, numOther;
 
     //Make them equal 0
-    numSuns = numNans = numValid = numOther = 0;
+    numSuns = numErrors = numValid = numOther = 0;
 
     //Go thru the vector and add up the statuses
     for (int i = 0; i < adultVec.size(); i++)
@@ -78,7 +72,7 @@ void countStatuses (const std::vector<Adult> & adultVec, const int & generation)
         }
         else if (adultVec[i].errorStatus == NAN_ERROR)
         {
-            numNans ++;
+            numErrors ++;
         }
         else if (adultVec[i].errorStatus == DUPLICATE)
         {
@@ -97,7 +91,7 @@ void countStatuses (const std::vector<Adult> & adultVec, const int & generation)
     std::cout << "\n\n_-_-_-_-_-_-_-_-_-_GENERATION #" << generation << " ERROR COUNTS_-_-_-_-_-_-_-_-_-_\n\n";
 
     std::cout << "\tSun Errors: " << numSuns;
-    std::cout << "\n\tNan Errors: " << numNans;
+    std::cout << "\n\tNan Errors: " << numErrors;
     std::cout << "\n\tValids: " << numValid;
     std::cout << "\n\tOther: " << numOther;
 
@@ -240,10 +234,6 @@ int main () {
         // accessed on the CPU when individuals are initilized
         launchCon = new EarthInfo(cConstants); 
 
-        // File output of element values that were calculated in EarthInfo constructor for verification
-        /*if (cConstants->record_mode == true) {
-            recordEarthData(cConstants, run);
-        }*/
         // Call optimize with the current parameters in cConstants
         optimize(cConstants);
 
@@ -358,78 +348,6 @@ void calculateGenerationValues (const std::vector<Adult> & allAdults, const std:
     
 }
 
-//Function that writes the results of the inserted generation
-void reportGeneration (std::vector<Adult> & oldAdults, std::vector<Adult> & allAdults, const cudaConstants* cConstants, const std::vector<double> & objectiveAvgValues, const double & currentAnneal, const int & generation, int & numNans, const int & duplicateNum, const double & minDist, const double & avgDist, const double & maxDist, const double & avgAge, const double & avgBirthday, const int & oldestBirthday){
-    // If in recording mode and write_freq reached, call the record method
-    if (static_cast<int>(generation) % cConstants->write_freq == 0 && cConstants->record_mode == true) {
-        recordGenerationPerformance(cConstants, oldAdults, objectiveAvgValues, generation, currentAnneal, cConstants->num_individuals, duplicateNum, minDist, avgDist, maxDist, avgAge, generation-oldestBirthday, avgBirthday, oldestBirthday);
-    }
-
-    // Only call terminalDisplay every DISP_FREQ, not every single generation
-    if ( static_cast<int>(generation) % cConstants->disp_freq == 0) {
-        // Prints the best individual's posDiff / speedDiff
-
-        //Print the generation
-        std::cout << "\n\nGeneration " << generation << " data:\n";
-
-        //Print the best adult for each objective
-        for (int i = 0; i < cConstants->missionObjectives.size(); i++) {
-            //Sort the oldAdults array by the correct parameter & order
-            parameterSort(oldAdults, cConstants->missionObjectives[i], oldAdults.size());
-
-            //Print the name of the objective
-            std::cout << "\nBest " << cConstants->missionObjectives[i].name << " Individual:";
-            //Display the info to the terminal
-            terminalDisplay(oldAdults[0], cConstants->missionObjectives);
-        }
-        
-        /*
-        //best position individual
-        std::cout << "\n\nBest Position Individual:";
-        std::sort(oldAdults.begin(), oldAdults.end(), LowerPosDiff);
-        terminalDisplay(oldAdults[0], generation);
-
-        if(cConstants->missionType == Rendezvous){
-            //Best lower speed individual
-            std::cout << "\nBest Speed Individual:";
-            std::sort(oldAdults.begin(), oldAdults.end(), LowerSpeedDiff);
-            terminalDisplay(oldAdults[0], generation);
-        }
-        else if(cConstants->missionType == Impact){
-            //Best higher speed individual
-            std::cout << "\nBest Speed Individual:";
-            std::sort(oldAdults.begin(), oldAdults.end(), HigherSpeedDiff);
-            terminalDisplay(oldAdults[0], generation);
-        }
-        */
-
-        //display to the terminal the best individual based on rankDistance
-        std::cout << "\nBest Rank Distance Individual:";
-        std::sort(oldAdults.begin(), oldAdults.end(), rankDistanceSort);
-        terminalDisplay(oldAdults[0], cConstants->missionObjectives);
-
-        //Display number of errors
-        std::cout << "\n# of errors this generation: " << numNans << "\n";
-
-        //Display number of duplicates
-        std::cout << "\n# of duplicates this generation: " << duplicateNum << "\n";
-        
-        //display the oldest individual
-        std::cout << "\nOldest age adult: " << generation - oldestBirthday << "\n";
-
-        //Display the progress of the best rank distance individual 
-        std::cout << "\nBest rank-distance adult progress: " << oldAdults[0].progress << "\n\n";
-        
-        //Reset the tally of nans.
-        numNans = 0;
-    }
-
-    //Record the parent pool for the next generation
-    if (static_cast<int>(generation) % cConstants->all_write_freq == 0 && cConstants->record_mode == true) {
-        recordAllIndividuals("allAdults", cConstants, allAdults, allAdults.size(), generation);
-    }
-}
-
 //Function that will facilitate the process of finding an optimal flight path
 double optimize(const cudaConstants* cConstants) {
     // Not used, previously used for reporting computational performance
@@ -440,10 +358,8 @@ double optimize(const cudaConstants* cConstants) {
     
     std::cout << "----------------------------------------------------------------------------------------------------" << std::endl;
 
-    // Initialize the recording files if in record mode
-    if (cConstants->record_mode == true) {
-        initializeRecord(cConstants);
-    }
+    //Initialize the output object with the base folder location (..\Output_Files\)
+    output genOutputs(cConstants);
 
     // input parameters for Runge Kutta process
     // Each parameter is the same for each thread on the GPU
@@ -478,9 +394,9 @@ double optimize(const cudaConstants* cConstants) {
     // set by checkTolerance()
     bool convergence = false;
 
-    //number of Nans, specifically used for diagnostic recording
+    //number of errors, specifically used for diagnostic recording
     //  couting all adults in the generation - includes oldAdults and newAdults that have nan values
-    int numNans = 0;
+    int numErrors = 0;
 
     //Initialize variables needed for distance, number of duplicate adults, and birthday reporting
     int duplicateNum = 0;
@@ -515,33 +431,24 @@ double optimize(const cudaConstants* cConstants) {
         //verifyVectors(newAdults, oldAdults, allAdults, "Post New Generation");
 
         //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE PREP PARENTS-_-_-_-_-_-_-_-_-_\n\n";
-        //fill oldAdults with the best adults from this generation and the previous generation so that the best parents can be selected (numNans is for all adults in the generation - the oldAdults and the newAdults)
+        //fill oldAdults with the best adults from this generation and the previous generation so that the best parents can be selected (numErrors is for all adults in the generation - the oldAdults and the newAdults)
         //allAdults will be filled with the last generation's set of parents and their offspring when this starts (sorted by rankDistanceSort)
         //      by the end of this function, it will be filled with the new generation's set of parents and children sorted by rankDistanceSort
         //newAdults goes in with the "grown" children created in new generation (size num_individuals)
         //      by the end of the function, it is cleared
         //oldAdults goes in with the pool of potential parents that may have generated the newAdults
         //      by the end of the function, it is filled with the best num_individuals adults from allAdults (sorted by rankDistanceSort) 
-        preparePotentialParents(allAdults, newAdults, oldAdults, numNans, duplicateNum, cConstants, generation, currentAnneal);
+        preparePotentialParents(allAdults, newAdults, oldAdults, numErrors, duplicateNum, cConstants, generation, currentAnneal);
 
         //Test function that will display the size and likely sort of each adult vector
         //      TODO: What should the states be? We should report them here to reference with the actual test
         //verifyVectors(newAdults, oldAdults, allAdults, "Post Prepare Parents");
 
-
-        //UPDATE (6/7/22): callRK moved into ga_crossover, the effect on the efficiency of the code is not known yet
-        //Output survivors for the current generation if write_freq is reached
-        if (generation % cConstants->all_write_freq == 0 && cConstants->record_mode == true) {
-            recordAllIndividuals("Survivors", cConstants, oldAdults, cConstants->survivor_count, generation);
-        }
-
         // Display a '.' to the terminal to show that a generation has been performed
         // This also serves to visually seperate the terminalDisplay() calls across generations 
         std::cout << '.';
 
-        //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE ANNEAL STFF-_-_-_-_-_-_-_-_-_\n\n";
         //Perform utitlity tasks (adjusting anneal and reporting data)
-
         //Calculate variables for birthdays and distances
         calculateGenerationValues(allAdults, cConstants->missionObjectives, objectiveAvgValues, duplicateNum, minDistance, avgDistance, maxDistance, generation, avgAge, avgBirthday, oldestBirthday);
 
@@ -550,7 +457,8 @@ double optimize(const cudaConstants* cConstants) {
 
 
         //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE RECORD-_-_-_-_-_-_-_-_-_\n\n";
-        reportGeneration (oldAdults, allAdults, cConstants, objectiveAvgValues, currentAnneal, generation, numNans, duplicateNum, minDistance, avgDistance, maxDistance, avgAge, avgBirthday, oldestBirthday);
+        //Print out necessary info for this generation
+        genOutputs.printGeneration(cConstants, allAdults, objectiveAvgValues, generation, currentAnneal, numErrors, duplicateNum, minDistance, avgDistance, maxDistance, avgAge, generation-oldestBirthday, avgBirthday, oldestBirthday);
 
         //Test function that will display the size and likely sort of each adult vector
         //      TODO: What should the states be? We should report them here to reference with the actual test
@@ -567,18 +475,8 @@ double optimize(const cudaConstants* cConstants) {
         //Loop exits based on result of checkTolerance and if max_generations has been hit
     } while ( !convergence && generation < cConstants->max_generations);
 
-    // Call record for final generation regardless of frequency
-    // for the annealing argument, set to -1 (since the anneal is only relevant to the next generation and so means nothing for the last one)
-    // for the numFront argument, set to -1 (just because)
-    if (cConstants->record_mode == true) {
-        recordGenerationPerformance(cConstants, oldAdults, objectiveAvgValues, generation, currentAnneal, cConstants->num_individuals, duplicateNum, minDistance, avgDistance, maxDistance, avgAge, generation-oldestBirthday, avgBirthday, oldestBirthday);
-    }
-    // Only call finalRecord if the results actually converged on a solution
-    // also display last generation onto terminal
-    if (convergence) {
-        terminalDisplay(oldAdults[0], cConstants->missionObjectives);
-        finalRecord(cConstants, oldAdults, generation);
-    }
+    //Handle the final printing
+    genOutputs.printFinalGen(cConstants, allAdults, convergence, generation, numErrors, duplicateNum, oldestBirthday); 
 
     return calcPerS;
 }

@@ -11,7 +11,7 @@
 // Called by optimize() in optimization.cu
 //void callRK(const int numThreads, const int blockThreads, Child *generation, double timeInitial, double stepSize, double absTol, double & calcPerS, const cudaConstants* cConstant, PlanetInfo *marsLaunchCon);
 
-// Calls rk4SimpleCUDA to calculate the final speed and position of the rocket relative to the asteroid
+// Calls rk4SimpleCUDA to calculate the final speed and position of the rocket relative to the target
 // Copies necessary values from the CPU to the GPU
 // Input: calcPerS - not currently used, but is a diagnostic tool that calculates how many times the Runge Kutta algorithm ran in the kernel per second
 //        generation - the children that must have the final positions calculated

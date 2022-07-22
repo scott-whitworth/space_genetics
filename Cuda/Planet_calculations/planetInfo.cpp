@@ -60,7 +60,7 @@ PlanetInfo::PlanetInfo(const cudaConstants* cConstants, const int & planetStatus
 
 // Returns conditions of the planet for a given time input
 // Input: currentTime - time offset from impact backwards in time (larger value refers further back) in units of seconds
-//          in other words, currentTimes how many seconds it will take for the spacecraft to reach the asteroid
+//          in other words, currentTimes how many seconds it will take for the spacecraft to reach the target
 // Output: Returns an element that is to the planet's position/velocity at currentTime away from impact using interpolate
 //         as currentTime very likely does not directly corelate to an explicit derived element in planetCon
 elements<double> PlanetInfo::getCondition(const double & currentTime) {
@@ -173,7 +173,7 @@ int getPlanetSize(const cudaConstants * cConstants){
 }
 
 
-//interpolates the position of the planet currentTime seconds BEFORE the spacecraft reaches the asteroid
+//interpolates the position of the planet currentTime seconds BEFORE the spacecraft reaches the target
 __host__ __device__ elements<double> getConditionDev(const double & currentTime, const cudaConstants * cConstants, const elements<double>* planetConditions) {
 // __host__ __device__ elements<double> PlanetInfo::getCondition(const double & currentTime) {
     // Defining variables to use

@@ -118,7 +118,7 @@ __global__ void rk4SimpleCUDA(Child *children, double *timeInitial, double *star
 
             //Needs to be triptime - curtime to get the correct index for mars
             //when curtime = triptime, this will give us the final position of mars at impact
-            //this is because getConditionDev takes in seconds before the spacecraft reaches the asteroid
+            //this is because getConditionDev takes in seconds before the spacecraft reaches the tarfet
             mars = getConditionDev(threadRKParameters.tripTime - curTime, cConstant, marsLaunchCon);
 
             //calculate the distance between mars and the spacecraft (|R|^2)
@@ -141,10 +141,10 @@ __global__ void rk4SimpleCUDA(Child *children, double *timeInitial, double *star
 
             //if the spacecraft is within Mars' sphere of influence, make the stepSize as small as possible
             //  this will increase the resolution of the spacecraft's position in this time frame
-            //if (marsCraftDist < MSOI){
+            if (marsCraftDist < MSOI){
                 //stepSize = (threadRKParameters.tripTime - startTime) / (2*cConstant->max_numsteps);
-            //    children[threadId].testCount++;
-            //}
+                children[threadId].testCount++;
+            }
             
             if ( (curTime + stepSize) > threadRKParameters.tripTime) {
                 stepSize = (threadRKParameters.tripTime - curTime); // shorten the last step to end exactly at time final
@@ -160,13 +160,13 @@ __global__ void rk4SimpleCUDA(Child *children, double *timeInitial, double *star
             }
             
             //if(sqrt(pow(mars.r, 2) + pow(curPos.r, 2) + pow(curPos.z - mars.z, 2) - (2*curPos.r*mars.r*cos(mars.theta-curPos.theta))) < cConstant->gravAssistDist){
-            // if(marsCraftDist < cConstant->gravAssistDist){
-            //     //This is a bad result, needs to be set to be removed
-            //     //Setting the child's status to be a sun error
-            //     children[threadId].errorStatus = MARS_ERROR;//Are all the children's errorStatus set to SUN_ERROR?
+            if(marsCraftDist < cConstant->gravAssistDist){
+                //This is a bad result, needs to be set to be removed
+                //Setting the child's status to be a sun error
+                children[threadId].errorStatus = MARS_ERROR;//Are all the children's errorStatus set to SUN_ERROR?
 
-            //     return;
-            // }
+                return;
+            }
             
         }
         //Give the child its final calculated position

@@ -19,9 +19,10 @@ struct cudaConstants {
     bool record_mode;    // If set to true, functions that record information onto files such as genPerformance.csv.  The code still records a valid solution regardless of this setting
     std::string initial_start_file_address; // If random_start is false, use file_address to find what file is being used for the initial start
 
-    //TODO: Convert these orbit thresholds to the new objective system
-    double orbitalRadius; // the radius of the orbit around a body
-    double orbitalSpeed; // the 
+    //These variables are used in orbit missions to determine the desired final orbital radius and speed
+    //They are initially set to -1 to allow the program to quickly determine if the goal is an orbit vs an impact/rendezvous
+    double orbitalRadius = -1; // the radius of the orbit around a body
+    double orbitalSpeed = -1; // the 
 
     int write_freq;       // Determine how many generations between calling recordGenerationPerformance() method (defined in Output_Funcs/output.cpp)
     int all_write_freq;   // Determine how many generations between calling recordAllIndividuals() method (defined in Output_Funcs/output.cpp)
@@ -70,12 +71,12 @@ struct cudaConstants {
 
     // The final position and velocity of the asteroid/target at impact date
     // Should be pulled from NASA database
-    double r_fin_ast;      // AU
-    double theta_fin_ast;  // Radians
-    double z_fin_ast;      // AU
-    double vr_fin_ast;     // AU/s
-    double vtheta_fin_ast; // AU/s
-    double vz_fin_ast;     // AU/s
+    double r_fin_target;      // AU
+    double theta_fin_target;  // Radians
+    double z_fin_target;      // AU
+    double vr_fin_target;     // AU/s
+    double vtheta_fin_target; // AU/s
+    double vz_fin_target;     // AU/s
 
     // The final position and velocity of the earth at impact date to be used as reference point
     double r_fin_earth;      // AU
@@ -110,10 +111,10 @@ struct cudaConstants {
     // minimum distance the spacecraft can be to the sun.
     double sun_r_min;
     
-    //destination asteroid file. The constants for the asteroid and earth data are passed in with a different file in order to switch between asteroids easier.
+    //destination asteroid file. The constants for the asteroid/target and earth data are passed in with a different file in order to switch between asteroids/targets easier.
     std::string destination;
 
-    //asteroid orbital constant
+    //asteroid/target orbital constant
     double orbitalPeriod;
 
     double gravAssistDist;

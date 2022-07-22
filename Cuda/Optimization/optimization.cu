@@ -56,54 +56,6 @@ void calculateGenerationValues (const std::vector<Adult> & allAdults, const std:
 // - exits when individuals converge on tolerance defined in Constants
 double optimize(const cudaConstants* cConstants, GPUMem & gpuValues);
 
-//Temp function that adds up the number of each status in an adults array and outputs the result
-void countStatuses (const std::vector<Adult> & adultVec, const int & generation) {
-    //Create ints for each status
-    int numSuns, numErrors, numValid, numMars, numOther;
-
-    //Make them equal 0
-    numSuns = numErrors = numValid = numMars = numOther = 0;
-
-    //Go thru the vector and add up the statuses
-    for (int i = 0; i < adultVec.size(); i++)
-    {
-        if (adultVec[i].errorStatus == SUN_ERROR)
-        {
-            numSuns++;
-        }
-        else if (adultVec[i].errorStatus == NAN_ERROR)
-        {
-            numErrors ++;
-        }
-        else if (adultVec[i].errorStatus == MARS_ERROR)
-        {
-            numMars++;
-        }
-        else if (adultVec[i].errorStatus == DUPLICATE)
-        {
-            //numDuplicates++;
-        }
-        else if (adultVec[i].errorStatus == VALID)
-        {
-            numValid++;
-        }
-        else {
-            numOther++;
-        }
-    }
-
-    //Print the results
-    std::cout << "\n\n_-_-_-_-_-_-_-_-_-_GENERATION #" << generation << " ERROR COUNTS_-_-_-_-_-_-_-_-_-_\n\n";
-
-    std::cout << "\tSun Errors: " << numSuns;
-    std::cout << "\n\tNan Errors: " << numErrors;
-    std::cout << "\n\tValids: " << numValid;
-    std::cout << "\n\tOther: " << numOther;
-
-    std::cout << "\n_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_\n\n";
-    
-}
-
 //Temp test function that is an assistant function to verify vectors
 //Will attempt to find which sort an adult vector is in
 void verifyVectorSort (const std::vector<Adult>& adults) {
@@ -224,11 +176,11 @@ int main () {
     //also allows the GPU to access the marsLaunchCon without reloading it everytime
     GPUMem gpuValues;
 
-    std::cout << sizeof(double) << std::endl;
-    std::cout << sizeof(Child) << std::endl;
-    std::cout << sizeof(elements<double>) << std::endl;
-    std::cout << sizeof(rkParameters<double>) << std::endl;
-    std::cout << sizeof(cudaConstants) << std::endl;
+    // std::cout << sizeof(double) << std::endl;
+    // std::cout << sizeof(Child) << std::endl;
+    // std::cout << sizeof(elements<double>) << std::endl;
+    // std::cout << sizeof(rkParameters<double>) << std::endl;
+    // std::cout << sizeof(cudaConstants) << std::endl;
 
     //test_main();
 
@@ -252,18 +204,18 @@ int main () {
         int marsConSize = getPlanetSize(cConstants);
         gpuValues.initialize(cConstants, marsConSize, marsLaunchCon->getAllPositions());
 
-        std::cout << "sizeof(launchCon->planetCon): " << sizeof(*(launchCon->planetCon)) << std::endl;
-        std::cout << "sizeof(marsLaunchCon->getAllPositions()): " << sizeof(*(marsLaunchCon->getAllPositions())) << std::endl;
-        std::cout << "marsConSize: " << marsConSize/6 << std::endl;
+        // std::cout << "sizeof(launchCon->planetCon): " << sizeof(*(launchCon->planetCon)) << std::endl;
+        // std::cout << "sizeof(marsLaunchCon->getAllPositions()): " << sizeof(*(marsLaunchCon->getAllPositions())) << std::endl;
+        // std::cout << "marsConSize: " << marsConSize/6 << std::endl;
 
-        elements<double>* aTest = marsLaunchCon->getAllPositions();
+        // elements<double>* aTest = marsLaunchCon->getAllPositions();
 
-        if (aTest[5].r == marsLaunchCon->planetCon[5].r){
-            std::cout << "getAllPositions seems to be working?" << std::endl;
-            std::cout << aTest[5].r << std::endl;
-        }else{
-            std::cout << "Fail" << std::endl;
-        }
+        // if (aTest[5].r == marsLaunchCon->planetCon[5].r){
+        //     std::cout << "getAllPositions seems to be working?" << std::endl;
+        //     std::cout << aTest[5].r << std::endl;
+        // }else{
+        //     std::cout << "Fail" << std::endl;
+        // }
 
         //setMars(cConstants);
 

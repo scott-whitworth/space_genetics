@@ -1,4 +1,4 @@
-function [] = plotDataCompare(cR,y0A,y0E,sizeC,tripTime1,coast1,coast_threshold1,gammaCoeff1,tauCoeff1,fuelMass1,alpha1,beta1,zeta1,launchPos1,dR,sizeD,tripTime2,coast2,coast_threshold2,gammaCoeff2,tauCoeff2,fuelMass2,alpha2,beta2,zeta2,launchPos2)
+function [] = plotDataCompare(cR,y0T,y0E,sizeC,tripTime1,coast1,coast_threshold1,gammaCoeff1,tauCoeff1,fuelMass1,alpha1,beta1,zeta1,launchPos1,dR,sizeD,tripTime2,coast2,coast_threshold2,gammaCoeff2,tauCoeff2,fuelMass2,alpha2,beta2,zeta2,launchPos2)
     %% Data that is required
     
     au=1.49597870691E11; % conversion of m/au
@@ -8,25 +8,25 @@ function [] = plotDataCompare(cR,y0A,y0E,sizeC,tripTime1,coast1,coast_threshold1
     tspan=[timeFinal 0];
     options = odeset('RelTol',1e-12);
     [tE, yE] = ode45(@orbitalMotion,tspan,y0E,options,gammaCoeff1,tauCoeff1,timeFinal,0);
-    [tA, yA] = ode45(@orbitalMotion,tspan,y0A,options,gammaCoeff1,tauCoeff1,timeFinal,0);
+    [tT, yT] = ode45(@orbitalMotion,tspan,y0T,options,gammaCoeff1,tauCoeff1,timeFinal,0);
     
-    % Transform to cartesian coordinates for position and velocity of asteroid and earth
+    % Transform to cartesian coordinates for position and velocity of target and earth
     [cX,cY,cZ]= pol2cart(cR(2,1:sizeC),cR(1,1:sizeC),cR(3,1:sizeC));
     [dX,dY,dZ]= pol2cart(dR(2,1:sizeD),dR(1,1:sizeD),dR(3,1:sizeD));
     [eX,eY,eZ]= pol2cart(yE(:,2),yE(:,1),yE(:,3));
     [eX_launch1,eY_launch1,eZ_launch1]= pol2cart(launchPos1(2),launchPos1(1),launchPos1(3));
     [eX_launch2,eY_launch2,eZ_launch2]= pol2cart(launchPos2(2),launchPos2(1),launchPos2(3));
-    [aX,aY,aZ]= pol2cart(yA(:,2),yA(:,1),yA(:,3));
+    [tX,tY,tZ]= pol2cart(yT(:,2),yT(:,1),yT(:,3));
     % Acceleration vector in cartesian coordinates
     [accelX1,accelY1,accelZ1] = getAccel(cR,tripTime1,gammaCoeff1,tauCoeff1,sizeC);
     [accelX2,accelY2,accelZ2] = getAccel(dR,tripTime2,gammaCoeff2,tauCoeff2,sizeD);
     
-    velX1 = cR(4,:).*cos(cR(2,:))-cR(1,:).*cR(5,:).*sin(cR(2,:)) - y0A(4); % AU
-    velY1 = cR(4,:).*sin(cR(2,:))+cR(1,:).*cR(5,:).*cos(cR(2,:)) - y0A(5);
-    velZ1 = cR(6,:) - y0A(6);
-    velX2 = dR(4,:).*cos(dR(2,:))-dR(1,:).*dR(5,:).*sin(dR(2,:)) - y0A(4); % AU
-    velY2 = dR(4,:).*sin(dR(2,:))+dR(1,:).*dR(5,:).*cos(dR(2,:)) - y0A(5);
-    velZ2 = dR(6,:) - y0A(6);
+    velX1 = cR(4,:).*cos(cR(2,:))-cR(1,:).*cR(5,:).*sin(cR(2,:)) - y0T(4); % AU
+    velY1 = cR(4,:).*sin(cR(2,:))+cR(1,:).*cR(5,:).*cos(cR(2,:)) - y0T(5);
+    velZ1 = cR(6,:) - y0T(6);
+    velX2 = dR(4,:).*cos(dR(2,:))-dR(1,:).*dR(5,:).*sin(dR(2,:)) - y0T(4); % AU
+    velY2 = dR(4,:).*sin(dR(2,:))+dR(1,:).*dR(5,:).*cos(dR(2,:)) - y0T(5);
+    velZ2 = dR(6,:) - y0T(6);
     
     
     %% Sub Plot 1
@@ -35,18 +35,18 @@ function [] = plotDataCompare(cR,y0A,y0E,sizeC,tripTime1,coast1,coast_threshold1
     subplot(2,3,1)
     polarplot(yE(:,2),yE(:,1),'.')
     hold on
-    polarplot(yA(:,2),yA(:,1),'.')
+    polarplot(yT(:,2),yT(:,1),'.')
     hold on
     polarplot(cR(2,1),cR(1,1),'r*')
     hold on
     polarplot(dR(2,1),dR(1,1),'g*')
     hold on
-    polarplot(y0A(2),y0A(1),'*b')
+    polarplot(y0T(2),y0T(1),'*b')
     hold on
     polarplot(cR(2,:),cR(1,:))
     hold on
     polarplot(dR(2,:),dR(1,:))
-    legend({'earth','asteroid','launch 1','launch 2','impact','spacecraft 1','spacecraft 2'})
+    legend({'earth','target','launch 1','launch 2','impact','spacecraft 1','spacecraft 2'})
     title('r-\theta plane')
     hold off
     
@@ -57,7 +57,7 @@ function [] = plotDataCompare(cR,y0A,y0E,sizeC,tripTime1,coast1,coast_threshold1
     subplot(2,3,4)
     plot(tE-(timeFinal-maxTripTime),yE(:,1),'.')
     hold on
-    plot(tA-(timeFinal-maxTripTime),yA(:,1),'.')
+    plot(tT-(timeFinal-maxTripTime),yT(:,1),'.')
     hold on
     if tripTime1 < tripTime2
         plot(cR(7,:)+tripTimeDiff,cR(1,:))
@@ -73,7 +73,7 @@ function [] = plotDataCompare(cR,y0A,y0E,sizeC,tripTime1,coast1,coast_threshold1
     ylabel('r (a.u.)')
     xlabel('t (s)')
     xlim([0 maxTripTime])
-    legend({'earth','asteroid','spacecraft 1','spacecraft 2'})
+    legend({'earth','target','spacecraft 1','spacecraft 2'})
     title('Orbital radius')
     hold off
     
@@ -81,7 +81,7 @@ function [] = plotDataCompare(cR,y0A,y0E,sizeC,tripTime1,coast1,coast_threshold1
     subplot(2,3,2)
     plot(tE-(timeFinal-maxTripTime),yE(:,1).*yE(:,5),'.')
     hold on
-    plot(tA-(timeFinal-maxTripTime),yA(:,1).*yA(:,5),'.')
+    plot(tT-(timeFinal-maxTripTime),yT(:,1).*yT(:,5),'.')
     hold on
     if tripTime1 < tripTime2
         plot(cR(7,:)+tripTimeDiff,cR(1,:).*cR(5,:))
@@ -97,7 +97,7 @@ function [] = plotDataCompare(cR,y0A,y0E,sizeC,tripTime1,coast1,coast_threshold1
     ylabel('h (a.u.^{2}/s)')
     xlabel('t (s)')
     xlim([0 maxTripTime])
-    legend({'earth','asteroid','spacecraft 1','spacecraft 2'})
+    legend({'earth','target','spacecraft 1','spacecraft 2'})
     title('Specific Angular Momentum')
     hold off
     
@@ -105,14 +105,14 @@ function [] = plotDataCompare(cR,y0A,y0E,sizeC,tripTime1,coast1,coast_threshold1
     subplot(2,3,3)
     plot(yE(:,1).*cos(yE(:,2)),yE(:,3),'.')
     hold on
-    plot(yA(:,1).*cos(yA(:,2)),yA(:,3),'.')
+    plot(yT(:,1).*cos(yT(:,2)),yT(:,3),'.')
     hold on
     plot(cR(1,:).*cos(cR(2,:)), cR(3,:),'LineWidth', 2)
     hold on
     plot(dR(1,:).*cos(dR(2,:)), dR(3,:),'LineWidth', 2)
     xlabel('x (a.u.)')
     ylabel('z (a.u.)')
-    legend({'earth','asteroid','spacecraft 1','spacecraft 2'})
+    legend({'earth','target','spacecraft 1','spacecraft 2'})
     title('x-z plane')
     hold off
     
@@ -120,7 +120,7 @@ function [] = plotDataCompare(cR,y0A,y0E,sizeC,tripTime1,coast1,coast_threshold1
     subplot(2,3,6)
     plot(tE-(timeFinal-maxTripTime),yE(:,3),'.')
     hold on
-    plot(tA-(timeFinal-maxTripTime),yA(:,3),'.')
+    plot(tT-(timeFinal-maxTripTime),yT(:,3),'.')
     hold on
     if tripTime1 < tripTime2
         plot(cR(7,:)+tripTimeDiff,cR(3,:))
@@ -136,7 +136,7 @@ function [] = plotDataCompare(cR,y0A,y0E,sizeC,tripTime1,coast1,coast_threshold1
     ylabel('z (a.u.)')
     xlim([0 maxTripTime])
     xlabel('t (s)')
-    legend({'earth','asteroid','spacecraft 1','spacecraft 2'})
+    legend({'earth','target','spacecraft 1','spacecraft 2'})
     title('Orbital elevation')
     hold off
     
@@ -144,7 +144,7 @@ function [] = plotDataCompare(cR,y0A,y0E,sizeC,tripTime1,coast1,coast_threshold1
     subplot(2,3,5)
     plot(tE-(timeFinal-maxTripTime),mod(yE(:,2),2*pi),'.')
     hold on
-    plot(tA-(timeFinal-maxTripTime),mod(yA(:,2), 2*pi),'.')
+    plot(tT-(timeFinal-maxTripTime),mod(yT(:,2), 2*pi),'.')
     hold on
     if tripTime1 < tripTime2
         plot(cR(7,:)+tripTimeDiff,mod(cR(2,:), 2*pi))
@@ -160,7 +160,7 @@ function [] = plotDataCompare(cR,y0A,y0E,sizeC,tripTime1,coast1,coast_threshold1
     ylabel('\theta (rad.)')
     xlim([0 maxTripTime])
     xlabel('t (s)')
-    legend({'earth','asteroid','spacecraft 1','spacecraft 2'})
+    legend({'earth','target','spacecraft 1','spacecraft 2'})
     title('Orbital angle')
     hold off
     
@@ -483,7 +483,7 @@ function [] = plotDataCompare(cR,y0A,y0E,sizeC,tripTime1,coast1,coast_threshold1
     zlabel('z (a.u.)')
     
     hold on
-    plot3(aX,aY,aZ,'LineWidth', 1, 'Color',	[0.6350, 0.0780, 0.1840])
+    plot3(tX,tY,tZ,'LineWidth', 1, 'Color',	[0.6350, 0.0780, 0.1840])
     hold on
     plot3(eX,eY,eZ,'LineWidth', 1,'Color',[.61 .51 .74])
     hold on
@@ -491,14 +491,14 @@ function [] = plotDataCompare(cR,y0A,y0E,sizeC,tripTime1,coast1,coast_threshold1
     hold on
     quiver3(dX(radStep2),dY(radStep2),dZ(radStep2),accelX2(radStep2),accelY2(radStep2),accelZ2(radStep2),'k','Autoscalefactor',.08,'LineWidth',1,'Color',[0, 0, 1])
     hold on
-    [y0Ax, y0Ay, y0Az] = pol2cart(y0A(2), y0A(1), y0A(3));
-    velDiff1 = au*sqrt((y0A(4) - cR(4,end))^2 + (y0A(5) - cR(5,end))^2 + (y0A(6) - cR(6,end))^2);
-    velDiff2 = au*sqrt((y0A(4) - dR(4,end))^2 + (y0A(5) - dR(5,end))^2 + (y0A(6) - dR(6,end))^2);
+    [y0Tx, y0Ty, y0Tz] = pol2cart(y0T(2), y0T(1), y0T(3));
+    velDiff1 = au*sqrt((y0T(4) - cR(4,end))^2 + (y0T(5) - cR(5,end))^2 + (y0T(6) - cR(6,end))^2);
+    velDiff2 = au*sqrt((y0T(4) - dR(4,end))^2 + (y0T(5) - dR(5,end))^2 + (y0T(6) - dR(6,end))^2);
     txt = join(['tripTime1: ',num2str(tripTime1/(3600*24)),' days\n|V1|: ',num2str(velDiff1),' m/s\nVx1: ',num2str(au*velX1(end)),' m/s\nVy1: ',num2str(au*velY1(end)),' m/s\nVz1: ',num2str(au*velZ1(end)),' m/s\ntripTime2: ',num2str(tripTime2/(3600*24)),' days\n|V2|: ',num2str(velDiff2),' m/s\nVx2: ',num2str(au*velX2(end)),' m/s\nVy2: ',num2str(au*velY2(end)),' m/s\nVz2: ',num2str(au*velZ2(end)),' m/s']);
     txt = compose(txt);
-    text(y0Ax, y0Ay, y0Az, txt)
+    text(y0Tx, y0Ty, y0Tz, txt)
     title('Solar orbitals')
-    legend('Spacecraft 1','Spacecraft 2','Asteroid','Earth','Thrust 1', 'Thrust 2')
+    legend('Spacecraft 1','Spacecraft 2','Target','Earth','Thrust 1', 'Thrust 2')
     hold off
     %print(a,'3D.png','-dpng','-r300'); 
     
@@ -509,12 +509,12 @@ function [] = plotDataCompare(cR,y0A,y0E,sizeC,tripTime1,coast1,coast_threshold1
     %xlim([-2.5 2])
     %ylim([-.3 .3])
     %hold on
-    %plot(yA(:,1).*cos(yA(:,2)),yA(:,3),'LineWidth', 1,'Color',	[0.6350, 0.0780, 0.1840])
+    %plot(yT(:,1).*cos(yT(:,2)),yT(:,3),'LineWidth', 1,'Color',	[0.6350, 0.0780, 0.1840])
     %hold on
     %plot(cR(1,1:sizeC).*cos(cR(2,1:sizeC)), cR(3,1:sizeC),'LineWidth', 1,'Color',[0.4660, 0.6740, 0.1880])
     %xlabel('x')
     %ylabel('z')
-    %legend('Earth','Asteroid','Spacecraft')
+    %legend('Earth','Targe','Spacecraft')
     %hold on
     %quiver(cX(radStep),cZ(radStep),accelX(radStep),accelZ(radStep),'k','LineWidth',1,'MarkerSize',15,'Autoscalefactor',.08)
     %title('Solar orbitals')

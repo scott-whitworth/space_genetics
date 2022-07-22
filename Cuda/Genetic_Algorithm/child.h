@@ -21,8 +21,8 @@ struct Child {
 
     elements<double> finalPos; // final position of the spacecraft at end of run
 
-    double posDiff; // in AU, difference in position between spacecraft and center of asteroid at end of run
-    double speedDiff; // in AU/s, difference in velocity between spacecraft and asteroid at end of run
+    double posDiff; // in AU, difference in position between spacecraft and center of target at end of run
+    double speedDiff; // in AU/s, difference in velocity between spacecraft and target at end of run
     double fuelSpent; // in kg, the amount of fuel spent by the individual during its simulation
 
     double progress; //progress of the individual's posDiff and speedDiff. 0 to 1 scale with 0 being poor and 1 meaning that the individual have completed all objectives
@@ -104,12 +104,12 @@ struct Child {
     __host__ double getParameters (const objective & requestObjective) const;
 
     // Calculates a posDiff value
-    // Input: cConstants in accessing properties for the final position of the target (such as r_fin_ast, theta_fin_ast, and z_fin_ast)
+    // Input: cConstants in accessing properties for the final position of the target (such as r_fin_target, theta_fin_target, and z_fin_target)
     // Output: Assigns and returns this individual's posDiff value
     __host__ __device__ double getPosDiff(const cudaConstants* cConstants);
 
     // Calculates a speedDiff value
-    // Input: cConstants in accessing properties for the final velocity of the target (such as vr_fin_ast, vtheta_fin_ast, and vz_fin_ast)
+    // Input: cConstants in accessing properties for the final velocity of the target (such as vr_fin_target, vtheta_fin_target, and vz_fin_target)
     // Output: Assigns and returns this individual's speedDiff value
     __host__ __device__ double getSpeedDiff(const cudaConstants* cConstants);
 

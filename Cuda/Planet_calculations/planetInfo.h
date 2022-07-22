@@ -10,16 +10,16 @@ class PlanetInfo{
     //private:
     public:
         // Elements pointer array that holds all of the planet conditions for a given time range
-        // This array starts with the position of the planet when the spacecraft is at the asteroid 
-        //      planetCon[0] = position of planet when the spacecraft is at the asteroid
+        // This array starts with the position of the planet when the spacecraft is at the target 
+        //      planetCon[0] = position of planet when the spacecraft is at the target
         //      planetCon[tripTime] = position of the planet when the spacecraft is about to leave Earth and begin its trip
-        //      planetCon[T] = position of the planet T timesteps (of cConstants->timeRes seconds) before the spacecraft reaches the asteroid
+        //      planetCon[T] = position of the planet T timesteps (of cConstants->timeRes seconds) before the spacecraft reaches the target
         // Thus every time step technically goes backwards in time -> the next element of the array is 1 hour BEFORE 
         //      the one that follows it. 
-        // This is the case because the actual calendar date when the spacecraft lands on the asteroid is AFTER
+        // This is the case because the actual calendar date when the spacecraft lands on the target is AFTER
         //      the calendar date of when the spacecraft leaves the Earth, but in this array the position of the 
-        //      planet when the spacecraft is at the asteroid comes FIRST
-        // This is can be kind of confusing on a mission starting from Earth and heading to the asteroid
+        //      planet when the spacecraft is at the target comes FIRST
+        // This is can be kind of confusing on a mission starting from Earth and heading to the target
         elements<double> *planetCon;
         //enum planet status that is given by the constuctor when it is called specifying which planet is being calculated
         int planetName;
@@ -42,9 +42,9 @@ class PlanetInfo{
         //        lowerWeight & upperWeight - weight values to adjust the interpolation in cases where the time is closer to one index than another (not midpoint)
         elements<double> interpolate(const elements<double> & lower, const elements<double> & upper, const double & lowerWeight, const double & upperWeight);
 
-        // Uses a planetStatus to determine which planet's position at the time when the spacecraft reaches the asteroid we want planet to be filled with
+        // Uses a planetStatus to determine which planet's position at the time when the spacecraft reaches the target we want planet to be filled with
         // Input: cConstants - to access the final positions and velocities of the planet as specified in the config file
-        //        planet - a set of elements that will be filled with the planet's position when the spacecraft reaches the asteroid
+        //        planet - a set of elements that will be filled with the planet's position when the spacecraft reaches the target
         //        planetStatus - allows us to identify which planet we are  
         void getPlanetPosition(const cudaConstants* cConstants, elements<double> & planet, const int & planetStatus);
 
@@ -57,10 +57,10 @@ class PlanetInfo{
         PlanetInfo(const cudaConstants* cConstants, const int & planetStatus);
         
         // Returns the interpolated conditions of a planet for a given time input, using interpolate if currentTime does not directly corelate to an explicit derived element in planetCon
-        // Input: currentTime - seconds BEFORE the spacecraft reaches the asteroid
+        // Input: currentTime - seconds BEFORE the spacecraft reaches the target
         // Output: Returns an element that is to a planet's position/velocity at currentTime away from impact (backwards)
         // IMPORTANT NOTE: 
-        //      currentTime is seconds BEFORE the spacecraft reaches the ASTEROID
+        //      currentTime is seconds BEFORE the spacecraft reaches the TARGET
         //      currentTime is NOT the number of seconds that have passed since the spacecraft left Earth 
         // NOTE: There is a device version of getCondition -> if changes are made here, you will likely want to make them there too 
         elements<double> getCondition(const double & currentTime);
@@ -95,14 +95,14 @@ int getPlanetSize(const cudaConstants * cConstants);
 //      planet: planet's position and velocity on the arrival date (passed in from planetInfo.cpp)
 elements<double> planetInitial_incremental(double timeInitial, double tripTime,const elements<double> & planet, const cudaConstants * cConstants);
 
-// Interpolates the data to find the position of a planet currentTime seconds BEFORE the spacecraft reaches the asteroid
+// Interpolates the data to find the position of a planet currentTime seconds BEFORE the spacecraft reaches the target
 // IMPORTANT NOTE: 
-//      currentTime is seconds BEFORE the spacecraft reaches the ASTEROID
+//      currentTime is seconds BEFORE the spacecraft reaches the TARGET
 //      currentTime is NOT the number of seconds that have passed since the spacecraft left Earth
-// Input: currentTime - seconds before the spacecraft reaches the asteroid
+// Input: currentTime - seconds before the spacecraft reaches the target
 //        cConstants - to access triptime_max and timeRes
 //        planetConditions - the array of elements that holds the position of the planet at timeRes intervals
-// Output: The position of the planet currentTime seconds BEFORE the spacecraft reaches the asteroid
+// Output: The position of the planet currentTime seconds BEFORE the spacecraft reaches the target
 // NOTE: This is a device version of getCondition -> if changes are made to getCondition, you will likely want to make them here too 
 __host__ __device__ elements<double> getConditionDev(const double & currentTime, const cudaConstants * cConstants, const elements<double>* planetConditions);
 

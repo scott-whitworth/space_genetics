@@ -66,10 +66,10 @@ void output::printFinalGen(const cudaConstants * cConstants, const std::vector<A
   reportRun(cConstants, allAdults, converged, generation);
 
   //Check to see if there is a convergence before printing the trajectory
-  if (converged) {
+  //if (converged) {
     //Create the trajectory bin file
     finalRecord(cConstants, allAdults[0], generation);
-  }
+  //}
 }
 
 //!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -484,12 +484,12 @@ void output::reportRun(const cudaConstants* cConstants, const std::vector<Adult>
 
 // Main Output, final results of genetic algorithm
 void output::trajectoryPrint( double x[], int generation, const cudaConstants* cConstants, const Adult& best) {
-  /*set the asteroid and inital conditions for the earth and spacecraft:
+  /*set the target and inital conditions for the earth and spacecraft:
   constructor takes in radial position(au), angluar position(rad), axial position(au),
   radial velocity(au/s), tangential velocity(au/s), axial velocity(au/s)*/
 
-  // setting landing conditions of the asteroid (Sept 30, 2022)
-  elements<double> asteroid = elements<double>(cConstants->r_fin_ast, cConstants->theta_fin_ast, cConstants->z_fin_ast, cConstants->vr_fin_ast, cConstants->vtheta_fin_ast, cConstants->vz_fin_ast);
+  // setting landing conditions of the target (Sept 30, 2022)
+  elements<double> target = elements<double>(cConstants->r_fin_target, cConstants->theta_fin_target, cConstants->z_fin_target, cConstants->vr_fin_target, cConstants->vtheta_fin_target, cConstants->vz_fin_target);
 
 // setting the final position of Mars based on the landing date
   elements<double> mars = elements<double>(cConstants->r_fin_mars, cConstants->theta_fin_mars, cConstants->z_fin_mars, cConstants->vr_fin_mars, cConstants->vtheta_fin_mars, cConstants->vz_fin_mars);
@@ -507,7 +507,7 @@ void output::trajectoryPrint( double x[], int generation, const cudaConstants* c
 
   // setting time parameters
   double timeInitial=0; 
-  double timeFinal=cConstants->triptime_min; // Orbital period of asteroid(s)
+  double timeFinal=cConstants->triptime_min; // The shortest possible triptime to make the initial deltaT a small but reasonable size
   double deltaT; // time step
   int numSteps = cConstants->max_numsteps*2; // initial guess for the number of time steps, guess for the memory allocated 
   deltaT = (timeFinal-timeInitial) / cConstants->max_numsteps; // initial guess for time step, small is preferable
@@ -589,12 +589,12 @@ void output::trajectoryPrint( double x[], int generation, const cudaConstants* c
   // output.open ("finalOptimization-"+std::to_string(static_cast<int>(seed))+"-"+std::to_string(threadRank)+".bin", std::ios::binary);
 
   // Impact conditions
-  output.write((char*)&cConstants->r_fin_ast, sizeof(double));
-  output.write((char*)&cConstants->theta_fin_ast, sizeof(double));
-  output.write((char*)&cConstants->z_fin_ast, sizeof(double));
-  output.write((char*)&cConstants->vr_fin_ast, sizeof(double));
-  output.write((char*)&cConstants->vtheta_fin_ast, sizeof(double));
-  output.write((char*)&cConstants->vz_fin_ast, sizeof(double));
+  output.write((char*)&cConstants->r_fin_target, sizeof(double));
+  output.write((char*)&cConstants->theta_fin_target, sizeof(double));
+  output.write((char*)&cConstants->z_fin_target, sizeof(double));
+  output.write((char*)&cConstants->vr_fin_target, sizeof(double));
+  output.write((char*)&cConstants->vtheta_fin_target, sizeof(double));
+  output.write((char*)&cConstants->vz_fin_target, sizeof(double));
 
   output.write((char*)&cConstants->r_fin_mars, sizeof(double));
   output.write((char*)&cConstants->theta_fin_mars, sizeof(double));
@@ -643,12 +643,12 @@ void output::trajectoryPrint( double x[], int generation, const cudaConstants* c
   delete [] dE;
   delete [] Etot_avg;
   
-  /*set the asteroid and inital conditions for the earth and spacecraft:
+  /*set the target and inital conditions for the earth and spacecraft:
   constructor takes in radial position(au), angluar position(rad), axial position(au),
   radial velocity(au/s), tangential velocity(au/s), axial velocity(au/s)*/
   /*
-  // setting landing conditions of the asteroid (Sept 30, 2022)
-  elements<double> asteroid = elements<double>(cConstants->r_fin_ast, cConstants->theta_fin_ast, cConstants->z_fin_ast, cConstants->vr_fin_ast, cConstants->vtheta_fin_ast, cConstants->vz_fin_ast);
+  // setting landing conditions of the target (Sept 30, 2022)
+  elements<double> target = elements<double>(cConstants->r_fin_target, cConstants->theta_fin_target, cConstants->z_fin_target, cConstants->vr_fin_target, cConstants->vtheta_fin_target, cConstants->vz_fin_target);
 
   // setting the final position of Mars based on the landing date
   elements<double> mars = elements<double>(cConstants->r_fin_mars, cConstants->theta_fin_mars, cConstants->z_fin_mars, cConstants->vr_fin_mars, cConstants->vtheta_fin_mars, cConstants->vz_fin_mars);
@@ -666,7 +666,7 @@ void output::trajectoryPrint( double x[], int generation, const cudaConstants* c
 
   // setting time parameters
   double timeInitial=0; 
-  double timeFinal=cConstants->orbitalPeriod; // Orbital period of asteroid(s)
+  double timeFinal=cConstants->orbitalPeriod; // Orbital period of targets(s)
   double deltaT; // time step
   int numSteps = cConstants->max_numsteps*2; // initial guess for the number of time steps, guess for the memory allocated 
   deltaT = (timeFinal-timeInitial) / cConstants->max_numsteps; // initial guess for time step, small is preferable
@@ -739,12 +739,12 @@ void output::trajectoryPrint( double x[], int generation, const cudaConstants* c
   output.open(outputPath + "finalOptimization-" + std::to_string(seed)+".bin", std::ios::binary);
 
   // Impact conditions
-  output.write((char*)&cConstants->r_fin_ast, sizeof(double));
-  output.write((char*)&cConstants->theta_fin_ast, sizeof(double));
-  output.write((char*)&cConstants->z_fin_ast, sizeof(double));
-  output.write((char*)&cConstants->vr_fin_ast, sizeof(double));
-  output.write((char*)&cConstants->vtheta_fin_ast, sizeof(double));
-  output.write((char*)&cConstants->vz_fin_ast, sizeof(double));
+  output.write((char*)&cConstants->r_fin_target, sizeof(double));
+  output.write((char*)&cConstants->theta_fin_target, sizeof(double));
+  output.write((char*)&cConstants->z_fin_target, sizeof(double));
+  output.write((char*)&cConstants->vr_fin_target, sizeof(double));
+  output.write((char*)&cConstants->vtheta_fin_target, sizeof(double));
+  output.write((char*)&cConstants->vz_fin_target, sizeof(double));
 
   output.write((char*)&cConstants->r_fin_mars, sizeof(double));
   output.write((char*)&cConstants->theta_fin_mars, sizeof(double));

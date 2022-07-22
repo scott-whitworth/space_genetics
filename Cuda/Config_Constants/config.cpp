@@ -267,24 +267,24 @@ void cudaConstants::FileRead(std::string fileName) {
                     }
 
 
-/////////////////////////////////////////////////////////////////////////// -- ASTEROID -- //////////////////////////////////////////////////////////////////////////////////
-                    else if (variableName == "r_fin_ast") {
-                        this->r_fin_ast = std::stod(variableValue);
+/////////////////////////////////////////////////////////////////////////// -- TARGET -- //////////////////////////////////////////////////////////////////////////////////
+                    else if (variableName == "r_fin_target") {
+                        this->r_fin_target = std::stod(variableValue);
                     }
-                    else if (variableName == "theta_fin_ast") {
-                        this->theta_fin_ast = std::stod(variableValue);
+                    else if (variableName == "theta_fin_target") {
+                        this->theta_fin_target = std::stod(variableValue);
                     }
-                    else if (variableName == "z_fin_ast") {
-                        this->z_fin_ast = std::stod(variableValue);
+                    else if (variableName == "z_fin_target") {
+                        this->z_fin_target = std::stod(variableValue);
                     }
-                    else if (variableName == "vr_fin_ast") {
-                        this->vr_fin_ast = std::stod(variableValue);
+                    else if (variableName == "vr_fin_target") {
+                        this->vr_fin_target = std::stod(variableValue);
                     }
-                    else if (variableName == "vtheta_fin_ast") {
-                        this->vtheta_fin_ast = std::stod(variableValue);
+                    else if (variableName == "vtheta_fin_target") {
+                        this->vtheta_fin_target = std::stod(variableValue);
                     }
-                    else if (variableName == "vz_fin_ast") {
-                        this->vz_fin_ast = std::stod(variableValue);
+                    else if (variableName == "vz_fin_target") {
+                        this->vz_fin_target = std::stod(variableValue);
                     }
                     else if (variableName == "orbitalPeriod") {
                         this->orbitalPeriod = stod(variableValue);
@@ -408,6 +408,12 @@ void cudaConstants::importObjective(std::string line) {
         //Optimize for minimal trip time
         goal = MIN_TRIP_TIME;
     }
+    else if (tempStr == "min_orbit_pos_diff") {
+        goal = MIN_ORBIT_POS_DIFF;
+    }
+    else if (tempStr == "min_orbit_speed_diff") {
+        goal = MIN_ORBIT_SPEED_DIFF;
+    }
     else if (tempStr == "max_speed_diff") {
         //Optimize for highest speed
         goal = MAX_SPEED_DIFF; 
@@ -489,9 +495,9 @@ std::ostream& operator<<(std::ostream& os, const cudaConstants& object) {
     os << "\tc3energy ("        << (object.c3scale * 100) << "%): "         << object.c3energy << "\tv_escape: "    << object.v_escape  << "\t\tv_impact: " << object.v_impact << "\n";
     os << "\tcoast_threshold: " << object.coast_threshold << "\n\n";
 
-    os << "Asteriod Info:\n";
-    os << "\t R: " << object.r_fin_ast  << "\t 0: " << object.theta_fin_ast  << "\t Z: " << object.z_fin_ast  << "\n";
-    os << "\tvR: " << object.vr_fin_ast << "\tv0: " << object.vtheta_fin_ast << "\tvZ: " << object.vz_fin_ast << "\n\n";
+    os << "Target Info:\n";
+    os << "\t R: " << object.r_fin_target  << "\t 0: " << object.theta_fin_target  << "\t Z: " << object.z_fin_target  << "\n";
+    os << "\tvR: " << object.vr_fin_target << "\tv0: " << object.vtheta_fin_target << "\tvZ: " << object.vz_fin_target << "\n\n";
 
     os << "Earth Info:\n";
     os << "\t R: " << object.r_fin_earth  << "\t 0: " << object.theta_fin_earth  << "\t Z: " << object.z_fin_earth  << "\n";

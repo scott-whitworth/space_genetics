@@ -220,11 +220,15 @@ void parameterSort(std::vector<Adult> & adults, const objective& sortObjective, 
     //Switch statement determines the type of sort needed to be done for the objective
     switch (static_cast<int>(sortObjective.goal)) {
         case MIN_POS_DIFF:
+
+        case MIN_ORBIT_POS_DIFF:
             //Sort by lowest pos diff
             std::sort(adults.begin(), adults.begin()+sortSize, LowerPosDiff);
             break;
 
         case MIN_SPEED_DIFF:
+
+        case MIN_ORBIT_SPEED_DIFF:
             //Sort by lowest speed diff
             std::sort(adults.begin(), adults.begin()+sortSize, LowerSpeedDiff);
             break;

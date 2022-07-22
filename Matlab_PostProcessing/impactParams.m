@@ -5,17 +5,17 @@
 clc,clear
 day2sec = 3600*24;
 
-% Asteroid position
-x_a = 6.061727293707692E-01; y_a = 8.369531060353675E-01;
-z_a = -2.015445997254413E-02;
-[th_a, r_a] = cart2pol(x_a,y_a);
-r_a = vpa(r_a), th_a = vpa(th_a), z_a = vpa(z_a)
-% Asteroid velocity
-vx_a = -1.472521774199771E-02/day2sec; vy_a = 1.321610726487941E-02/day2sec;
-vz_a = 1.066836745240369E-03/day2sec;
-vr_a = (x_a*vx_a+y_a*vy_a)/r_a; 
-vth_a = (x_a*vy_a-y_a*vx_a)/r_a; 
-vr_a = vpa(vr_a), vth_a = vpa(vth_a), vz_a = vpa(vz_a)
+% Target position
+x_t = 6.061727293707692E-01; y_t = 8.369531060353675E-01;
+z_t = -2.015445997254413E-02;
+[th_t, r_t] = cart2pol(x_t,y_t);
+r_t = vpa(r_t), th_t = vpa(th_t), z_t = vpa(z_t)
+% Target velocity
+vx_t = -1.472521774199771E-02/day2sec; vy_t = 1.321610726487941E-02/day2sec;
+vz_t = 1.066836745240369E-03/day2sec;
+vr_t = (x_t*vx_t+y_t*vy_t)/r_t; 
+vth_t = (x_t*vy_t-y_t*vx_t)/r_t; 
+vr_t = vpa(vr_t), vth_t = vpa(vth_t), vz_t = vpa(vz_t)
 
 % Earth position
 x_e = 9.919106263356792E-01; y_e = 1.363370226016378E-01;

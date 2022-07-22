@@ -218,8 +218,6 @@ void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& 
     marsErrors = 0;
     duplicateNum = 0;
 
-    //countStatuses(newAdults, generation);
-    //countStatuses(oldAdults, generation);
     //Iterate through allAdults and find any duplicate adults
     findDuplicates(newAdults, oldAdults, cConstants, currentAnneal);
 
@@ -242,7 +240,6 @@ void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& 
 
     
 
-    //countStatuses(allAdults, generation);
 
     //Calculate rank of each adult based on domination sort
     //* Ignore any nans at the end of allAdults
@@ -271,7 +268,7 @@ void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& 
     //Clear the newAdult vector so that it is ready to receive new children
     newAdults.clear(); 
 
-    //countStatuses(oldAdults, generation);
+
 }
 
 void addToAllAdults(std::vector<Adult> & adultPool, std::vector<Adult> & allAdults, const int & index, int& numErrors, int& duplicateNum, int& marsErrors){

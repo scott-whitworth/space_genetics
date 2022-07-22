@@ -5,6 +5,9 @@
 #define _USE_MATH_DEFINES // for use of M_PI
 #define SECONDS_IN_YEAR (365.25*24*3600) // Used for converting units from years to seconds or vice-versa 31557600
 
+//This values is often used to denote that we are not optimizing for a certain objective
+#define NOT_APPLICABLE  -1
+
 // Planetary properties and constants
 #define earthRadius (1.49598261e11/AU) // radial distance of Earth from Sun (au)
 #define earthPeriod SECONDS_IN_YEAR //Orbital period of the Earth around the Sun (s)

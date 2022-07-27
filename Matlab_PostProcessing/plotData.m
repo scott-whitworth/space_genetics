@@ -41,7 +41,7 @@ function [] = plotData(cR,y0T,y0M,y0E,sizeC,tripTime,coast,coast_threshold,gamma
     hold on
     polarplot(yT(:,2),yT(:,1),'.')
     hold on
-    polarplot(yM(:,2),yM(:,1),'.')
+    polarplot(yM(:,2),yM(:,1),'.','Color',[0.250,0.250,0.0])
     %rlim([0 1.5])
     hold on
     polarplot(cR(2,1),cR(1,1),'r*')
@@ -66,7 +66,7 @@ function [] = plotData(cR,y0T,y0M,y0E,sizeC,tripTime,coast,coast_threshold,gamma
 %    plot((tT-(timeFinal-tripTime))/(3600*24),yT(:,1).*yT(:,5),'.')
     plot(tT/(3600*24),yT(:,1).*yT(:,5),'.')
     hold on
-    plot(tM/(3600*24),yM(:,1).*yM(:,5),'.')
+    plot(tM/(3600*24),yM(:,1).*yM(:,5),'.','Color',[0.250,0.250,0.0])
     hold on
     plot(cR(7,:)/(3600*24),cR(1,:).*cR(5,:),'Color',[0.4660, 0.6740, 0.1880],'LineWidth', 2)
     ylabel('h (AU^{2}/s)')
@@ -83,7 +83,7 @@ function [] = plotData(cR,y0T,y0M,y0E,sizeC,tripTime,coast,coast_threshold,gamma
     hold on
     plot(yT(:,1).*cos(yT(:,2)),yT(:,3),'.')
     hold on
-    plot(yM(:,1).*cos(yM(:,2)),yM(:,3),'.')
+    plot(yM(:,1).*cos(yM(:,2)),yM(:,3),'.','Color',[0.250,0.250,0.0])
     hold on
     plot(cR(1,:).*cos(cR(2,:)), cR(3,:),'Color',[0.4660, 0.6740, 0.1880],'LineWidth', 2)
     xlim([-3.35 3.35])
@@ -103,7 +103,7 @@ function [] = plotData(cR,y0T,y0M,y0E,sizeC,tripTime,coast,coast_threshold,gamma
     hold on
     plot(tT/(3600*24),yT(:,1),'.')
     hold on
-    plot(tM/(3600*24),yM(:,1),'.')
+    plot(tM/(3600*24),yM(:,1),'.','Color',[0.250,0.250,0.0])
     hold on
     plot(cR(7,:)/(3600*24),cR(1,:),'Color',[0.4660, 0.6740, 0.1880],'LineWidth', 2)
     ylabel('r (AU)')
@@ -118,7 +118,7 @@ function [] = plotData(cR,y0T,y0M,y0E,sizeC,tripTime,coast,coast_threshold,gamma
     hold on
     plot(tT/(3600*24),mod(yT(:,2), 2*pi),'.')
     hold on
-    plot(tM/(3600*24),mod(yM(:,2), 2*pi),'.')
+    plot(tM/(3600*24),mod(yM(:,2), 2*pi),'.','Color',[0.250,0.250,0.0])
     hold on
     plot(cR(7,:)/(3600*24),mod(cR(2,:), 2*pi),'Color',[0.4660, 0.6740, 0.1880],'LineWidth', 2)
     ylabel('\theta (rad)')
@@ -133,7 +133,7 @@ function [] = plotData(cR,y0T,y0M,y0E,sizeC,tripTime,coast,coast_threshold,gamma
     hold on
     plot(tT/(3600*24),yT(:,3),'.')
     hold on
-    plot(tM/(3600*24),yM(:,3),'.')
+    plot(tM/(3600*24),yM(:,3),'.','Color',[0.250,0.250,0.0])
     hold on
     plot(cR(7,:)/(3600*24),cR(3,:),'Color',[0.4660, 0.6740, 0.1880],'LineWidth', 2)
     ylabel('z (AU)')
@@ -332,7 +332,7 @@ function [] = plotData(cR,y0T,y0M,y0E,sizeC,tripTime,coast,coast_threshold,gamma
     hold on
     plot3(tX,tY,tZ,'LineWidth', 1, 'Color',	[0.6350, 0.0780, 0.1840])
     hold on
-    plot3(mX,mY,mZ,'LineWidth', 1, 'Color',	[0.9290 0.6940 0.1250])
+    plot3(mX,mY,mZ,'LineWidth', 1, 'Color',[0.250,0.250,0.0])
     %zlim([-2 2])
     hold on
     %plot3(eX,eY,eZ,'LineWidth', 1,'Color',[.61 .51 .74])

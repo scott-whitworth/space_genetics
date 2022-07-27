@@ -129,10 +129,12 @@ __host__ __device__ double Child::getSpeedDiff(const cudaConstants* cConstants) 
             //      Thus the pow(cConstants->vr_fin_target - finalPos.vr, 2) should be 0
             // Additionally, to remain within a circular orbit, the magnitude of the sqrt(v_theta ^2 + v_z^2) must be the orbital velocity
             //      So the (sqrt(v_theta ^2 + v_z^2) - v_orbit)^2 term shoudl also go to 0
-            speedDiff = sqrt(pow(cConstants->vr_fin_target - finalPos.vr, 2) + pow(sqrt(pow(cConstants->vtheta_fin_target - finalPos.vtheta, 2) + pow(cConstants->vz_fin_target - finalPos.vz, 2)) - cConstants->orbitalSpeed, 2));
-        }
+            //speedDiff = sqrt(pow(cConstants->vr_fin_target - finalPos.vr, 2) + pow(sqrt(pow(cConstants->vtheta_fin_target - finalPos.vtheta, 2) + pow(cConstants->vz_fin_target - finalPos.vz, 2)) - cConstants->orbitalSpeed, 2));
+            //sqrt(abs((pow(cConstants->vr_fin_target - finalPos.vr, 2) + pow(cConstants->vtheta_fin_target - finalPos.vtheta, 2) + pow(cConstants->vz_fin_target - finalPos.vz, 2)) - pow(cConstants->orbitalSpeed, 2)));
+            speedDiff = sqrt(abs((pow(cConstants->vr_fin_target - finalPos.vr, 2) + pow(cConstants->vtheta_fin_target - finalPos.vtheta, 2) + pow(cConstants->vz_fin_target - finalPos.vz, 2)) - pow(cConstants->orbitalSpeed, 2)));
+        }   
         else{
-            //Goal is impact or rendezvous
+            //Goal is impact or rendezvous   
             speedDiff = sqrt(pow(cConstants->vr_fin_target - finalPos.vr, 2) + pow(cConstants->vtheta_fin_target - finalPos.vtheta, 2) + pow(cConstants->vz_fin_target - finalPos.vz, 2)); 
         }
     }

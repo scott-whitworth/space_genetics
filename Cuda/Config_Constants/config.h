@@ -22,7 +22,7 @@ struct cudaConstants {
     //These variables are used in orbit missions to determine the desired final orbital radius and speed
     //They are initially set to -1 to allow the program to quickly determine if the goal is an orbit vs an impact/rendezvous
     double orbitalRadius = -1; // the radius of the orbit around a body
-    double orbitalSpeed = -1; // the 
+    double orbitalSpeed = -1; // the final velocity the spacecraft needs to orbit its target
 
     int write_freq;       // Determine how many generations between calling recordGenerationPerformance() method (defined in Output_Funcs/output.cpp)
     int all_write_freq;   // Determine how many generations between calling recordAllIndividuals() method (defined in Output_Funcs/output.cpp)

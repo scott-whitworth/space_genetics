@@ -5,8 +5,12 @@ using std::endl;
 #include "../Unit_Testing/testing_sorts.h"
 #include "../Unit_Testing/testing_genetics.h"
 #include "../Unit_Testing/testing_planet.cpp"
+
+// If you want to run the unit test, ensure CUDA is installed on your computer, then use cd commands to navigate to /space_genetics/Cuda/Unit_Testing
+// Then paste the below line of code to the terminal and once it is finished building, type unit_test into the terminal and hit enter to run it
 // nvcc -ccbin "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.22.27905\bin\Hostx64\x64\cl.exe" -o unit_test unit_testing_main.cu -arch=compute_50 -code=sm_50 
 
+// Likely not all these unit tests are working with the current version of our code
 int main(){
     //determines whether or much of the workings of the unit tests will be printed or not
     bool lotsOfCouts = true; 
@@ -38,6 +42,8 @@ int main(){
         cout << "Completed all the genetics units tests, but some FAILED" << endl;
     }
     
+    // Calls the planet tests that ensure access to Mars' position works as we expect it to
+    // Tries to return Mars' 
     if (runPlanetTests(lotsOfCouts)){
         cout << "PASSED: All the genetics tests passed" << endl;
     }

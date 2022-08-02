@@ -3,8 +3,9 @@ void giveRank(std::vector<Adult> & allAdults, const cudaConstants* cConstants) {
     //non-denominated sorting method
     //https://www.iitk.ac.in/kangal/Deb_NSGA-II.pdf
 
-    //Used to store the current front of adults. first filled with the first front adults(best out of all population)
-    // filled with index of adults in allAdults
+    //Used to store the current front of adults 
+    //  first filled with the first front adults (best out of all population)
+    //  filled with index of adults in allAdults
     std::vector<int> front;
 
     //2D vector stores which other adults each adult has dominated
@@ -20,48 +21,32 @@ void giveRank(std::vector<Adult> & allAdults, const cudaConstants* cConstants) {
     //fill the vector with 0s to make sure the count is accurate
     dominatedByCount.resize(allAdults.size(), 0);
 
-    //loop through each individual within the allAdults vector
+    //loop through allAdults
     for (int i = 0; i < allAdults.size(); i++){
 
         //For each individual within allAdults, compare them to each other adult
+        //    becasue of mirroring aA[5] => aA[7] is the same as aA[7] => aA[5], only the upper half need to be checked
         for(int j = i+1; j < allAdults.size(); j++){
-
-            //TODO: Where is the best place to check for status conditions? In dominationCheck or here
-            //check the status of both i and j and see if i is automatically dominated
-            /*
-            if(allAdults[i].errorStatus != VALID && allAdults[j].errorStatus == VALID){
-                dominatedByCount[i]++;
-                domination[j].push_back(i);
-            }//check the status of both i and j and see if j is automatically dominated
-            else if(allAdults[j].errorStatus != VALID && allAdults[i].errorStatus == VALID){
-                domination[i].push_back(j);
-                dominatedByCount[j]++;
-                
-            }
-            */
-            //if either both are valid or both are not valid, it will rank them normally
             //Check to see if i dominates j
             if (dominationCheck(allAdults[i], allAdults[j], cConstants)){
                 //Put the jth index in the set of individuals dominated by i
-                //std::cout << "\n" << i << "th (i) Adult dominates " << j << "th (j) Adult!\n";
                 domination[i].push_back(j);
+                //add one to j's dominated by count
                 dominatedByCount[j]++;
             }
             //Check to see if j dominates i
-            else if ( dominationCheck( allAdults[j], allAdults[i], cConstants) ){
-                //std::cout << "\n" << j << "th (j) Adult dominates " << i << "th (i) Adult!\n";
+            else if (dominationCheck( allAdults[j], allAdults[i], cConstants)){
+                //Put the ith index in the set of individuals dominated by j
+                domination[j].push_back(i);
                 //Add one to i's dominated by count
                 dominatedByCount[i]++;
-                domination[j].push_back(i);
             }
+            //implicit else: neither dominate eachother, don't do anything (don't update domination or dominatedByCount)
         }
-        
         //if i was never dominated, add it's index to the best front, front1. Making its ranking = 1.
         if (dominatedByCount[i] == 0){
             allAdults[i].rank = 1;
             front.push_back(i);
-
-            //std::cout << "\n\nAdult #" << i << " ranked " << 1;
         }
     }
 
@@ -90,9 +75,6 @@ void giveRank(std::vector<Adult> & allAdults, const cudaConstants* cConstants) {
                 if (dominatedByCount[domination[front[k]][l]] == 0){
                     //Assign a rank to the new most dominating adult left
                     allAdults[domination[front[k]][l]].rank = rankNum + 1;
-
-                    //std::cout << "\n\nAdult #" << domination[front[k]][l] << " ranked " << rankNum+1;
-
                     //Add the index of the this adult to newFront
                     newFront.push_back(domination[front[k]][l]);                        
                 }
@@ -100,14 +82,13 @@ void giveRank(std::vector<Adult> & allAdults, const cudaConstants* cConstants) {
         }
         //increment the rank number
         rankNum++;
-        
+
         //empty the current front
         std::vector<int>().swap(front);
 
         //Equate the current (now empty) front to the new front to transfer the indexes of the adults in newFront to front
         front = newFront;
     }
-    //std::cout << "\n~~~~~~~~~~~~~~~~~~~~~~~~FINISHED RANKING~~~~~~~~~~~~~~~~~~~~~~~~\n";
 }
 
 //gives each adult in the allAdults a distance representing how different it is from other individuals
@@ -162,6 +143,7 @@ void giveDistance(std::vector<Adult> & allAdults, const cudaConstants* cConstant
             normalizationValue = allAdults[validAdults-1].getParameters(cConstants->missionObjectives[i]);
 
             //Go through the non-extreme valid adults and see if they have met the threshold
+            //TODO: NOTE: We are still unsure if this is a valid way of giving distance to those that are under convergence
             for (int j = 1; j < validAdults-1; j++) {
                 if (allAdults[j].getParameters(cConstants->missionObjectives[i]) < cConstants->missionObjectives[i].convergenceThreshold) {
                     //Add one to the metThreshold tracker
@@ -174,6 +156,7 @@ void giveDistance(std::vector<Adult> & allAdults, const cudaConstants* cConstant
                     //Since the allAdults vector is sorted for this objective, if the code is here, it means all adults who meet the threshold have been passed
                     //So it is safe to break the for loop
                     break;
+                    //Scott would like to document his displeasure with break statements here and below in the other loop
                 }
             }
             
@@ -219,6 +202,7 @@ void giveDistance(std::vector<Adult> & allAdults, const cudaConstants* cConstant
 void parameterSort(std::vector<Adult> & adults, const objective& sortObjective, const int & sortSize) {
     //Switch statement determines the type of sort needed to be done for the objective
     switch (static_cast<int>(sortObjective.goal)) {
+        //TODO: I would put in some information about each of these (and the implicit connection between MIN_POS_DIFF and MIN_ORBIT_POS_DIFF
         case MIN_POS_DIFF:
 
         case MIN_ORBIT_POS_DIFF:

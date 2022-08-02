@@ -31,19 +31,27 @@ bool runPlanetTests(bool printThings){
     utcConstants->timeRes=1000; // Earth Calculations Time Resolution Value
     
     //Bennu config values but shortened to make comparisons easier
-    utcConstants->r_fin_earth=9.86E-01;
-    utcConstants->theta_fin_earth=1.25;
-    utcConstants->z_fin_earth=-4.33E-05;
-    utcConstants->vr_fin_earth=-1.8E-09;
-    utcConstants->vtheta_fin_earth=2.0E-07;
-    utcConstants->vz_fin_earth=-2.3E-12;
+    utcConstants->r_fin_earth=9.86E-01; //in AU
+    utcConstants->theta_fin_earth=1.25; //in rad
+    utcConstants->z_fin_earth=-4.33E-05; //in AU
+    utcConstants->vr_fin_earth=-1.8E-09; //in AU/s
+    utcConstants->vtheta_fin_earth=2.0E-07; //in AU/s
+    utcConstants->vz_fin_earth=-2.3E-12; // in AU/s
+
+    utcConstants->r_fin_mars=1.42; //in AU
+    utcConstants->theta_fin_mars=0.433; //in rad
+    utcConstants->z_fin_mars=-1.92E-02; //in AU
+    utcConstants->vr_fin_mars=1.14E-08; //in AU/s
+    utcConstants->vtheta_fin_mars=1.72E-07; //in AU/s
+    utcConstants->vz_fin_mars=4.89E-09; //in AU/s
+    
 
 // SETTING A RANDOM NUMBER GENERATOR (rng) TO BE USED BY FUNCTIONS
     // This rng object is used for generating all random numbers in the genetic algorithm, passed in to functions that need it
     std::mt19937_64 rng(utcConstants->time_seed);
 
     //VERY complicated part of the code with some possibility of errors -> just needed for the child constructor with rkParameters and cConstants as its arguments
-    launchCon = new PlanetInfo(utcConstants, EARTH); 
+    launchCon = new PlanetInfo(utcConstants, MARS); 
 
 // CALLING THE DIFFERENT UNIT TESTING ALGORITHMS
     bool allWorking = true;
@@ -61,14 +69,17 @@ bool runPlanetTests(bool printThings){
 }
 
 bool testGetConditions(const cudaConstants* utcConstants){
-    //uses get conditions to try and get the initial conditions of the Earth
-    elements<double> initial = (*launchCon).getCondition(utcConstants->triptime_max-1);
+    //uses get conditions to try and get the final conditions of Mars (the values from the config)
+    //since time here goes backwards (starting from the asteroid and counting back in time), 0 is at the asteroid 
+    //while something like 100 would mean 100 seconds before the spacecraft reached the asteroid
+    elements<double> final = (*launchCon).getCondition(0);
     
-    //uses the overloaded << to print this to the terminal
-    std::cout << initial << std::endl;
+    //uses the overloaded << to print the position of Mars at this time to the terminal
+    std::cout << final << std::endl;
 
     //this returns whether or not we're getting an expected result
-    if (initial.r == utcConstants->r_fin_earth){
+    //Mars's position should be its final position
+    if (final.r == utcConstants->r_fin_mars){
         return true;
     }
 

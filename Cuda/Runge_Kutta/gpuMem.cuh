@@ -5,6 +5,7 @@
 #include "..\Runge_Kutta\rkParameters.h"
 #include "..\Config_Constants\config.h"
 
+//This struct has all the device parameters need for the callRK process
 struct GPUMem
 {
     double stepSize; 

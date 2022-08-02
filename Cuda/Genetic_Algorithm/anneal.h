@@ -10,6 +10,7 @@
 ///////////////////////////////////////////////////////////////
 
 // --- This file includes functions used to calculate anneal ---
+// TODO: I would put more info here regarding ^^^^^^^^^^^^^^
 
 //----------------------------------------------------------------------------------------------------------------------------
 //This function will calculate a new anneal based on the current progress of the 0th (best) individual

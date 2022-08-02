@@ -110,6 +110,6 @@ __host__ __device__ elements<double> getConditionDev(const double & currentTime,
 #include "planetInfo.cpp"
 // Global variable for launchCon (assigned content in optimization.cu)
 PlanetInfo *launchCon;
-PlanetInfo* marsLaunchCon;
+PlanetInfo *marsLaunchCon;
 
 #endif

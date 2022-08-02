@@ -1,7 +1,8 @@
 //Didymos-Optimization_Project:
-//Last Editor: Mateo and Lauren
+//Last Edit: August 2022
 //Tasks Completed: 
-	//No recent changes
+	//Added gravitational assist from Mars
+	//changes are in calcRate for vr, vtheta, vz
 	
 #include <math.h> // used for sine, cosine, and pow functions
 
@@ -23,10 +24,6 @@ template <class T> __host__ __device__ elements<T> calc_kPlanet(const T & h, con
 						h*calcRate_vzPlanet(y));
 }
 
-// template <class T>  __host__ __device__ T calcMarsCraftDist(const elements<T> & y, const elements<T> & mars) {
-//  	return  sqrt((pow(mars.r, 2) + pow(y.r, 2) + pow(y.z - mars.z, 2) - (2*y.r*mars.r*cos(mars.theta-y.theta))));
-//  }
-
 template <class T>  __host__ __device__ T calcRate_r(const elements<T> & y) {
 	return y.vr;
 }
@@ -44,22 +41,13 @@ template <class T> __host__ __device__ T calcRate_vr(const elements<T> & y, coef
 		   ((-constG * massMars * (y.r - mars.r))/ (pow(marsCraftDist,3))) +
 		   (pow(y.vtheta,2) / y.r) + 
 		   (accel*cos(calc_tau(coeff,curTime, timeFinal))*sin(calc_gamma(coeff,curTime, timeFinal))));
-	//if (marsCraftDist < MSOI){
-		//dvr_dt += ;
-	//}
-	//return dvr_dt;
 }
-
+//TODO: fix the fmod in vtheta to be fmod(both) instead of two seperate fmods
 template <class T> __host__ __device__ T calcRate_vtheta(const elements<T> & y, coefficients<T> & coeff, const T & accel, const T & curTime, const T & timeFinal, const elements<T> & mars, const T & marsCraftDist) {
 	return  (static_cast<double>(0.0) + 
 			((-constG * massMars *(fmod(y.theta, 2*M_PI)-fmod(mars.theta, 2*M_PI)) *((y.r+mars.r)/2)) / (pow(marsCraftDist,3))) +
 			(-y.vr*y.vtheta / y.r) +
 			(accel*cos(calc_tau(coeff,curTime, timeFinal))*cos(calc_gamma(coeff,curTime, timeFinal))));
-	//if (marsCraftDist < MSOI){
-		//dvtheta_dt += ;
-	//}
-	
-	// return dvtheta_dt;
 }
 
 template <class T> __host__ __device__ T calcRate_vz(const elements<T> & y, coefficients<T> & coeff, const T & accel, const T & curTime, const T & timeFinal, const elements<T> & mars, const T & marsCraftDist) {
@@ -67,11 +55,6 @@ template <class T> __host__ __device__ T calcRate_vz(const elements<T> & y, coef
 			((-constG * massMars * (y.z - mars.z))  / (pow(marsCraftDist,3))) + 
 		    static_cast<double>(0.0) +
 		    (accel*sin(calc_tau(coeff,curTime, timeFinal))));
-	//if (marsCraftDist < MSOI){
-		//z_ddot += ;
-	//}
-	
-	 //z_ddot;
 }
 template <class T> __host__ __device__ T calcRate_vrPlanet(const elements<T> & y) {
 	return ((-constG * massSun * y.r) / (pow(pow(y.r, 2) + pow(y.z, 2), 1.5))) + 

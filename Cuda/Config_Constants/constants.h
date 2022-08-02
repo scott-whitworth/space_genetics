@@ -2,6 +2,8 @@
 #define CONSTANTS_H
 #include <math.h>
 
+//Non-configured constants
+
 #define _USE_MATH_DEFINES // for use of M_PI
 #define SECONDS_IN_YEAR (365.25*24*3600) // Used for converting units from years to seconds or vice-versa 31557600
 
@@ -53,6 +55,7 @@
 //Enumerations for storing mission objectives within cConstants
 //First enumeration is for identifying parameters
 //  Will be used to grab the correct parameter from individuals
+//TODO: as of August 2022, this is never used, recommend deleting this
 enum MISSION_PARAMETERS {
     POS_DIFF = 0,       //The posDiff of an individual
     SPEED_DIFF = 1,     //The speedDiff of an individual
@@ -63,6 +66,7 @@ enum MISSION_PARAMETERS {
 //This is used in both Child and Adult
 //enumeration to make error status easier to keep track of, as opposed to using hard-coded numbers 
 //could be removed in the future, included for now to check if the default constructor is being used
+//TODO: as of August 2022, this is currently not used outside of constructors, recommend deleting this
 enum STATUS {
     DEFAULT_CHILD = 0, //child that is created through the default constructor, not ready to be made an adult
     FUNCTIONAL_CHILD = 1, //child that is created in main constructor and given startParams
@@ -70,6 +74,8 @@ enum STATUS {
 };
 
 //status values used for child and adult that tell us if it is a nan and what kind of nan error it is
+//    Addresses complicated communication from the GPU process that previously was paying attention only to NANs
+//    Now the GPU loop can assign a status to more accurately describe why the individual is not VALID
 enum ERROR_STATUS{
     VALID = 0,   //not a nan, no problems with any of the parameter values
     SUN_ERROR = 1,   //flew too close to the sun, the posDiff and speedDiff are set to bad values during callRK

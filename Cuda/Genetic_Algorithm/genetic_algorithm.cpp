@@ -201,7 +201,7 @@ void firstGeneration(Child* initialChildren, std::vector<Adult>& oldAdults, cons
      // Each child represents an individual set of starting parameters 
         // GPU based runge kutta process determines final position and velocity based on parameters
     //Will fill in the final variables (final position & speed, posDiff, speedDiff) for each child
-    //TODO: Perhaps we should just import cCOnstants and newChildren into callRk, since most of the arguments come from cConstants regardless
+    //TODO: Does cConstants need to be included in the callRK function call?
     callRK(calcPerS, initialChildren, cConstants, gpuValues, timeIntial); 
 
     //Now that the children have been simulated, convert the children into adults

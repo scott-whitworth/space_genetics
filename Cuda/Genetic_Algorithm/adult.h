@@ -103,6 +103,9 @@ bool LowerTripTime(const Adult& personA, const Adult& personB);
 bool LowerProgress(const Adult& personA, const Adult& personB);
 
 //!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+//TODO: below here is probably the second most confusing part of the code. I would document this in a flowchart / readme.md to draw out the particulars of how this engages with rankDistanceSort and the genetic algorithm
+
 //Compare two adults to see if the first adult dominates the second adult
 //Returns true if personA dominates personB.
 //returns false if personA does not dominate personB.

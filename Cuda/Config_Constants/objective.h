@@ -4,8 +4,9 @@
 #include <string>
 
 //enum used to store the potential parameter goals
-//  *Important Note For Future*
-//   Negative values indicate that the program will try to minimize a value and positive values indicate a favor for large values
+//  *Important Note For Future*:
+//      Negative values indicate that the program will try to minimize a value and
+//      positive values indicate a favor for large values
 enum parameterGoals {
     //Minimization goals
     MIN_POS_DIFF = -1, 
@@ -22,10 +23,11 @@ enum parameterGoals {
     MAX_SPEED_DIFF = 2, 
 };
 
-//TODO: add orbital objective
+//TODO: Somewhere these enums should be well documented (I would suggest in a .md file)
+//      What are all of the possible questions someone would have about 'min_orbit_pos_diff'? Or any of the others
 
 //This structure holds the necessary information for a program objective
-//This will allow for the program to handle dynamic program objectives
+//This allows for the program to handle dynamic program objectives
 
 //NOTE: When adding a new objective, make sure to complete these steps:
 //  1) Make sure the parameter is accessible from within the child class
@@ -46,16 +48,19 @@ struct objective {
     double convergenceThreshold; 
 
     //The domination threshold determines when the program will/will not prioritize better values
-    //      If two individuals compared in a domination check have parameter values better than the domination check, the parameter will not be considered for domination
+    //      If two individuals compared in a domination check have parameter values better than the domination check,
+    //          the parameter will not be considered for domination
     double dominationThreshold; 
 
     //equateTolerance determines the differentiation needed for two parameters to be considered not equal
+    //  this is primarily a floating point comparison issue
     double equateTolerance;
 
     //Default constructor, will set the goal as an error
     objective(): goal(UNKNOWN){}
 
     //Constructor that accepts the information for an objective, should be the only constructor used
+    //    Should only be called when the mission.config file is parsed/loaded
     objective(std::string _name, parameterGoals _goal, double _convergenceThreshold, double _dominationThreshold, double _equateTolerance):
         name(_name), goal(_goal), convergenceThreshold(_convergenceThreshold), dominationThreshold(_dominationThreshold), equateTolerance(_equateTolerance) {}
 };

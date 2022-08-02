@@ -17,6 +17,9 @@
 // Genetic Algorithim Functions                              //
 ///////////////////////////////////////////////////////////////
 
+//TODO: at a very high level this probably needs an external readme or glossary of what each of these things mean.
+//      this is possibly the most convoluted protion of the code base, care should be taken in planning / documenting
+
 // --- This file includes functions which handle generation management, such as selecting parents and generation creation ---
 
 // newGeneration will generate a mask and use random adults from oldAdults to generate new children

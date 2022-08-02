@@ -21,8 +21,8 @@ using std::endl;
 //         FALSE - on at least one test, at least one of the sorts did not behave as we expected
 bool compareTwoAdults();
 
-// Verifies that rankSort and rankDistanceSort will work on a vector of individuals because they are generally used to sort vectors
-// Starts with two identical copies of a vector of adults and sorts each vector using rankSort or rankDistanceSort
+// Verifies that rankSort and rankDistanceSort will work on a vector of individuals
+// Starts with two identical copies of a vector of adults and sorts each using rankSort or rankDistanceSort
 // Prints cout statements to the terminal that show you what is going on with the sort
 // Input: printStuff - TRUE -> will allow the user to either see all the individuals as they are organized 
 //                     FALSE -> it will keep it from displaying all the cout statements
@@ -30,32 +30,35 @@ bool compareTwoAdults();
 //         FALSE - During at least one of the tests, at least one of the vectors was not sorted how we expected
 bool sortAdultVec(bool printStuff);
 
-// Helper function for sortAdultVec
+// Helper function for sortAdultVec to keep that function shorter
 // Initializes a different vector of adults based on which test we are trying to perform
 // Input: testNum - which test is being accomplished
-//        a - the vector to be filled
+//        a - the vector to be filled 
 //        print - whether or not it should print information about the vector to the terminal
 // Output: all the current values are cleared from a and it is filled with adults corresponding to which test we are performing
 bool differentTestsSetUp(int testNum, std::vector<Adult>& a, bool print);
 
-// This function holds the order in which the different Adults should be ordered and searches for issues with their actual order
+// Ensures that all the tests got the expected results
+// Holds the order in which the different Adults should be ordered and searches for issues with their actual order
 // Input: testNum - the test we are performing
-//        rs - the vector of Adults sorted using rankSort
-//        rDS - the vector of Adults sorted using rankDistanceSort
-// Output: returns true if the vector was sorted correctly or false if it was not
+//        rs - Adults sorted using rankSort (should alreadt be sorted)
+//        rDS - Adults sorted using rankDistanceSort (should already be sorted)
+// Output: returns TRUE if the vector was sorted correctly or FALSE if it was not
 //         also prints cout statements explaining any discrepancies that were found
 bool differentTestsCheck(int testNum, std::vector<Adult> & rs, std::vector<Adult>& rDS);
 
-// Helper function for differentTestsCheck - where the correct order for different individuals are held
+// Helper function for differentTestsCheck - cills correctRS and correctRDS with individuals in the order they should be depending on the test being executed
+//      (based on testNum)
 // Input: testNum - the test we are performing so it loads the correct vectors
-//        correctRS & correctRDS - vectors that will be emptied and filled with the order the Adults should be in after each sort is performed
+//        correctRS & correctRDS - emptied and filled with the order the Adults should be in after each sort is performed
+// Output: correctRS and correctRDS are filled with Adults in rankSort and rankDistanceSort order respectively for the test indicated by testNum
 void loadCorrectOrders(int testNum, std::vector<Adult> & correctRS, std::vector<Adult> & correctRDS);
 
-//TODO: Test 5 may be broken...
+//TODO: Test 5 may be broken... -> pretty sure this is no longer the case, but unable to confirm it is working since I cannot run the code
 
-//prints the rank, distance, and status of every element in the vector using unitTestingRankDistanceStatusPrint()
-// Input: a - adults to be printed
-// Output: prints the ranks, distances, and error statuses of each adult in a
+// Prints the rank, distance, and status of every element in the vector using unitTestingRankDistanceStatusPrint()
+// Input: a - Adults to be printed
+// Output: prints the ranks, distances, and error statuses of each Adult in a
 void vecPrinting(std::vector<Adult>& a);
 
 #include "../Unit_Testing/testing_sorts.cpp"

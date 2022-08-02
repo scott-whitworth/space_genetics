@@ -14,8 +14,10 @@
 
 // --- This file includes the definition for the child class and associated functions ---
 
-// Child is a structure member of the genetic algorithm's population and has set of parameters and the resulting position and velocity
-//once a child is created it will then be copied to an adult with some added parameters
+//TODO: We probably want to be more clear about the dichotomy of child/adult, somewhere should be clear documentation
+
+// Child is a structure member of the genetic algorithm's population and has set of input and output parameters
+// once a child is created it will then be copied to an adult with some added parameters
 struct Child {
     rkParameters<double> startParams; // input parameters for the run- the unique identifiers of this individual
 
@@ -30,7 +32,7 @@ struct Child {
 
     int birthday; //keeps track of the generation this individual was created in 
 
-    int testCount;
+    int testCount; //TODO: change name to countSteps, useful when adjusting the stepsize for MSOI for orbital missions
 
     //Both status and error_status are defined in constants.h
 
@@ -64,6 +66,7 @@ struct Child {
     Child(const Child& other);
 
     #ifdef UNITTEST //set up in unit_testing_main.cpp
+
     // Child constructor only with status - ONLY USED FOR UNIT TESTING!!!
     // Input: errorStatus - this is the only thing set in Child by this constructor
     // Output: A child with only its errorStatus set
@@ -88,6 +91,8 @@ struct Child {
     Child(rkParameters<double> & childParameters, double posD, double speedD, double prog, double avgPrntProg, int bday): startParams(childParameters), errorStatus(VALID), posDiff(posD), speedDiff(speedD), funcStatus(FUNCTIONAL_CHILD), progress(prog), avgParentProgress(avgPrntProg), birthday(bday){}
 
     #endif //unit testing end if
+
+    //TODO: Delete? VVVVVVVV
 
     //Child(rkParameters<double> & childParams, elements<double> posFinal,  double posD,  double speedD, STATUS s, int errStat): startParams(childParams), finalPos(posFinal), posDiff(posD), speedDiff(speedD), funcStatus(s), errorStatus(errorStatus){}
 

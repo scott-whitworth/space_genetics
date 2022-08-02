@@ -58,6 +58,7 @@ double optimize(const cudaConstants* cConstants, GPUMem & gpuValues);
 
 //Temp test function that is an assistant function to verify vectors
 //Will attempt to find which sort an adult vector is in
+//TODO: Should be removed, not used
 void verifyVectorSort (const std::vector<Adult>& adults) {
     //Create flag bools that are used to try and find in what order each vector is sorted 
     bool rankSorted, distanceSorted, rankDistanceSorted;
@@ -125,6 +126,7 @@ void verifyVectorSort (const std::vector<Adult>& adults) {
 
 //Temp test function to verify the status of the adult vectors
 //Will report to the console the size of each vector and attempt to find out in what order they are sorted
+//TODO: Should be removed, not used
 void verifyVectors (const std::vector<Adult>& newAdults, const std::vector<Adult>& oldAdults, const std::vector<Adult>& allAdults, const std::string & areaUsed = "") {
     //Separate section for vector reporting
     std::cout << "\n_-_-_-_-_-_-_-_-VECTOR REPORTS-_-_-_-_-_-_-_-_\n";
@@ -176,14 +178,6 @@ int main () {
     //also allows the GPU to access the marsLaunchCon without reloading it everytime
     GPUMem gpuValues;
 
-    // std::cout << sizeof(double) << std::endl;
-    // std::cout << sizeof(Child) << std::endl;
-    // std::cout << sizeof(elements<double>) << std::endl;
-    // std::cout << sizeof(rkParameters<double>) << std::endl;
-    // std::cout << sizeof(cudaConstants) << std::endl;
-
-    //test_main();
-
     // Sets run0 seed, used to change seed between runs
     // Seed is set in cudaConstants: current time or passed in via config
     double zero_seed = cConstants->time_seed;
@@ -196,33 +190,21 @@ int main () {
         std::cout << *cConstants;
         std::cout << "\tPerforming run #" << run+1 << "\n\n";
 
-        // pre-calculate a table of Earth's position within possible mission time range
+        // pre-calculate a table of Earth's and Mars' position within possible mission time range
         // defined as global variable
         // accessed on the CPU when individuals are initialized
         launchCon = new PlanetInfo(cConstants, EARTH); 
         marsLaunchCon = new PlanetInfo(cConstants, MARS);
+        //This ensures that we copy the correct size of marsCon to the GPU
         int marsConSize = getPlanetSize(cConstants);
+        //initialize all values needed for GPU calculations
         gpuValues.initialize(cConstants, marsConSize, marsLaunchCon->getAllPositions());
-
-        // std::cout << "sizeof(launchCon->planetCon): " << sizeof(*(launchCon->planetCon)) << std::endl;
-        // std::cout << "sizeof(marsLaunchCon->getAllPositions()): " << sizeof(*(marsLaunchCon->getAllPositions())) << std::endl;
-        // std::cout << "marsConSize: " << marsConSize/6 << std::endl;
-
-        // elements<double>* aTest = marsLaunchCon->getAllPositions();
-
-        // if (aTest[5].r == marsLaunchCon->planetCon[5].r){
-        //     std::cout << "getAllPositions seems to be working?" << std::endl;
-        //     std::cout << aTest[5].r << std::endl;
-        // }else{
-        //     std::cout << "Fail" << std::endl;
-        // }
-
-        //setMars(cConstants);
 
         // Call optimize with the current parameters in cConstants
         optimize(cConstants, gpuValues);
-
-        delete launchCon; // Deallocate launchCon info for this run as it may be using a different time range in the next run
+        
+        // Deallocate launchCon info for this run as it may be using a different time range in the next run
+        delete launchCon; 
         delete marsLaunchCon;
         gpuValues.free();
     }
@@ -362,8 +344,6 @@ double optimize(const cudaConstants* cConstants, GPUMem & gpuValues) {
     // Main set of parameters for Genetic Algorithm
     // contains all thread unique input parameters
     // The "children pool" of the current genertation
-    //TODO: Where is this size set? Are we certian the size is correct? / do we have positive control?
-    //      6/28/22: Can be verified with a function, okay to delete this?
     std::vector<Adult> newAdults; 
 
     //Input parameters from the previous generation. Mixes with new children to determine new inputParameters
@@ -403,7 +383,6 @@ double optimize(const cudaConstants* cConstants, GPUMem & gpuValues) {
     //      these adults are either randomly generated or pulled from a file
     createFirstGeneration(oldAdults, cConstants, rng, generation, gpuValues); 
 
-    //verifyVectors(newAdults, oldAdults, allAdults, "Post First Generation");
 
     // main gentic algorithm loop
     // - continues until checkTolerance returns true (specific number of individuals are within threshold)

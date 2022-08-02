@@ -178,9 +178,6 @@ void cudaConstants::FileRead(std::string fileName) {
                         // Initially have c3energy just be the assigned value in the config, c3scale impacts c3energy (and by extension v_escape) within the constructor  
                         this->c3energy = std::stod(variableValue);
                     }
-                    else if (variableName == "v_impact") {
-                        this->v_impact = std::stod(variableValue);
-                    }
 
 
 ////////////////////////////////////////////////////////////////////// -- GENETIC ALGORITHM -- ///////////////////////////////////////////////////////////////////////////
@@ -492,7 +489,7 @@ std::ostream& operator<<(std::ostream& os, const cudaConstants& object) {
     os << "Spacecraft Info:\n";
     os << "\tthruster_type: "   << object.thruster_type   << "\tdry_mass: " << object.dry_mass << "\t\tfuel_mass: " << object.fuel_mass << "\t\twet_mass: " << object.wet_mass << "\n";
     // Display the c3energy assignment, showing c3scale to help clarify that it is not directly from config
-    os << "\tc3energy ("        << (object.c3scale * 100) << "%): "         << object.c3energy << "\tv_escape: "    << object.v_escape  << "\t\tv_impact: " << object.v_impact << "\n";
+    os << "\tc3energy ("        << (object.c3scale * 100) << "%): "         << object.c3energy << "\tv_escape: "    << object.v_escape  << "\n";
     os << "\tcoast_threshold: " << object.coast_threshold << "\n\n";
 
     os << "Target Info:\n";

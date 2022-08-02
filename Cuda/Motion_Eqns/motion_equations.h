@@ -28,7 +28,6 @@ template <class T> __host__ __device__ elements<T> calc_kPlanet(const T & h, con
 // Utilities of calc_k(), calculates the element from current condition
 // Parameter y: complete current condition
 
-//template <class T>  __host__ __device__ T calcMarsCraftDist(const elements<T> & y, const elements<T> & mars);
 
 // Based on: y.vr
 // Output: rDot

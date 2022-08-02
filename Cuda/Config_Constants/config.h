@@ -19,20 +19,20 @@ struct cudaConstants {
     bool record_mode;    // If set to true, functions that record information onto files such as genPerformance.csv.  The code still records a valid solution regardless of this setting
     std::string initial_start_file_address; // If random_start is false, use file_address to find what file is being used for the initial start
 
-    //These variables are used in orbit missions to determine the desired final orbital radius and speed
+    //Variables used in orbit missions to determine the desired final orbital radius and speed
     //They are initially set to -1 to allow the program to quickly determine if the goal is an orbit vs an impact/rendezvous
     double orbitalRadius = -1; // the radius of the orbit around a body
     double orbitalSpeed = -1; // the final velocity the spacecraft needs to orbit its target
 
-    int write_freq;       // Determine how many generations between calling recordGenerationPerformance() method (defined in Output_Funcs/output.cpp)
-    int all_write_freq;   // Determine how many generations between calling recordAllIndividuals() method (defined in Output_Funcs/output.cpp)
-    int disp_freq;        // Determine how many generations between calling terminalDisplay() method (defined in Output_Funcs/output.cpp)
+    int write_freq;       // Generations between calling recordGenerationPerformance() method (defined in Output_Funcs/output.cpp)
+    int all_write_freq;   // Generations between calling recordAllIndividuals() method (defined in Output_Funcs/output.cpp)
+    int disp_freq;        // Generations between calling terminalDisplay() method (defined in Output_Funcs/output.cpp)
 
     int best_count;        // Number of individuals that needs to be within the acceptable condition before ending the algorithm, also how many of the top individuals are recorded
     double anneal_initial; // initial value for annealing, meant to replace the previously used calculation involving ANNEAL_MIN and ANNEAL_MAX with something more simple
     double anneal_final;   // final value for annealing, anneal cannot be reduced beyond this point
 
-    double mutation_amplitude; // The percentage for probability of mutating a gene in a new individual, called iteratively to mutate more genes until the check fails
+    double mutation_amplitude; // Percentage for probability of mutating a gene in a new individual, called iteratively to mutate more genes until the check fails
 
     // Scalars used to modify the mutate_scales below, used to assist in making adults mutate more if needed
     // A value of 1 will have an individual's parameters mutate at the scale of the variables below
@@ -71,6 +71,7 @@ struct cudaConstants {
 
     // The final position and velocity of the asteroid/target at impact date
     // Should be pulled from NASA database
+    // Loaded in from target.config
     double r_fin_target;      // AU
     double theta_fin_target;  // Radians
     double z_fin_target;      // AU
@@ -94,44 +95,51 @@ struct cudaConstants {
     double vtheta_fin_mars; // AU/s
     double vz_fin_mars;     // AU/s
 
-    double v_impact; // AU/s, the official DART mission data, used in cost function of individuals to sort individuals with posDiff < pos_threshold
-
     double rk_tol;       // The relative/absolute (not sure which one it is) tolerance for the runge kutta algorithm
     double doublePrecThresh; // The smallest allowed double value for runge-kutta
     int cpu_numsteps;    // Constant higher precision for final CPU RK method, set to be equal to max_numsteps
     int min_numsteps;    // Minimum number of steps in runge kutta 
     int max_numsteps;    // Maximum number of steps in runge kutta 
     int num_individuals; // Number of individuals in the pool, each individual contains its own thread
-    int survivor_count;  // Number of survivors selected, every pair of survivors creates 8 new individuals
-    int thread_block_size;
+    int survivor_count;  // Number of survivors selected, every pair of survivors creates some amount of new individuals
+    int thread_block_size; // Semi-fixed value, GPU harware-dependent. Size of the GPU thread blocks, used when launching the GPU kernel
 
-    // Used in generating time range for Earth calculations (units in seconds), distance between explicit time intervals stored
+    //(seconds) Used in generating time range for Earth calculations , distance between explicit time intervals stored
     int timeRes;
 
-    // minimum distance the spacecraft can be to the sun.
+    // (AU) minimum distance the spacecraft can be to the sun
+    //    if spacecraft ever enters this distance, should cause error
     double sun_r_min;
     
-    //destination asteroid file. The constants for the asteroid/target and earth data are passed in with a different file in order to switch between asteroids/targets easier.
+    //Destination asteroid file. 
+    // Constants for the asteroid/target and earth data in a different file to aid in switching asteroids/targets
     std::string destination;
 
-    //asteroid/target orbital constant
+    // (seconds) asteroid/target orbital constant around Sun
     double orbitalPeriod;
 
+    // (AU) Distance from surface of secondary gravity assising body, design goal
+    //    The genetic algorithm should push the path to minimize this, this acts as a minimum threshold
+    //    TODO: This may need to be moved to a full output parameter, not a mission constant
     double gravAssistDist;
 
-    //Vector of objectives that will be solved by the program
-    //  For more information of what the objective class holds, look at it's header file
+    // Collection of desired parameters and their details which are used by the genetic algorithm
+    //     specifically used in rank and distance calculations
+    //     for more info, look at documentation in objective.h and the mission.config files
     std::vector<objective> missionObjectives; 
 
     // Default constructor, assumes the files being pulled are genetic.config and mission.config
+    // Fully sets up cConstants for a given run
     cudaConstants();
 
     // Constructor, accepts a string argument for the config file path
+    // DEPRECIATED, not implemented, and probably not needed
     cudaConstants(std::string configFile);
 
     // Sets properties to what is within the config file
     // Input: File address that is used to open a text-based file and parses through to assign variables
-    // Output: Properties explicitly set in the config file are set to values following equal sign, ignores comments or empty lines in files 
+    // Output: Properties explicitly set in the config file are set to values following equal sign,
+    //            ignores comments or empty lines in files 
     // Notice: This does not verify much, if anything, about the config file!
     void FileRead(std::string fileName);
 

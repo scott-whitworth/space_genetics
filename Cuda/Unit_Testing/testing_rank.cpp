@@ -8,6 +8,7 @@
 using std::cout;
 using std::endl;
 
+//NOT CURRENTLY BEING USED AND VERY OUTDATED
 
 // this function will check if giveRank is functioning as expected
 //Input: None, but the class and posDiff and speedDiff of each adult will be created here

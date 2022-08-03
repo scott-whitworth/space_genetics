@@ -111,7 +111,7 @@ bool testGetConditions(const cudaConstants* utcConstants){
         expectedResults = false;
     }
 
-    double tripTime = 47304000; //Makes a fake 1.5 year trip time (don't use 1.5*SECONS_IN_YEAR because that is abou 9 hours off)
+    double tripTime = 47304000; //Makes a fake 1.5 year trip time (don't use 1.5*SECONDS_IN_YEAR because that is about 9 hours off)
 
     //this should be the position of Mars an when the spacecraft launches (1.5 years before the spacecraft reaches its target)
     elements<double> launchTime = (*marsLaunchCon).getCondition(tripTime);

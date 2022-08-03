@@ -3,35 +3,37 @@
 <h2>Genetics Unit Tests</h2>
 testing_genetics is a collection of unit tests to ensure that Adults are generated as we expect them to be. This section is most used to verify that the code in ga_crossover and genetic_algorithm both work as we expect them to. It checks this by verifying they are sorted in the order we expect and ensures that Children inherit genetic material properly from their parents. Additionally, a bunch of lower level tests are done on some of the individual functions from the genetic_algorithm or ga_crossover files.
 
+NOTE: If the number of children produced by a set of parents changes, then crossoverChildrenCount needs to be updated in order for the unit tests to work properly. Additionally, if the third child is no longer the Child whose parameters are an average of its parents' parameters, then fullAvgOffset must be updated to reflect this.
+
 <h3>runGeneticsUnitTests</h3>
 
-- Sets up the CUDA Constants to be used in the rest of the genetics tests as well as setting up the rng to be used throughout the tests
+- Sets up the CUDA Constants to be used in the rest of the genetics tests as well as setting up the rng to be used throughout the tests.
 
 - Runs all the genetics unit tests
 
 <h3>firstParentsTest</h3>
 
-- Uses a set of 10 children and converts them to Adults, then verifies these Adults can be properly sorted
-- This is to verify nothing weird happens when converting Children to Adults and to ensure that giving ranks and distances to individuals and then sorting them works as expected
+- Uses a set of 10 children and converts them to Adults, then verifies these Adults can be properly sorted.
+- This is to verify nothing weird happens when converting Children to Adults and to ensure that giving ranks and distances to individuals and then sorting them works as expected.
 
 <h3>checkParentsTest</h3>
 
-- Helper function for firstParentsTest. It holds the hand-calculated order the Adults from firstParentsTest should be sorted in. It takes in the vector theResults (which is the order that firstParentsTest put the Adults in after rank distance sorting them) and compares this to the order that they should be in
+- Helper function for firstParentsTest. It holds the hand-calculated order the Adults from firstParentsTest should be sorted in. It takes in the vector theResults (which is the order that firstParentsTest put the Adults in after rank distance sorting them) and compares this to the order that they should be in.
 
 <h3>createMasks</h3>
 
-- A function that tests if masks are being generated correctly
-- It uses the different methods to make masks and then verifies that the only numbers that exist in the mask that has been generated are the ones supposed to be there
+- A function that tests if masks are being generated correctly.
+- It uses the different methods to make masks and then verifies that the only numbers that exist in the mask that has been generated are the ones supposed to be there.
   
   - If printMask is set to true, it will print the output of the mask of each mask in the terminal so that you can visually verify it was generated properly
 
 <h3>makeChildrenWithDifferentMethods</h3>
 
-- Uses two known Adults to generate pairs of Children using each of the different crossOver_XXX methods and generateChildrenPair to generate the 2 children from these parents using a specific method
+- Uses two known Adults to generate pairs of Children using each of the different crossOver_XXX methods and generateChildrenPair to generate the 2 children from these parents using a specific method.
   
   - It calls checkReasonability (outlined below) to check that the Child has the properties we expected it would
 
-- It attempts to make children using all the crossover methods with and with the thruster_type set to both 0 and 1  
+- It attempts to make children using all the crossover methods with and with the thruster_type set to both 0 and 1.  
 
 <h3>checkReasonability</h3>
 
@@ -50,18 +52,78 @@ testing_genetics is a collection of unit tests to ensure that Adults are generat
 
 <h3>getParamStuff</h3>
 
-- Helper function for checkReasonability that uses an offset (alpha, beta, zeta, tripTime, etc.) to pull the proper parameter from a Child. Using ALPHA_OFFSET makes the function return the alpha value of the Child passed into the funtion
+- Helper function for checkReasonability that uses an offset (alpha, beta, zeta, tripTime, etc.) to pull the proper parameter from a Child. Using ALPHA_OFFSET makes the function return the alpha value of the Child passed into the funtion.
 
 <h3>twentyAdultsPosAndSpeedDiffMade</h3>
 
-- Creates 20 Adults with known tripTimes, posDiffs, and speedDiffs, but the rest of their parameters are not set, so they are likely full of random junk. They are given ranks and distances and rank distance sorted
+- Creates 20 Adults with known tripTimes, posDiffs, and speedDiffs, but the rest of their parameters are not set, so they are likely full of random junk. They are given ranks and distances and rank distance sorted. The tripTimes were chosen so that there should not be any confusion on which parents produced a Child by looking merely at its tripTime. All tripTime averages should be unique from the average produced by any other combination of parents.
 
 <h3>verifyChildrenFromCrossover</h3>
 
 - Creates Children from a set of 20 unique individuals, 20 duplicates, and 20 mixed (some unique, some duplicates). These children are generated with a variety of survivor counts - starting with all 20 Adults being potential parents, then 10, then 5, and finally only 2 of them are used to generate all 20 Children.
+- Calls a helper function, cfcAnswersMatchExpectations, to verify that the results make sense.
+- This function is meant to test generateChildrenFromCrossover.
+
+<h3>cfcAnswersMatchExpectations</h3>
+
+- Looks for the parents of a set of children by using their tripTimes. It compares the tripTime of the 3rd Child (the first one produced by crossOver_average that is a true average) to the average of the tripTime of two Adults and uses this to identify the set's parents. If a set has fewer than 3 Children, it will look at the individual Child/Children's tripTimes and find a Adult that has its same tripTime and identify this as one of the set's parents.
+- It is important that any functions that call this function do not mutate their children's parameters or the code will not be able to correctly determine a Child's parents.
+- Depending on whether or not printThings is set to true, it may print the tripTimes of the parents of a set along with the tripTimes of any Children these parents produced.
+
+<h3>testingCopyOfNewGen</h3>
+
+- This function tests the unit testing version of newGeneration (UTCopyOfNewGeneration). The function UTCopyOfNewGeneration is supposed to be basically the same as the actual newGeneration, only it does not include callRK or anything related to callRK (thus it does not include the GPUMem stuff either).
+- NOTE: If newGeneration is changed at all, UTCopyOfNewGeneration will need to be updated as well. Otherwise, this will no longer be a good way to test that newGeneration is working as it should.
+- This function loads the 20 Adults from twentyAdultsPosAndSpeedDiffMade and increases survivor_count and num_individuals both to 20, then it calls the unit testing version of newGeneration and converts the newAdults made by this method back into Children so they can be sent through cfcAnswersMatchExpectations to verify they were properly generated.
+
+<h3>convertBackToChildren</h3>
+
+- This helper function for testingCopyOfNewGen takes the important elements of the Adults passed into this function and turns them into an array of Children using a Child constructor made particularly for this function.
+
+<h3>UTCopyOfNewGeneration</h3>
+
+- This function is basically the newGeneration, only it does not include callRK or anything related to callRK (like GPUMem). As of the end of summer 2022, it still matched newGeneration, just missing callRK and its inputs. 
+- This function was created to unit test just the actual process of creating a new generation without any of the extra complications that come from calling callRK (a function that operates on the GPU).
+
+<h3>firstFullGen</h3>
+
+- This function creates an entire generation of individuals and uses the actual newGeneration function (that uses the GPU callRK function) to create Children from this first generation of parents
+
+  - This function uses a different function to verify that the Children were generated correctly. It uses verifyFullGen instead of cfcAnswersMatchExpectations. 
+
+- If the test passes with generating 10 individuals from a survivor pool of 3 individuals, it then calls another function, makeManyChildren that attempts to generate 65 children from 7 parents and from 5 parents
+
+<h3>verifyFullGen</h3>
+
+- This function takes in the new generation of Adults and the vector of their parents' generation and attempts to distinguish a set's parents by examining the tripTime of the child whose tripTime is an average of its parents' tripTimes. This information is used to determine the Child's parents. If there are not enough Children in a set that one is produced using averaging, then it attempts to establish the parents by comparing a Child's tripTime to a parent's tripTime and trying to find an exact match because the first two Children are generated using crossOver_wholeRandom which would assign the value from a parent's tripTime to one Child and the other parent's tripTime to the other Child (because the mask is flipped, switching 1s to 2s and vice versa).
+
+<h3>makeManyChildren</h3>
+
+- Using the same set of potential parents as firstFullGen, this function uses newGeneration to try and generate 65 Children from 7 survivors and calls verifyFullGen to ensure they were made correctly. Then, if the previous test passed, it attempts to make 65 Children from 5 survivors.
+
+<h3>checkUTMutateMask</h3>
+
+- This function is not currently in use, but it calls a unit testing version of mutateMask which is basically the actual mutateMask function (as of the end of the summer 2022), but just with a cout statement saying how many genes were mutated. This function takes the mask created in mutateMask and prints it, showing which genes would be mutated.
+
+<h3>UTmutateMask</h3>
+
+- This function basically matches the actual mutateMask function, but it just has an extra cout statement to print how many genes were mutated. It uses a random number generator and the mutation chance to establish whether or not a gene will be mutated.
 
 <h2>Planet Unit Tests</h2>
-The planet methods have not been heavily unit tested, but this unit test was to confirm our assumption about how accessing the positions of planets using getCondition works.
+The planet methods have not been heavily unit tested, but this unit test is to confirm our assumption about how accessing the positions of planets using getCondition works. Additionally, they ensure getCondition and getConditionDev give us the same results.
+
+<h3>runPlanetTests</h3>
+
+- Sets up the cuda constants that need to be used in any other planet testing functions, sets up marsLaunchCon, and calls the planet unit tests
+
+<h3>testGetConditions</h3>
+
+- This function verifies that getCondition is working as we expect it to.
+
+  - It retrieves the position of Mars when the input into getCondition is 0 and verifies that this is the position of Mars at the end of the mission (0 seconds before completing the mission).
+  - Then it retrieves the position of Mars when the input into getCondition is 3600 and verifies this means the position of Mars 3600 seconds (or 1 hour) before the spacecraft reaches its destination.
+  - Then it retrieves the position of Mars when the input into getCondition is about 1.5 years (this is the kind of thing that would be like an actual tripTime) and it attempts to verify this would be the position of Mars when the spacecraft leaves Earth.
+  - It checks whether the results using getConditionDev are the same as the ones returned when using getCondition.
 
 <h2>testing_rank unit tests </h2>
 
@@ -89,3 +151,33 @@ as expected with no changes needed to it from the previous summer's version.
 - NOTE: this test is currently outdated as it uses the adult struct to mark duplicates but we now use errorStatus
 
 <h2>Sorts Unit Tests</h2>
+These tests are used to verify that rankSort and rankDistanceSort put individuals in the expected order.
+
+<h3>compareTwoAdults</h3>
+
+- This function checks the functions are working at their most basic level and choose which of two individuals is better using rankSort and rankDistanceSort.
+  
+    - First, it compares two Adults with different ranks and different distances.
+    - Second, it compares two Adults with the same rank and different distances, where the first individual is better (with a greater distance).
+    - Third, it compares two Adults with the same rank and different distances, but the individual with a better distance has an error status.
+    - Fourth, it compares individuals with different ranks but the same distance.
+
+<h3>sortAdultVec</h3>
+
+- This function performs 6 tests where a set of Adults are loaded into a vector (using differentTestsSetUp) and then the same vector is sorted using both rankSort and rankDistanceSort, then it is compared to the correct order (which was hard-coded into loadCorrectOrders)
+
+  - First, it sorts 7 Adults with unique ranks and a variety of distances
+  - Second, it sorts 7 Adults with the same rank and all with unique distances
+  - Third, it sorts 7 Adults with different ranks but all the same distance
+  - Fourth, it sorts 8 Adults with a variety of ranks and distances (some of which are repeated), but there are not Adults whose rank and distance are both the same
+  - Fifth, it sorts 5 Adults with mostly the same rank and distance, but one is a SUN_ERROR. This also ensures that when there are two Adults with the same rank and distance, there are no errors with the placement of these individuals.
+  - Sixth, it sorts 10 Adults with largely random ranks and distances with a combination of values with and without error statuses
+
+<h3>differentTestsSetUp</h3>
+
+- This function is a helper function for sortAdultVec that, depending on the testNum, fills the vector of Adults with the Adults necessary to perform each test.
+- If print is set to true, it will print the vector of Adults before they are sorted.
+
+<h3>differentTestsCheck</h3>
+
+- This function is a helper function for sortAdultVec that, depending on testNum, which takes in two vectors of Adults and compares them to the correct verso

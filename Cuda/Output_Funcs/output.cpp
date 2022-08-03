@@ -655,6 +655,7 @@ void output::errorCheck(double *time, elements<double> *yp,  double *gamma,  dou
     // total mass at each time step
     mass[i] = wetMass - fuelSpent[i];
     // total mechanical energy (K + U) at each time step
+    //TODO: include mars in the error
     Etot[i] = mass[i] * ((pow(yp[i].vr,2) + pow(yp[i].vtheta,2) + pow(yp[i].vz,2))/ 2 - constG * massSun / yp[i].r) / pow(AU,2);
     if (i) {
       // Ignore first time step, only calculate as a change from step to step

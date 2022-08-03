@@ -3,6 +3,10 @@ bool runGeneticsUnitTests(bool printThings){
     //making cudaConstants to control what is going on in genetic algorithm while still using the original functions
     cudaConstants* utcConstants = new cudaConstants(); 
 
+    //preallocates all the memory for the varaibles used by the GPU
+    //also allows the GPU to access the marsLaunchCon without reloading it everytime
+    GPUMem gpuValues;
+
     // Seed used for randomization rng things, using seed 0 for consistancy / tracability 
     utcConstants->time_seed = 0; 
 
@@ -73,6 +77,11 @@ bool runGeneticsUnitTests(bool printThings){
 
     //VERY complicated part of the code with some possibility of errors -> just needed for the child constructor with rkParameters and cConstants as its arguments
     launchCon = new PlanetInfo(utcConstants, EARTH); 
+    marsLaunchCon = new PlanetInfo(utcConstants, MARS);
+    //This ensures that we copy the correct size of marsCon to the GPU
+    int marsConSize = getPlanetSize(cConstants);
+    //initialize all values needed for GPU calculations
+    gpuValues.initialize(cConstants, marsConSize, marsLaunchCon->getAllPositions());
 
 // CALLING THE DIFFERENT UNIT TESTING ALGORITHMS
     bool allWorking = true;
@@ -119,7 +128,7 @@ bool runGeneticsUnitTests(bool printThings){
     //creates a generation of parents and then creates children from these parents
     //then these children are sent through a function that verifies their tripTime values 
     //tripTime was chosen because it was the paramerter set in creating the parents and it is easiest to see if the children have the correct values for tripTime 
-    if (firstFullGen(rng, utcConstants, printThings)){
+    if (firstFullGen(rng, utcConstants, printThings, gpuValues)){
         cout << "PASSED: Successfully made the first generation of adults from another set of adults" << endl;
     }
     else{
@@ -129,6 +138,7 @@ bool runGeneticsUnitTests(bool printThings){
 
     delete utcConstants;
     delete launchCon;
+    gpuValues.free();
     return allWorking;
 }
 
@@ -1097,6 +1107,7 @@ void convertBackToChildren(std::vector<Adult>& newAdult, Child* newChildren, con
 }
 
 //copied from genetic_algorithm.cpp on 6/29/22 at 5:59PM and then removed all the callRK and callRK dependent things
+//at the end of summer 2022 it still was practically the same as the actual newGeneration function, only missing the callRK and its inputs
 //made it return an int representing where the children from the unique individuals ended and the duplicates started
 int UTCopyOfNewGeneration(std::vector<Adult> & oldAdults, std::vector<Adult> & newAdults, const double & annealing, const int & generation, std::mt19937_64 & rng, const cudaConstants* utcConstants){
     //Vector that will hold the adults who are potential parents
@@ -1126,7 +1137,7 @@ int UTCopyOfNewGeneration(std::vector<Adult> & oldAdults, std::vector<Adult> & n
 }
 
 //unit testing creating an entire generation of individuals
-bool firstFullGen(std::mt19937_64& rng, cudaConstants * utcConstants, bool printThings){
+bool firstFullGen(std::mt19937_64& rng, cudaConstants * utcConstants, bool printThings, GPUMem & gpuValues){
     utcConstants->num_individuals = 10;
     utcConstants->survivor_count = 3;
 
@@ -1157,7 +1168,7 @@ bool firstFullGen(std::mt19937_64& rng, cudaConstants * utcConstants, bool print
     }
 
     std::vector<Adult> parents;
-    firstGeneration(genZero, parents, utcConstants); //genZero and is turned into parents using firstGeneration which has been unit tested previously
+    firstGeneration(genZero, parents, utcConstants, gpuValues); //genZero and is turned into parents using firstGeneration which has been unit tested previously
 
     //the parents are sorted so they can be selected to be parents for a new generation
     giveRank(parents, utcConstants); 
@@ -1168,7 +1179,7 @@ bool firstFullGen(std::mt19937_64& rng, cudaConstants * utcConstants, bool print
     std::vector<Adult> youngGen;
 
     //creates young a young generation with an annealing rate of 0.0 and the generation is set to 1 (the random 0.0 and 1)
-    newGeneration(parents, youngGen, 0.0, 1, rng, utcConstants);
+    newGeneration(parents, youngGen, 0.0, 1, rng, utcConstants, gpuValues);
 
     //verifies the children generated are as expected
     noErrors = verifyFullGen(youngGen, parents, utcConstants, printThings);
@@ -1185,7 +1196,7 @@ bool firstFullGen(std::mt19937_64& rng, cudaConstants * utcConstants, bool print
     //if the first test passed successfully, tries making a lot a children from a small number of survivors
     if (noErrors){
         cout << "Test successful - trying creating a large number number of children from a small number of adults " << endl;
-        noErrors = makeManyChildren(rng, youngGen, parents, utcConstants, printThings);
+        noErrors = makeManyChildren(rng, youngGen, parents, utcConstants, printThings, gpuValues);
     }
 
     //returns noErrors
@@ -1300,25 +1311,26 @@ bool verifyFullGen(std::vector<Adult>& youngGen, std::vector<Adult>& possParents
 
 //tries making children from just a couple of survivors - not currently working as far as I know...
 //was working before merging the changes, but it is breaking now, so due to the network being down, unable to further test this issue
-bool makeManyChildren(std::mt19937_64& rng, std::vector<Adult>& youngGen, std::vector<Adult>& possParents, cudaConstants * utcConstants, bool printThings){
+bool makeManyChildren(std::mt19937_64& rng, std::vector<Adult>& youngGen, std::vector<Adult>& possParents, cudaConstants * utcConstants, bool printThings, GPUMem & gpuValues){
     bool noErrors = true; 
 
     utcConstants->num_individuals = 65;
     utcConstants->survivor_count = 7;
 
-    newGeneration(possParents, youngGen, 0.0, 1, rng, utcConstants);
+    newGeneration(possParents, youngGen, 0.0, 1, rng, utcConstants, gpuValues);
     //verifies 
     noErrors = verifyFullGen(youngGen, possParents, utcConstants, false);
 
     if (!noErrors){
         cout << "Problem with 65 individuals generated from 7 parents" << endl;
+        return noErrors;
     }
     else if (printThings){
         cout << "Generated 65 individuals from 7 parents" << endl;
     }
 
     utcConstants->survivor_count = 5;
-    newGeneration(possParents, youngGen, 0.0, 1, rng, utcConstants);
+    newGeneration(possParents, youngGen, 0.0, 1, rng, utcConstants, gpuValues);
     //verifies 
     noErrors = verifyFullGen(youngGen, possParents, utcConstants, false);
 
@@ -1352,6 +1364,8 @@ bool checkUTMutateMask(){
     
 }
 
+//practically matches the actual mutateMask function, except it prints out geneCount (the number of genes that will be mutated) at the end
+//still basically matches the actual function as of the end of summer 2022
 void UTmutateMask(std::mt19937_64 & rng, bool * mutateMask, double mutation_rate){
     
     for (int i = 0; i < OPTIM_VARS; i++) {

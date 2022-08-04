@@ -120,7 +120,7 @@
 ## ga_crossover.cpp/h
 ### maskValue enum
   - Used to generate masks for generating children
-  - Determines if a child's input parameter comes from parent 1, parent 2, the average of the parents, or a weighted average of the parents
+  - Determines if a child's input parameter comes from parent 1 (1), parent 2 (2), the average of the parents (3), or a weighted average of the parents (4)
   - An array with the size of the number of input parameters is filled with instances of this enum; this is used to determine the origin of each of a child's input parameters
 
 ### crossOver_randHalf

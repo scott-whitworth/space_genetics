@@ -4,9 +4,11 @@
 #include <random> //for rng
 #include <time.h>
 
+//NOTE: Because there were so few of these, we did not bother to make a .h for this,
+//      but if more planet unit testing is done, it would like be worth it to move these
+//      function headers to a .h file
 //runs the unit tests for the planets functions
 bool runPlanetTests(bool printThings);
-
 //Prints the conditions of the Earth at triptime_min, which should be the start point
 bool testGetConditions(const cudaConstants* utcConstants);
 
@@ -21,8 +23,8 @@ bool runPlanetTests(bool printThings){
     utcConstants->orbitalPeriod = 1.0e8; // so it is easy to see the period and it should be the same length as the planet's position is (s) 
 
     //ALL THE STUFF SO EARTH'S INITIAL POSITION CAN BE CALCULATED
-    utcConstants->triptime_max=2.0; //set to 2 years
-    utcConstants->triptime_min=1.0; //set to 1 year
+    utcConstants->triptime_max=2.0*SECONDS_IN_YEAR; //set to 2 years
+    utcConstants->triptime_min=1.0*SECONDS_IN_YEAR; //set to 1 year
     utcConstants->timeRes=1800; // Earth Calculations Time Resolution Value
     
     //Bennu config values but shortened to make comparisons easier
@@ -109,11 +111,13 @@ bool testGetConditions(const cudaConstants* utcConstants){
         expectedResults = false;
     }
 
-    double tripTime = 1.5*SECONDS_IN_YEAR; //Makes a fake 1.5 year trip time
+    double tripTime = 47304000; //Makes a fake 1.5 year trip time (don't use 1.5*SECONDS_IN_YEAR because that is about 9 hours off)
 
     //this should be the position of Mars an when the spacecraft launches (1.5 years before the spacecraft reaches its target)
     elements<double> launchTime = (*marsLaunchCon).getCondition(tripTime);
 
+    //uses the overloaded << to print the position of Mars at this time to the terminal
+    std::cout << launchTime << std::endl;
 
     //Mars coordinates from 2017-Jun-03 17:00:00.0000 (1.5 years before) 
     double rMarsLaunch = 1.5912271219;
@@ -136,7 +140,10 @@ bool testGetConditions(const cudaConstants* utcConstants){
         expectedResults = false;
     }
 
-    double usingConditionDev = (*marsLaunchCon).getConditionDev(tripTime);
+    elements<double> usingConditionDev = getConditionDev(tripTime, utcConstants, marsLaunchCon);
+
+    //uses the overloaded << to print the position of Mars at this time to the terminal
+    std::cout << usingConditionDev << std::endl;
 
     if (launchTime.r != usingConditionDev.r){
         std::cout << "using getConditionDev is not getting the same answer as getCondition" << std::endl;

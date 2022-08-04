@@ -45,10 +45,10 @@ int main(){
     // Calls the planet tests that ensure access to Mars' position works as we expect it to
     // Tries to return Mars' 
     if (runPlanetTests(lotsOfCouts)){
-        cout << "PASSED: All the genetics tests passed" << endl;
+        cout << "PASSED: The time in getCondition(time) is the number of seconds before the end of the mission as we expected" << endl;
     }
     else{
-        cout << "Completed all the genetics units tests, but some FAILED" << endl;
+        cout << "Either one of the hand-done calculations was wrong or getCondition works differently than we thought it would - the test FAILED" << endl;
     }
     // if(dominationTest()){
     //     cout << "dominationTest has ended" <<endl;

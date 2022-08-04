@@ -11,7 +11,7 @@ PlanetInfo::PlanetInfo(const cudaConstants* cConstants, const int & planetStatus
     if(planetStatus == EARTH){
         startTime = cConstants->triptime_min; // Starting time (s), chronologically this is closest to impact time (0 would be exactly impact date)
         endTime = cConstants->triptime_max;   // Ending time (s), chronologically this is earliest time away from impact date
-    }else if(planetStatus == MARS){
+    }else if(planetStatus == MARS){ 
         startTime = 0.0; // Starting time (s), chronologically this is closest to impact time (0 would be exactly impact date)
         endTime = cConstants->triptime_max;   // Ending time (s), chronologically this is earliest time away from impact date
     }
@@ -37,7 +37,18 @@ PlanetInfo::PlanetInfo(const cudaConstants* cConstants, const int & planetStatus
     planetCon[0] = planet;
 
     // Shows progress of planet position calculations before the optimization in cuda can occur.
-    std::cout << "Calculating planet positions for the trip time range" << std::endl;
+    std::cout << "Calculating ";
+    //TODO: Run the code to ensure this cosmetic change did not mess up anything else
+    if(planetStatus == EARTH){
+        std::cout << "Earth";
+    }else if(planetStatus == MARS){
+        std::cout << "Mars";
+    }
+    else{
+        std::cout << "an unknown celestial body's";
+    }
+    std::cout << " positions for the trip time range" << std::endl;
+    
     std::cout << "          10 20 30 40 50 60 70 80 90 100" << std::endl;
     std::cout << "progress:[";
 

@@ -36,6 +36,7 @@
   - <b>Min_Orbit_Pos_Diff</b> (minimizes the final position difference between the individual and the orbit radius of the target body)
   - <b>Min_Orbit_Speed_Diff</b> (minimizes the final speed difference between the individual and the orbit speed of the target body)
 - Note: Goals which optimize for input variables (e.g. min_trip_time) currently don't work nearly as well and may be better optimized by setting challenging min/max values
+- Note: Orbit goals don't currently work very well, see [orbitalMissions.md](orbitalMissions.md) for detail
 
 <br>
 
@@ -60,4 +61,29 @@
 
 - This value determines how similar two individuals' variables have to be for the individuals to be considered in the objective
 - Used because the objectives have different units
-  - It also is not practical to com
+  - It also is not practical to compare parameters at unreasonable precisions (e.g. measuring fuel spent at 1e-14 kg)
+
+<br>
+</br>
+
+# Building New Objectives
+
+- The current structure of how objectives are handled makes the process of building new objectives relatively simple
+- Candidates for new objectives ideally should be a value that can be minimized or maximized and do not directly have to do with a single input parameter
+- Following are the steps needed to build a new objective:
+    1. Initialize the output variable that will be used to measure the progress the objective within the [child class](../Genetic_Algorithm/child.h)
+       - How this variable is calculated may be from within the runge-kutta simulation (see fuelSpent) or calculated within its own function (see posDiff)
+    2. Add the in-code name of the goal to the parameterGoals enum in [objective.h](objective.h)
+       - Important Note: if this objective is about minimizing an output, make sure the value of the enum variable is <0 (and vice-versa for maximizing objectives). The sign of objective enum variable is a quick method used by the code to determine the desired direction of the objective. 
+    3. Using the new enum goal, add the new objective to the section in the importObjective() function in [config.cpp](config.cpp) where the inputs from mission.config are translated to objective objects.
+    4. Add the new objective to the getParameter() function in child.cpp
+       - This function is used to dynamically return the correct child class variable depending on the objective
+       - Thus, you need to add an if statement which returns the output variable you created in step 1 if the input objective is the one you are building
+    5. Build a new sort function for the objective's output variable in the adult class
+       - These sort functions are used when calculating an individual's distance
+       - The sort should return true when the first adult submitted has a better value for the objectives output variable than the second adult
+         - For example, if the objective is a minimization, the sort function needs to favor smaller values
+         - See previously created sort functions and their associated objectives for clarity
+    6. Finally, add the sort that you just built to the parameterSort() function in sort.cpp
+       - This function calls the correct sort based on the submitted objective
+       - So, append to the switch statement within the function to sort based on the new objective using the sort function from the previous step 

@@ -63,6 +63,42 @@ bool LowerSpeedDiff(const Adult& personA, const Adult& personB) {
     }
 }
 
+// Compare two adults by their orbit positional difference values
+// input: two adults
+// output: returns true if personB has a lower orbit pos difference than personA
+bool LowerOrbitPosDiff(Adult& personA, Adult& personB) {
+    if(personA.errorStatus !=  VALID && personA.errorStatus != DUPLICATE){
+        return false;
+    }
+    else if(personB.errorStatus !=  VALID && personB.errorStatus != DUPLICATE){
+        return true;
+    }
+    else if (personA.orbitPosDiff < personB.orbitPosDiff) {
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
+// Compare two adults by their orbit speed difference values
+// input: two adults
+// output: returns true if personB has a lower orbit speed difference than personA
+bool LowerOrbitSpeedDiff(Adult& personA, Adult& personB) {
+    if(personA.errorStatus !=  VALID && personA.errorStatus != DUPLICATE){
+        return false;
+    }
+    else if(personB.errorStatus !=  VALID && personB.errorStatus != DUPLICATE){
+        return true;
+    }
+    else if (personA.orbitSpeedDiff < personB.orbitSpeedDiff) {
+        return true;
+    }
+    else {
+        return false;
+    }    
+}
+
 // Compare two individuals by their spent fuel values, used in standard sort to have array contain lowest fuel spent individual at start
 // input: two individuals
 // output: returns true if personA has a smaller amount of fuel used than personB

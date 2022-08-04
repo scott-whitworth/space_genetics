@@ -77,7 +77,7 @@ struct Adult: public Child {
 
 // Compare two adults by their positional difference values
 // input: two adults
-// output: returns true if personB has a higher positional difference than personA
+// output: returns true if personB has a lower positional difference than personA
 bool LowerPosDiff(Adult& personA, Adult& personB);
 
 // Compare two adults by their velocity difference values
@@ -89,6 +89,16 @@ bool HigherSpeedDiff(const Adult& personA, const Adult& personB);
 // input: two adults
 // output: returns true if personB has a lower velocity difference than personA
 bool LowerSpeedDiff(const Adult& personA, const Adult& personB);
+
+// Compare two adults by their orbit positional difference values
+// input: two adults
+// output: returns true if personB has a lower orbit pos difference than personA
+bool LowerOrbitPosDiff(Adult& personA, Adult& personB);
+
+// Compare two adults by their orbit speed difference values
+// input: two adults
+// output: returns true if personB has a lower orbit speed difference than personA
+bool LowerOrbitSpeedDiff(Adult& personA, Adult& personB);
 
 // Compare two individuals by their spent fuel values, used in standard sort to have array contain lowest fuel spent individual at start
 // input: two individuals

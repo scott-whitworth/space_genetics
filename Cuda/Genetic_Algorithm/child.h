@@ -25,6 +25,8 @@ struct Child {
 
     double posDiff; // in AU, difference in position between spacecraft and center of target at end of run
     double speedDiff; // in AU/s, difference in velocity between spacecraft and target at end of run
+    double orbitPosDiff; // in AU, difference in position between the spacecraft and the orbital radius of the target at the end of the run
+    double orbitSpeedDiff; // in AU/s, the difference in velocity between the spacecraft and the orbit speed of the target at the end of the run
     double fuelSpent; // in kg, the amount of fuel spent by the individual during its simulation
 
     double progress; //progress of the individual's posDiff and speedDiff. 0 to 1 scale with 0 being poor and 1 meaning that the individual have completed all objectives
@@ -117,6 +119,16 @@ struct Child {
     // Input: cConstants in accessing properties for the final velocity of the target (such as vr_fin_target, vtheta_fin_target, and vz_fin_target)
     // Output: Assigns and returns this individual's speedDiff value
     __host__ __device__ double getSpeedDiff(const cudaConstants* cConstants);
+
+    // Calculates an orbit posDiff value
+    // Input: cConstants in accessing properties for the orbit radius of the target
+    // Output: Assigns and returns this individual's orbitPosDiff value
+    __host__ __device__ double getOrbitPosDiff(const cudaConstants* cConstants);
+
+    // Calculates an orbit speedDiff value
+    // Input: cConstants in accessing properties for the orbit speed of the target
+    // Output: Assigns and returns this individual's orbitSpeedDiff value
+    __host__ __device__ double getOrbitSpeedDiff(const cudaConstants* cConstants);
 
     // Calculates the progress depending on the mission type
     // Input: cConstants for the tolerances, and the child's posDiff and speedDiff are used

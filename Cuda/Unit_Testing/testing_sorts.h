@@ -41,7 +41,7 @@ bool differentTestsSetUp(int testNum, std::vector<Adult>& a, bool print);
 // Ensures that all the tests got the expected results
 // Holds the order in which the different Adults should be ordered and searches for issues with their actual order
 // Input: testNum - the test we are performing
-//        rs - Adults sorted using rankSort (should alreadt be sorted)
+//        rs - Adults sorted using rankSort (should already be sorted)
 //        rDS - Adults sorted using rankDistanceSort (should already be sorted)
 // Output: returns TRUE if the vector was sorted correctly or FALSE if it was not
 //         also prints cout statements explaining any discrepancies that were found

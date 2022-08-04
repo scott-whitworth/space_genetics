@@ -4,9 +4,14 @@
 <h1>Document Links</h1>  
 
 - [General Info](#general-info)
-- [Genetic.config Values](#values-from-genetic-config)
-- [Mission.config Values](#mission-config-values)
-- [Target.config Values](#target-config-values)
+- [Values from genetic config](#values-from-genetic-config)
+  - [Basic Variables](#basic-variables)
+  - [GPU/Algorithim Variables](#gpualgorithim-variables)
+  - [Display Variables](#display-variables)
+  - [Input Parameter Range and Mutation Variables](#input-parameter-range-and-mutation-variables)
+  - [Other Variables](#other-variables)
+- [Mission config Values](#mission-config-values)
+- [Target config Values](#target-config-values)
 - [Impact Position and Velocity Values](#impact-position-and-velocity-values)
 - [Recommended Config Values](#recommended-config-values)
 
@@ -37,6 +42,7 @@
 <br>
 
 # Values from genetic config
+## Basic Variables
 | Variable Name              	| Data Type  	| Units 	| Usage                                                                                                                                                      	                    |   	|
 |----------------------------	|------------	|-------	|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---	|
 | time_seed                  	| int/string 	| None  	| Sets the seed used in random generation initialization and labeling file outputs, either specify a seed to use or place "NONE" for the seed to be time(0)                         |   	|
@@ -44,6 +50,10 @@
 | run_count                     | int           | None      | The number of runs that will be completed before ending the program   |       |
 | random_start               	| boolean    	| None  	| If "true", sets initial generation's individuals to hold parameters with random values of set range (refer to Table 4), if "false" it initializes the individuals from a provided file    |   	|
 | initial_start_file_address 	| string     	| None  	| If random_start is false, the program uses this address to get parameter values for the initial individuals with the assumption that the file hold 14 sets    |   	|
+
+## GPU/Algorithim Variables
+| Variable Name              	| Data Type  	| Units 	| Usage                                                                                                                                                      	                    |   	|
+|----------------------------	|------------	|-------	|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---	|
 | rk_tol                 	    | double     	| None  	| The relative/absolute (not sure which one it is) tolerance for the runge kutta algorithm |   	|
 | doublePrecThresh              | double     	| None  	| The smallest error difference in runge kutta algorithm allowed, having the value set too small would result in differences between GPU and CPU runge-kutta due to the data types limits of precision |   	|
 | max_numsteps                 	| int        	| None  	| Maximum number of steps in the runge kutta used in the GPU and in EarthInfo's reverse runge kutta method, note that changing the numsteps but keeping same time_seed value can lead to different results due to slight variance in the results that changes the aglorithm's path to finding a solution    |   	|
@@ -51,10 +61,21 @@
 | num_individuals           	| int        	| None  	| Sets the size of the population pool and number of threads used as an individual is given a thread, recommended to not change |   	|
 | survivor_count               	| int        	| None  	| Number of individuals selected as "survivors" to produce new individuals in the next generation in the genetic algorithm, every pair produces 8 new individuals, value must be even   |   	|
 | thread_block_size           	| int        	| None  	| Number of threads per block on the GPU being used, recommended to not change  |   	|
+| cpu_numsteps                 	| int        	| None  	| Set time step size in the runge kutta used in the CPU, which is called after a set of parameters lead to convergence in the GPU and needs to be recorded in trajectoryPrint() (set equal to max_numsteps) |   	|
+| coast_threshold             	| double     	| None  	| In a range from 0 to 1, 1 sets the spacecraft to coast at all times while 0 sets the spacecraft to always have thruster on    |   	|
+| timeRes                    	| int        	| seconds   | The "gap" between each calculation for Earth's backward runge-kutta, for example 3600 sets every calculation to be 1 hour apart   |   	|
+
+## Display Variables
+| Variable Name              	| Data Type  	| Units 	| Usage                                                                                                                                                      	                    |   	|
+|----------------------------	|------------	|-------	|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---	|
 | record_mode                 	| boolean       | None  	| If "true", sets program to output various files that describe the performance, meant to be used in helping verify/debug behavior. |   	|
 | write_freq                 	| int        	| None  	| Sets number of generations to process before writing information onto files, 1 is to write every generation   |   	|
 | all_write_freq                | int           | None      | Sets the number of generations to process before writing information on all individuals in a generation onto files, 200 creates a new file every 200 generations  |   |
 | disp_freq                  	| int        	| None  	| Sets number of gnerations to process before outputting to console terminal, 1 is to display output every generation   |   	|
+
+## Input Parameter Range and Mutation Variables
+| Variable Name              	| Data Type  	| Units 	| Usage                                                                                                                                                      	                    |   	|
+|----------------------------	|------------	|-------	|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---	|
 | gamma_random_start_range      | double     	| None      | The magnitude of the +/- value range for gamma coefficient random initial values  |   	|
 | tau_random_start_range        | double     	| None      | The magnitude of the +/- value range for tau coefficient random initial values    |   	|
 | coast_random_start_range      | double     	| None      | The magnitude of the +/- value range for coast coefficient random initial values  |   	|
@@ -70,18 +91,19 @@
 | zeta_mutate_scale          	| double     	| Radians  	| Affects the maximum mutation range for zeta values (maximum mutation for the corresponding parameter is annealing * [this scale]) |   	|
 | beta_mutate_scale           	| double     	| Radians  	| Affects the maximum mutation range for beta values (maximum mutation for the corresponding parameter is annealing * [this scale]) |   	|
 | alpha_mutate_scale           	| double     	| Radians  	| Affects the maximum mutation range for alpha values (maximum mutation for the corresponding parameter is annealing * [this scale])    |   	|
+
+## Other Variables
+| Variable Name              	| Data Type  	| Units 	| Usage                                                                                                                                                      	                    |   	|
+|----------------------------	|------------	|-------	|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---	|
 | anneal_initial             	| double     	| None  	| The initial anneal value used. Anneal impacts the maximum possible mutation value when generating a new individual (does not impact probability)  |   	|
 | anneal_final             	  | double     	| None  	| The lowest that the anneal can reduce to. |  	 |
-| cpu_numsteps                 	| int        	| None  	| Set time step size in the runge kutta used in the CPU, which is called after a set of parameters lead to convergence in the GPU and needs to be recorded in trajectoryPrint() (set equal to max_numsteps) |   	|
-| coast_threshold             	| double     	| None  	| In a range from 0 to 1, 1 sets the spacecraft to coast at all times while 0 sets the spacecraft to always have thruster on    |   	|
-| timeRes                    	| int        	| seconds   | The "gap" between each calculation for Earth's backward runge-kutta, for example 3600 sets every calculation to be 1 hour apart   |   	|
 | best_count                 	| int        	| None  	| How many individuals must have obtained a solution before ending the algorithm, also outputs the top number of individuals up to best_count   |   	|
 <br>
 
 # Mission config Values
 | Variable Name              	| Data Type  	| Units 	| Usage |   	|
 |----------------------------	|------------	|-------	|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---	|
-| Planetaryn_Objectives    | String        | N/A           | See [mission_config_readme.md](mission_config_readme.md) to find a detailed explanation on how to set this variable. This variable spot contains the requested objectives for the genetic algorithim. |   |
+| Planetary_Objectives    | String        | N/A           | See [mission_config_readme.md](mission_config_readme.md) to find a detailed explanation on how to set this variable. This variable spot contains the requested objectives for the genetic algorithim. |   |
 | Destination           | String       	| None  	| File file location for the requested mission or target. The linked file should have final position and velocity values for the origin and target body as well as information about the spacecraft |     |
 | sun_r_min                 	| double       	| AU      	| Determines how close the spacecraft can get to the sun before being rejected.   |      |
 | triptime_max                  | double     	| Years   | The maximum triptime, not only impacts the random starting guesses but also in deriving the time range calculation on PlanetInfo and also assumed to be larger than triptime_min |   	|
@@ -133,6 +155,11 @@ A table to elaborate on why some variables are assigned certain values
 
 | Variable Name              	| Recommended Value  	| Reasoning 	|   |
 |-----------------------------	|-------	| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------	|---    |
+| [base bennu.config](\Base_Target_Configs\base_bennu.config)    | N/A   | The base config file used for missions where bennu is the target  |   |
+| [base didymos.config](\Base_Target_Configs\base_didymos.config)    | N/A   | The base config file used for missions where didymos is the target  |   |
+| [base marsOdyssey.config](\Base_Target_Configs\base_marsOdyssey.config)    | N/A   | The base config file used for missions where mars (oddesy mission) is the target  |   |
+| [base marsOrbit.config](\Base_Target_Configs\base_marsOrbit.config)    | N/A   | The base config file used for missions where mars (orbital mission) is the target  |   |
+| [base psyche.config](\Base_Target_Configs\base_psyche.config)    | N/A   | The base config file used for missions where psyche is the target  |   |
 | mutation_rate                 | 0.5-0.75       | From test runs involving different mutation rates for the impact mission, 0.5 showed to be most effective at converging on a solution.  This was for singlue mutations, while mutation rates for more genes occurring after only showing no serious change. Rendezvous missions seem to need more mutations, so current rate 0.75.                         |       |
 | triptime_min                  | 0.0-3.5         | These values are going to be mission dependent. For example, the bennu mission is best done as a redezvous mission with a triptime_min of 1.0. The didymos mission is similar. The psyche mission should have a min of 3.5, and the mars orbital should start at 0.5.   |       |
 | triptime_max                  | 1.5-6.0       | As stated for the min, the max is also mission dependent. The bennu mission should end at 2.0. The didymos should end at 1.5. Psyche is a bit different as some of their missions plan to take 6 years while some end at 5 years. The mars orbital should be 1.5.  |       |

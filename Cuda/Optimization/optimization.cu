@@ -56,111 +56,6 @@ void calculateGenerationValues (const std::vector<Adult> & allAdults, const std:
 // - exits when individuals converge on tolerance defined in Constants
 double optimize(const cudaConstants* cConstants, GPUMem & gpuValues);
 
-//Temp test function that is an assistant function to verify vectors
-//Will attempt to find which sort an adult vector is in
-//TODO: Should be removed, not used
-void verifyVectorSort (const std::vector<Adult>& adults) {
-    //Create flag bools that are used to try and find in what order each vector is sorted 
-    bool rankSorted, distanceSorted, rankDistanceSorted;
-    //Assume the vector is sorted in some ways 
-    rankSorted = true;
-    distanceSorted = true;
-    rankDistanceSorted = true; 
-
-    //go through the first 10 indicies of the vector (if it isn't empty)
-    //if there is a pattern, it will report the potential sort
-    if (adults.size() == 0)
-    {
-        //If its empty, report that
-        std::cout << "empty vector"; 
-    }
-    else {
-        for (int i = 0; i < 10; i++) {
-            //Check to see if the vector is not in rank or rank-distance order
-            //Since both rely on rank first, it is okay to check them at the same time
-            if (adults[i].rank > adults[i+1].rank){
-                //make rank and rank distance false, since it isn't sorted by any sort of rank
-                rankSorted = rankDistanceSorted = false;
-            }
-            //see if rank is good, so check for distance for rank-distance
-            else {
-                //is only sorted by distance within a rank, so we need to see if the next adult is in the same rank
-                if (adults[i].rank == adults[i+1].rank)
-                {
-                    //Check to see if the distances are not sorted
-                    if (adults[i].distance < adults[i+1].distance)
-                    {
-                        //Array potentially in rank sort, but not rank-distance sort
-                        rankDistanceSorted = false;
-                    }
-                    
-                }
-                
-            }
-            //Check to see if distances are not sorted correctly
-            if (adults[i].distance < adults[i+1].distance)
-            {
-                distanceSorted = false; 
-            }
-            
-        }
-
-        //Not that the vector has been sorted through, report a probable sort, or report that no sort was identified
-        if (rankDistanceSorted)
-        {
-            std::cout<<"rank-distance sorted";
-        }
-        else if (rankSorted)
-        {
-            std::cout<<"rank sorted";
-        }
-        else if (distanceSorted)
-        {
-            std::cout<<"distance sorted";
-        }
-        else {
-            std::cout<<"no/unidentified sort";
-        }
-    }
-}
-
-//Temp test function to verify the status of the adult vectors
-//Will report to the console the size of each vector and attempt to find out in what order they are sorted
-//TODO: Should be removed, not used
-void verifyVectors (const std::vector<Adult>& newAdults, const std::vector<Adult>& oldAdults, const std::vector<Adult>& allAdults, const std::string & areaUsed = "") {
-    //Separate section for vector reporting
-    std::cout << "\n_-_-_-_-_-_-_-_-VECTOR REPORTS-_-_-_-_-_-_-_-_\n";
-
-    //Report where this is being used if reported
-    if (areaUsed.size() > 0)
-    {
-        std::cout << "\nREPORT POINT: " << areaUsed << "\n";
-    }
-    
-    //First start of reports for newAdults
-    //Report size, set up reporting for sort
-    std::cout << "\nnewAdults:\n\tsize: " << newAdults.size() << "\n\tsort status: ";
-
-    //try to find sort status for newAdults
-    verifyVectorSort(newAdults);
-
-    //Next, report stats for oldAdults
-    //Report size, set up reporting for sort
-    std::cout << "\noldAdults:\n\tsize: " << oldAdults.size() << "\n\tsort status: ";
-
-    //try to find sort status for newAdults
-    verifyVectorSort(oldAdults);
-
-    //Next, report stats for oldAdults
-    //Report size, set up reporting for sort
-    std::cout << "\nallAdults:\n\tsize: " << allAdults.size() << "\n\tsort status: ";
-
-    //try to find sort status for newAdults
-    verifyVectorSort(allAdults);
-
-    std::cout << "\n\n_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_\n\n";
-}
-
 //-----------------------------------------------------------------------------------------------------------------------------
 int main () {
     
@@ -394,11 +289,6 @@ double optimize(const cudaConstants* cConstants, GPUMem & gpuValues) {
         //newAdults is empty and will be filled with the "grown" children generated in this method
         //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE NEW GEN-_-_-_-_-_-_-_-_-_\n\n";
         newGeneration(oldAdults, newAdults, currentAnneal, generation, rng, cConstants, gpuValues);
-        //Test function that will display the size and likely sort of each adult vector
-        //      newAdults: should be N size & unsorted
-        //      oldAdults: should be N size & rankDistance sorted
-        //      allAdults: should be empty or ~2N size of previous generation's adults and rankDistance sorted depending on if its on the 0th generation or not
-        //verifyVectors(newAdults, oldAdults, allAdults, "Post New Generation");
 
         //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE PREP PARENTS-_-_-_-_-_-_-_-_-_\n\n";
         //fill oldAdults with the best adults from this generation and the previous generation so that the best parents can be selected (numErrors is for all adults in the generation - the oldAdults and the newAdults)
@@ -409,10 +299,6 @@ double optimize(const cudaConstants* cConstants, GPUMem & gpuValues) {
         //oldAdults goes in with the pool of potential parents that may have generated the newAdults
         //      by the end of the function, it is filled with the best num_individuals adults from allAdults (sorted by rankDistanceSort) 
         preparePotentialParents(allAdults, newAdults, oldAdults, numErrors, duplicateNum, cConstants, generation, currentAnneal, marsErrors);
-
-        //Test function that will display the size and likely sort of each adult vector
-        //      TODO: What should the states be? We should report them here to reference with the actual test
-        //verifyVectors(newAdults, oldAdults, allAdults, "Post Prepare Parents");
 
         // Display a '.' to the terminal to show that a generation has been performed
         // This also serves to visually seperate the terminalDisplay() calls across generations 
@@ -425,14 +311,9 @@ double optimize(const cudaConstants* cConstants, GPUMem & gpuValues) {
         //Assumes oldAdults is in rankDistance order
         changeAnneal (oldAdults, cConstants, currentAnneal, generation);
 
-
         //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE RECORD-_-_-_-_-_-_-_-_-_\n\n";
         //Print out necessary info for this generation
         genOutputs.printGeneration(cConstants, allAdults, objectiveAvgValues, generation, currentAnneal, numErrors, duplicateNum, minDistance, avgDistance, maxDistance, avgAge, generation-oldestBirthday, avgBirthday, oldestBirthday);
-
-        //Test function that will display the size and likely sort of each adult vector
-        //      TODO: What should the states be? We should report them here to reference with the actual test
-        //verifyVectors(newAdults, oldAdults, allAdults, "End Of Generation");
 
         // Before replacing new adults, determine whether all are within tolerance
         // Determines when loop is finished

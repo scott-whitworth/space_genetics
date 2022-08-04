@@ -243,17 +243,6 @@ rkParameters<double> mutate(const rkParameters<double> & p1, std::mt19937_64 & r
         // }
     }
 
-    // If in record mode, append the recordLog into the .csv file
-    // if (cConstants->record_mode == true) {
-    //     int genesMutated = 0;
-    //     for (int i = 0; i < OPTIM_VARS; i++) {
-    //         if (mutation_mask[i] == true) {
-    //             genesMutated++;
-    //         }
-    //     }
-    //     recordMutateFile(cConstants, generation, annealing, genesMutated, recordLog);
-    // }
-
     //Delete the mask and set of parameters to free memory
     delete [] mutation_mask;
     return childParameters;

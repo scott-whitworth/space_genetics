@@ -113,8 +113,9 @@ void convertToAdults(std::vector<Adult> & newAdults, Child* newChildren, const c
         //The two functions will look at the child's errorStatus and set the diffs based on that
         newChildren[i].getPosDiff(cConstants);
         newChildren[i].getSpeedDiff(cConstants);
+        newChildren[i].getOrbitPosDiff(cConstants);
+        newChildren[i].getOrbitSpeedDiff(cConstants);
         newChildren[i].getProgress(cConstants);
-
     }
     
     //Iterate through the newChildren vector to add them to the newAdult vector

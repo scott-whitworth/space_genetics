@@ -24,6 +24,10 @@ struct cudaConstants {
     double orbitalRadius = -1; // the radius of the orbit around a body
     double orbitalSpeed = -1; // the final velocity the spacecraft needs to orbit its target
 
+    //two multipliers used in callRk and rk4sys that will change how many steps are taken in the calculations
+    int MSOI_steps;  //this multiplier is a large number that will increase the stepsize
+    double MSOI_error; //This will change how large the MSOI is and when to start increasing the stepsize
+
     int write_freq;       // Generations between calling recordGenerationPerformance() method (defined in Output_Funcs/output.cpp)
     int all_write_freq;   // Generations between calling recordAllIndividuals() method (defined in Output_Funcs/output.cpp)
     int disp_freq;        // Generations between calling terminalDisplay() method (defined in Output_Funcs/output.cpp)

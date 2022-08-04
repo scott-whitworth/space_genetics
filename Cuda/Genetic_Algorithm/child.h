@@ -32,7 +32,7 @@ struct Child {
 
     int birthday; //keeps track of the generation this individual was created in 
 
-    int testCount; //TODO: change name to countSteps, useful when adjusting the stepsize for MSOI for orbital missions
+    int stepCount; //counts steps in callRK, needed for orbital missions to keep track of steps
 
     //Both status and error_status are defined in constants.h
 

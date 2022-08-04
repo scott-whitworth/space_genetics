@@ -34,7 +34,7 @@
     // Output: A dynamic array of position and velocity sets, last entry is final conditions
     //Called by trajectoryPrint()
 template <class T> void rk4sys(const T & timeInitial, const T & timeFinal, T *times, const elements<T> & y0, T stepSize, elements<T> *y_new, 
-                                const T & absTol, coefficients<T> coeff, T *gamma,  T *tau, int & lastStep, T *accel_output, T *fuelSpent, const T & wetMass, const cudaConstants* cConstant);
+                                const T & absTol, coefficients<T> coeff, T *gamma,  T *tau, int & lastStep, T *accel_output, T *fuelSpent, const T & wetMass, const cudaConstants* cConstant, elements<T> *marsIndex);
 
 //3.
     // Comment on stepsize: Expected to be negative due to reverse integration

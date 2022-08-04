@@ -1,14 +1,22 @@
 <h1>Current progress of orbital missions </h1>
 
 <h2>Psyche mission </h2>
-Currently this mission does not work at all and there are many factors as to why that may be. One major factor that the orbital mission and the Odyssey mission aim 
-to examine is the problem of resolution when it comes to time and stepSize. These are both likely far too large for a mission like this that uses the gravity of mars
-at their current values. These values of 1600 for max_numsteps, 400 for min_numsteps, and 3600 for timeRes need to be much smaller when including Mars' gravity.
-timeRes should be around 450 which will make the planet calculations take longer but it is neccessary. The max_numsteps should be as large as possible (3000 for the 
-computers in the lab) and min_numsteps should be at least 800. These will make the overall calculations more accurate but not the calculations in the MSOI. To make 
-these more accurate, MSOI_steps and MSOI_error will likely need to be implemented and tested. Another reason this mission may not work is potentially an algorithmic problem 
-however this is unlikely (it may be worth looking into). The last and most problematic reason has to do with something currently out of our control. The last time we ran the psyche
-mission, the spacecraft would orbit the sun for the entire triptime and would not use mars. The very few times it did use mars it would end up going far too fast. If this is still the case, it means that the thrusters we are using are not capable of completing a mission like this (this is more likely for an orbital mission as this one has more time to slow
-down). 
+Currently this mission does not work at all and there are many factors as to why that may be. One major factor that the orbital mission and the Odyssey mission aim to examine is the problem of resolution when it comes to time and stepSize. These are both likely far too large for a mission like this that uses the gravity of Mars at their current values. These values of 1600 for max_numsteps, 400 for min_numsteps, and 3600 for timeRes need to be much smaller when including Mars' gravity. timeRes should be around 450 which will make the planet calculations take longer but it is neccessary. The max_numsteps should be as large as possible (3000 for the computers in the lab) and min_numsteps should be at least 800. These will make the overall calculations more accurate but not the calculations in the MSOI. To make these more accurate, MSOI_steps and MSOI_error will likely need to be implemented and tested. Another reason this mission may not work is potentially an algorithmic problem however this is unlikely (it may be worth looking into). The last and most problematic reason has to do with something currently out of our control. The last time we ran the psyche mission, the spacecraft would orbit the sun for the entire triptime and would not use mars. The very few times it did use mars it would end up going far too fast. If this is still the case, it means that the thrusters we are using are not capable of completing a mission like this (this is more likely for an orbital mission as this one has more time to slowdown). 
 
 <h2> Orbital missions (Mars) </h2>
+
+<h3> marsOrbit.config </h3>
+
+<h4>Background</h4>
+The marsOrbit config uses the expected flyby date for the psyche mission with Mars. This mission was made for a gravitational assist and not orbit, so it will likely never work. The few times this mission was tested, there was a lot of error in the velocities and calculation of the conservation of mechanical energy. Like the psyche mission, the spacecraft is unable to slow down enough or even attempt to orbit mars. The expectation of the results currently should be that the mission will achieve the posDiff, but not the speedDiff. The speedDiff will be too fast because of Mars' gravity and it is unknown on how to fix this currently.
+
+<h4>Tests conducted</h4>
+One of the things that have been tested regarding this mission is adding more steps within MSOI to make sure the gravitational calculations are accurate. The stepSize could easily step past important calculations for this mission at the end of it, so its important to have as any steps as possible at the end. Through the tests done this seems to help the error go down at least but does not improve speedDiff. Another test that has been done is changing the c3 and its scale to see if had too much or not enough launch energy. The values for c3 are not based off any specific for this mission so they should be changed to some extent. Lastly, the timeRes was made very small (225) and this also led to no major change other than making the code slow. 
+
+<h3> marsOdyssey.config </h3>
+
+<h4>Background</h4>
+This config is based of the Odyssey mission conducted by NASA in 2001. This mission was sent to Mars to orbit around it (and study it). The initial orbit it would maintain was much larger than the final orbit it was meant to maintain (the largest orbit had a period of ~20 hours while the final one was ~2 hours). This was done by using the spacecrafts powerful thrusters (much more powerful than the ones in our code) to readjust its orbital period. The Odyssey's closest approach was 330km above the surface of Mars. The final orbit it maintained was a circular orbit, but the other orbits were all very elliptical. With all of this in mind, this mission may prove difficult for our code to simulate. 
+
+<h4>Tests conducted</h4>
+The major change to better this mission was changing the way vtheta_Rate was calculated in motion_equations.cpp. When calculating the gravity of Mars, it is important to use the fmod of the two thetas being used. Initially, it was being calculated as fmod(y.theta, 2pi) - fmod(mars.theta, 2pi), but it should be fmod(fmod(y.theta, 2pi) - fmod(mars.theta, 2pi)). This changed the outcome for this mission greatly when it came to the posDiff and speedDiff, but did not affect the marsOrbit mission. The change was important, however it led to the posDiff getting stuck at around 0.001, which was not happening before. Without this change, the posDiff will converge, but the speedDiff will be around 1e-6, and the tangential velocity spikes and so does the error. 

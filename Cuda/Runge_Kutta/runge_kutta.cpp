@@ -7,7 +7,7 @@
 #include "../Motion_Eqns/motion_equations.h"
 
 template <class T> void rk4sys(const T & timeInitial, const T & timeFinal, T *times, const elements<T> & y0, T stepSize, elements<T> *y_new, 
-                               const T & absTol, coefficients<T> coeff, T *gamma,  T *tau, int & lastStep, T *accel_output, T *fuelSpent, const T & wetMass, const cudaConstants* cConstant) {
+                               const T & absTol, coefficients<T> coeff, T *gamma,  T *tau, int & lastStep, T *accel_output, T *fuelSpent, const T & wetMass, const cudaConstants* cConstant, elements<T> *marsIndex) {
 
     thruster<T> thrust(cConstant);
 
@@ -45,12 +45,13 @@ template <class T> void rk4sys(const T & timeInitial, const T & timeFinal, T *ti
             // array of fuel spent for binary output
             fuelSpent[n] = massFuelSpent;
         }
-
+        //TODO: The indexing for the error here should be double checked
+        elements<double> mars = (*marsLaunchCon).getCondition(timeFinal - curTime); //gets Mars' position relative to the Sun
+        marsIndex[n] = mars;
+        
         if (curTime == timeFinal) {
             break;
         }
-
-        elements<double> mars = (*marsLaunchCon).getCondition(timeFinal - curTime); //gets Mars' position relative to the Sun
 
         //calculate the distance between the spacecraft and Mars
         double marsCraftDist = sqrt(pow(mars.r, 2) + pow(u.r, 2) + pow(u.z - mars.z, 2) - (2*u.r*mars.r*cos(mars.theta-u.theta)));
@@ -65,12 +66,15 @@ template <class T> void rk4sys(const T & timeInitial, const T & timeFinal, T *ti
         stepSize *= calc_scalingFactor(u-error,error,absTol, cConstant->doublePrecThresh); // Alter the step size for the next iteration
 
         // The step size cannot exceed the total time divided by 2 and cannot be smaller than the total time divided by 1000
-            if (stepSize > (timeFinal - timeInitial) / cConstant->min_numsteps) {
-                stepSize = (timeFinal - timeInitial) / cConstant->min_numsteps;
-            }
-            else if (stepSize < (timeFinal - timeInitial) / cConstant->max_numsteps) {
-                stepSize = (timeFinal - timeInitial) / cConstant->max_numsteps;
-            }
+        if (stepSize > (timeFinal - timeInitial) / cConstant->min_numsteps) {
+            stepSize = (timeFinal - timeInitial) / cConstant->min_numsteps;
+        }
+        else if (stepSize < (timeFinal - timeInitial) / cConstant->max_numsteps) {
+            stepSize = (timeFinal - timeInitial) / cConstant->max_numsteps;
+        }
+        if (marsCraftDist < MSOI*cConstant->MSOI_error){
+            stepSize = (timeFinal - timeInitial) / (cConstant->MSOI_steps*cConstant->max_numsteps);
+        }
         
         // shorten the last step to end exactly at time final
         if ( (curTime+stepSize) > timeFinal) {
@@ -80,10 +84,15 @@ template <class T> void rk4sys(const T & timeInitial, const T & timeFinal, T *ti
         n++;
     } //end of while 
     lastStep = n;
-    
+
     // Test outputs to observe difference between rk4sys results with CUDA runge-kutta results
-    std::cout << "rk4sys posDiff: " << sqrt(pow(cConstant->r_fin_target - y_new[lastStep].r, 2) + pow(cConstant->r_fin_target * cConstant->theta_fin_target - y_new[lastStep].r * fmod(y_new[lastStep].theta, 2 * M_PI), 2) + pow(cConstant->z_fin_target - y_new[lastStep].z, 2)) << std::endl;
-    std::cout << "rk4sys speedDiff: " << sqrt(pow(cConstant->vr_fin_target - y_new[lastStep].vr, 2) + pow(cConstant->vtheta_fin_target - y_new[lastStep].vtheta, 2) + pow(cConstant->vz_fin_target - y_new[lastStep].vz, 2));
+    if (cConstant->orbitalSpeed != NOT_APPLICABLE){//change the calculation if it is a orbital mission 
+        std::cout << "rk4sys posDiff: " << abs(sqrt(pow(cConstant->r_fin_target, 2) + pow(y_new[lastStep].r, 2) + pow(y_new[lastStep].z - cConstant->z_fin_target, 2) - (2*y_new[lastStep].r*cConstant->r_fin_target*cos(cConstant->theta_fin_target-y_new[lastStep].theta))) - cConstant->orbitalRadius) << std::endl;
+        std::cout << "rk4sys speedDiff: " << sqrt(abs((pow(cConstant->vr_fin_target - y_new[lastStep].vr, 2) + pow(cConstant->vtheta_fin_target - y_new[lastStep].vtheta, 2) + pow(cConstant->vz_fin_target - y_new[lastStep].vz, 2)) - pow(cConstant->orbitalSpeed, 2)));
+    }else{
+        std::cout << "rk4sys posDiff: " << sqrt(pow(cConstant->r_fin_target - y_new[lastStep].r, 2) + pow(cConstant->r_fin_target * cConstant->theta_fin_target - y_new[lastStep].r * fmod(y_new[lastStep].theta, 2 * M_PI), 2) + pow(cConstant->z_fin_target - y_new[lastStep].z, 2)) << std::endl;
+        std::cout << "rk4sys speedDiff: " << sqrt(pow(cConstant->vr_fin_target - y_new[lastStep].vr, 2) + pow(cConstant->vtheta_fin_target - y_new[lastStep].vtheta, 2) + pow(cConstant->vz_fin_target - y_new[lastStep].vz, 2));
+    }   
 }
 
 template <class T> void rk4Reverse(const T & timeInitial, const T & timeFinal, const elements<T> & y0, 

@@ -141,13 +141,12 @@ __global__ void rk4SimpleCUDA(Child *children, double *timeInitial, double *star
 
             //if the spacecraft is within Mars' sphere of influence, make the stepSize as small as possible
             //  this will increase the resolution of the spacecraft's position in this time frame
-            //TODO: this will be useful to change the stepsize when in MSOI
-            //make sure to add this to rk4sys
-            if (marsCraftDist < MSOI){
-                //stepSize = (threadRKParameters.tripTime - startTime) / (2*cConstant->max_numsteps);
-                children[threadId].testCount++;
+            if (marsCraftDist < MSOI*cConstant->MSOI_error){
+                stepSize = (threadRKParameters.tripTime - startTime) / (cConstant->MSOI_steps*cConstant->max_numsteps);
             }
-            
+            //count the steps taken for this threads calculations
+            children[threadId].stepCount++;
+
             if ( (curTime + stepSize) > threadRKParameters.tripTime) {
                 stepSize = (threadRKParameters.tripTime - curTime); // shorten the last step to end exactly at time final
             }

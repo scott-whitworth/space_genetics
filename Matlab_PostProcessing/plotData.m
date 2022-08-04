@@ -341,6 +341,11 @@ function [] = plotData(cR,y0T,y0M,y0E,sizeC,tripTime,coast,coast_threshold,gamma
     hold on
     quiver3(cX(radStep),cY(radStep),cZ(radStep),accelX(radStep),accelY(radStep),accelZ(radStep),'k','Autoscalefactor',.25,'LineWidth',1)
     hold on
+    [mX_final,mY_final,mZ_final]= pol2cart(y0M(2),y0M(1),y0M(3));
+    r_msoi = 0.00385847; % radius of Mars' sphere of influence in AU
+    [x,y,z] = sphere;
+    surf(mX_final+r_msoi*x, mY_final+r_msoi*y, mZ_final+r_msoi*z, 'FaceColor','b','FaceAlpha',0.1, 'LineStyle',':')
+    hold on
     [y0Tx, y0Ty, y0Tz] = pol2cart(y0T(2), y0T(1), y0T(3));
 
     velDiff = au*sqrt((y0T(4) - cR(4,end))^2 + (y0T(5) - cR(5,end))^2 + (y0T(6) - cR(6,end))^2);

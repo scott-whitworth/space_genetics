@@ -99,10 +99,11 @@ bool LowerTripTime(const Adult& personA, const Adult& personB) {
     }
 }
 
-// Compare two individuals by their positional difference values, used in standard sort to have array contain lowest posDiff individual at start
-// input: two individuals
-// output: returns true if personB has a higher positional difference than personA
-bool LowerProgress(const Adult& personA, const Adult& personB) {
+//compares two individuals and sorts based on which individual is closer to 1
+//WARNING: this may be implemented in output.cpp in printFinalGen() when it may not need to be (use for test reasons)
+//input: two individuals
+//output: returns true if personA is closer to 1 than personB
+bool bestProgress(const Adult& personA, const Adult& personB) {
     if(personA.errorStatus !=  VALID && personA.errorStatus != DUPLICATE){
         return false;
     }

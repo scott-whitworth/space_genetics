@@ -51,7 +51,7 @@ void output::printGeneration(const cudaConstants * cConstants, const std::vector
 }
 
 //Function will handle printing at the end of a run
-void output::printFinalGen(const cudaConstants * cConstants, const std::vector<Adult>& allAdults, const bool& converged, const int& generation, int& errorNum, const int& duplicateNum, const int& oldestBirthday) {
+void output::printFinalGen(const cudaConstants * cConstants, std::vector<Adult>& allAdults, const bool& converged, const int& generation, int& errorNum, const int& duplicateNum, const int& oldestBirthday) {
   //Call for a print of allIndividuals if in record mode and if it is not a report generation already
   //  Note: second check is simply so redundant files aren't created
   if ((cConstants->record_mode == true) && (generation % cConstants->all_write_freq != 0)) {
@@ -68,6 +68,7 @@ void output::printFinalGen(const cudaConstants * cConstants, const std::vector<A
   //Check to see if there is a convergence before printing the trajectory
   //if (converged) {
     //Create the trajectory bin file
+    //std::sort(allAdults.begin(), allAdults.end(), bestProgress); //remove if not needed, puts the best progress individual first
     finalRecord(cConstants, allAdults[0], generation);
   //}
 }
@@ -262,7 +263,6 @@ void output::recordGenerationPerformance(const cudaConstants * cConstants, std::
     excelFile << objectiveAvgValues[i] << ",";
   }
 
-  std::sort(adults.begin(), adults.end(), rankDistanceSort); //Reset the sort for the next outputs
 
   // Record best individual's parameters
   excelFile << adults[0].startParams.alpha << ",";
@@ -509,7 +509,8 @@ void output::trajectoryPrint( double x[], int generation, const cudaConstants* c
   double timeInitial=0; 
   double timeFinal=cConstants->triptime_min; // The shortest possible triptime to make the initial deltaT a small but reasonable size
   double deltaT; // time step
-  int numSteps = cConstants->max_numsteps*2; // initial guess for the number of time steps, guess for the memory allocated 
+  //int numSteps = cConstants->max_numsteps*7; // initial guess for the number of time steps, guess for the memory allocated 
+  int numSteps = best.stepCount+5; // initial guess for the number of time steps, guess for the memory allocated 
   deltaT = (timeFinal-timeInitial) / cConstants->max_numsteps; // initial guess for time step, small is preferable
 
   // setup of thrust angle calculations based off of optimized coefficients
@@ -526,6 +527,7 @@ void output::trajectoryPrint( double x[], int generation, const cudaConstants* c
 
   // Initialize memory for the solution vector of the dependant solution
   elements<double>* yp = new elements<double>[numSteps];
+  elements<double>* marsIndex = new elements<double>[numSteps];
   
   double *times, *gamma, *tau, *accel_output, *fuelSpent, *work, *dE, *Etot_avg;
   times = new double[numSteps]; // Initialize memory for time array
@@ -541,7 +543,7 @@ void output::trajectoryPrint( double x[], int generation, const cudaConstants* c
   int lastStepInt;
 
   // integrate the trajectory of the input starting conditions
-  rk4sys(timeInitial, x[TRIPTIME_OFFSET] , times, spaceCraft, deltaT, yp, absTol, coeff, gamma, tau, lastStepInt, accel_output, fuelSpent, wetMass, cConstants);
+  rk4sys(timeInitial, x[TRIPTIME_OFFSET] , times, spaceCraft, deltaT, yp, absTol, coeff, gamma, tau, lastStepInt, accel_output, fuelSpent, wetMass, cConstants, marsIndex);
 
   // store the number of steps as a double for binary output
   double lastStep = lastStepInt;
@@ -550,7 +552,7 @@ void output::trajectoryPrint( double x[], int generation, const cudaConstants* c
   elements<double> yOut = yp[lastStepInt];
 
   // calculate the error in conservation of mechanical energy due to the thruster
-  errorCheck(times, yp, gamma, tau, lastStepInt, accel_output, fuelSpent, wetMass, work, dE, Etot_avg, cConstants);
+  errorCheck(times, yp, gamma, tau, lastStepInt, accel_output, fuelSpent, wetMass, work, dE, Etot_avg, cConstants, marsIndex);
 
 
   //Get the seed for outputs
@@ -645,17 +647,20 @@ void output::trajectoryPrint( double x[], int generation, const cudaConstants* c
 }
 
 // Records error in energy conservation due to thrust calculations
-void output::errorCheck(double *time, elements<double> *yp,  double *gamma,  double *tau, int & lastStep, double *accel, double *fuelSpent, const double & wetMass, double *work, double *dE, double *Etot_avg, const cudaConstants* config) {
+void output::errorCheck(double *time, elements<double> *yp,  double *gamma,  double *tau, int & lastStep, double *accel, double *fuelSpent, const double & wetMass, double *work, double *dE, double *Etot_avg, const cudaConstants* config, elements<double> *mars) {
   // Initializing storage at each time step
   double *mass = new double[lastStep];
   double *Etot = new double[lastStep];
-  
+  double marsCraftDist;
+
   //Iterate over all time steps
   for (int i = 0; i < lastStep; i++) {
     // total mass at each time step
     mass[i] = wetMass - fuelSpent[i];
     // total mechanical energy (K + U) at each time step
-    Etot[i] = mass[i] * ((pow(yp[i].vr,2) + pow(yp[i].vtheta,2) + pow(yp[i].vz,2))/ 2 - constG * massSun / yp[i].r) / pow(AU,2);
+    marsCraftDist = sqrt(pow(mars[i].r, 2) + pow(yp[i].r, 2) + pow(yp[i].z - mars[i].z, 2) - (2*yp[i].r*mars[i].r*cos(mars[i].theta-yp[i].theta)));
+
+    Etot[i] = mass[i] * ((pow(yp[i].vr,2) + pow(yp[i].vtheta,2) + pow(yp[i].vz,2))/ 2 - (constG * massSun / yp[i].r) - (constG * massMars/ marsCraftDist )) / pow(AU,2);
     if (i) {
       // Ignore first time step, only calculate as a change from step to step
       // W = F.dL (work done between time steps)
@@ -749,6 +754,9 @@ void printBestAdults(const cudaConstants* cConstants, std::vector<Adult> adults,
   
   //display the oldest individual
   std::cout << "\nOldest age adult: " << generation - oldestBirthday << "\n";
+
+  //Display the steps taken by the best individual
+  std::cout << "\nBest step count: " << adults[0].stepCount << "\n";
 
   //Display the progress of the best rank distance individual 
   std::cout << "\nBest rank-distance adult progress: " << adults[0].progress << "\n\n";

@@ -37,7 +37,7 @@ Child::Child(rkParameters<double> & childParameters, const cudaConstants* cConst
     errorStatus = NOT_RUN; //not run through callRK yet
     birthday = genCreated; //Set the child's birthday to the current generation
     avgParentProgress = calcAvgParentProgress; //The avg progress of the creating parents, if any (0 for randomly generated children)
-    testCount = 0;
+    stepCount = 0;//no calculations done yet, default is zero
 }
 
 // Copy constructor
@@ -55,7 +55,7 @@ Child:: Child(const Child& other){
     birthday = other.birthday;
     avgParentProgress = other.avgParentProgress;
     progress = other.progress;
-    testCount = other.testCount;
+    stepCount = other.stepCount;
 }
 
 //Getter for a parameter dependent on the objective that is passed in

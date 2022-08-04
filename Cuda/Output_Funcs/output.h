@@ -36,7 +36,7 @@ struct output
     // Inputs: Passed to recordAllIndividuals(), printBestAdults(), reportRun(), & finalRecord()
     //              See those functions' header files for detail on how the inputs are used
     // Outputs: printBestAdults() and reportRun() will be called regardless, with recordAllIndividuals() and finalRecord() being called conditionally
-    void printFinalGen(const cudaConstants * cConstants, const std::vector<Adult>& allAdults, const bool& converged, const int& generation, int& errorNum, const int& duplicateNum, const int& oldestBirthday); 
+    void printFinalGen(const cudaConstants * cConstants, std::vector<Adult>& allAdults, const bool& converged, const int& generation, int& errorNum, const int& duplicateNum, const int& oldestBirthday); 
     
     // Initialize genPerformance with header rows
     // input: cConstants - to access time_seed for deriving file name conventions
@@ -136,7 +136,7 @@ struct output
     //         dE - array of changes in mechanical energy between time steps (J)
     //         Etot_avg - array of average mechanical energy between time steps (J)
     // Used to fill orbitalMotion{}.bin
-    void errorCheck(double *time, elements<double> *yp,  double *gamma,  double *tau, int & lastStep, double *accel, double *fuelSpent, const double & wetMass, double *work, double *dE, double *Etot_avg, const cudaConstants* config);
+    void errorCheck(double *time, elements<double> *yp,  double *gamma,  double *tau, int & lastStep, double *accel, double *fuelSpent, const double & wetMass, double *work, double *dE, double *Etot_avg, const cudaConstants* config, elements<double> *mars);
 
     // method that stores information of launchCon of timeRes*24 resolution
     // input: cConstants - access time range and resolution info

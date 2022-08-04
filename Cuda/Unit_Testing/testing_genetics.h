@@ -1,5 +1,5 @@
 #define UNITTEST
-#include "../Earth_calculations/earthInfo.h"  // For launchCon and EarthInfo()
+#include "../Planet_calculations/planetInfo.h"  // For launchCon and EarthInfo()
 #include "../Genetic_Algorithm/adult.h" //to access Adults
 #include "../Runge_Kutta/runge_kuttaCUDA.cuh" // ONLY in here so I don't get errors when compiling since I am including ga_crossover.h which needs this
 #include "../Genetic_Algorithm/ga_crossover.h" //to access the genetics crossover algorithms being unit tested here
@@ -198,7 +198,7 @@ int UTCopyOfNewGeneration(std::vector<Adult> & oldAdults, std::vector<Adult> & n
 //              survivor_count of them actually produce the next generation
 // Output: Returns true if the results seem to be as expected and false if there is an issue with them
 //         If printThings is true, it will print some things to the terminal, but even if it is false, it will print any error messages
-bool firstFullGen(std::mt19937_64& rng, cudaConstants * utcConstants, bool printThings);
+bool firstFullGen(std::mt19937_64& rng, cudaConstants * utcConstants, bool printThings, GPUMem & gpuValues);
 
 // A function that is used to verify that firstFullGen is working correctly
 // Attempts to determine the parents of a set of children by looking at the child made from a whole average
@@ -220,7 +220,7 @@ bool verifyFullGen(std::vector<Adult>& youngGen, std::vector<Adult>& possParents
 // Output: TRUE - using both 7 and 5 parents, sets of 65 children could be generated and could have their parents identified
 //         FALSE - it either fails to identify the parents of 65 children when it either has 7 parents (returns false immediately and doesn't check if it will work for 5)
 //                 or returns false if it fails when there are 5 survivors
-bool makeManyChildren(std::mt19937_64& rng, std::vector<Adult>& youngGen, std::vector<Adult>& possParents, cudaConstants * utcConstants, bool printThings);
+bool makeManyChildren(std::mt19937_64& rng, std::vector<Adult>& youngGen, std::vector<Adult>& possParents, cudaConstants * utcConstants, bool printThings, GPUMem & gpuValues);
 
 //NOT CURRENTLY USING THE BELOW TESTS 
 //THEY ARE BASICALLY JUST THE ACTUAL MUTATE MASK FUNCTIONS, BUT WITH SOME COUT STATEMENTS TO ENSURE THINGS ARE WORKING AS THEY SHOULD

@@ -93,6 +93,8 @@
 |----------------------------	|------------	|-------	|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---	|
 | Planetary Body Final Values   | double        | N/A       | These variables store the position and velocity of the mission's relevent planetary bodies at the time of mission completion. See the [Impact Position and Velocity Values](#impact-position-and-velocity-values) table for detail.  |   |
 | gravAssistDist                | double        | AU        | The minimum distance a spacecraft can get from the gravitational assist body. |   |
+| orbitalRadius                 | double        | AU        | The desired orbital radius for the spacecraft around the target. <b>Note: Include this variable in the target config file when only intending to do orbital missions!</b>    |   |
+| orbitalSpeed                  | double        | AU        | The desired orbital speed for the spacecraft around the target. <b>Note: Include this variable in the target config file when only intending to do orbital missions!</b>    |   |
 | thruster_type                	| int        	| None  	| Determine what thruster is used, 0 for none and 1 for NEXT ion thruster   |   	|
 | dry_mass                     	| double        | kg      	| Set the mass of the spacecraft without fuel, also used in determining wet_mass    |   	|
 | fuel_mass                     | double        | kg      	| Sets the initial mass of fuel in the spacecraft, used in determining wet_mass |   	|

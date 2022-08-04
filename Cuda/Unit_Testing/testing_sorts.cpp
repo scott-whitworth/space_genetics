@@ -183,7 +183,7 @@ bool differentTestsSetUp(int testNum, std::vector<Adult>& a, bool print){
         a.push_back(Adult(5,11,VALID));
         a.push_back(Adult(1,11, VALID));
     }
-    //The fourth test looks at adults who have a randp, ranks and distances (with some crossover in each rank and distance)
+    //The fourth test looks at adults who have a random ranks and distances (with some crossover in each rank and distance)
     else if (testNum == 4){
         //Makes 8 Adults with a variety of ranks and distances
         a.push_back(Adult(8,5, VALID));
@@ -236,12 +236,23 @@ bool differentTestsCheck(int testNum, std::vector<Adult> & rs, std::vector<Adult
     std::vector<Adult> correctRS;
     std::vector<Adult> correctRDS;
     loadCorrectOrders(testNum, correctRS, correctRDS); //loads vectors full adults in the order rankSort and rankDistanceSort should sort the adults
+    //if the rank sorted and rank distance sorted vectors are not the same size, then there is a deeper issue
+    //  with what is being passed in
     if (rs.size() != rDS.size()){
         cout << "A major issue occured and the vectors sorted using rankSort and rankDistanceSort are no longer the same lengths" << endl;
         return false;
     }
+
+    if (rs.size() != correctRS.size() || rDS.size() != correctRDS.size()){
+        cout << "There was an issue with loading one or more of the vectors" << endl;
+        return false;
+    }
+
+    //now that we have confirmed the two vectors are the same length we can go through both vectors simulatenously
     for (int i = 0; i < rs.size(); i++){
+        //confirms the correct individual is in each slot for the rank sorted individuals
         if (rs[i].rank != correctRS[i].rank || rs[i].distance != correctRS[i].distance || rs[i].errorStatus != correctRS[i].errorStatus){
+            //prints a message if anything is in the wrong spot
             cout << "On test " << testNum << ", the vector sorted using rankSort has an incorrect value at index " << i << " of " << rs.size()-1;
             cout <<  ". \nThe values should be (" << correctRS[i].rank << "," << correctRS[i].distance << ",";
             if (correctRS[i].errorStatus == VALID){
@@ -259,7 +270,9 @@ bool differentTestsCheck(int testNum, std::vector<Adult> & rs, std::vector<Adult
             }
             noErrorsInOrder = false;
         }
+        //confirms each individual is in the correct spot for the rank distance sorted individuals
         if (rDS[i].rank != correctRDS[i].rank || rDS[i].distance != correctRDS[i].distance || rDS[i].errorStatus != correctRDS[i].errorStatus){
+            //prints a message if anything is in the wrong spot
             cout << "On test " << testNum << ", the vector sorted using rankDistanceSort has an incorrect value at index " << i << " of " << rDS.size()-1;
             cout <<  ". \nThe values should be (" << correctRDS[i].rank << "," << correctRDS[i].distance << ",";
             if (correctRDS[i].errorStatus == VALID){
@@ -278,6 +291,7 @@ bool differentTestsCheck(int testNum, std::vector<Adult> & rs, std::vector<Adult
             noErrorsInOrder = false;
         }
     }
+    //if any errors were found this will return false, otherwise it will return true
     return noErrorsInOrder;
 }
 

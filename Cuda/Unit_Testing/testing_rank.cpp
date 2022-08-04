@@ -530,7 +530,6 @@ void giveRankTest(std::vector<Adult> & allAdults, int missionType) {
                     //Assign a rank to the new most dominating adult left
                     allAdults[domination[front[k]][l]].rank = rankNum + 1;
                     //Add the index of the this adult to newFront
-                    //TODO: these counts are still getting into the negatives for smaller tests
                     newFront.push_back(domination[front[k]][l]);
                 }
                 

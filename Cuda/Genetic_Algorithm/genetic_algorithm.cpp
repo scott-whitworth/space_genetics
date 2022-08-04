@@ -51,8 +51,7 @@ void fillParents(std::vector<Adult> & oldAdults, std::vector<Adult> & parents, c
         for (int i = 0; i < cConstants->survivor_count; i++) {
             parents.push_back(oldAdults[i]);
         }   
-    }else{//TODO: We may not need this anymore if we plan on removing duplicates, if we fully mutate a duplicate it
-          //      is likely that it will be an adult with a bad posDiff and speedDiff because all the paramters changed from the current best
+    }else{
 
         //sort all the oldAdults by rankDistance, so the best will be chosen as survivors/parents
         std::sort(oldAdults.begin(), oldAdults.end(), rankDistanceSort);

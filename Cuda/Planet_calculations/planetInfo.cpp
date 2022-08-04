@@ -38,7 +38,6 @@ PlanetInfo::PlanetInfo(const cudaConstants* cConstants, const int & planetStatus
 
     // Shows progress of planet position calculations before the optimization in cuda can occur.
     std::cout << "Calculating ";
-    //TODO: Run the code to ensure this cosmetic change did not mess up anything else
     if(planetStatus == EARTH){
         std::cout << "Earth";
     }else if(planetStatus == MARS){

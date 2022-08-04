@@ -455,6 +455,8 @@ void generateChildrenFromCrossover(std::vector<Adult> &parents, Child *newChildr
             // This mask method will generate a set of parameters based on the average of parameters from each parent
 
             // Set the mask to be be average
+            //TODO: I thought this was chnaged to be averageRatio long ago? Do we want to use averageRatio?
+            //TODO: for future students on this: It should be examined if the averageRatio is better or not
             crossOver_average(mask);
             // Generate a pair of children based on the mask
             generateChildrenPair(parents[parentPool[parentIndex]], parents[parentPool[parentIndex + 1]], newChildren, childrenToGenerate, mask, currentAnneal, rng, numNewChildren, generation, cConstants);

@@ -6,9 +6,7 @@
 #include "../Runge_Kutta/runge_kutta.h"
 
 class PlanetInfo{
-    //TODO: Switch public designation back to private once we are finished running tests
-    //private:
-    public:
+    private:
         // Elements pointer array that holds all of the planet conditions for a given time range
         // This array starts with the position of the planet when the spacecraft is at the target 
         //      planetCon[0] = position of planet when the spacecraft is at the target

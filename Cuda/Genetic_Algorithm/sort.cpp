@@ -204,17 +204,23 @@ void parameterSort(std::vector<Adult> & adults, const objective& sortObjective, 
     switch (static_cast<int>(sortObjective.goal)) {
         //TODO: I would put in some information about each of these (and the implicit connection between MIN_POS_DIFF and MIN_ORBIT_POS_DIFF
         case MIN_POS_DIFF:
-
-        case MIN_ORBIT_POS_DIFF:
             //Sort by lowest pos diff
             std::sort(adults.begin(), adults.begin()+sortSize, LowerPosDiff);
             break;
 
         case MIN_SPEED_DIFF:
-
-        case MIN_ORBIT_SPEED_DIFF:
             //Sort by lowest speed diff
             std::sort(adults.begin(), adults.begin()+sortSize, LowerSpeedDiff);
+            break;
+
+        case MIN_ORBIT_POS_DIFF:
+            //Sort by lowest orbit pos diff
+            std::sort(adults.begin(), adults.begin()+sortSize, LowerOrbitPosDiff);
+            break;
+
+        case MIN_ORBIT_SPEED_DIFF:
+            //Sort by lowest orbit speed diff
+            std::sort(adults.begin(), adults.begin()+sortSize, LowerOrbitSpeedDiff);
             break;
 
         case MIN_FUEL_SPENT:

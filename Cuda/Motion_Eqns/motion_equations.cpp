@@ -42,10 +42,10 @@ template <class T> __host__ __device__ T calcRate_vr(const elements<T> & y, coef
 		   (pow(y.vtheta,2) / y.r) + 
 		   (accel*cos(calc_tau(coeff,curTime, timeFinal))*sin(calc_gamma(coeff,curTime, timeFinal))));
 }
-//TODO: fix the fmod in vtheta to be fmod(both) instead of two seperate fmods
+//TODO: is the fmod using the new method done correctly here?
 template <class T> __host__ __device__ T calcRate_vtheta(const elements<T> & y, coefficients<T> & coeff, const T & accel, const T & curTime, const T & timeFinal, const elements<T> & mars, const T & marsCraftDist) {
 	return  (static_cast<double>(0.0) + 
-			((-constG * massMars *(fmod(y.theta, 2*M_PI)-fmod(mars.theta, 2*M_PI)) *((y.r+mars.r)/2)) / (pow(marsCraftDist,3))) +
+			((-constG * massMars *(fmod((y.theta - mars.theta), 2*M_PI)) *((y.r+mars.r)/2)) / (pow(marsCraftDist,3))) +
 			(-y.vr*y.vtheta / y.r) +
 			(accel*cos(calc_tau(coeff,curTime, timeFinal))*cos(calc_gamma(coeff,curTime, timeFinal))));
 }

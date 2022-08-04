@@ -14,8 +14,7 @@
 // --- This file includes functions that handle assigning rank and distance to adults so they can be sorted ---
 
 //----------------------------------------------------------------------------------------------------------------------------
-//TODO: Is this just for rendezvous missions? --------------------------------------VVVVVVVVVV
-//Used to give rankings for sorting based on non-dominated sorting method. Used for rendezvous mission
+//Used to give rankings for sorting based on non-dominated sorting method.
 //Assigns suitability rank to all adults.
 //Inputs: allAdults - this generation of adults, will be compared to eachother to find rank
 //                    because they are adults, they are guarenteed to have valid speedDiff/posDiff

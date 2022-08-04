@@ -3,7 +3,9 @@ Based on previous work 2019 - 2021 Sankaran / Griffith summer research
 2019: Mateo, Lauren, Ben  
 2020: Matthew, Noah, Andrew, Jeremy  
 2021: Cassie, Trevor
+
 2022: Caleb, Connor, Meg
+
 Pulled from: https://github.com/scott-whitworth/Didymos-optimization on 6/7/2021  
 
 <h1>Multi-Objective Optimization Project</h1>
@@ -11,11 +13,17 @@ Pulled from: https://github.com/scott-whitworth/Didymos-optimization on 6/7/2021
 
 <h2>Project Background & Current Objective</h2>
 
-TODO: This probably needs to be updated to be more generic. This text is good, but also the program is much more than 'just' DART now.
+NASA has many missions to planets and asteroids with a variety of objectives: Rendezvous missions to collect samples of the target; orbital missions to study the target’s atmosphere; and missions where the spacecraft will perform a kinetic impact to change the orbital trajectory of its target. This program employs a multi-objective genetic algorithm which takes advantage of Nvidia's CUDA platform to optimize parameters to guide a spacecraft fitted with a NEXT ion thruster to its target. At this stage of development, the focus is to update the genetic algorithm to optimize for more objectives (not only position difference and speed difference) and to allow the program to model more real missions, including orbital missions and those that rely on gravity assists.
+
+Previously, the code could find the optimal trajectories for a spacecraft with the NEXT ion thruster to redirect an asteroid (as in the DART mission) or to perform a soft landing on the surface of an asteroid (as with the OSIRIS-REx mission). By contrast, for the summer of 2022, the goal was to improve the convergence rate of the current code and to adapt it to handle other mission types and optimize for additional objectives (e.g. minimized fuel use or reduced trip time). 
+
+
+/* TODO: Consider deleting a replacing with the above text?
 
   NASA's Double Asteroid Redirection Test (DART) mission involves having the spacecraft perform a kinetic impact to change the orbital trajectory of Dimorphos around the parent body, Didymos.  The spacecraft to be used is fitted with a NEXT ion thruster though is not required to hit the target but rather be used as a technical demonstration.  For the previous project, the goal was to find an optimal trajectory using the thruster that would result in a greater difference in velocity with the target to make for a more effective change in Dimorphos' orbit. For the summer of 2021, the new goal is to attempt to optimize the program so that the spacecraft can instead perform a soft landing on the asteroid (similar to the OSIRIS-REx mission), while still being optimized to handle a DART mission.
 
   To find the best trajectory, the program utilizes a multi-objective genetic algorithm which takes advantage of Nvidia's CUDA platform to optimize parameters which lead to landing the spacecraft on the asteroid. At this stage of development, the focus is to update the genetic algorithm to optimize the position and velocity of the spacecraft in reference to the asteroid.
+*/
 
 
   Parameters being optimizing are the following
@@ -39,7 +47,7 @@ There are many folders and files in this project, so here's a short rundown of f
     * Config_Constants: Where cudaConstants structure is defined and default genetic.config file is, cudaConstants handles storing const values that we may want to be able to change for different runs of the program.  Also contains the constants.h file
       * constants.h: Stores constant properties, such as AU unit value and optimized variable offsets for the array that stores the values, these are constants that should not be easily changed.
       * bennu.config and didymos.config: These two files hold information pertaining to their respective asteroids, so the user can switch between the target asteroid in genetic.config
-    * Planet_calculations: Code for calculating the planet conditions and defines the global pointer variable launchCon (planetInfo.h). Dependent on Motion_Eqns/elements.h, Thrust_Files/thruster.h, and Config_Constants/config.h.
+    * [Planet_calculations](../Cuda/Planet_calculations/planet_calculations_info.md): Code for calculating the planet conditions and defines the global pointer variable launchCon (planetInfo.h). Dependent on Motion_Eqns/elements.h, Thrust_Files/thruster.h, and Config_Constants/config.h.
     * Genetic_Algorithm: Defines individuals used in the genetic algorithm and crossover/mutation methods to generate new generations in a pool.
     * Motion_Eqns: Defines elements structure that is used to describe the position and velocity of an object in space (such as Earth). Dependent on Thrust_Files and Config_Constants/config.h.
     * Optimization: Contains main file (optimization.cu) that has main() and main optimize function that is used.

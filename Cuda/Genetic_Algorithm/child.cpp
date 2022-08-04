@@ -50,6 +50,8 @@ Child:: Child(const Child& other){
     posDiff = other.posDiff; 
     speedDiff = other.speedDiff;
     fuelSpent = other.fuelSpent;
+    orbitPosDiff = other.orbitPosDiff;
+    orbitSpeedDiff = other.orbitSpeedDiff; 
     funcStatus = other.funcStatus;
     errorStatus = other.errorStatus;
     birthday = other.birthday;
@@ -74,10 +76,10 @@ __host__ double Child::getParameters (const objective & requestObjective) const 
         return startParams.tripTime; 
     }
     else if (requestObjective.goal == MIN_ORBIT_POS_DIFF){
-        return posDiff;
+        return orbitPosDiff;
     }
     else if (requestObjective.goal == MIN_ORBIT_SPEED_DIFF){
-        return speedDiff;
+        return orbitSpeedDiff;
     }
     else {
         //Inducates error
@@ -91,56 +93,69 @@ __host__ double Child::getParameters (const objective & requestObjective) const 
 // Input: cConstants in accessing properties such as r_fin_target, theta_fin_target, and z_fin_target
 // Output: Assigns and returns this individual's posDiff value
 __host__ __device__ double Child::getPosDiff(const cudaConstants* cConstants) {
-    
-    
-    //Check to see if the posDiff should be calculated or set to the bad value
-    //Will mean only valid children will be likely to be considered for future generations
-    if (errorStatus == VALID || errorStatus == DUPLICATE) {
-        //Check to see if getting into an orbit is the goal
-        if (cConstants->orbitalRadius != NOT_APPLICABLE) {
-            //Calculate the orbital posDiff
-            //Calculates the distance between the target and the spacecraft
-            double targetToCraftDist = (sqrt(pow(cConstants->r_fin_target, 2) + pow(finalPos.r, 2) + pow(finalPos.z - cConstants->z_fin_target, 2) - (2*finalPos.r*cConstants->r_fin_target*cos(cConstants->theta_fin_target-finalPos.theta))));
-            //The distance between the target and the spacecraft should be the orbital radius in order to converge
-            posDiff = abs(targetToCraftDist - cConstants->orbitalRadius);
-        }
-        else {
-            //Calculate the normal posDiff
-            //posDiff = sqrt(delta(r)^2 + delta(theta)^2 - r*fmod(theta, 2pi) + delta(z)^2 ) -> magnitude of delta(position)
-            posDiff = sqrt(pow(cConstants->r_fin_target - finalPos.r, 2) + pow( (cConstants->r_fin_target * cConstants->theta_fin_target) - (finalPos.r * fmod(finalPos.theta, 2 * M_PI)), 2) + pow(cConstants->z_fin_target - finalPos.z, 2));
-        }
-    }
+    //Calculate the normal posDiff using the sun-relative pos diff between the spacecraft and the target 
+    //posDiff = sqrt(delta(r)^2 + delta(theta)^2 - r*fmod(theta, 2pi) + delta(z)^2 ) -> magnitude of delta(position)
+    posDiff = sqrt(pow(cConstants->r_fin_target - finalPos.r, 2) + pow( (cConstants->r_fin_target * cConstants->theta_fin_target) - (finalPos.r * fmod(finalPos.theta, 2 * M_PI)), 2) + pow(cConstants->z_fin_target - finalPos.z, 2));
 
     return posDiff;
 }
 
-//!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Calculates a speedDiff value
 // Input: cConstants in accessing properties such as vr_fin_target, vtheta_fin_target, and vz_fin_target
 // Output: Assigns and returns this child's speedDiff value
 __host__ __device__ double Child::getSpeedDiff(const cudaConstants* cConstants) {
-    //Check to see if the speedDiff should be calculated or set to the bad value
-    //Will mean only valid children will be likely to be considered for future generations
-    if (errorStatus == VALID || errorStatus == DUPLICATE) {
-        //Check to see if the goal is an orbit vs another mission type
-        if (cConstants->orbitalSpeed != NOT_APPLICABLE){
-            //Goal is an orbit
-            // The radial velocity of the spacecraft compared with that of the target should be constant to remain in a circular orbit
-            //      Thus the pow(cConstants->vr_fin_target - finalPos.vr, 2) should be 0
-            // Additionally, to remain within a circular orbit, the magnitude of the sqrt(v_theta ^2 + v_z^2) must be the orbital velocity
-            //      So the (sqrt(v_theta ^2 + v_z^2) - v_orbit)^2 term shoudl also go to 0
-            //speedDiff = sqrt(pow(cConstants->vr_fin_target - finalPos.vr, 2) + pow(sqrt(pow(cConstants->vtheta_fin_target - finalPos.vtheta, 2) + pow(cConstants->vz_fin_target - finalPos.vz, 2)) - cConstants->orbitalSpeed, 2));
-            //sqrt(abs((pow(cConstants->vr_fin_target - finalPos.vr, 2) + pow(cConstants->vtheta_fin_target - finalPos.vtheta, 2) + pow(cConstants->vz_fin_target - finalPos.vz, 2)) - pow(cConstants->orbitalSpeed, 2)));
-            speedDiff = sqrt(abs((pow(cConstants->vr_fin_target - finalPos.vr, 2) + pow(cConstants->vtheta_fin_target - finalPos.vtheta, 2) + pow(cConstants->vz_fin_target - finalPos.vz, 2)) - pow(cConstants->orbitalSpeed, 2)));
-        }   
-        else{
-            //Goal is impact or rendezvous   
-            speedDiff = sqrt(pow(cConstants->vr_fin_target - finalPos.vr, 2) + pow(cConstants->vtheta_fin_target - finalPos.vtheta, 2) + pow(cConstants->vz_fin_target - finalPos.vz, 2)); 
-        }
-    }
+    //Calculate the speed diff by calculating the sun-relative speed difference between the spacecraft and the target 
+    speedDiff = sqrt(pow(cConstants->vr_fin_target - finalPos.vr, 2) + pow(cConstants->vtheta_fin_target - finalPos.vtheta, 2) + pow(cConstants->vz_fin_target - finalPos.vz, 2)); 
 
     return speedDiff;
 }
+
+// Calculates an orbit posDiff value
+// Input: cConstants in accessing properties for the orbit radius of the target
+// Output: Assigns and returns this individual's orbitPosDiff value
+__host__ __device__ double Child::getOrbitPosDiff(const cudaConstants* cConstants) {
+    //Check to see if there is an orbit radius set
+    //  Done by seeing if orbital radius is less than 0 since its default value is -1
+    if (cConstants->orbitalRadius < 0) {
+        //The orbital radius is never set, so set orbitPosDiff to a default bad value
+        orbitPosDiff = 1; 
+    }
+    else {
+        //Orbital radius set, calculate the orbital pos diff
+        //Calculates the distance between the target and the spacecraft
+        double targetToCraftDist = (sqrt(pow(cConstants->r_fin_target, 2) + pow(finalPos.r, 2) + pow(finalPos.z - cConstants->z_fin_target, 2) - (2*finalPos.r*cConstants->r_fin_target*cos(cConstants->theta_fin_target-finalPos.theta))));
+        //The distance between the target and the spacecraft should be the orbital radius in order to converge
+        orbitPosDiff = abs(targetToCraftDist - cConstants->orbitalRadius);
+    }
+
+    return orbitPosDiff;
+}
+
+// Calculates an orbit speedDiff value
+// Input: cConstants in accessing properties for the orbit speed of the target
+// Output: Assigns and returns this individual's orbitSpeedDiff value
+__host__ __device__ double Child::getOrbitSpeedDiff(const cudaConstants* cConstants) {
+    //Check to see if there is an orbit radius set
+    //  Done by seeing if orbital radius is less than 0 since its default value is -1
+    if (cConstants->orbitalRadius < 0) {
+        //The orbital radius is never set, so set orbitSpeedDiff to a default bad value
+        orbitSpeedDiff = 1; 
+    }
+    else {
+        //Orbital radius set, calculate the orbital speed diff
+        // The radial velocity of the spacecraft compared with that of the target should be constant to remain in a circular orbit
+        //      Thus the pow(cConstants->vr_fin_target - finalPos.vr, 2) should be 0
+        // Additionally, to remain within a circular orbit, the magnitude of the sqrt(v_theta ^2 + v_z^2) must be the orbital velocity
+        //      So the (sqrt(v_theta ^2 + v_z^2) - v_orbit)^2 term shoudl also go to 0
+        //speedDiff = sqrt(pow(cConstants->vr_fin_target - finalPos.vr, 2) + pow(sqrt(pow(cConstants->vtheta_fin_target - finalPos.vtheta, 2) + pow(cConstants->vz_fin_target - finalPos.vz, 2)) - cConstants->orbitalSpeed, 2));
+        //sqrt(abs((pow(cConstants->vr_fin_target - finalPos.vr, 2) + pow(cConstants->vtheta_fin_target - finalPos.vtheta, 2) + pow(cConstants->vz_fin_target - finalPos.vz, 2)) - pow(cConstants->orbitalSpeed, 2)));
+        orbitSpeedDiff = sqrt(abs((pow(cConstants->vr_fin_target - finalPos.vr, 2) + pow(cConstants->vtheta_fin_target - finalPos.vtheta, 2) + pow(cConstants->vz_fin_target - finalPos.vz, 2)) - pow(cConstants->orbitalSpeed, 2)));
+    }
+
+    return orbitSpeedDiff;
+}
+
+//!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 __host__ void Child::getProgress(const cudaConstants* cConstants){
 

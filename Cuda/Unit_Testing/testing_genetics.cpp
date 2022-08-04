@@ -62,7 +62,6 @@ bool runGeneticsUnitTests(bool printThings){
     // Various values that impact runge kutta
     utcConstants->rk_tol=1e-12;
     utcConstants->doublePrecThresh=1e-12;
-    //utcConstants->GuessMaxPossibleSteps=1000000; //TODO: Long term, I think we need to get rid of this, we use max_numsteps instead
     utcConstants->max_numsteps=1000;
     utcConstants->min_numsteps=400;
 
@@ -827,13 +826,7 @@ bool verifyChildrenFromCrossover(std::mt19937_64& rng, bool printThings, cudaCon
         //resets this so it can accurately hold the number of duplicates
         numDupes = 0;
 
-        // ===== NOTE =====
-        // Attempted having a pool of entirely duplicates 
-        // there was only 1 individual in parent and generateChildrenFromCrossover could not handle it
-        // it began an infinite loop of printing "In generateChildrenFromCrossover() we've cycled through the parentPool twice"
-        // the code for this test is commented out below
-        // TODO: What should I do with this code? We should never get this situation, but I thought I should test it
-
+        // A pool of entirely duplicates
         if (printThings){
             cout << "In a pool full of duplicates of one individual..." << endl;
         }
@@ -916,7 +909,6 @@ bool cfcAnswersMatchExpectations(const int & numChildren, const Child* childrenG
                         correctParents = true;
                         prnt1 = i;
                         prnt2 = j;
-                        //TODO: Run the code and make sure the output of this is as expected/looks nice
                         //prints the tripTimes of the parents and of any children they've made
                         if (!skipPrint){
                             cout << std::fixed << std::setprecision(1) << "Parent 1's tripTime: " << parents[prnt1].startParams.tripTime << "\t\t Parent 2's tripTime: " << parents[prnt2].startParams.tripTime << endl;

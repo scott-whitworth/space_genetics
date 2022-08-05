@@ -23,8 +23,7 @@ enum parameterGoals {
     MAX_SPEED_DIFF = 2, 
 };
 
-//TODO: Somewhere these enums should be well documented (I would suggest in a .md file)
-//      What are all of the possible questions someone would have about 'min_orbit_pos_diff'? Or any of the others
+//See mission_config_readme.md for more details
 
 //This structure holds the necessary information for a program objective
 //This allows for the program to handle dynamic program objectives

@@ -51,10 +51,9 @@
     - [getCondition/getConditionDev](#getconditiongetconditiondev)
 - [Classes](#classes)
   - [Child](#child)
-    - [Child_Members](#childmembers)
+    - [Child_Members](#child_members)
     - [Constructors](#constructors)
-    - [Unit_Test_Constructors](#unittestconstructors)
-    - [getRKParams](#getrkparams)
+    - [Unit_Test_Constructors](#unit_test_constructors)
     - [getParameters](#getparameters)
     - [getPosDiff](#getposdiff)
     - [getSpeedDiff](#getspeeddiff)
@@ -62,15 +61,19 @@
     - [getOrbitSpeedDiff](#getorbitspeeddiff)
     - [getProgress](#getprogress)
   - [Adult](#adult)
-    - [Adult_Members](#adultmembers)
-    - [dominationCheck](#dominationCheck)
-    - [rankSort](#rankSort)
-    - [rankDistanceSort](#rankDistanceSorrt)
+    - [Adult_Members](#adult_members)
+    - [dominationCheck](#dominationcheck)
+    - [rankSort](#ranksort)
+    - [rankDistanceSort](#rankdistancesort)
   - [GPUMem](#gpumem)
     - [Members](#members)
+    - [Initialize](#initialize)
+    - [Free](#free)
   - [PlanetInfo(Class)](#planetinfoclass)
   - [Elements](#elements)
+    - [Description](#description)
   - [rkParameters](#rkparameters)
+    - [Description](#description-1)
 
 
 
@@ -121,15 +124,16 @@
 <br>
 
 ## config.cpp/h
-
+- Sets us the constants that will be used throughout the code
+- See [config_readme.md](Config_Constants/config_readme.md) for more information on this section and for information on the config files themselves
 <br>
 
 ## Anneal.cpp/h
 ### changeAnneal
   - Calculates the anneal for the next generation
     - Anneal affects the strength of mutations to children parameters, which allows for smaller changes to input parameters when close to solving the objectives
-  - Current implimentation relies on a step method 
-    - Each step sets the current anneal to a multiplier of a intial anneal
+  - Current implementation relies on a step method 
+    - Each step sets the current anneal to a multiplier of a initial anneal
     - The step is chosen based on the progress of the best individual
     - The higher the step, the lower the anneal is set to
     - When the progress of the best individual gets high enough, the anneal calculation method switches to a method which employs exponential decay
@@ -159,7 +163,8 @@
 
 ### crossOver_bundleVars
   - Randomly assigns the indexes of the mask array to either parent 1 or parent 2
-  - This differs from crossOver_wholeRandom because the parent for the gamma, tau, and coast parameters to one parent
+  - This differs from crossOver_wholeRandom because the parent for all the gamma, tau, or coast parameters are just one parent
+    - Eg. All the gammas may be parent 1, the taus may be parent 2, and the coasts could all be parent 1
 
 ### crossOver_average
   - Assigns all indexes of the mask array to average
@@ -397,13 +402,13 @@ The class Adult is built upon the Child class and extends it. Individuals that a
   - *devStepSize: Device pointer to allocate space for the step size (not currently in use)
   - *devAbsTol: Device pointer to allocate space for tolerance
   - *devCConstant: Device pointer to allocate space for cConstants
-  - *devMarsLaunchCon: Device pointer to allocate space for marsLaunchCon
+  - *devMarsLaunchCon: Device pointer to allocate space for marsLaunchCon, the array of positions of Mars over time
 ### Initialize
-- initializes the device parameters and allocates the space on the GPU
+- Initializes the device parameters and allocates the space on the GPU
 ### Free
-- deallocates memory stored to GPU
+- Deallocates memory stored to GPU
 ## PlanetInfo(Class)
-- See the [planet_calculations_info.md](../Cuda/Planet_calculations/planet_calculations_info.md) or read the comment headers on the planetInfo.h file
+- See the [planet_calculations_info.md](../Cuda/Planet_calculations/planet_calculations_info.md), the section of this document on [PlanetInfo](#planetinfocpph) or read the comment headers on the planetInfo.h file
 ## Elements
 ### Description
 - These are the 6 main "elements" of the spacecraft being the 3 positional cylindrical coordinates: r, theta, and z; and the spacecraft's velocity in those 3 directions: vr, vtheta, and vz. These 3 components are initialized in elements.cpp and elements.h and used as double throughout the code. They are calculated within child after callRK.

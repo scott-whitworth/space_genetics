@@ -21,32 +21,11 @@ void callRK(double & calcPerS, Child *generation, const cudaConstants* cConstant
     cudaEvent_t kernelStart, kernelEnd;
     cudaEventCreate(&kernelStart);
     cudaEventCreate(&kernelEnd);
-    //cudaMalloc((void**) &gpuValues.devGeneration, numThreads * sizeof(Child));
-
-    // Child *devGeneration; 
-    // double *devTimeInitial;
-    // double *devStepSize;
-    // double *devAbsTol;
-    // cudaConstants *devCConstant;
-    // PlanetInfo *devMarsLaunchCon;
-
-
-//     // allocate memory for the parameters passed to the device
-//     cudaMalloc((void**) &devGeneration, numThreads * sizeof(Child));
-//     cudaMalloc((void**) &devTimeInitial, sizeof(double));
-//     cudaMalloc((void**) &devStepSize, sizeof(double)); 
-//     cudaMalloc((void**) &devAbsTol, sizeof(double));
-//     cudaMalloc((void**) &devCConstant, sizeof(cudaConstants));
-//    // cudaMalloc((void**) &devMarsLaunchCon, sizeof());
 
     // copy values of parameters passed from host onto device
     cudaMemcpy(gpuValues.devGeneration, generation, numThreads * sizeof(Child), cudaMemcpyHostToDevice);
     cudaMemcpy(gpuValues.devTimeInitial, &timeInitial, sizeof(double), cudaMemcpyHostToDevice);
     cudaMemcpy(gpuValues.devStepSize, &stepSize, sizeof(double), cudaMemcpyHostToDevice);
-//     cudaMemcpy(devStepSize, &stepSize, sizeof(double), cudaMemcpyHostToDevice);
-//     cudaMemcpy(devAbsTol, &absTol, sizeof(double), cudaMemcpyHostToDevice);
-//     cudaMemcpy(devCConstant, cConstant, sizeof(cudaConstants), cudaMemcpyHostToDevice);
-//    // cudaMemcpy(devMarsLaunchCon, marsLaunchCon, sizeof(), cudaMemcpyHostToDevice); //shallow memory copy
     
     // GPU version of rk4Simple()
     cudaEventRecord(kernelStart);
@@ -55,15 +34,6 @@ void callRK(double & calcPerS, Child *generation, const cudaConstants* cConstant
 
     // copy the result of the kernel onto the host
     cudaMemcpy(generation, gpuValues.devGeneration, numThreads * sizeof(Child), cudaMemcpyDeviceToHost);
-
-
-    // free memory from device
-    // cudaFree(gpuValues.devGeneration);
-    // cudaFree(devTimeInitial);
-    // cudaFree(devStepSize);
-    // cudaFree(devAbsTol);
-    // cudaFree(devCConstant);
-    // cudaFree(devMarsLaunchCon);
 
     float kernelT;
     

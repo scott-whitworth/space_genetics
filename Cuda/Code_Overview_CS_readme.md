@@ -48,7 +48,30 @@
     - [parameterSort](#parametersort)
   - [planetInfo.cpp/h](#planetinfocpph)
     - [PlanetInfo](#planetinfo)
+    - [getCondition/getConditionDev](#getconditiongetconditiondev)
 - [Classes](#classes)
+  - [Child](#child)
+    - [Child_Members](#childmembers)
+    - [Constructors](#constructors)
+    - [Unit_Test_Constructors](#unittestconstructors)
+    - [getRKParams](#getrkparams)
+    - [getParameters](#getparameters)
+    - [getPosDiff](#getposdiff)
+    - [getSpeedDiff](#getspeeddiff)
+    - [getOrbitPosDiff](#getorbitposdiff)
+    - [getOrbitSpeedDiff](#getorbitspeeddiff)
+    - [getProgress](#getprogress)
+  - [Adult](#adult)
+    - [Adult_Members](#adultmembers)
+    - [dominationCheck](#dominationCheck)
+    - [rankSort](#rankSort)
+    - [rankDistanceSort](#rankDistanceSorrt)
+  - [GPUMem](#gpumem)
+    - [Members](#members)
+  - [PlanetInfo(Class)](#planetinfoclass)
+  - [Elements](#elements)
+  - [rkParameters](#rkparameters)
+
 
 
 <br>
@@ -207,10 +230,10 @@
 ### newGeneration
   - Calls all functions necessary for generating a new set of children which will fill the newAdults vector
   - Functions called are:
-    1. fillParents; this selects the parents to be used when generating children
-    2. makeChildren; this creates the new set of children
-    3. callRK; this passes the children along to be simulated
-    4. convertToAdults; this fills newAdults with the simulated children
+    1. fillParents- this selects the parents to be used when generating children
+    2. makeChildren- this creates the new set of children
+    3. callRK- this passes the children along to be simulated
+    4. convertToAdults- this fills newAdults with the simulated children
 
 ### fillParents
   - Selects the top adults from the previous generations to be parents
@@ -260,16 +283,16 @@
     - However, when solving for only one parameter, rank works as expected, with each unique individual occupying a unique rank
   - Assigning a rank occurs in two stages:
   1. Each individual is compared against every other individual passed in and there is a check to see if one individual dominates the other
-    - See the section on the adult class to learn about how an individual dominates another
-    - For each individual, it is tracked how many times they were dominated and what other individuals they have dominated
-    - At the end of the comparisons, any individual who was never dominated is added to a "front" vector
-  2. Each individual is assigned a rank depending on how many times they were dominated
-    - This process utilizes a while loop which runs until all individuals have a rank; the loop is:
-    1. Go through all individuals in the front vector and pull up the individuals they dominated
-    2. For each of the dominated individuals, subtract one from their counter for how many times they were dominated
-    3. If an individual's domination counter reaches 0, add them to the "newFront" vector and assign them their rank (rank = times though this loop + 1)
-    4. Once the front vector has been iterated through, replace the front vector with the newFront vector and clear the newFront vector
-      - If newFront is empty during this step, end the loop instead of repeating
+      - See the section on the adult class to learn about how an individual dominates another
+      - For each individual, it is tracked how many times they were dominated and what other individuals they have dominated
+      - At the end of the comparisons, any individual who was never dominated is added to a "front" vector
+  1. Each individual is assigned a rank depending on how many times they were dominated
+       - This process utilizes a while loop which runs until all individuals have a rank; the loop is:
+         1. Go through all individuals in the front vector and pull up the individuals they dominated
+         2. For each of the dominated individuals, subtract one from their counter for how many times they were dominated
+         3. If an individual's domination counter reaches 0, add them to the "newFront" vector and assign them their rank (rank = times though this loop + 1)
+         4. Once the front vector has been iterated through, replace the front vector with the newFront vector and clear the newFront vector
+            - If newFront is empty during this step, end the loop instead of repeating
 
 ### giveDistance
  - Assigns a distance to all valid (or duplicate) individuals
@@ -295,9 +318,95 @@
 ## planetInfo.cpp/h
   - See the [planet_calculations_info.md](../Cuda/Planet_calculations/planet_calculations_info.md) file for detailed information on how planetary body positions are calculated
 ### PlanetInfo
-  - 
+  - Going backwards in time, this function calculates the position of the planet from the endTime to startTime. It fills planetCon with this data starting at the latest point in time to the earliest possible time the spacecraft might have left Earth.
+### getCondition/getConditionDev
+  - These functions are practically the same - the only difference is getConditionDev can operate on the GPU as well as the CPU.
+  - It takes in a time (currentTime) which is the number of seconds BEFORE endTime and will perform an interpolation with the data in planetCon to find the position of planet currentTime seconds before endTime.
 
 <br>
 </br>
 
 # Classes
+## Child
+The Child class are the individuals generated through crossover that are put through callRK to have their positions, speeds, and error statuses calculated. They should never be sorted, as they lack the metrics needed for sorting (rank and distance). 
+### Child_Members
+  - startParams: Holds the information about the starting location of the spacecraft. These are the rkParameters that characterize the spacecraft's trip
+  - finalPos: The final position and velocity of the spacecraft when at the end of its mission
+  - posDiff: The difference in position between spacecraft and center of target at end of run (in AU)
+  - speedDiff: The difference in speed between spacecraft and target at end of run (in AU/s)
+  - orbitPosDiff: The difference in position between the spacecraft and the orbital radius of the target at the end of the run (in AU)
+  - orbitSpeedDiff: The difference in velocity between the spacecraft and the orbit speed of the target at the end of the run (in AU/s)
+  - fuelSpent: The amount of fuel spent by the individual during its simulation (in kg)
+  - progress: How close the individual is to convergence. It is a 0 to 1 scale with 0 being poor and 1 meaning that the individual have completed all objectives
+  - avgParentProgress: The average of the individual's two parents' progress values
+  - birthday: Keeps track of the generation this individual was created in 
+  - stepCount: Counts steps in callRK, needed for orbital missions to keep track of steps
+  - funcStatus: Not currently in use, but was made to keep track of where in the individual was in the process of being created, given its posDiff and speedDiff, and being made into an Adult that could be sorted
+  - errorStatus: Record of if child is computed correctly, should be set in callRK. If a Child has a NAN in any of its elements or if it gets too close to the Sun or Mars, it will be given an error status to prevent it from passing on its undesirable genes
+
+### Constructors
+- Default constructor: Should never really be used, but set up as a guardrail that sets the functional status to default Child so it could theoretically be detected and removed. Since we are not currently using functional status, perhaps we want to make that an errorStatus instead
+- General Child Constructor: The next Child constructor is the only that is normally used. It sets the Child's startParams, using the position of Earth and rkParameters generated randomly or through crossover and mutation. It also sets the status for the Child, along with its parents' progress average and its birthday. It also prepares stepCount to be used elsewhere in the code
+- Copy Constructor: This constructor allows you to make a Child that is a clone of another Child. The code might be able to do this without this function being explicitly defined, but this constructor was written as an attempt to fix errors we were getting earlier when we did not have it
+### Unit_Test_Constructors
+- A variety of constructors were created specifically for unit tests. They are within a #ifdef, so they should not be accessible in the normal code, as they could potentially cause major errors if they were used anywhere aside from unit testing. For the specifics of what these constructors are used for, refer to [child.h](Genetic_Algorithm/child.h).
+### getParameters
+- Here, parameter does not refer to rkParameters. Instead, it returns a parameter based on a mission objective.
+- For example, if MIN_POS_DIFF is passed in, this function will return the posDiff of this Child.
+- This function helps sort individuals by different objectives, by pulling the part of Child that corresponds to a mission objective.
+### getPosDiff
+- Calculates and sets the posDiff of a Child, comparing the final position of the Child to that of its target.
+### getSpeedDiff
+- Calculates and sets the speedDiff of a Child, comparing the final speed of a Child to that of its target.
+### getOrbitPosDiff
+- Calculates and sets the orbitPosDiff of a Child, comparing the final position of the Child to that of its target and the orbital radius which the mission is trying to achieve.
+### getOrbitSpeedDiff
+- Calculates and sets the orbitSpeedDiff of a Child, comparing the final speed of the Child to the final speed of its target and factoring in the fact that we are trying to achieve a certain orbital speed.
+### getProgress
+- Calculates and sets the progress of an individual. 
+- Progress is calculated by finding the a ratio between the goal/convergence threshold and the actual value an individual possesses for a certain objective. If the individual has met an objective, a 1 is added for that metric, otherwise it will be a ratio of the threshold and actual values for an objective. Once the actual vs. goal ratio has been calculated for every objective, the progress should be a number greater than or equal to the number of objectives. Then the number of objectives is divided through by the number calculated for progress so it is a number between 0 and 1, where 1 means an individual has converged.
+  - The progress calculation is done a little differently depending on whether the goal is a minimization or maximization. If the goal is a minimization, the actual value is divided by the threshold. If the goal is a maximization, the threshold is divided by the actual value.
+- If a Child is neither VALID nor a duplicate, its progress is set to 0 because this individual is not useable.
+
+## Adult 
+The class Adult is built upon the Child class and extends it. Individuals that are Adults should have already been through callRK as a Child, and should never be passed through this function again. An Adult inherits all the properties of a Child, but also contain rank and distance, which allows them to be sorted. Unlike a Child, which should never be sorted, Adults are made to be sorted and they are the individuals that are used to create the next generation of Children.
+### Adult_Members
+- rank: rank is a metric that tells you how an individual compares to other individuals in terms of how well it meets the objectives. Individuals that have a lower rank are better than individuals with a higher rank. For more information about how rank is calculated, please refer to the section about [giveRank](#giverank). 
+- distance: distance is a metric that tells you how different from other individuals an Adult is. It is a measure of genetic diversity and higher distances (more unique individuals) are favored in sorting. For more information on how an Adult gets a distance, refer to the [giveDistance](#givedistance) section.
+### dominationCheck
+- In essence, an individual "dominates" another individual if and only if it is better (or at least as good as) another individual for EVERY objective.
+- If two Adults have an objective within equate tolerance or below the domination threshold, this parameter will be ignored
+  - If all the parameters are ignored, neither individual dominates the other individual
+  - If all the parameters are approximately equal except one, then 1 individual will dominate the other
+- If an Adult has ANY parameter where it performs better than the other individual, it will not be dominated by that individual, even if the second individual outperforms it on every other parameter
+  - Example: Minimization of posDiff, speedDiff, & tripTime (NOTE: these are not real values). Adult A has posDiff: 1.0e-9; speedDiff: 3.5e-7; tripTime: 47000000 and Adult B has posDiff: 1.0e-8; speedDiff: 1e-10; tripTime:55000000. Adult A's posDiff and tripTime are both better than Adult B's, but Adult B's speedDiff is better than Adult A's, so they are co-dominant. Neither Adult dominates the other. 
+  - For a hand-calculated example of this code, refer to the Calculations for testing_genetics PDF in the 2022-Summer file on Teams.
+- Domination is used to determine rank. 
+### rankSort
+- Individuals that are either VALID or DUPLICATES are sorted by their rank, with the lowest rank being favored over higher ranks.
+### rankDistanceSort
+- Individuals that are either VALID or DUPLICATES are sorted by their rank, with the lowest rank being favored over higher ranks. If two individuals are in the same rank, the one with the greatest distance (the most unique individual) is favored.
+
+## GPUMem
+### Members
+  - stepSize: Not currently in use 
+  - absTol: Used to be set to rk_tol
+  - numThreads: Used to hol num_individuals
+  - *devGeneration: Device pointer to allocate space for generation
+  - *devTimeInitial: Device pointer to allocate space for timeInitial (set to zero)
+  - *devStepSize: Device pointer to allocate space for the step size (not currently in use)
+  - *devAbsTol: Device pointer to allocate space for tolerance
+  - *devCConstant: Device pointer to allocate space for cConstants
+  - *devMarsLaunchCon: Device pointer to allocate space for marsLaunchCon
+### Initialize
+- initializes the device parameters and allocates the space on the GPU
+### Free
+- deallocates memory stored to GPU
+## PlanetInfo(Class)
+- See the [planet_calculations_info.md](../Cuda/Planet_calculations/planet_calculations_info.md) or read the comment headers on the planetInfo.h file
+## Elements
+### Description
+- These are the 6 main "elements" of the spacecraft being the 3 positional cylindrical coordinates: r, theta, and z; and the spacecraft's velocity in those 3 directions: vr, vtheta, and vz. These 3 components are initialized in elements.cpp and elements.h and used as double throughout the code. They are calculated within child after callRK.
+## rkParameters
+### Description
+- These are the 25 (26?) "genes" of the spacecraft. This includes the 6 parameters in elements, triptime, beta, zeta, alpha, and the coefficients for gamma (7), tau (3), and coast (5). These genes are initialized in rkParameters.cpp and rkParameters.h. Other than elements, these are all calculated when callRK is called, and are mutated in ga_crossover.cpp. 

@@ -41,7 +41,7 @@ bool CAtest();
 //       previousBestPosDiff is found from the changeInBestTest and used to see if the best adult has changed or not
 //       posTolerance is used for adjusting the annealing
 //       dRate is the distinguishable rate which is adjusted based on the current best posDiff
-//NOTE/TODO: this header is outdated, this is the new changeAnneal function that uses progress
+//NOTE: this header is outdated, this is the new changeAnneal function that uses progress
 void changeAnnealTest(const std::vector<Adult>& oldAdults, int missionType, double & new_anneal, double & currentAnneal);
 
 //function that calculates the progress

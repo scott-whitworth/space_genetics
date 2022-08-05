@@ -6,15 +6,15 @@
 #include "../Config_Constants/constants.h"
 
 //TODO: Big step: think about where in the code we rely on numeric data to determine errors (like checking for NAN)
-//TODO: Is ERROR_STATUS necessary? We have statuses for it, but they aren't used... we only use STATUS as of 6/28/22
+
+//TODO: Is STATUS necessary? We have statuses for it, but they aren't used... we only use ERROR_STATUS as of 6/28/22
+
 
 ///////////////////////////////////////////////////////////////
 // Child Class & Functions                                   //
 ///////////////////////////////////////////////////////////////
 
 // --- This file includes the definition for the child class and associated functions ---
-
-//TODO: We probably want to be more clear about the dichotomy of child/adult, somewhere should be clear documentation
 
 // Child is a structure member of the genetic algorithm's population and has set of input and output parameters
 // once a child is created it will then be copied to an adult with some added parameters
@@ -37,7 +37,7 @@ struct Child {
     int stepCount; //counts steps in callRK, needed for orbital missions to keep track of steps
 
     //Both status and error_status are defined in constants.h
-
+    //STATUS should be removed in the future
     STATUS funcStatus;//flag that keeps track of the status of the child (and eventually adult)
     
     ERROR_STATUS errorStatus; //record of if child is computed correctly, should be set in callRK
@@ -93,12 +93,6 @@ struct Child {
     Child(rkParameters<double> & childParameters, double posD, double speedD, double prog, double avgPrntProg, int bday): startParams(childParameters), errorStatus(VALID), posDiff(posD), speedDiff(speedD), funcStatus(FUNCTIONAL_CHILD), progress(prog), avgParentProgress(avgPrntProg), birthday(bday){}
 
     #endif //unit testing end if
-
-    //TODO: Delete? VVVVVVVV
-
-    //Child(rkParameters<double> & childParams, elements<double> posFinal,  double posD,  double speedD, STATUS s, int errStat): startParams(childParams), finalPos(posFinal), posDiff(posD), speedDiff(speedD), funcStatus(s), errorStatus(errorStatus){}
-
-    rkParameters<double> getRKParams() {return startParams;}
 
 //!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  

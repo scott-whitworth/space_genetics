@@ -18,7 +18,6 @@ void newGeneration (std::vector<Adult> & oldAdults, std::vector<Adult> & newAdul
     makeChildren(parents, newChildren, annealing, generation, rng, cConstants);
     
     //Initialize variables needed for callRK
-    //TODO: there is likely a better solution for this than just setting them as 0 here
     double timeInitial = 0;
     double calcPerS = 0;
 
@@ -41,7 +40,6 @@ void newGeneration (std::vector<Adult> & oldAdults, std::vector<Adult> & newAdul
 void fillParents(std::vector<Adult> & oldAdults, std::vector<Adult> & parents, const int & generation, const cudaConstants* cConstants){
     //Clearing parents before separating the parents from a vector ensures parents
     parents.clear();
-    //TODO: this function is a bit outdated now that duplicates are being kept
     //If statement will check if the generation is 0 
     //      If so, it will assign all the surviving adults to parents
     //      If not, it will decide which vector based on progress
@@ -201,7 +199,6 @@ void firstGeneration(Child* initialChildren, std::vector<Adult>& oldAdults, cons
      // Each child represents an individual set of starting parameters 
         // GPU based runge kutta process determines final position and velocity based on parameters
     //Will fill in the final variables (final position & speed, posDiff, speedDiff) for each child
-    //TODO: Does cConstants need to be included in the callRK function call?
     callRK(calcPerS, initialChildren, cConstants, gpuValues, timeIntial); 
 
     //Now that the children have been simulated, convert the children into adults

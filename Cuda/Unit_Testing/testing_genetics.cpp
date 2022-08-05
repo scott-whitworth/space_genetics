@@ -78,9 +78,9 @@ bool runGeneticsUnitTests(bool printThings){
     launchCon = new PlanetInfo(utcConstants, EARTH); 
     marsLaunchCon = new PlanetInfo(utcConstants, MARS);
     //This ensures that we copy the correct size of marsCon to the GPU
-    int marsConSize = getPlanetSize(cConstants);
+    int marsConSize = getPlanetSize(utcConstants);
     //initialize all values needed for GPU calculations
-    gpuValues.initialize(cConstants, marsConSize, marsLaunchCon->getAllPositions());
+    gpuValues.initialize(utcConstants, marsConSize, marsLaunchCon->getAllPositions());
 
 // CALLING THE DIFFERENT UNIT TESTING ALGORITHMS
     bool allWorking = true;

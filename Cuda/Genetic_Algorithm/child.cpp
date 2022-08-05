@@ -82,7 +82,7 @@ __host__ double Child::getParameters (const objective & requestObjective) const 
         return orbitSpeedDiff;
     }
     else {
-        //Inducates error
+        //Indicates error
         std::cout << "\n_-_-_-_-_-_-_-_-_-Error Identifying Parameter Goal_-_-_-_-_-_-_-_-_-\n";
         return -1;
     }
@@ -144,11 +144,10 @@ __host__ __device__ double Child::getOrbitSpeedDiff(const cudaConstants* cConsta
     else {
         //Orbital radius set, calculate the orbital speed diff
         // The radial velocity of the spacecraft compared with that of the target should be constant to remain in a circular orbit
-        //      Thus the pow(cConstants->vr_fin_target - finalPos.vr, 2) should be 0
+        //      Thus the pow(cConstants->vr_fin_target - finalPos.vr, 2) should go to 0
         // Additionally, to remain within a circular orbit, the magnitude of the sqrt(v_theta ^2 + v_z^2) must be the orbital velocity
         //      So the (sqrt(v_theta ^2 + v_z^2) - v_orbit)^2 term shoudl also go to 0
         //speedDiff = sqrt(pow(cConstants->vr_fin_target - finalPos.vr, 2) + pow(sqrt(pow(cConstants->vtheta_fin_target - finalPos.vtheta, 2) + pow(cConstants->vz_fin_target - finalPos.vz, 2)) - cConstants->orbitalSpeed, 2));
-        //sqrt(abs((pow(cConstants->vr_fin_target - finalPos.vr, 2) + pow(cConstants->vtheta_fin_target - finalPos.vtheta, 2) + pow(cConstants->vz_fin_target - finalPos.vz, 2)) - pow(cConstants->orbitalSpeed, 2)));
         orbitSpeedDiff = sqrt(abs((pow(cConstants->vr_fin_target - finalPos.vr, 2) + pow(cConstants->vtheta_fin_target - finalPos.vtheta, 2) + pow(cConstants->vz_fin_target - finalPos.vz, 2)) - pow(cConstants->orbitalSpeed, 2)));
     }
 
@@ -222,7 +221,7 @@ __host__ void Child::getProgress(const cudaConstants* cConstants){
     }
 }
 
-//TODO: Long term we need to consider the velocity vector, not just the magnitude
+//NOTE: Long term we need to consider the velocity vector, not just the magnitude
 //      this would be where we want to introduce those calculations
 //      Three parameters:
 //              position diff

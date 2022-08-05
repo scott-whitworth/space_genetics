@@ -18,9 +18,14 @@ struct GPUMem
     double *devAbsTol;
     cudaConstants *devCConstant;
     elements<double> *devMarsLaunchCon;
-    
+    //initializes the device parameters and allocates the space on the GPU
+    //input: cConstants - needed to allocate space
+    //       marsConSize - size of (marsCon * elements<double>)
+    //       marsLaunchCon - iformation regarding mars' position to be set on GPU
+    //output: space allocated on GPU and information stored in that space for callRK
     void initialize(const cudaConstants* cConstants, const int & marsConSize, const elements<double>* marsLaunchCon);
 
+    //deallocates memory stored to GPU
     void free();
 
 };

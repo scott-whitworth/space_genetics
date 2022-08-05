@@ -166,7 +166,7 @@ void mutateMask(std::mt19937_64 & rng, bool * mutateMask, double mutation_rate) 
 
 
 // In a given Individual's parameters, generate a mutate mask using mutateMask() and then adjust parameters based on the mask, mutation of at least one gene is not guranteed
-rkParameters<double> mutate(const rkParameters<double> & p1, std::mt19937_64 & rng, const double & annealing, const cudaConstants* cConstants, const int & generation, const double & mutationScale, const double & mutation_chance) {    
+rkParameters<double> mutate(const rkParameters<double> & p1, std::mt19937_64 & rng, const double & annealing, const cudaConstants* cConstants, const double & mutationScale, const double & mutation_chance) {    
     // initially set new individual to have all parameter values from parent 1
     rkParameters<double> childParameters = p1; 
 
@@ -250,7 +250,7 @@ rkParameters<double> mutate(const rkParameters<double> & p1, std::mt19937_64 & r
 
 //!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Creates a new rkParameters individual by combining properties of two parent Individuals using a mask to determine which
-rkParameters<double> generateNewChild(const rkParameters<double> & p1, const rkParameters<double> & p2, const std::vector<int> & mask, const cudaConstants * cConstants, const double & annealing, std::mt19937_64 & rng, const int & generation) {
+rkParameters<double> generateNewChild(const rkParameters<double> & p1, const rkParameters<double> & p2, const std::vector<int> & mask, const cudaConstants * cConstants, const double & annealing, std::mt19937_64 & rng) {
 
     // Set the new individual to hold traits from parent 1 
     rkParameters<double> childParameters = p1;
@@ -342,7 +342,7 @@ rkParameters<double> generateNewChild(const rkParameters<double> & p1, const rkP
     }
 
     // Crossover complete, determine mutation
-    childParameters = mutate(childParameters, rng, annealing, cConstants, generation, cConstants->mutation_amplitude, cConstants->default_mutation_chance);
+    childParameters = mutate(childParameters, rng, annealing, cConstants, cConstants->mutation_amplitude, cConstants->default_mutation_chance);
 
     return childParameters;
 }
@@ -357,7 +357,7 @@ void generateChildrenPair (const Adult & parent1, const Adult & parent2, Child *
     }
 
     //Generate a new individual based on the two parents
-    newChildren[numNewChildren] = Child(generateNewChild(parent1.startParams, parent2.startParams, mask, cConstants, annealing, rng, generation), cConstants, generation, (parent1.progress + parent2.progress)/2);
+    newChildren[numNewChildren] = Child(generateNewChild(parent1.startParams, parent2.startParams, mask, cConstants, annealing, rng), cConstants, generation, (parent1.progress + parent2.progress)/2);
 
     //Add one to numNewChildren to signify that a new child has been added to the newChildren vector
     //Will also ensure that no children are overwritten
@@ -372,7 +372,7 @@ void generateChildrenPair (const Adult & parent1, const Adult & parent2, Child *
     flipMask(mask); 
 
     //Generate a mirrored child
-    newChildren[numNewChildren] = Child(generateNewChild(parent1.startParams, parent2.startParams, mask, cConstants, annealing, rng, generation), cConstants, generation, (parent1.progress + parent2.progress)/2); 
+    newChildren[numNewChildren] = Child(generateNewChild(parent1.startParams, parent2.startParams, mask, cConstants, annealing, rng), cConstants, generation, (parent1.progress + parent2.progress)/2); 
 
     //Add one to numNewChildren since a new child was generated
     numNewChildren++;
@@ -455,8 +455,9 @@ void generateChildrenFromCrossover(std::vector<Adult> &parents, Child *newChildr
             // This mask method will generate a set of parameters based on the average of parameters from each parent
 
             // Set the mask to be be average
-            //TODO: I thought this was chnaged to be averageRatio long ago? Do we want to use averageRatio?
+            //TODO: I thought this was changed to be averageRatio long ago? Do we want to use averageRatio?
             //TODO: for future students on this: It should be examined if the averageRatio is better or not
+            //Currently does 1 full average and 1 averageRatio (flipping crossOver_average mask turns it to an averageRatio mask)
             crossOver_average(mask);
             // Generate a pair of children based on the mask
             generateChildrenPair(parents[parentPool[parentIndex]], parents[parentPool[parentIndex + 1]], newChildren, childrenToGenerate, mask, currentAnneal, rng, numNewChildren, generation, cConstants);

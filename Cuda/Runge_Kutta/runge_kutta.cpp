@@ -45,7 +45,7 @@ template <class T> void rk4sys(const T & timeInitial, const T & timeFinal, T *ti
             // array of fuel spent for binary output
             fuelSpent[n] = massFuelSpent;
         }
-        //TODO: The indexing for the error here should be double checked
+        //WARNING/NOTE: The indexing of n (not getCondition) for the error here should be double checked
         elements<double> mars = (*marsLaunchCon).getCondition(timeFinal - curTime); //gets Mars' position relative to the Sun
         marsIndex[n] = mars;
         
@@ -72,6 +72,7 @@ template <class T> void rk4sys(const T & timeInitial, const T & timeFinal, T *ti
         else if (stepSize < (timeFinal - timeInitial) / cConstant->max_numsteps) {
             stepSize = (timeFinal - timeInitial) / cConstant->max_numsteps;
         }
+        //for mars missions - check if it is in MSOI and increase the steps taken
         if (marsCraftDist < MSOI*cConstant->MSOI_error){
             stepSize = (timeFinal - timeInitial) / (cConstant->MSOI_steps*cConstant->max_numsteps);
         }

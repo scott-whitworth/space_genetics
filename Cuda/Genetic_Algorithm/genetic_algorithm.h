@@ -17,8 +17,7 @@
 // Genetic Algorithim Functions                              //
 ///////////////////////////////////////////////////////////////
 
-//TODO: at a very high level this probably needs an external readme or glossary of what each of these things mean.
-//      this is possibly the most convoluted protion of the code base, care should be taken in planning / documenting
+// For more information on this section of code, please refer to the geneticAlgorithm.cpp/h section of Code_Overview_CS_readme.md
 
 // --- This file includes functions which handle generation management, such as selecting parents and generation creation ---
 

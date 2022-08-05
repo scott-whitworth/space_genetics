@@ -66,8 +66,13 @@ bool runPlanetTests(bool printThings){
     return allWorking;
 }
 
+//TODO/Note (for next year): This unit test is not quite working on its third test
+// Is getCondition not working for tripTime or is the value pulled from NASA's data base 
+//  taken from the wrong day or time or something like that
 bool testGetConditions(const cudaConstants* utcConstants){
     bool expectedResults = true;
+
+    //TEST 1:
 
     //uses get conditions to try and get the final conditions of Mars (the values from the config)
     //since time here goes backwards (starting from the asteroid and counting back in time), 0 is at the asteroid 
@@ -83,6 +88,8 @@ bool testGetConditions(const cudaConstants* utcConstants){
 
         expectedResults = false;
     }
+
+    //TEST 2: 
 
     //this should be the position of Mars an hour before the spacecraft reaches its target
     elements<double> hourBefore = (*marsLaunchCon).getCondition(3600);
@@ -111,6 +118,7 @@ bool testGetConditions(const cudaConstants* utcConstants){
         expectedResults = false;
     }
 
+    //TEST 3:
     double tripTime = 47304000; //Makes a fake 1.5 year trip time (don't use 1.5*SECONDS_IN_YEAR because that is about 9 hours off)
 
     //this should be the position of Mars an when the spacecraft launches (1.5 years before the spacecraft reaches its target)
@@ -140,7 +148,8 @@ bool testGetConditions(const cudaConstants* utcConstants){
         expectedResults = false;
     }
 
-    elements<double> usingConditionDev = getConditionDev(tripTime, utcConstants, marsLaunchCon);
+    //TEST 4:
+    elements<double> usingConditionDev = getConditionDev(tripTime, utcConstants, marsLaunchCon->getAllPositions());
 
     //uses the overloaded << to print the position of Mars at this time to the terminal
     std::cout << usingConditionDev << std::endl;

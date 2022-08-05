@@ -6,13 +6,6 @@
 using std::cout;
 using std::endl;
 
-//TODO: Fix comment headers
-//  high level points: 'this function' should never be used
-//  be specific but also concise
-//  don't refer to data types unless you absolutely need to 'rs - the vector of Adults....' that is redundant
-//  Your header should clarify *why* before clarifying what
-//  Your header should spcify expectations for what is coming in (this vector should already be sorted) or outputs (passed by reference)
-
 // Verifies that rankSort and rankDistanceSort are doing what we expect at a basic level (it can determine the better of two individuals)
 // Compares two adults with set ranks and distances using rankSort and rankDistanceSort
 // Uses the unitTesting constructor for Adult to make Adults with a known rank and distance so they can be better compared
@@ -33,7 +26,7 @@ bool sortAdultVec(bool printStuff);
 // Helper function for sortAdultVec to keep that function shorter
 // Initializes a different vector of adults based on which test we are trying to perform
 // Input: testNum - which test is being accomplished
-//        a - the vector to be filled 
+//        a - the vector to be filled (should be empty)
 //        print - whether or not it should print information about the vector to the terminal
 // Output: all the current values are cleared from a and it is filled with adults corresponding to which test we are performing
 bool differentTestsSetUp(int testNum, std::vector<Adult>& a, bool print);
@@ -41,8 +34,8 @@ bool differentTestsSetUp(int testNum, std::vector<Adult>& a, bool print);
 // Ensures that all the tests got the expected results
 // Holds the order in which the different Adults should be ordered and searches for issues with their actual order
 // Input: testNum - the test we are performing
-//        rs - Adults sorted using rankSort (should already be sorted)
-//        rDS - Adults sorted using rankDistanceSort (should already be sorted)
+//        rs - Adults sorted using rankSort (should already be sorted when they're passed in)
+//        rDS - Adults sorted using rankDistanceSort (should already be sorted when they're passed in)
 // Output: returns TRUE if the vector was sorted correctly or FALSE if it was not
 //         also prints cout statements explaining any discrepancies that were found
 bool differentTestsCheck(int testNum, std::vector<Adult> & rs, std::vector<Adult>& rDS);
@@ -54,10 +47,8 @@ bool differentTestsCheck(int testNum, std::vector<Adult> & rs, std::vector<Adult
 // Output: correctRS and correctRDS are filled with Adults in rankSort and rankDistanceSort order respectively for the test indicated by testNum
 void loadCorrectOrders(int testNum, std::vector<Adult> & correctRS, std::vector<Adult> & correctRDS);
 
-//TODO: Test 5 may be broken... -> pretty sure this is no longer the case, but unable to confirm it is working since I cannot run the code
-
 // Prints the rank, distance, and status of every element in the vector using unitTestingRankDistanceStatusPrint()
-// Input: a - Adults to be printed
+// Input: a - Adults to be printed 
 // Output: prints the ranks, distances, and error statuses of each Adult in a
 void vecPrinting(std::vector<Adult>& a);
 

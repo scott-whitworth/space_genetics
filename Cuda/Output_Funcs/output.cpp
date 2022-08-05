@@ -68,7 +68,7 @@ void output::printFinalGen(const cudaConstants * cConstants, std::vector<Adult>&
   //Check to see if there is a convergence before printing the trajectory
   //if (converged) {
     //Create the trajectory bin file
-    std::sort(allAdults.begin(), allAdults.end(), bestProgress); //remove if not needed, puts the best progress individual first
+    //std::sort(allAdults.begin(), allAdults.end(), bestProgress); //remove if not needed, puts the best progress individual first
     finalRecord(cConstants, allAdults[0], generation);
   //}
 }

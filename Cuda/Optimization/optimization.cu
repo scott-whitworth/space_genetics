@@ -1,19 +1,15 @@
-// Didymos Optimization Project using CUDA and a genetic algorithm
+// Spaceflight Optimization Project using CUDA and a genetic algorithm
 
-//TODO: Clarify complexities of the include paths
-//TODO: What / why we are including
-#include "../Planet_calculations/planetInfo.h"  // For launchCon and EarthInfo()
-#include "../Genetic_Algorithm/adult.h" // For adult structs, paths to rkParameters for randomParameters()
-#include "../Genetic_Algorithm/child.h" // For child structs, paths to rkParameters for randomParameters()
+#include "../Planet_calculations/planetInfo.h"  // For launchCon and EarthInfo(); includes elements, runge_kutta, & config.h
+#include "../Genetic_Algorithm/adult.h" // For adult structs, paths to rkParameters for randomParameters(); includes child, rkParameters, & planetInfo
+#include "../Genetic_Algorithm/child.h" // For child structs, paths to rkParameters for randomParameters(); includes config.h, rkParameters, & planetInfo
 #include "../Output_Funcs/output.h" // For terminalDisplay(), recordGenerationPerformance(), and finalRecord()
-#include "../Runge_Kutta/runge_kuttaCUDA.cuh" // for testing rk4simple
-#include "../Genetic_Algorithm/ga_crossover.h" // for selectSurvivors() and newGeneration()
-#include "../Genetic_Algorithm/genetic_algorithm.h" //For functions that set up new generations
-#include "../Genetic_Algorithm/sort.h" //For functions that will allow for sorting of the adult arrays by giving them ranks and distances
-#include "../Genetic_Algorithm/anneal.h" //For all the annealing functions
-#include "../Runge_Kutta/gpuMem.cuh" // for initializing and deallocating memory
-
-//#include "../Unit_Testing/testing_sorts.cpp"
+#include "../Runge_Kutta/runge_kuttaCUDA.cuh" // for testing rk4simple; includes calcFourier, motion_eqns, child, & gpuMem
+#include "../Genetic_Algorithm/ga_crossover.h" // for selectSurvivors() and newGeneration(); includes constants.h, adult, & child
+#include "../Genetic_Algorithm/genetic_algorithm.h" //For functions that set up new generations; includes constants.h, adult, child, ga_crossover, & sort
+#include "../Genetic_Algorithm/sort.h" //For functions that will allow for sorting of the adult arrays by giving them ranks and distances; includes constants.h & adult
+#include "../Genetic_Algorithm/anneal.h" //For all the annealing functions; includes constants.h & adult
+#include "../Runge_Kutta/gpuMem.cuh" // for initializing and deallocating; includes child, rkParameters, & config.h
 
 #include <iostream> // cout
 #include <iomanip>  // used for setw(), sets spaces between values output
@@ -224,14 +220,6 @@ double optimize(const cudaConstants* cConstants, GPUMem & gpuValues) {
 
     //Initialize the output object with the base folder location (..\Output_Files\)
     output genOutputs(cConstants);
-
-    // input parameters for Runge Kutta process
-    // Each parameter is the same for each thread on the GPU
-    //double timeInitial = 0; // the starting time of the trip is always defined as zero   
-
-    // Runge Kutta adaptive time step error tolerance
-    // Not used now that callRK has been moved to ga_crossover
-    //double absTol = cConstants->rk_tol; 
 
     // Initial genetic anneal scalar
     double currentAnneal = cConstants->anneal_initial;

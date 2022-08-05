@@ -21,6 +21,7 @@
     cudaMemcpy(devMarsLaunchCon, marsLaunchCon, marsConSize * sizeof(double), cudaMemcpyHostToDevice);
 }
 
+//deallocate the memory on the GPU when the code is finished
 void GPUMem::free(){
     cudaFree(devGeneration);
     cudaFree(devTimeInitial);

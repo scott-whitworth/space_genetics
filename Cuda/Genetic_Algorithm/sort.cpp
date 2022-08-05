@@ -143,7 +143,7 @@ void giveDistance(std::vector<Adult> & allAdults, const cudaConstants* cConstant
             normalizationValue = allAdults[validAdults-1].getParameters(cConstants->missionObjectives[i]);
 
             //Go through the non-extreme valid adults and see if they have met the threshold
-            //TODO: NOTE: We are still unsure if this is a valid way of giving distance to those that are under convergence
+            //TODO: NOTE (for future students): We are still unsure if this is a valid way of giving distance to those that are under convergence
             for (int j = 1; j < validAdults-1; j++) {
                 if (allAdults[j].getParameters(cConstants->missionObjectives[i]) < cConstants->missionObjectives[i].convergenceThreshold) {
                     //Add one to the metThreshold tracker
@@ -202,7 +202,11 @@ void giveDistance(std::vector<Adult> & allAdults, const cudaConstants* cConstant
 void parameterSort(std::vector<Adult> & adults, const objective& sortObjective, const int & sortSize) {
     //Switch statement determines the type of sort needed to be done for the objective
     switch (static_cast<int>(sortObjective.goal)) {
-        //TODO: I would put in some information about each of these (and the implicit connection between MIN_POS_DIFF and MIN_ORBIT_POS_DIFF
+        //Depending on the objective, the Adults must be sorted in a different order
+        //While MIN_POS_DIFF and MIN_ORBITAL_POS_DIFF may seem quite similar, they are calcualted a little differently
+        //  MIN_POS_DIFF is trying to make the position difference between the spacecraft and its target basically 0
+        //  MIN_ORBITAL_POS_DIFF is trying to make the difference position difference between the spacecraft and its target equal to the orbital radius
+        //  A similar thing is true with MIN_SPEED_DIFF & MIN_ORBITAL_SPEED_DIFF (going to 0 vs going to orbital speed)
         case MIN_POS_DIFF:
             //Sort by lowest pos diff
             std::sort(adults.begin(), adults.begin()+sortSize, LowerPosDiff);

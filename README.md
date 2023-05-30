@@ -58,7 +58,7 @@ On WU System & Personal Computers:
    2. Open command prompt in the VScode terminal, make sure this is `Command Line`.
    3. Navigate to the Optimization folder (input and enter "cd Cuda" then "cd Optimization").
    4. Enter the following (new Summer 2021):
-      `nvcc -ccbin "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.22.27905\bin\Hostx64\x64\cl.exe" -o test optimization.cu -arch=compute_50 -code=sm_50` 
+      `nvcc -ccbin "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.29.30133\bin\Hostx64\x64\cl.exe" -o test optimization.cu -arch=compute_50 -code=sm_50` 
     - `test` will be the name of the executable. This could be set to anything.  
     - The last flags were added to force GPU to use its own architecture. This is dependent on which machine you are running. Those flags are for the machines in 214/304 Lab
     - *If your computer can't find the file, then there is a problem with the path. Copy and paste the file path into a file explorer, and delete everything after `\MSVC\` then click through until you get to `\cl.exe`. Copy this path and use it to replace the old path.*

@@ -52,7 +52,7 @@ void output::printGeneration(const cudaConstants * cConstants, const std::vector
 }
 
 //Function will handle printing at the end of a run
-void output::printFinalGen(const cudaConstants * cConstants, std::vector<Adult>& allAdults, const bool& converged, const int& generation, int& errorNum, const int& duplicateNum, const int& oldestBirthday) {
+void output::printFinalGen(const cudaConstants * cConstants, std::vector<Adult>& allAdults, const bool& converged, const int& generation, int& errorNum, const int& duplicateNum, const int& oldestBirthday, const float& avgGenTime) {
   //Call for a print of allIndividuals if in record mode and if it is not a report generation already
   //  Note: second check is simply so redundant files aren't created
   if ((cConstants->record_mode == true) && (generation % cConstants->all_write_freq != 0)) {
@@ -64,7 +64,7 @@ void output::printFinalGen(const cudaConstants * cConstants, std::vector<Adult>&
   printBestAdults(cConstants, allAdults, generation, errorNum, duplicateNum, oldestBirthday);
 
   //Print the result of the run to the combined run result file
-  reportRun(cConstants, allAdults, converged, generation);
+  reportRun(cConstants, allAdults, converged, generation, avgGenTime);
 
   //Check to see if there is a convergence before printing the trajectory
   //if (converged) {
@@ -437,7 +437,7 @@ void output::finalRecord(const cudaConstants* cConstants, const Adult& bestAdult
 //!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 // Function which prints the general info of a run when its over
-void output::reportRun(const cudaConstants* cConstants, const std::vector<Adult>& adults, const bool& converged, const int& generation) {
+void output::reportRun(const cudaConstants* cConstants, const std::vector<Adult>& adults, const bool& converged, const int& generation, const float& avgGenTime) {
   //Open the runReport file
   std::ofstream output("..\\Output_Files\\runReports.csv", std::ios::app);
 
@@ -445,6 +445,8 @@ void output::reportRun(const cudaConstants* cConstants, const std::vector<Adult>
   output << "Seed:," << static_cast<int>(cConstants->time_seed) << ",,";
   //Report the final generion
   output << "Final Generation:," << generation << ",,";
+  //Report the average generation time
+  output << "Average Time/Generation:," << avgGenTime << ",,";
   //Report if it converged
   output << "Converged:,";
   if (converged) {

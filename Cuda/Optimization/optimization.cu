@@ -257,6 +257,10 @@ double optimize(const cudaConstants* cConstants, GPUMem & gpuValues) {
     double maxDistance, minDistance, avgDistance, avgAge, avgBirthday;
     int oldestBirthday;
 
+    //Inititalize variables for storing the average time per generation
+    float totGenTime;
+    time_t genStartTime = time_t();  
+
     //Vector used to report the average parameter value for each objective
     std::vector<double> objectiveAvgValues; 
 
@@ -269,7 +273,10 @@ double optimize(const cudaConstants* cConstants, GPUMem & gpuValues) {
 
     // main gentic algorithm loop
     // - continues until checkTolerance returns true (specific number of individuals are within threshold)
-    do {        
+    do {
+        //Record the start time of the new generation
+        genStartTime = time(0);
+
         // Genetic Crossover and mutation occur here
         //takes in oldAdults (the potential parents) and fills newAdults with descendants of the old adults
         //oldAdults is filled with the potential parents for a generation (num_individuals size) 
@@ -310,12 +317,15 @@ double optimize(const cudaConstants* cConstants, GPUMem & gpuValues) {
         
         //Increment the generation counter
         ++generation;
+
+        //Add to the total generation time, subtracting the current time from the one recorded at the start of the generation
+        totGenTime += static_cast<float>(time(0) - genStartTime);
     
         //Loop exits based on result of checkTolerance and if max_generations has been hit
     } while ( !convergence && generation < cConstants->max_generations);
 
     //Handle the final printing
-    genOutputs.printFinalGen(cConstants, allAdults, convergence, generation, numErrors, duplicateNum, oldestBirthday); 
+    genOutputs.printFinalGen(cConstants, allAdults, convergence, generation, numErrors, duplicateNum, oldestBirthday, (totGenTime/generation)); 
 
     return calcPerS;
 }

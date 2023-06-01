@@ -36,7 +36,7 @@ struct output
     // Inputs: Passed to recordAllIndividuals(), printBestAdults(), reportRun(), & finalRecord()
     //              See those functions' header files for detail on how the inputs are used
     // Outputs: printBestAdults() and reportRun() will be called regardless, with recordAllIndividuals() and finalRecord() being called conditionally
-    void printFinalGen(const cudaConstants * cConstants, std::vector<Adult>& allAdults, const bool& converged, const int& generation, int& errorNum, const int& duplicateNum, const int& oldestBirthday); 
+    void printFinalGen(const cudaConstants * cConstants, std::vector<Adult>& allAdults, const bool& converged, const int& generation, int& errorNum, const int& duplicateNum, const int& oldestBirthday, const float& avgGenTime); 
     
     // Initialize genPerformance with header rows
     // input: cConstants - to access time_seed for deriving file name conventions
@@ -109,8 +109,9 @@ struct output
     //              NOTE: assumes oldAdults is in rank-distance sort
     //         converged - a bool which indicates whether the run converged or not
     //         generation - the final generation
+    //         avgGenTime - the average time (in seconds) it took a generation to complete during the run
     // Output: a file with at-a-glance info of runs is appended to within Output_Files
-    void reportRun(const cudaConstants* cConstants, const std::vector<Adult>& oldAdults, const bool& converged, const int& generation); 
+    void reportRun(const cudaConstants* cConstants, const std::vector<Adult>& oldAdults, const bool& converged, const int& generation, const float& avgGenTime); 
 
     // Main Output, final results of genetic algorithm
     // input: x[] - array of OPTIM_VARS for a single individual

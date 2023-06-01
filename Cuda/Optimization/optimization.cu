@@ -16,6 +16,7 @@
 #include <random>   // for std::mt19937_64 object
 #include <vector>   // allows us to use vectors instead of just arrays
 #include <string>
+#include <chrono>
 
 
 //----------------------------------------------------------------------------------------------------------------------------
@@ -258,8 +259,7 @@ double optimize(const cudaConstants* cConstants, GPUMem & gpuValues) {
     int oldestBirthday;
 
     //Inititalize variables for storing the average time per generation
-    float totGenTime;
-    time_t genStartTime = time_t();  
+    std::chrono::time_point<std::chrono::system_clock> runStartTime = std::chrono::system_clock::now();
 
     //Vector used to report the average parameter value for each objective
     std::vector<double> objectiveAvgValues; 
@@ -274,9 +274,6 @@ double optimize(const cudaConstants* cConstants, GPUMem & gpuValues) {
     // main gentic algorithm loop
     // - continues until checkTolerance returns true (specific number of individuals are within threshold)
     do {
-        //Record the start time of the new generation
-        genStartTime = time(0);
-
         // Genetic Crossover and mutation occur here
         //takes in oldAdults (the potential parents) and fills newAdults with descendants of the old adults
         //oldAdults is filled with the potential parents for a generation (num_individuals size) 
@@ -317,15 +314,15 @@ double optimize(const cudaConstants* cConstants, GPUMem & gpuValues) {
         
         //Increment the generation counter
         ++generation;
-
-        //Add to the total generation time, subtracting the current time from the one recorded at the start of the generation
-        totGenTime += static_cast<float>(time(0) - genStartTime);
     
         //Loop exits based on result of checkTolerance and if max_generations has been hit
     } while ( !convergence && generation < cConstants->max_generations);
 
+    //Get the run's total time
+    std::chrono::duration<float> totRunTime = (std::chrono::system_clock::now() - runStartTime);
+
     //Handle the final printing
-    genOutputs.printFinalGen(cConstants, allAdults, convergence, generation, numErrors, duplicateNum, oldestBirthday, (totGenTime/generation)); 
+    genOutputs.printFinalGen(cConstants, allAdults, convergence, generation, numErrors, duplicateNum, oldestBirthday, (totRunTime.count()/generation)); 
 
     return calcPerS;
 }

@@ -38,6 +38,7 @@ Child::Child(rkParameters<double> & childParameters, const cudaConstants* cConst
     birthday = genCreated; //Set the child's birthday to the current generation
     avgParentProgress = calcAvgParentProgress; //The avg progress of the creating parents, if any (0 for randomly generated children)
     stepCount = 0;//no calculations done yet, default is zero
+    minMarsDist = 100;
 }
 
 // Copy constructor
@@ -58,6 +59,7 @@ Child:: Child(const Child& other){
     avgParentProgress = other.avgParentProgress;
     progress = other.progress;
     stepCount = other.stepCount;
+    minMarsDist = other.minMarsDist;
 }
 
 //Getter for a parameter dependent on the objective that is passed in
@@ -80,6 +82,9 @@ __host__ double Child::getParameters (const objective & requestObjective) const 
     }
     else if (requestObjective.goal == MIN_ORBIT_SPEED_DIFF){
         return orbitSpeedDiff;
+    }
+    else if (requestObjective.goal == MIN_MARS_DIST){
+        return minMarsDist;
     }
     else {
         //Indicates error

@@ -100,6 +100,8 @@ bool LowerOrbitPosDiff(Adult& personA, Adult& personB);
 // output: returns true if personB has a lower orbit speed difference than personA
 bool LowerOrbitSpeedDiff(Adult& personA, Adult& personB);
 
+bool higherOrbitPosDiff(Adult& personA, Adult& personB);
+
 // Compare two individuals by their spent fuel values, used in standard sort to have array contain lowest fuel spent individual at start
 // input: two individuals
 // output: returns true if personA has a smaller amount of fuel used than personB
@@ -110,6 +112,7 @@ bool LowerFuelSpent(const Adult& personA, const Adult& personB);
 // output: returns true if personA has a lower triptime than personB
 bool LowerTripTime(const Adult& personA, const Adult& personB);
 
+bool LowerMarsDist(const Adult& personA, const Adult& personB);
 
 //compares two individuals and sorts based on which individual is closer to 1
 //WARNING: this may be implemented in output.cpp in printFinalGen() when it may not need to be (use for test reasons)

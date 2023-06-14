@@ -28,6 +28,7 @@ struct Child {
     double orbitPosDiff; // in AU, difference in position between the spacecraft and the orbital radius of the target at the end of the run
     double orbitSpeedDiff; // in AU/s, the difference in velocity between the spacecraft and the orbit speed of the target at the end of the run
     double fuelSpent; // in kg, the amount of fuel spent by the individual during its simulation
+    double minMarsDist;
 
     double progress; //progress of the individual's posDiff and speedDiff. 0 to 1 scale with 0 being poor and 1 meaning that the individual have completed all objectives
     double avgParentProgress; //The average of the two parents progress

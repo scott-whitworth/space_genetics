@@ -93,6 +93,10 @@ __global__ void rk4SimpleCUDA(Child *children, double *timeInitial, double *star
 
             //calculate the distance between mars and the spacecraft (|R|^2)
             double marsCraftDist = sqrt(pow(mars.r, 2) + pow(curPos.r, 2) + pow(curPos.z - mars.z, 2) - (2*curPos.r*mars.r*cos(mars.theta-curPos.theta)));
+
+            if (marsCraftDist < children[threadId].minMarsDist) {
+                children[threadId].minMarsDist = marsCraftDist;
+            }
             
             // calculate k values and get new value of y
             rkCalc(curTime, threadRKParameters.tripTime, stepSize, curPos, threadRKParameters.coeff, curAccel, error, mars, marsCraftDist); 

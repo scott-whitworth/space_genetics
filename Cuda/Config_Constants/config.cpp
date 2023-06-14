@@ -32,7 +32,8 @@ cudaConstants::cudaConstants() {
 
 // http://www.cplusplus.com/forum/beginner/11304/ for refesher on reading line by line
 // Input: fileName - string address to the path to open the file being used
-// Output - variable names found in the file that correspond to the cudaConstants' will be assigned the value followed by the name and '=', following a certain format assumption base (refer to config_readme.md for more precise information on format)
+// Output - variable names found in the file that correspond to the cudaConstants' will be assigned the value followed by the 
+// name and '=', following a certain format assumption base (refer to config_readme.md for more precise information on format)
 void cudaConstants::FileRead(std::string fileName) {
     // Use string line to hold a line read from the config file in variable configFile
     std::string line;
@@ -42,7 +43,7 @@ void cudaConstants::FileRead(std::string fileName) {
     if (configFile.is_open()) {
         // Go through line by line
         while ( std::getline(configFile, line) ) {
-            // If line is not empty and the line is not staring as a comment, then the line is expected to be a variable constant being assigned 
+            // If line is not empty and the line is not starting as a comment, then the line is expected to be a variable constant being assigned 
             if (line != "" && ( line.find("//") != 0 )) {
 
                 //First check to see if mission objectives are being imported, since that will be a different process than other config variables
@@ -416,6 +417,9 @@ void cudaConstants::importObjective(std::string line) {
     }
     else if (tempStr == "min_orbit_speed_diff") {
         goal = MIN_ORBIT_SPEED_DIFF;
+    }
+    else if (tempStr == "min_mars_dist") {
+        goal = MIN_MARS_DIST;
     }
     else if (tempStr == "max_speed_diff") {
         //Optimize for highest speed

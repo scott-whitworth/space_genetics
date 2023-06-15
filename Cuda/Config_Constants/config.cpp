@@ -4,6 +4,7 @@
 #include <iomanip> // For setprecision in << operator
 #include <time.h> // for time(0)
 #include <math.h> // for sqrt() in constructor to derive v_escape from c3energy
+//#include <cctype> //Needed for Tesla only
 #include "constants.h" // for AU
 
 // Default constructor which assumes that genetic.config and mission.config are the files being pulled from

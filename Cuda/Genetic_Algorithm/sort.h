@@ -4,6 +4,7 @@
 #include "..\Config_Constants\constants.h" //so we can use cuda constants
 #include "..\Genetic_Algorithm\adult.h" //allows us to use adults
 #include <vector>   // allows us to use vectors instead of just arrays
+//#include <algorithm> //Needed for Tesla only 
 
 ///////////////////////////////////////////////////////////////
 // Sort Functions                                            //

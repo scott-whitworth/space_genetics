@@ -30,13 +30,13 @@ struct output
     // Inputs: Passed to printBestAdults(), recordGenerationPerformance(), recordGenSimple(), and recordAllIndividuals()
     //              See those functions' header files for detail on how the inputs are used
     // Outputs: The functions lised above will be called depending on the current generation and cConstants's write frequency variables
-    void printGeneration(const cudaConstants * cConstants, const std::vector<Adult>& allAdults, const std::vector<double>& objectiveAvgValues, const int& generation, const double& new_anneal, int& errorNum, const int& duplicateNum, const double& minDist, const double& avgDist, const double& maxDist, const double& avgAge, const int& oldestAge, const double& avgBirthday, const int& oldestBirthday); 
+    void printGeneration(const cudaConstants * cConstants, const std::vector<Adult>& allAdults, const std::vector<double>& objectiveAvgValues, const int& generation, const double& new_anneal, int& errorNum, const int& duplicateNum, const int & minSteps, const int & avgSteps, const int & maxSteps, const double& minDist, const double& avgDist, const double& maxDist, const double& avgAge, const int& oldestAge, const double& avgBirthday, const int& oldestBirthday, const float& avgGenTime); 
 
     // Function will handle printing at the end of a run
     // Inputs: Passed to recordAllIndividuals(), printBestAdults(), reportRun(), & finalRecord()
     //              See those functions' header files for detail on how the inputs are used
     // Outputs: printBestAdults() and reportRun() will be called regardless, with recordAllIndividuals() and finalRecord() being called conditionally
-    void printFinalGen(const cudaConstants * cConstants, std::vector<Adult>& allAdults, const bool& converged, const int& generation, int& errorNum, const int& duplicateNum, const int& oldestBirthday); 
+    void printFinalGen(const cudaConstants * cConstants, std::vector<Adult>& allAdults, const bool& converged, const int& generation, int& errorNum, const int& duplicateNum, const int& oldestBirthday, const float& avgGenTime); 
     
     // Initialize genPerformance with header rows
     // input: cConstants - to access time_seed for deriving file name conventions
@@ -79,7 +79,7 @@ struct output
     //         avgBirthday - the non-generation-adjusted average generation age
     //         oldestBirthday - the non-generation-adjusted oldest generation age
     // output: genPerformanceT-[time_seed].csv is appended parameter information on the best individual in pool
-    void recordGenerationPerformance(const cudaConstants * cConstants, std::vector<Adult> adults, const std::vector<double>& objectiveAvgValues, const int& generation, const double& new_anneal, const int& errorNum, const int& duplicateNum, const double& minDist, const double& avgDist, const double& maxDist, const double& avgAge, const int& oldestAge, const double& avgBirthday, const int& oldestBirthday);
+    void recordGenerationPerformance(const cudaConstants * cConstants, std::vector<Adult> adults, const std::vector<double>& objectiveAvgValues, const int& generation, const double& new_anneal, const int& errorNum, const int& duplicateNum, const int & minSteps, const int & avgSteps, const int & maxSteps, const double& minDist, const double& avgDist, const double& maxDist, const double& avgAge, const int& oldestAge, const double& avgBirthday, const int& oldestBirthday, const float& avgGenTime);
 
     // Record highlights of the full genPerformance file
     //  Note: assumes initializeRecord() has been called
@@ -110,7 +110,7 @@ struct output
     //         converged - a bool which indicates whether the run converged or not
     //         generation - the final generation
     // Output: a file with at-a-glance info of runs is appended to within Output_Files
-    void reportRun(const cudaConstants* cConstants, const std::vector<Adult>& oldAdults, const bool& converged, const int& generation); 
+    void reportRun(const cudaConstants* cConstants, const std::vector<Adult>& oldAdults, const bool& converged, const int& generation, const float& avgGenTime); 
 
     // Main Output, final results of genetic algorithm
     // input: x[] - array of OPTIM_VARS for a single individual

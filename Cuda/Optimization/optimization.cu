@@ -16,6 +16,7 @@
 #include <random>   // for std::mt19937_64 object
 #include <vector>   // allows us to use vectors instead of just arrays
 #include <string>
+#include <chrono>
 #include <algorithm>
 
 
@@ -44,7 +45,7 @@ bool checkTolerance(std::vector<Adult> & oldAdults, const cudaConstants* cConsta
 //          avgBirthday - average birth generation for the adults
 //          oldestBirthday - the oldest adult's birth generation
 // Outputs: The arguments will be filled in with the up-to-date values for this generation
-void calculateGenerationValues (const std::vector<Adult> & allAdults, const std::vector<objective> & objectives, std::vector<double> & objectiveAvgValues, int & duplicateNum, double & minDist, double & avgDist, double & maxDist, const int & generation, double & avgAge, double & avgBirthday, int & oldestBirthday);
+void calculateGenerationValues (const std::vector<Adult> & allAdults, const std::vector<objective> & objectives, std::vector<double> & objectiveAvgValues, int & duplicateNum, double & minDist, double & avgDist, double & maxDist, int & minSteps, int & avgSteps, int & maxSteps, const int & generation, double & avgAge, double & avgBirthday, int & oldestBirthday);
 
 //----------------------------------------------------------------------------------------------------------------------------
 // Main processing function for Genetic Algorithm
@@ -149,11 +150,15 @@ bool checkTolerance(std::vector<Adult>& oldAdults, const cudaConstants* cConstan
 }
 
 //Function that will calculate distance and birthday values for a generation
-void calculateGenerationValues (const std::vector<Adult> & allAdults, const std::vector<objective> & objectives, std::vector<double> & objectiveAvgValues, int & duplicateNum, double & minDist, double & avgDist, double & maxDist, const int & generation, double & avgAge, double & avgBirthday, int & oldestBirthday){
+void calculateGenerationValues (const std::vector<Adult> & allAdults, const std::vector<objective> & objectives, std::vector<double> & objectiveAvgValues, int & duplicateNum, double & minDist, double & avgDist, double & maxDist, int & minSteps, int & avgSteps, int & maxSteps, const int & generation, double & avgAge, double & avgBirthday, int & oldestBirthday){
     //Reset the dist values
     minDist = 2; //Set the min dist to the maximum possible value, so that it will be changed
     avgDist = 0; 
     maxDist = 0; //Set the max dist to the min possible value, so that it is garunteed to be changed
+
+    minSteps = 1000000;
+    avgSteps = 0;
+    maxSteps = 0;
 
     //Reset the average parameter values
     objectiveAvgValues.clear();
@@ -173,10 +178,18 @@ void calculateGenerationValues (const std::vector<Adult> & allAdults, const std:
         if (allAdults[i].distance < minDist) {
             minDist = allAdults[i].distance; //Set the new min distance
         }
-
         //Check to see if this adult's distance is the new maximum
-        if (allAdults[i].distance > maxDist) {
+        else if (allAdults[i].distance > maxDist) {
             maxDist = allAdults[i].distance; //Ser the new max distance
+        }
+
+        //Check to see if this adult's step count is a new minimum
+        if (allAdults[i].stepCount < minSteps) {
+            minSteps = allAdults[i].stepCount; //Set the new min distance
+        }
+        //Check to see if this adult's step count is the new maximum
+        else if (allAdults[i].stepCount > maxSteps) {
+            maxSteps = allAdults[i].stepCount; //Set the new max distance
         }
 
         //Check to see if this adult's birthday is older than the current oldest
@@ -186,6 +199,7 @@ void calculateGenerationValues (const std::vector<Adult> & allAdults, const std:
            
         //Add to the avg distance
         avgDist += allAdults[i].distance;
+        avgSteps += allAdults[i].stepCount;
 
         //Add the adult's parameter values to the necessary spot in the objective average value vector
         for (int j = 0; j < objectives.size(); j++) {
@@ -201,6 +215,7 @@ void calculateGenerationValues (const std::vector<Adult> & allAdults, const std:
     //  Shouldn't matter, as we don't ever compared averages to individuals
     //Divide the averages by the number of adults to get the averages
     avgDist /= allAdults.size();
+    avgSteps /= allAdults.size();
     for (int i = 0; i < objectiveAvgValues.size(); i++) {
         objectiveAvgValues[i] /= allAdults.size();
     }
@@ -256,7 +271,11 @@ double optimize(const cudaConstants* cConstants, GPUMem & gpuValues) {
     //Initialize variables needed for distance, number of duplicate adults, and birthday reporting
     int duplicateNum = 0;
     double maxDistance, minDistance, avgDistance, avgAge, avgBirthday;
-    int oldestBirthday;
+    int minSteps, avgSteps, maxSteps, oldestBirthday;
+
+    //Inititalize variables for storing the average time per generation
+    std::chrono::time_point<std::chrono::system_clock> runStartTime = std::chrono::system_clock::now();
+    std::chrono::duration<float> totRunTime;
 
     double worstOPD = 0;
 
@@ -272,7 +291,7 @@ double optimize(const cudaConstants* cConstants, GPUMem & gpuValues) {
 
     // main gentic algorithm loop
     // - continues until checkTolerance returns true (specific number of individuals are within threshold)
-    do {        
+    do {
         // Genetic Crossover and mutation occur here
         //takes in oldAdults (the potential parents) and fills newAdults with descendants of the old adults
         //oldAdults is filled with the potential parents for a generation (num_individuals size) 
@@ -297,14 +316,17 @@ double optimize(const cudaConstants* cConstants, GPUMem & gpuValues) {
 
         //Perform utitlity tasks (adjusting anneal and reporting data)
         //Calculate variables for birthdays and distances
-        calculateGenerationValues(allAdults, cConstants->missionObjectives, objectiveAvgValues, duplicateNum, minDistance, avgDistance, maxDistance, generation, avgAge, avgBirthday, oldestBirthday);
+        calculateGenerationValues(allAdults, cConstants->missionObjectives, objectiveAvgValues, duplicateNum, minDistance, avgDistance, maxDistance, minSteps, avgSteps, maxSteps, generation, avgAge, avgBirthday, oldestBirthday);
 
         //Assumes oldAdults is in rankDistance order
         changeAnneal (oldAdults, cConstants, currentAnneal, generation);
 
+        //Get the run's total time
+        totRunTime = (std::chrono::system_clock::now() - runStartTime);
+
         //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE RECORD-_-_-_-_-_-_-_-_-_\n\n";
         //Print out necessary info for this generation
-        genOutputs.printGeneration(cConstants, allAdults, objectiveAvgValues, generation, currentAnneal, numErrors, duplicateNum, minDistance, avgDistance, maxDistance, avgAge, generation-oldestBirthday, avgBirthday, oldestBirthday);
+        genOutputs.printGeneration(cConstants, allAdults, objectiveAvgValues, generation, currentAnneal, numErrors, duplicateNum, minSteps, avgSteps, maxSteps, minDistance, avgDistance, maxDistance, avgAge, generation-oldestBirthday, avgBirthday, oldestBirthday, (totRunTime.count()/(generation+1)));
 
         // Before replacing new adults, determine whether all are within tolerance
         // Determines when loop is finished
@@ -344,7 +366,7 @@ double optimize(const cudaConstants* cConstants, GPUMem & gpuValues) {
     } while ( !convergence && generation < cConstants->max_generations);
 
     //Handle the final printing
-    genOutputs.printFinalGen(cConstants, allAdults, convergence, generation, numErrors, duplicateNum, oldestBirthday); 
+    genOutputs.printFinalGen(cConstants, allAdults, convergence, generation, numErrors, duplicateNum, oldestBirthday, (totRunTime.count()/(generation+1))); 
 
     return calcPerS;
 }

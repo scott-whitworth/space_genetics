@@ -3,6 +3,7 @@
 #include <iostream>
 #include <fstream>
 #include <direct.h>
+#include <algorithm>
 #include "math.h"
 #include "..\Genetic_Algorithm\sort.h"
 
@@ -22,7 +23,7 @@ output::output(const cudaConstants* cConstants, const std::string& selectFolder)
 }
 
 //Call the functions which print during a run
-void output::printGeneration(const cudaConstants * cConstants, const std::vector<Adult>& allAdults, const std::vector<double>& objectiveAvgValues, const int& generation, const double& new_anneal, int& errorNum, const int& duplicateNum, const double& minDist, const double& avgDist, const double& maxDist, const double& avgAge, const int& oldestAge, const double& avgBirthday, const int& oldestBirthday) {
+void output::printGeneration(const cudaConstants * cConstants, const std::vector<Adult>& allAdults, const std::vector<double>& objectiveAvgValues, const int& generation, const double& new_anneal, int& errorNum, const int& duplicateNum, const int & minSteps, const int & avgSteps, const int & maxSteps, const double& minDist, const double& avgDist, const double& maxDist, const double& avgAge, const int& oldestAge, const double& avgBirthday, const int& oldestBirthday, const float& avgGenTime) {
   
   //Check to see if the best adults should be printed to the terminal on this generation
   if (generation % cConstants->disp_freq == 0) {
@@ -36,7 +37,7 @@ void output::printGeneration(const cudaConstants * cConstants, const std::vector
     if (generation % cConstants->write_freq == 0) {
 
       //Push info to the function which prints the full genPerformance file
-      recordGenerationPerformance(cConstants, allAdults, objectiveAvgValues, generation, new_anneal, errorNum, duplicateNum, minDist, avgDist, maxDist, avgAge, oldestAge, avgBirthday, oldestBirthday);
+      recordGenerationPerformance(cConstants, allAdults, objectiveAvgValues, generation, new_anneal, errorNum, duplicateNum, minSteps, avgSteps, maxSteps, minDist, avgDist, maxDist, avgAge, oldestAge, avgBirthday, oldestBirthday, avgGenTime);
       //Push info to the function which prints the simplified genPerformance file
       recordGenSimple(cConstants, allAdults, objectiveAvgValues, generation);
     }
@@ -51,7 +52,7 @@ void output::printGeneration(const cudaConstants * cConstants, const std::vector
 }
 
 //Function will handle printing at the end of a run
-void output::printFinalGen(const cudaConstants * cConstants, std::vector<Adult>& allAdults, const bool& converged, const int& generation, int& errorNum, const int& duplicateNum, const int& oldestBirthday) {
+void output::printFinalGen(const cudaConstants * cConstants, std::vector<Adult>& allAdults, const bool& converged, const int& generation, int& errorNum, const int& duplicateNum, const int& oldestBirthday, const float& avgGenTime) {
   //Call for a print of allIndividuals if in record mode and if it is not a report generation already
   //  Note: second check is simply so redundant files aren't created
   if ((cConstants->record_mode == true) && (generation % cConstants->all_write_freq != 0)) {
@@ -63,7 +64,7 @@ void output::printFinalGen(const cudaConstants * cConstants, std::vector<Adult>&
   printBestAdults(cConstants, allAdults, generation, errorNum, duplicateNum, oldestBirthday);
 
   //Print the result of the run to the combined run result file
-  reportRun(cConstants, allAdults, converged, generation);
+  reportRun(cConstants, allAdults, converged, generation, avgGenTime);
 
   //Check to see if there is a convergence before printing the trajectory
   //if (converged) {
@@ -135,7 +136,7 @@ void output::initializeGenPerformance(const cudaConstants * cConstants) {
     }
   }
 
-  excelFile << "anneal,minDistance,avgDistance,maxDistance,avgAge,oldestAge,bestAdultAge,avgBirthday,oldestBirthday,bestAdultBirthday,errorNum,duplicateNum,avgParentProgress,progress,parentChildProgressRatio\n";
+  excelFile << "anneal,avgGenTime,minDistance,avgDistance,maxDistance,minSteps,avgSteps,maxSteps,avgAge,oldestAge,bestAdultAge,avgBirthday,oldestBirthday,bestAdultBirthday,errorNum,duplicateNum,avgParentProgress,progress,parentChildProgressRatio\n";
   excelFile.close();
 }
 
@@ -238,7 +239,7 @@ void output::copyFile (const std::string& source, const std::string& destination
 
 //!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Take in the current state of the generation and appends to excel file, assumes initializeRecord() had already been called before (no need to output a header row)
-void output::recordGenerationPerformance(const cudaConstants * cConstants, std::vector<Adult> adults, const std::vector<double>& objectiveAvgValues, const int& generation, const double& new_anneal, const int& errorNum, const int& duplicateNum, const double& minDist, const double& avgDist, const double& maxDist, const double& avgAge, const int& oldestAge, const double& avgBirthday, const int& oldestBirthday) {
+void output::recordGenerationPerformance(const cudaConstants * cConstants, std::vector<Adult> adults, const std::vector<double>& objectiveAvgValues, const int& generation, const double& new_anneal, const int& errorNum, const int& duplicateNum, const int & minSteps, const int & avgSteps, const int & maxSteps, const double& minDist, const double& avgDist, const double& maxDist, const double& avgAge, const int& oldestAge, const double& avgBirthday, const int& oldestBirthday, const float& avgGenTime) {
   std::ofstream excelFile;
   int seed = cConstants->time_seed;
   std::string fileId = std::to_string(seed);
@@ -283,10 +284,17 @@ void output::recordGenerationPerformance(const cudaConstants * cConstants, std::
   //New anneal every gen
   excelFile << new_anneal << ",";
 
+  //Avg generation time
+  excelFile << avgGenTime << ",";
+
   //Distance values
   excelFile << minDist << ",";
   excelFile << avgDist << ",";
   excelFile << maxDist << ",";
+  //Step values
+  excelFile << minSteps << ",";
+  excelFile << avgSteps << ",";
+  excelFile << maxSteps << ",";
   //Age values
   excelFile << avgAge << ",";
   excelFile << oldestAge << ",";
@@ -356,7 +364,7 @@ void output::recordAllIndividuals(std::string name, const cudaConstants * cConst
     outputFile << cConstants->missionObjectives[i].name << ",";
   }
   
-  outputFile << "age,birthday,rank,distance,avgParentProgress,progress,parentChildProgressRatio";
+  outputFile << "age,birthday,rank,distance,numSteps,avgParentProgress,progress,parentChildProgressRatio";
   outputFile << '\n';
 
   outputFile << std::setprecision(20);
@@ -389,6 +397,7 @@ void output::recordAllIndividuals(std::string name, const cudaConstants * cConst
     outputFile << adults[i].birthday << ",";
     outputFile << adults[i].rank << ",";
     outputFile << adults[i].distance << ",";
+    outputFile << adults[i].stepCount << ",";
     outputFile << adults[i].avgParentProgress << ",";
     outputFile << adults[i].progress << ",";
     outputFile << adults[i].avgParentProgress/adults[i].progress << ",";
@@ -436,7 +445,7 @@ void output::finalRecord(const cudaConstants* cConstants, const Adult& bestAdult
 //!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 // Function which prints the general info of a run when its over
-void output::reportRun(const cudaConstants* cConstants, const std::vector<Adult>& adults, const bool& converged, const int& generation) {
+void output::reportRun(const cudaConstants* cConstants, const std::vector<Adult>& adults, const bool& converged, const int& generation, const float& avgGenTime) {
   //Open the runReport file
   std::ofstream output("..\\Output_Files\\runReports.csv", std::ios::app);
 
@@ -444,6 +453,8 @@ void output::reportRun(const cudaConstants* cConstants, const std::vector<Adult>
   output << "Seed:," << static_cast<int>(cConstants->time_seed) << ",,";
   //Report the final generion
   output << "Final Generation:," << generation << ",,";
+  //Report the average generation time
+  output << "Average Time/Generation:," << avgGenTime << ",,";
   //Report if it converged
   output << "Converged:,";
   if (converged) {

@@ -11,6 +11,7 @@
     cudaMalloc((void**) &devTimeInitial, sizeof(double));
     cudaMalloc((void**) &devStepSize, sizeof(double)); 
     cudaMalloc((void**) &devAbsTol, sizeof(double));
+    cudaMalloc((void**) &devChildrenToSim, sizeof(int));
     cudaMalloc((void**) &devCConstant, sizeof(cudaConstants));
     cudaMalloc((void**) &devMarsLaunchCon, marsConSize * sizeof(double));
 
@@ -27,6 +28,7 @@ void GPUMem::free(){
     cudaFree(devTimeInitial);
     cudaFree(devStepSize);
     cudaFree(devAbsTol);
+    cudaFree(devChildrenToSim);
     cudaFree(devCConstant);
     cudaFree(devMarsLaunchCon);
 }

@@ -333,31 +333,17 @@ double optimize(const cudaConstants* cConstants, GPUMem & gpuValues) {
         //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE CONVERGENCE CHECK-_-_-_-_-_-_-_-_-_\n\n";
         convergence = checkTolerance(oldAdults, cConstants);
 
-        std::sort(allAdults.begin(), allAdults.end(), higherOrbitPosDiff);
-        if (allAdults[0].minMarsDist < MSOI*cConstants->MSOI_error && worstOPD < allAdults[0].orbitPosDiff) {
-            std::string tempPath = genOutputs.outputPath;
-            genOutputs.outputPath = tempPath+"badAdult\\";
-            mkdir(genOutputs.outputPath.c_str());
-            genOutputs.finalRecord(cConstants, allAdults[0], generation);
-            genOutputs.outputPath = tempPath;
-            worstOPD = allAdults[0].orbitPosDiff;
-            std::cout << "\nBAD ADULT PRINTED\n\n";
-        }
-        std::sort(allAdults.begin(), allAdults.end(), rankDistanceSort);
-        
-        // //test: print bin for each individual who has a very bad posdiff
-        // std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: allAdultsSize " << allAdults.size() << "-_-_-_-_-_-_-_-_-_\n\n";
-        // for (int i = 0; i < allAdults.size(); i++)
-        // {
-        //     //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: CHECKING INDIVIDUAL " << i << " FOR BAD VALUE-_-_-_-_-_-_-_-_-_\n\n";
-        //     //std::cout << "\n\n_-_-_-_-_-_-_-_-_-INDIVIDUALS: " << oldAdults[i].orbitPosDiff << "-_-_-_-_-_-_-_-_-_\n\n";
-        //     if (allAdults[i].orbitPosDiff > 1000)
-        //     {
-        //         genOutputs.finalRecord(cConstants, allAdults[i], generation);
-        //         std::cout << "\nBAD ADULT PRINTED\n\n";
-        //     }
+        // std::sort(allAdults.begin(), allAdults.end(), higherOrbitPosDiff);
+        // if (allAdults[0].minMarsDist < MSOI*cConstants->MSOI_error && worstOPD < allAdults[0].orbitPosDiff) {
+        //     std::string tempPath = genOutputs.outputPath;
+        //     genOutputs.outputPath = tempPath+"badAdult\\";
+        //     mkdir(genOutputs.outputPath.c_str());
+        //     genOutputs.finalRecord(cConstants, allAdults[0], generation);
+        //     genOutputs.outputPath = tempPath;
+        //     worstOPD = allAdults[0].orbitPosDiff;
+        //     std::cout << "\nBAD ADULT PRINTED\n\n";
         // }
-        
+        // std::sort(allAdults.begin(), allAdults.end(), rankDistanceSort);        
         
         //Increment the generation counter
         ++generation;

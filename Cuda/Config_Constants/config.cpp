@@ -297,6 +297,9 @@ void cudaConstants::FileRead(std::string fileName) {
                     else if (variableName == "gravAssistDist") {
                         this->gravAssistDist = stod(variableValue);
                     }
+                    else if (variableName == "gravAssistTime") {
+                        this->gravAssistTime = stod(variableValue);
+                    }
 
 
 /////////////////////////////////////////////////////////////////////////// -- EARTH -- //////////////////////////////////////////////////////////////////////////////////

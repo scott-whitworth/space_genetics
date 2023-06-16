@@ -127,6 +127,10 @@ struct cudaConstants {
     //    TODO: This may need to be moved to a full output parameter, not a mission constant
     double gravAssistDist;
 
+    // (seconds) Estimation for the time it will take an individual to do a gravity assist around a planet
+    //      This is used during the simulation to concentrate steps within this timespan when an individual is in a sphere of influence
+    double gravAssistTime;
+
     // Collection of desired parameters and their details which are used by the genetic algorithm
     //     specifically used in rank and distance calculations
     //     for more info, look at documentation in objective.h and the mission.config files

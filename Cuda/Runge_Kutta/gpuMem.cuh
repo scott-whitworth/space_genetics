@@ -16,6 +16,7 @@ struct GPUMem
     double *devTimeInitial;
     double *devStepSize;
     double *devAbsTol;
+    int *devChildrenToSim;
     cudaConstants *devCConstant;
     elements<double> *devMarsLaunchCon;
     //initializes the device parameters and allocates the space on the GPU

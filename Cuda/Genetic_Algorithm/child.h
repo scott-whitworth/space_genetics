@@ -37,6 +37,7 @@ struct Child {
 
     int stepCount; //counts steps in callRK, needed for orbital missions to keep track of steps
     int simStartTime; //Tracks the time from end of mission that the child needs to be simulated from. This is used to simulate children specifically within spheres of influence
+    elements<double> simStartPos; //Tracks the positon/velocity elements from the end of a simulation, will only be used in RK4Simple
 
     //Both status and error_status are defined in constants.h
     //STATUS should be removed in the future

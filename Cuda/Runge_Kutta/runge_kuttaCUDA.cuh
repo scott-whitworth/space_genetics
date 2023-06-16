@@ -28,7 +28,7 @@ void callRK( double & calcPerS, Child *generation, const cudaConstants* cConstan
 //        cConstant - allows you to access the thruster_type, wet_mass, and things like that
 //        marsLaunchCon - the positions of Mars that have been calculated so far
 // Output: The individuals in children all have their final positions and error statuses set
-__global__ void rk4SimpleCUDA(Child *children, double *timeInitial, double *startStepSize, double *absTolInput, int n, const cudaConstants* cConstant, elements<double> * marsLaunchCon, int *childrenToSim);
+__global__ void rk4SimpleCUDA(Child *children, double *timeInitial, double *startStepSize, double *absTolInput, int n, const cudaConstants* cConstant, elements<double> * marsLaunchCon, int& childrenToSim);
 
 
 #include "runge_kuttaCUDA.cu"

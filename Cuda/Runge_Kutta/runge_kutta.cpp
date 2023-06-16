@@ -15,6 +15,8 @@ template <class T> void rk4sys(const T & timeInitial, const T & timeFinal, T *ti
     thruster<T> thrust(cConstant);
 
     T curTime = timeInitial; // setting time equal to the start time
+    T startTime = timeInitial;
+    T endTime;
     int n = 0; // setting the initial iteration number equal to 0
 
     //mass of fuel expended (kg)
@@ -29,8 +31,19 @@ template <class T> void rk4sys(const T & timeInitial, const T & timeFinal, T *ti
     u = y0;
 
     //While loop will continute the calculations until the run has completed
-    while (SIM_STATUS != COMPLETED_SIM) {
-        while (curTime <= timeFinal) { // iterate until time is equal to the stop time
+    while (simStatus != COMPLETED_SIM) {
+        //Set the proper endTime
+        //If it is an SOI run, the endTime will be curTime plus the estimated assist/orbital time
+        //If not, end time will equal timeFinal
+        if (simStatus == INSIDE_SOI) {
+            endTime = curTime + cConstant->gravAssistTime;
+            //endTime = curTime + ((timeFinal - startTime) * cConstant->gravAssistTimeFrac);
+        }
+        else {
+            endTime = timeFinal;
+        }
+
+        while (curTime <= endTime) { // iterate until time is equal to the stop time
 
             y_new[n] = u;
 
@@ -53,10 +66,6 @@ template <class T> void rk4sys(const T & timeInitial, const T & timeFinal, T *ti
             //WARNING/NOTE: The indexing of n (not getCondition) for the error here should be double checked
             elements<double> mars = (*marsLaunchCon).getCondition(timeFinal - curTime); //gets Mars' position relative to the Sun
             marsIndex[n] = mars;
-            
-            if (curTime == timeFinal) {
-                break;
-            }
 
             //calculate the distance between the spacecraft and Mars
             double marsCraftDist = sqrt(pow(mars.r, 2) + pow(u.r, 2) + pow(u.z - mars.z, 2) - (2*u.r*mars.r*cos(mars.theta-u.theta)));
@@ -71,20 +80,60 @@ template <class T> void rk4sys(const T & timeInitial, const T & timeFinal, T *ti
             stepSize *= calc_scalingFactor(u-error,error,absTol, cConstant->doublePrecThresh); // Alter the step size for the next iteration
 
             // The step size cannot exceed the total time divided by 2 and cannot be smaller than the total time divided by 1000
-            if (stepSize > (timeFinal - timeInitial) / cConstant->min_numsteps) {
-                stepSize = (timeFinal - timeInitial) / cConstant->min_numsteps;
+            if (stepSize > (endTime - startTime) / cConstant->min_numsteps) {
+                stepSize = (endTime - startTime) / cConstant->min_numsteps;
             }
-            else if (stepSize < (timeFinal - timeInitial) / cConstant->max_numsteps) {
-                stepSize = (timeFinal - timeInitial) / cConstant->max_numsteps;
+            else if (stepSize < (endTime - startTime) / cConstant->max_numsteps) {
+                stepSize = (endTime - startTime) / cConstant->max_numsteps;
             }
             //for mars missions - check if it is in MSOI and increase the steps taken
             if (marsCraftDist < MSOI*cConstant->MSOI_error){
-                stepSize = (timeFinal - timeInitial) / (cConstant->MSOI_steps*cConstant->max_numsteps);
+                stepSize = (endTime - startTime) / (cConstant->MSOI_steps*cConstant->max_numsteps);
             }
             
-            // shorten the last step to end exactly at time final
-            if ( (curTime+stepSize) > timeFinal) {
-                stepSize = (timeFinal-curTime);
+            // shorten the last step to end exactly at the end time
+            if ( (curTime+stepSize) > endTime) {
+                stepSize = (endTime-curTime);
+            }
+
+            //Check to see if the curTime is less than endTime
+            if (curTime < endTime) {
+                //If so, check to see if the child triggers the conditions for a new run
+
+                //See if child has entered MSOI
+                if (marsCraftDist < MSOI*cConstant->MSOI_error && simStatus != INSIDE_SOI) {
+                    //Set the child status to inside SOI
+                    simStatus = INSIDE_SOI;
+
+                    //Reset start time to the current time
+                    startTime = curTime; 
+
+                    break;
+                }
+
+                //Check if child has exited MSOI after being inside it
+                if (marsCraftDist > MSOI*cConstant->MSOI_error && simStatus == INSIDE_SOI) {
+                    //Set the child status to outide SOI
+                    simStatus = OUTSIDE_SOI;
+
+                    //Reset start time  to the current time
+                    startTime = curTime; 
+
+                    break;
+                }
+            }
+            //The time is at or past the endTime 
+            else {
+                //if the endTime is at the final time, the simulation is done
+                if (endTime >= timeFinal) {
+                    simStatus = COMPLETED_SIM;
+                }
+                //if not, it means that the simulation is in a SOI and hasn't escaped the SOI by the time the estimated orbit/assist time
+                //set up the next simulation pass by resetting time initial to the current time
+                else {
+                    startTime = curTime;
+                }
+                
             }
 
             n++;

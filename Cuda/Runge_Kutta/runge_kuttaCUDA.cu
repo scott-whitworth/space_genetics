@@ -23,6 +23,8 @@ void callRK(double & calcPerS, Child *generation, const cudaConstants* cConstant
     
     //While loop will keep simulating while there are still children to simulate
     while (childrenToSim > 0) {
+        std::cout << "\nPreforming new simulation for " << childrenToSim << " individuals\n";
+
         cudaEvent_t kernelStart, kernelEnd;
         cudaEventCreate(&kernelStart);
         cudaEventCreate(&kernelEnd);
@@ -31,17 +33,17 @@ void callRK(double & calcPerS, Child *generation, const cudaConstants* cConstant
         cudaMemcpy(gpuValues.devGeneration, generation, numThreads * sizeof(Child), cudaMemcpyHostToDevice);
         cudaMemcpy(gpuValues.devTimeInitial, &timeInitial, sizeof(double), cudaMemcpyHostToDevice);
         cudaMemcpy(gpuValues.devStepSize, &stepSize, sizeof(double), cudaMemcpyHostToDevice);
-        cudaMemcpy(gpuValues.devChildrenToSim, &childrenToSim, sizeof(int), cudaMemcpyHostToDevice);
+        //cudaMemcpy(gpuValues.devChildrenToSim, &childrenToSim, sizeof(int), cudaMemcpyHostToDevice);
 
         
         // GPU version of rk4Simple()
         cudaEventRecord(kernelStart);
-        rk4SimpleCUDA<<<(numThreads+blockThreads-1)/blockThreads,blockThreads>>>(gpuValues.devGeneration, gpuValues.devTimeInitial, gpuValues.devStepSize, gpuValues.devAbsTol, numThreads, gpuValues.devCConstant, gpuValues.devMarsLaunchCon, gpuValues.devChildrenToSim);
+        rk4SimpleCUDA<<<(numThreads+blockThreads-1)/blockThreads,blockThreads>>>(gpuValues.devGeneration, gpuValues.devTimeInitial, gpuValues.devStepSize, gpuValues.devAbsTol, numThreads, gpuValues.devCConstant, gpuValues.devMarsLaunchCon, childrenToSim);
         cudaEventRecord(kernelEnd);
 
         // copy the result of the kernel onto the host
         cudaMemcpy(generation, gpuValues.devGeneration, numThreads * sizeof(Child), cudaMemcpyDeviceToHost);
-        cudaMemcpy(&childrenToSim, gpuValues.devChildrenToSim, sizeof(int), cudaMemcpyDeviceToHost);
+        //cudaMemcpy(&childrenToSim, gpuValues.devChildrenToSim, sizeof(int), cudaMemcpyDeviceToHost);
 
         float kernelT;
         
@@ -54,7 +56,7 @@ void callRK(double & calcPerS, Child *generation, const cudaConstants* cConstant
 }
 
 // seperate conditions are passed for each thread, but timeInitial, stepSize, and absTol are the same for every thread
-__global__ void rk4SimpleCUDA(Child *children, double *timeInitial, double *startStepSize, double *absTolInput, int n, const cudaConstants* cConstant, elements<double>* marsLaunchCon, int *childrenToSim) {
+__global__ void rk4SimpleCUDA(Child *children, double *timeInitial, double *startStepSize, double *absTolInput, int n, const cudaConstants* cConstant, elements<double>* marsLaunchCon, int& childrenToSim) {
 
         int threadId = threadIdx.x + blockIdx.x * blockDim.x;
         if (threadId < n) {
@@ -95,8 +97,8 @@ __global__ void rk4SimpleCUDA(Child *children, double *timeInitial, double *star
                     curTime = children[threadId].simStartTime;
                     //Set the start time to this simulation's start time
                     startTime = children[threadId].simStartTime;
-                    //Get the child's finalPos, which will have the elements of the child at the last step of the last simulation
-                    curPos = children[threadId].finalPos;
+                    //Get the child's simStartPos, which will have the elements of the child at the last step of the last simulation
+                    curPos = children[threadId].simStartPos;
                 }
 
                 //Check to see if this simulation occurs within a sphere of influence
@@ -104,6 +106,7 @@ __global__ void rk4SimpleCUDA(Child *children, double *timeInitial, double *star
                 if(children[threadId].simStatus == INSIDE_SOI) {
                     //If this is a mission inside a SOI, set the final to be a gravAssistTime difference from the start time
                     endTime = startTime + cConstant->gravAssistTime;
+                    //endTime = startTime + ((threadRKParameters.tripTime - startTime) * cConstant->gravAssistTimeFrac);
 
                     //Check to make sure that endTime is not further than tripTIme
                     if(endTime > threadRKParameters.tripTime) {
@@ -123,7 +126,7 @@ __global__ void rk4SimpleCUDA(Child *children, double *timeInitial, double *star
 
                 elements<double> error; // holds output of previous value from rkCalc
 
-        while (curTime < threadRKParameters.tripTime) {
+                while (curTime < endTime) {
 
                     // Check the thruster type before performing calculations
                     if (cConstant->thruster_type == thruster<double>::NO_THRUST) {
@@ -213,7 +216,7 @@ __global__ void rk4SimpleCUDA(Child *children, double *timeInitial, double *star
                         if (marsCraftDist < MSOI*cConstant->MSOI_error && children[threadId].simStatus != INSIDE_SOI) {
                             //Set the final time and position for this portion of the child's simulation
                             children[threadId].simStartTime = curTime;
-                            children[threadId].finalPos = curPos;
+                            children[threadId].simStartPos = curPos;
 
                             //Set the child status to inside SOI
                             children[threadId].simStatus = INSIDE_SOI;
@@ -225,33 +228,41 @@ __global__ void rk4SimpleCUDA(Child *children, double *timeInitial, double *star
                         if (marsCraftDist > MSOI*cConstant->MSOI_error && children[threadId].simStatus == INSIDE_SOI) {
                             //Set the final time and position for this portion of the child's simulation
                             children[threadId].simStartTime = curTime;
-                            children[threadId].finalPos = curPos;
+                            children[threadId].simStartPos = curPos;
 
                             //Set the child status to outide SOI
                             children[threadId].simStatus = OUTSIDE_SOI;
 
                             break;
                         }
-                    }
-                    //Check to see if this simulation is a SOI sim
-                    else if (children[threadId].simStatus == INSIDE_SOI) {
-                        //If here, the cur time at or past the end time
-                        //Normally, this would be at the end of the trip
-                        //But for SOI simulations, if the code is here, the individual is still inside the MSOI, but hasn't necessarily reached the end
-                    }      
+                    }    
                 }
-                //Give the child its final calculated position and time
-                children[threadId].finalPos = curPos;
-                children[threadId].simStartTime = curTime;
 
-                //if it is not a SUN_ERROR then it is valid
-                children[threadId].errorStatus = VALID;
+                //Check to see if this simulation has completed its total runtime
+                if (endTime >= threadRKParameters.tripTime) {
+                    //If here, the individual's simulation has completely ended, regardless of its current simStatus
+                    
+                    //Give the child its final calculated position
+                    children[threadId].finalPos = curPos;
 
-                //The child has finished it's run, set the simStatus to completed
-                children[threadId].simStatus = COMPLETED_SIM;
+                    //if it is not a SUN_ERROR then it is valid
+                    children[threadId].errorStatus = VALID;
 
-                //Subtract one from the children to simulate tracker
-                childrenToSim--;
+                    //The child has finished it's run, set the simStatus to completed
+                    children[threadId].simStatus = COMPLETED_SIM;
+
+                    //Subtract one from the children to simulate tracker
+                    childrenToSim--;
+                }
+                //else: endTime != tripTime
+                else {
+                    //This means the simulation was for an individual in a SOI, but it never escaped the SOI in the estimated time
+                    //The individual will need be run through a SOI simulation again 
+                    //The sim status would already be INSIDE_SOI, so only the position and time need to be recorded
+                    children[threadId].simStartPos = curPos;
+                    children[threadId].simStartTime = curTime;  
+                }
+                
             }
         }
         

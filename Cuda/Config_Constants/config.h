@@ -131,6 +131,10 @@ struct cudaConstants {
     //      This is used during the simulation to concentrate steps within this timespan when an individual is in a sphere of influence
     double gravAssistTime;
 
+    // (%, implicit seconds) The percent of the triptime estimated to be used for a gravitational assist
+    //      Will be used in RK4Simple and RK4Sys to do simulations specifically for when an individual is inside a sphere of influence
+    double gravAssistTimeFrac;
+
     // Collection of desired parameters and their details which are used by the genetic algorithm
     //     specifically used in rank and distance calculations
     //     for more info, look at documentation in objective.h and the mission.config files

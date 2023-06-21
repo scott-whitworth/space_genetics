@@ -521,8 +521,9 @@ void output::trajectoryPrint( double x[], int generation, const cudaConstants* c
   double timeFinal=cConstants->triptime_min; // The shortest possible triptime to make the initial deltaT a small but reasonable size
   double deltaT; // time step
   //int numSteps = cConstants->max_numsteps*7; // initial guess for the number of time steps, guess for the memory allocated 
-  int numSteps = best.stepCount+5; // initial guess for the number of time steps, guess for the memory allocated 
-  deltaT = (timeFinal-timeInitial) / cConstants->max_numsteps; // initial guess for time step, small is preferable
+  // int numSteps = best.stepCount+5; // initial guess for the number of time steps, guess for the memory allocated 
+  int numSteps = ((best.simNum+1)*cConstants->max_numsteps)+1;
+  deltaT = (timeFinal-timeInitial) / numSteps; // initial guess for time step, small is preferable
 
   // setup of thrust angle calculations based off of optimized coefficients
   coefficients<double> coeff;
@@ -533,8 +534,6 @@ void output::trajectoryPrint( double x[], int generation, const cudaConstants* c
   double wetMass = cConstants->wet_mass;
   // setting Runge-Kutta tolerance
   double absTol = cConstants->rk_tol;
-  // set optmization minimum
-  // double Fmin = cConstants->f_min;
 
   // Initialize memory for the solution vector of the dependant solution
   elements<double>* yp = new elements<double>[numSteps];
@@ -560,7 +559,7 @@ void output::trajectoryPrint( double x[], int generation, const cudaConstants* c
   double lastStep = lastStepInt;
 
   // gets the final y values of the spacecrafts for the cost function.
-  elements<double> yOut = yp[lastStepInt];
+  //elements<double> yOut = yp[lastStepInt];
 
   // calculate the error in conservation of mechanical energy due to the thruster
   errorCheck(times, yp, gamma, tau, lastStepInt, accel_output, fuelSpent, wetMass, work, dE, Etot_avg, cConstants, marsIndex);

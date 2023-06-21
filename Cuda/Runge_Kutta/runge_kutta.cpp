@@ -17,7 +17,7 @@ template <class T> void rk4sys(const T & timeInitial, const T & timeFinal, T *ti
     T curTime = timeInitial; // setting time equal to the start time
     T startTime = timeInitial;
     T endTime;
-    int n = 0; // setting the initial iteration number equal to 0
+    int n = 0; // setting the initial step number equal to 0
 
     //mass of fuel expended (kg)
     //set to 0 initially
@@ -43,7 +43,7 @@ template <class T> void rk4sys(const T & timeInitial, const T & timeFinal, T *ti
             endTime = timeFinal;
         }
 
-        while (curTime <= endTime) { // iterate until time is equal to the stop time
+        while (curTime < endTime) { // iterate until time is equal to the stop time
 
             y_new[n] = u;
 
@@ -86,10 +86,6 @@ template <class T> void rk4sys(const T & timeInitial, const T & timeFinal, T *ti
             else if (stepSize < (endTime - startTime) / cConstant->max_numsteps) {
                 stepSize = (endTime - startTime) / cConstant->max_numsteps;
             }
-            //for mars missions - check if it is in MSOI and increase the steps taken
-            if (marsCraftDist < MSOI*cConstant->MSOI_error){
-                stepSize = (endTime - startTime) / (cConstant->MSOI_steps*cConstant->max_numsteps);
-            }
             
             // shorten the last step to end exactly at the end time
             if ( (curTime+stepSize) > endTime) {
@@ -101,7 +97,7 @@ template <class T> void rk4sys(const T & timeInitial, const T & timeFinal, T *ti
                 //If so, check to see if the child triggers the conditions for a new run
 
                 //See if child has entered MSOI
-                if (marsCraftDist < MSOI*cConstant->MSOI_error && simStatus != INSIDE_SOI) {
+                if (marsCraftDist < MSOI*cConstant->MSOI_scale && simStatus != INSIDE_SOI) {
                     //Set the child status to inside SOI
                     simStatus = INSIDE_SOI;
 
@@ -112,7 +108,7 @@ template <class T> void rk4sys(const T & timeInitial, const T & timeFinal, T *ti
                 }
 
                 //Check if child has exited MSOI after being inside it
-                if (marsCraftDist > MSOI*cConstant->MSOI_error && simStatus == INSIDE_SOI) {
+                if (marsCraftDist > MSOI*cConstant->MSOI_scale && simStatus == INSIDE_SOI) {
                     //Set the child status to outide SOI
                     simStatus = OUTSIDE_SOI;
 
@@ -140,7 +136,7 @@ template <class T> void rk4sys(const T & timeInitial, const T & timeFinal, T *ti
         } //end of while
     }
      
-    lastStep = n;
+    lastStep = n-1;
 
     // Test outputs to observe difference between rk4sys results with CUDA runge-kutta results
     if (cConstant->orbitalSpeed != NOT_APPLICABLE){//change the calculation if it is a orbital mission 

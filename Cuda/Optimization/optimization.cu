@@ -333,17 +333,17 @@ double optimize(const cudaConstants* cConstants, GPUMem & gpuValues) {
         //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE CONVERGENCE CHECK-_-_-_-_-_-_-_-_-_\n\n";
         convergence = checkTolerance(oldAdults, cConstants);
 
-        // std::sort(allAdults.begin(), allAdults.end(), higherOrbitPosDiff);
-        // if (allAdults[0].minMarsDist < MSOI*cConstants->MSOI_error && worstOPD < allAdults[0].orbitPosDiff) {
-        //     std::string tempPath = genOutputs.outputPath;
-        //     genOutputs.outputPath = tempPath+"badAdult\\";
-        //     mkdir(genOutputs.outputPath.c_str());
-        //     genOutputs.finalRecord(cConstants, allAdults[0], generation);
-        //     genOutputs.outputPath = tempPath;
-        //     worstOPD = allAdults[0].orbitPosDiff;
-        //     std::cout << "\nBAD ADULT PRINTED\n\n";
-        // }
-        // std::sort(allAdults.begin(), allAdults.end(), rankDistanceSort);        
+        std::sort(allAdults.begin(), allAdults.end(), LowerMarsDist);
+        if (allAdults[0].minMarsDist < MSOI*cConstants->MSOI_scale && worstOPD < allAdults[0].orbitPosDiff) {
+            std::string tempPath = genOutputs.outputPath;
+            genOutputs.outputPath = tempPath+"badAdult\\";
+            mkdir(genOutputs.outputPath.c_str());
+            genOutputs.finalRecord(cConstants, allAdults[0], generation);
+            genOutputs.outputPath = tempPath;
+            worstOPD = allAdults[0].orbitPosDiff;
+            std::cout << "\nBAD ADULT PRINTED\n\n";
+        }
+        std::sort(allAdults.begin(), allAdults.end(), rankDistanceSort);        
         
         //Increment the generation counter
         ++generation;

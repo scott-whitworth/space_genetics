@@ -261,12 +261,9 @@ void cudaConstants::FileRead(std::string fileName) {
                     else if (variableName == "orbitalSpeed"){
                         this->orbitalSpeed = std::stod(variableValue);
                     }
-                    else if (variableName == "MSOI_error"){
-                        this->MSOI_error = std::stod(variableValue);
+                    else if (variableName == "MSOI_scale"){
+                        this->MSOI_scale = std::stod(variableValue);
                     }
-                    else if (variableName == "MSOI_steps"){
-                        this->MSOI_steps = std::stod(variableValue);
-                    }  
                     else if (variableName == "coast_threshold") {
                         this->coast_threshold = std::stod(variableValue);
                     }
@@ -507,7 +504,7 @@ std::ostream& operator<<(std::ostream& os, const cudaConstants& object) {
     os << "\tthruster_type: "   << object.thruster_type   << "\tdry_mass: " << object.dry_mass << "\t\tfuel_mass: " << object.fuel_mass << "\t\twet_mass: " << object.wet_mass << "\n";
     // Display the c3energy assignment, showing c3scale to help clarify that it is not directly from config
     os << "\tc3energy ("        << (object.c3scale * 100) << "%): "         << object.c3energy << "\tv_escape: "    << object.v_escape  << "\n";
-    os << "\tcoast_threshold: " << object.coast_threshold << "\tMSOI_error: " << object.MSOI_error << "\tMSOI_steps: " << object.MSOI_steps << "\n\n";
+    os << "\tcoast_threshold: " << object.coast_threshold << "\tMSOI_scale: " << object.MSOI_scale << "\n\n";
 
     os << "Target Info:\n";
     os << "\t R: " << object.r_fin_target  << "\t 0: " << object.theta_fin_target  << "\t Z: " << object.z_fin_target  << "\n";

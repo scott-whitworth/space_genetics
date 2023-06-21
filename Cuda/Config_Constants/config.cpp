@@ -19,7 +19,7 @@ cudaConstants::cudaConstants() {
     FileRead("../Config_Constants/" + this->destination);
 
     //If time mutation scale is not set, set it to the difference between triptime max and min
-    if (triptime_mutate_scale == 0) {
+    if (this->triptime_mutate_scale < this->doublePrecThresh) {
         //std::cout << "\nTEST: setting triptime mutate scale to difference\n";
         this->triptime_mutate_scale = (this->triptime_max - this->triptime_min);
     }

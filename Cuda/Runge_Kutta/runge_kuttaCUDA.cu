@@ -20,8 +20,6 @@ void callRK(double & calcPerS, Child *generation, const cudaConstants* cConstant
     const int numThreads = gpuValues.numThreads;
     const int blockThreads = cConstant->thread_block_size;
     double stepSize = (cConstant->triptime_min - timeInitial)/cConstant->max_numsteps;
-
-    std::cout << "_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-";
     
     //Do while loop will keep simulating while there are still children to simulate
     do {
@@ -47,7 +45,8 @@ void callRK(double & calcPerS, Child *generation, const cudaConstants* cConstant
         cudaMemcpy(generation, gpuValues.devGeneration, numThreads * sizeof(Child), cudaMemcpyDeviceToHost);
 
         //Output how many simulation cycles the code has done
-        std::cout << "\nCompleted simulation cycle " << simulationNum << " for this generation.\n";
+        //std::cout << "\nCompleted simulation cycle " << simulationNum << " for this generation.\n";
+        std::cout << "_";
 
         simulationNum++; //Add one to simulation num for the next cycle
 

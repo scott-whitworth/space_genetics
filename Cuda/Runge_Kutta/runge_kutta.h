@@ -2,6 +2,7 @@
 #define RUNGE_KUTTA_H
 #include "../Thrust_Files/coefficients.h"
 #include "../Thrust_Files/thruster.h" // used to pass in a thruster type
+#include "../Config_Constants/constants.h" // used for simulation status
 
 
 // Three variations of fifth-order Runge-Kutta algorthim for system of ODEs defined in ODE45.h

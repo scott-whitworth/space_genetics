@@ -82,8 +82,20 @@ enum ERROR_STATUS{
     MARS_ERROR = 2, //the spacecraft gets too close to Mars
     DUPLICATE = 3,  //an adult has been found to be a duplicate of another, original adult
     NOT_RUN = 4, //child has not been run through callRK (this is the default when created)
-    NAN_ERROR = 6, //there was an issue during the simulation of the child, causing its final pos to be nan
-    OTHER_ERROR = 7,   //any nans not caught during callRk are set to this error status in optimization
+    NAN_ERROR = 5, //there was an issue during the simulation of the child, causing its final pos to be nan
+    OTHER_ERROR = 6,   //any nans not caught during callRk are set to this error status in optimization
+};
+
+//Enum will track the simulation status for each child
+//  Each child will initially have a sim status of INITIAL_RUN
+//  If a child enters an sphere of influence during it's run, it will have the status INSIDE_MSOI
+//  If then the child exits the sphere of influence, it will be assigned OUTSIDE_SOI
+//  This is used in the Runge-Kutta simulations to 
+enum SIM_STATUS{
+    INITIAL_SIM = 0,
+    INSIDE_SOI = 1,
+    OUTSIDE_SOI = 2,
+    COMPLETED_SIM = 3,
 };
 
 enum PLANET{

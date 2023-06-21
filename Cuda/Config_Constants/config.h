@@ -24,9 +24,7 @@ struct cudaConstants {
     double orbitalRadius = -1; // the radius of the orbit around a body
     double orbitalSpeed = -1; // the final velocity the spacecraft needs to orbit its target
 
-    //two multipliers used in callRk and rk4sys that will change how many steps are taken in the calculations
-    int MSOI_steps;  //this multiplier is a large number that will increase the stepsize
-    double MSOI_error; //This will change how large the MSOI is and when to start increasing the stepsize
+    double MSOI_scale; //This will modify how large the base MSOI is scaled, used in determining when an individual enters a SOI 
 
     int write_freq;       // Generations between calling recordGenerationPerformance() method (defined in Output_Funcs/output.cpp)
     int all_write_freq;   // Generations between calling recordAllIndividuals() method (defined in Output_Funcs/output.cpp)
@@ -126,6 +124,14 @@ struct cudaConstants {
     //    The genetic algorithm should push the path to minimize this, this acts as a minimum threshold
     //    TODO: This may need to be moved to a full output parameter, not a mission constant
     double gravAssistDist;
+
+    // (seconds) Estimation for the time it will take an individual to do a gravity assist around a planet
+    //      This is used during the simulation to concentrate steps within this timespan when an individual is in a sphere of influence
+    double gravAssistTime;
+
+    // (%, implicit seconds) The percent of the triptime estimated to be used for a gravitational assist
+    //      Will be used in RK4Simple and RK4Sys to do simulations specifically for when an individual is inside a sphere of influence
+    double gravAssistTimeFrac;
 
     // Collection of desired parameters and their details which are used by the genetic algorithm
     //     specifically used in rank and distance calculations

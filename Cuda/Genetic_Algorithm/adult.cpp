@@ -135,6 +135,24 @@ bool LowerTripTime(const Adult& personA, const Adult& personB) {
     }
 }
 
+// Compare two individuals by their minMarsDist values, used in standard sort to have array contain lowest minMarsDist individual at start
+// input: two individuals
+// output: returns true if personA has a lower minMarsDist than personB
+bool LowerMarsDist(const Adult& personA, const Adult& personB) {
+    if(personA.errorStatus !=  VALID && personA.errorStatus != DUPLICATE){
+        return false;
+    }
+    else if(personB.errorStatus !=  VALID && personB.errorStatus != DUPLICATE){
+        return true;
+    }
+    else if (personA.minMarsDist < personB.minMarsDist) {
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
 //compares two individuals and sorts based on which individual is closer to 1
 //WARNING: this may be implemented in output.cpp in printFinalGen() when it may not need to be (use for test reasons)
 //input: two individuals
@@ -335,7 +353,7 @@ void findDuplicates (std::vector<Adult>& newAdults, std::vector<Adult>& oldAdult
         for(int j = i+1; j < tempAllAdults.size(); j++){
             //only true if it is both a duplicate and has not been previous marked as a duplicate
             // [j].duplicate check is for the second time an Adult is flagged as a duplicate
-            //CHecks for a valid error status, so duplicates can be reset to valid without worry of overriding other error statuses
+            //Checks for a valid error status, so duplicates can be reset to valid without worry of overriding other error statuses
             if(duplicateCheck(tempAllAdults[i], tempAllAdults[j], cConstants) && tempAllAdults[j].errorStatus == VALID) {
                 tempAllAdults[j].errorStatus = DUPLICATE;
             }

@@ -21,13 +21,14 @@
 struct Child {
     rkParameters<double> startParams; // input parameters for the run- the unique identifiers of this individual
 
-    elements<double> finalPos; // final position of the spacecraft at end of run
+    elements<double> finalPos; // final position of the spacecraft at end of a simulation
 
     double posDiff; // in AU, difference in position between spacecraft and center of target at end of run
     double speedDiff; // in AU/s, difference in velocity between spacecraft and target at end of run
     double orbitPosDiff; // in AU, difference in position between the spacecraft and the orbital radius of the target at the end of the run
     double orbitSpeedDiff; // in AU/s, the difference in velocity between the spacecraft and the orbit speed of the target at the end of the run
     double fuelSpent; // in kg, the amount of fuel spent by the individual during its simulation
+    double minMarsDist;
 
     double progress; //progress of the individual's posDiff and speedDiff. 0 to 1 scale with 0 being poor and 1 meaning that the individual have completed all objectives
     double avgParentProgress; //The average of the two parents progress
@@ -35,12 +36,19 @@ struct Child {
     int birthday; //keeps track of the generation this individual was created in 
 
     int stepCount; //counts steps in callRK, needed for orbital missions to keep track of steps
+    int simStartTime; //Tracks the time from end of mission that the child needs to be simulated from. This is used to simulate children specifically within spheres of influence
+    elements<double> simStartPos; //Tracks the positon/velocity elements from the end of a simulation, will only be used in RK4Simple
 
     //Both status and error_status are defined in constants.h
     //STATUS should be removed in the future
     STATUS funcStatus;//flag that keeps track of the status of the child (and eventually adult)
     
     ERROR_STATUS errorStatus; //record of if child is computed correctly, should be set in callRK
+
+    SIM_STATUS simStatus; //Record the state of the child's simulation, will be set and used in callRK
+
+    //Keeps track of the number of simulation cycles this child needed
+    int simNum; 
 
 
 //!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

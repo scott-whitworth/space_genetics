@@ -12,6 +12,8 @@ Child::Child() {
     funcStatus = DEFAULT_CHILD;//not ready to be an adult
 
     errorStatus = NOT_RUN; //not run through callRk
+
+    simStatus = INITIAL_SIM; //has not been simulated
 }
 
 // Set the initial position of the spacecraft according to the newly generated parameters
@@ -35,9 +37,14 @@ Child::Child(rkParameters<double> & childParameters, const cudaConstants* cConst
 
     funcStatus = FUNCTIONAL_CHILD;//ready to be an adult
     errorStatus = NOT_RUN; //not run through callRK yet
+    simStatus = INITIAL_SIM; //Has not been simulated yet
     birthday = genCreated; //Set the child's birthday to the current generation
     avgParentProgress = calcAvgParentProgress; //The avg progress of the creating parents, if any (0 for randomly generated children)
-    stepCount = 0;//no calculations done yet, default is zero
+    stepCount = 0; //no calculations done yet, default is zero
+    simStartTime = 0; //Inititially start the simulation at the start of the trip time
+    minMarsDist = 100; //Arbitrarily high initial min mars distance
+
+    simNum = 0; //Has not been simulated yet
 }
 
 // Copy constructor
@@ -54,10 +61,12 @@ Child:: Child(const Child& other){
     orbitSpeedDiff = other.orbitSpeedDiff; 
     funcStatus = other.funcStatus;
     errorStatus = other.errorStatus;
+    simStatus = other.simStatus;
     birthday = other.birthday;
     avgParentProgress = other.avgParentProgress;
     progress = other.progress;
     stepCount = other.stepCount;
+    minMarsDist = other.minMarsDist;
 }
 
 //Getter for a parameter dependent on the objective that is passed in
@@ -80,6 +89,9 @@ __host__ double Child::getParameters (const objective & requestObjective) const 
     }
     else if (requestObjective.goal == MIN_ORBIT_SPEED_DIFF){
         return orbitSpeedDiff;
+    }
+    else if (requestObjective.goal == MIN_MARS_DIST){
+        return minMarsDist;
     }
     else {
         //Indicates error

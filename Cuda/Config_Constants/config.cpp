@@ -18,6 +18,12 @@ cudaConstants::cudaConstants() {
     //get the destination
     FileRead("../Config_Constants/" + this->destination);
 
+    //If time mutation scale is not set, set it to the difference between triptime max and min
+    if (triptime_mutate_scale == 0) {
+        //std::cout << "\nTEST: setting triptime mutate scale to difference\n";
+        this->triptime_mutate_scale = (this->triptime_max - this->triptime_min);
+    }
+
     // Now that dry_mass and fuel_mass have been acquired, derive wet_mass
     this->wet_mass = this->dry_mass + this->fuel_mass;
 
@@ -251,6 +257,9 @@ void cudaConstants::FileRead(std::string fileName) {
                     }
                     else if (variableName == "sun_r_min") {
                         this->sun_r_min = std::stod(variableValue);
+                    }
+                    else if (variableName == "maxSimNum") {
+                        this->maxSimNum = std::stoi(variableValue);
                     }
                     else if (variableName == "best_count") {
                         this->best_count = std::stoi(variableValue);

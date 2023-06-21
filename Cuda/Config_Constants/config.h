@@ -112,6 +112,9 @@ struct cudaConstants {
     // (AU) minimum distance the spacecraft can be to the sun
     //    if spacecraft ever enters this distance, should cause error
     double sun_r_min;
+
+    //The maximum number of times an individual can be simulated
+    int maxSimNum;
     
     //Destination asteroid file. 
     // Constants for the asteroid/target and earth data in a different file to aid in switching asteroids/targets

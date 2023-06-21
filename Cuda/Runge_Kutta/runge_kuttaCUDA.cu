@@ -79,6 +79,18 @@ __global__ void rk4SimpleCUDA(Child *children, double *timeInitial, double *star
         if (children[threadId].simStatus != COMPLETED_SIM) {
             //If not, run it's simulation
             children[threadId].simNum++;
+
+            //Check to see if the child is about to be simulated too many times
+            if (children[threadId].simNum > cConstant->maxSimNum) {
+                //Assign an error to the child because it has been running for too long
+                children[threadId].errorStatus = SIMNUM_ERROR;
+
+                //Mark it as having completed it's run
+                children[threadId].simStatus = COMPLETED_SIM;
+
+                //Quit the simulation
+                return;
+            }
             
             rkParameters<double> threadRKParameters = children[threadId].startParams; // get the parameters for this thread
 

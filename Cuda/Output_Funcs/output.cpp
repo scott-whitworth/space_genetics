@@ -23,7 +23,7 @@ output::output(const cudaConstants* cConstants, const std::string& selectFolder)
 }
 
 //Call the functions which print during a run
-void output::printGeneration(const cudaConstants * cConstants, const std::vector<Adult>& allAdults, const std::vector<double>& objectiveAvgValues, const int& generation, const double& new_anneal, int& errorNum, const int& duplicateNum, const double& minDist, const double& avgDist, const double& maxDist, const double& avgAge, const int& oldestAge, const double& avgBirthday, const int& oldestBirthday) {
+void output::printGeneration(const cudaConstants * cConstants, const std::vector<Adult>& allAdults, const std::vector<double>& objectiveAvgValues, const int& generation, const double& new_anneal, int& errorNum, const int& duplicateNum, const int & minSteps, const int & avgSteps, const int & maxSteps, const double& minDist, const double& avgDist, const double& maxDist, const double& avgAge, const int& oldestAge, const double& avgBirthday, const int& oldestBirthday, const float& avgGenTime) {
   
   //Check to see if the best adults should be printed to the terminal on this generation
   if (generation % cConstants->disp_freq == 0) {
@@ -37,7 +37,7 @@ void output::printGeneration(const cudaConstants * cConstants, const std::vector
     if (generation % cConstants->write_freq == 0) {
 
       //Push info to the function which prints the full genPerformance file
-      recordGenerationPerformance(cConstants, allAdults, objectiveAvgValues, generation, new_anneal, errorNum, duplicateNum, minDist, avgDist, maxDist, avgAge, oldestAge, avgBirthday, oldestBirthday);
+      recordGenerationPerformance(cConstants, allAdults, objectiveAvgValues, generation, new_anneal, errorNum, duplicateNum, minSteps, avgSteps, maxSteps, minDist, avgDist, maxDist, avgAge, oldestAge, avgBirthday, oldestBirthday, avgGenTime);
       //Push info to the function which prints the simplified genPerformance file
       recordGenSimple(cConstants, allAdults, objectiveAvgValues, generation);
     }
@@ -136,7 +136,7 @@ void output::initializeGenPerformance(const cudaConstants * cConstants) {
     }
   }
 
-  excelFile << "anneal,minDistance,avgDistance,maxDistance,avgAge,oldestAge,bestAdultAge,avgBirthday,oldestBirthday,bestAdultBirthday,errorNum,duplicateNum,avgParentProgress,progress,parentChildProgressRatio\n";
+  excelFile << "anneal,avgGenTime,minDistance,avgDistance,maxDistance,minSteps,avgSteps,maxSteps,avgAge,oldestAge,bestAdultAge,avgBirthday,oldestBirthday,bestAdultBirthday,errorNum,duplicateNum,avgParentProgress,progress,parentChildProgressRatio\n";
   excelFile.close();
 }
 
@@ -239,7 +239,7 @@ void output::copyFile (const std::string& source, const std::string& destination
 
 //!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Take in the current state of the generation and appends to excel file, assumes initializeRecord() had already been called before (no need to output a header row)
-void output::recordGenerationPerformance(const cudaConstants * cConstants, std::vector<Adult> adults, const std::vector<double>& objectiveAvgValues, const int& generation, const double& new_anneal, const int& errorNum, const int& duplicateNum, const double& minDist, const double& avgDist, const double& maxDist, const double& avgAge, const int& oldestAge, const double& avgBirthday, const int& oldestBirthday) {
+void output::recordGenerationPerformance(const cudaConstants * cConstants, std::vector<Adult> adults, const std::vector<double>& objectiveAvgValues, const int& generation, const double& new_anneal, const int& errorNum, const int& duplicateNum, const int & minSteps, const int & avgSteps, const int & maxSteps, const double& minDist, const double& avgDist, const double& maxDist, const double& avgAge, const int& oldestAge, const double& avgBirthday, const int& oldestBirthday, const float& avgGenTime) {
   std::ofstream excelFile;
   int seed = cConstants->time_seed;
   std::string fileId = std::to_string(seed);
@@ -284,10 +284,17 @@ void output::recordGenerationPerformance(const cudaConstants * cConstants, std::
   //New anneal every gen
   excelFile << new_anneal << ",";
 
+  //Avg generation time
+  excelFile << avgGenTime << ",";
+
   //Distance values
   excelFile << minDist << ",";
   excelFile << avgDist << ",";
   excelFile << maxDist << ",";
+  //Step values
+  excelFile << minSteps << ",";
+  excelFile << avgSteps << ",";
+  excelFile << maxSteps << ",";
   //Age values
   excelFile << avgAge << ",";
   excelFile << oldestAge << ",";
@@ -357,7 +364,7 @@ void output::recordAllIndividuals(std::string name, const cudaConstants * cConst
     outputFile << cConstants->missionObjectives[i].name << ",";
   }
   
-  outputFile << "age,birthday,rank,distance,avgParentProgress,progress,parentChildProgressRatio";
+  outputFile << "age,birthday,rank,distance,numSteps,avgParentProgress,progress,parentChildProgressRatio";
   outputFile << '\n';
 
   outputFile << std::setprecision(20);
@@ -390,6 +397,7 @@ void output::recordAllIndividuals(std::string name, const cudaConstants * cConst
     outputFile << adults[i].birthday << ",";
     outputFile << adults[i].rank << ",";
     outputFile << adults[i].distance << ",";
+    outputFile << adults[i].stepCount << ",";
     outputFile << adults[i].avgParentProgress << ",";
     outputFile << adults[i].progress << ",";
     outputFile << adults[i].avgParentProgress/adults[i].progress << ",";
@@ -513,8 +521,9 @@ void output::trajectoryPrint( double x[], int generation, const cudaConstants* c
   double timeFinal=cConstants->triptime_min; // The shortest possible triptime to make the initial deltaT a small but reasonable size
   double deltaT; // time step
   //int numSteps = cConstants->max_numsteps*7; // initial guess for the number of time steps, guess for the memory allocated 
-  int numSteps = best.stepCount+5; // initial guess for the number of time steps, guess for the memory allocated 
-  deltaT = (timeFinal-timeInitial) / cConstants->max_numsteps; // initial guess for time step, small is preferable
+  // int numSteps = best.stepCount+5; // initial guess for the number of time steps, guess for the memory allocated 
+  int numSteps = ((best.simNum+1)*cConstants->max_numsteps)+1;
+  deltaT = (timeFinal-timeInitial) / numSteps; // initial guess for time step, small is preferable
 
   // setup of thrust angle calculations based off of optimized coefficients
   coefficients<double> coeff;
@@ -525,8 +534,6 @@ void output::trajectoryPrint( double x[], int generation, const cudaConstants* c
   double wetMass = cConstants->wet_mass;
   // setting Runge-Kutta tolerance
   double absTol = cConstants->rk_tol;
-  // set optmization minimum
-  // double Fmin = cConstants->f_min;
 
   // Initialize memory for the solution vector of the dependant solution
   elements<double>* yp = new elements<double>[numSteps];
@@ -552,7 +559,7 @@ void output::trajectoryPrint( double x[], int generation, const cudaConstants* c
   double lastStep = lastStepInt;
 
   // gets the final y values of the spacecrafts for the cost function.
-  elements<double> yOut = yp[lastStepInt];
+  //elements<double> yOut = yp[lastStepInt];
 
   // calculate the error in conservation of mechanical energy due to the thruster
   errorCheck(times, yp, gamma, tau, lastStepInt, accel_output, fuelSpent, wetMass, work, dE, Etot_avg, cConstants, marsIndex);

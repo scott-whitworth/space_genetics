@@ -9,10 +9,15 @@
 template <class T> void rk4sys(const T & timeInitial, const T & timeFinal, T *times, const elements<T> & y0, T stepSize, elements<T> *y_new, 
                                const T & absTol, coefficients<T> coeff, T *gamma,  T *tau, int & lastStep, T *accel_output, T *fuelSpent, const T & wetMass, const cudaConstants* cConstant, elements<T> *marsIndex) {
 
+    //Create a sim status which indidicates the run has not started
+    SIM_STATUS simStatus = INITIAL_SIM;
+
     thruster<T> thrust(cConstant);
 
     T curTime = timeInitial; // setting time equal to the start time
-    int n = 0; // setting the initial iteration number equal to 0
+    T startTime = timeInitial;
+    T endTime;
+    int n = 0; // setting the initial step number equal to 0
 
     //mass of fuel expended (kg)
     //set to 0 initially
@@ -25,66 +30,113 @@ template <class T> void rk4sys(const T & timeInitial, const T & timeFinal, T *ti
     // Set the first element of the solution vector to the initial conditions
     u = y0;
 
-    while (curTime <= timeFinal) { // iterate until time is equal to the stop time
-
-        y_new[n] = u;
-
-        times[n] = curTime;
-
-        // Check the thruster type before performing calculations, at time 0
-        if (cConstant->thruster_type == thruster<double>::NO_THRUST) {
-            gamma[n] = tau[n] = accel_output[n] = fuelSpent[n] = 0;
+    //While loop will continute the calculations until the run has completed
+    while (simStatus != COMPLETED_SIM) {
+        //Set the proper endTime
+        //If it is an SOI run, the endTime will be curTime plus the estimated assist/orbital time
+        //If not, end time will equal timeFinal
+        if (simStatus == INSIDE_SOI) {
+            endTime = curTime + cConstant->gravAssistTime;
+            //endTime = curTime + ((timeFinal - startTime) * cConstant->gravAssistTimeFrac);
         }
         else {
-            // array of gamma for binary output
-            gamma[n] = calc_gamma(coeff, curTime, timeFinal);
-            // array of tau for binary output
-            tau[n] = calc_tau(coeff,curTime, timeFinal);
-            // array of acceleration for binary output
-            accel_output[n] = calc_accel(u.r,u.z, thrust, massFuelSpent, stepSize, calc_coast(coeff, curTime, timeFinal, thrust), wetMass, cConstant);
-            // array of fuel spent for binary output
-            fuelSpent[n] = massFuelSpent;
-        }
-        //WARNING/NOTE: The indexing of n (not getCondition) for the error here should be double checked
-        elements<double> mars = (*marsLaunchCon).getCondition(timeFinal - curTime); //gets Mars' position relative to the Sun
-        marsIndex[n] = mars;
-        
-        if (curTime == timeFinal) {
-            break;
+            endTime = timeFinal;
         }
 
-        //calculate the distance between the spacecraft and Mars
-        double marsCraftDist = sqrt(pow(mars.r, 2) + pow(u.r, 2) + pow(u.z - mars.z, 2) - (2*u.r*mars.r*cos(mars.theta-u.theta)));
+        while (curTime < endTime) { // iterate until time is equal to the stop time
 
-        //calculate new position
-        rkCalc(curTime, timeFinal, stepSize, u, coeff, accel_output[n], error, mars, marsCraftDist);
+            y_new[n] = u;
 
-        //array of time output as t         
-        curTime += stepSize;
+            times[n] = curTime;
 
-        //This is the way that stepSize was calculated in rk4SimpleCUDA
-        stepSize *= calc_scalingFactor(u-error,error,absTol, cConstant->doublePrecThresh); // Alter the step size for the next iteration
+            // Check the thruster type before performing calculations, at time 0
+            if (cConstant->thruster_type == thruster<double>::NO_THRUST) {
+                gamma[n] = tau[n] = accel_output[n] = fuelSpent[n] = 0;
+            }
+            else {
+                // array of gamma for binary output
+                gamma[n] = calc_gamma(coeff, curTime, timeFinal);
+                // array of tau for binary output
+                tau[n] = calc_tau(coeff,curTime, timeFinal);
+                // array of acceleration for binary output
+                accel_output[n] = calc_accel(u.r,u.z, thrust, massFuelSpent, stepSize, calc_coast(coeff, curTime, timeFinal, thrust), wetMass, cConstant);
+                // array of fuel spent for binary output
+                fuelSpent[n] = massFuelSpent;
+            }
+            //WARNING/NOTE: The indexing of n (not getCondition) for the error here should be double checked
+            elements<double> mars = (*marsLaunchCon).getCondition(timeFinal - curTime); //gets Mars' position relative to the Sun
+            marsIndex[n] = mars;
 
-        // The step size cannot exceed the total time divided by 2 and cannot be smaller than the total time divided by 1000
-        if (stepSize > (timeFinal - timeInitial) / cConstant->min_numsteps) {
-            stepSize = (timeFinal - timeInitial) / cConstant->min_numsteps;
-        }
-        else if (stepSize < (timeFinal - timeInitial) / cConstant->max_numsteps) {
-            stepSize = (timeFinal - timeInitial) / cConstant->max_numsteps;
-        }
-        //for mars missions - check if it is in MSOI and increase the steps taken
-        if (marsCraftDist < MSOI*cConstant->MSOI_error){
-            stepSize = (timeFinal - timeInitial) / (cConstant->MSOI_steps*cConstant->max_numsteps);
-        }
-        
-        // shorten the last step to end exactly at time final
-        if ( (curTime+stepSize) > timeFinal) {
-            stepSize = (timeFinal-curTime);
-        }
+            //calculate the distance between the spacecraft and Mars
+            double marsCraftDist = sqrt(pow(mars.r, 2) + pow(u.r, 2) + pow(u.z - mars.z, 2) - (2*u.r*mars.r*cos(mars.theta-u.theta)));
 
-        n++;
-    } //end of while 
-    lastStep = n;
+            //calculate new position
+            rkCalc(curTime, timeFinal, stepSize, u, coeff, accel_output[n], error, mars, marsCraftDist);
+
+            //array of time output as t         
+            curTime += stepSize;
+
+            //This is the way that stepSize was calculated in rk4SimpleCUDA
+            stepSize *= calc_scalingFactor(u-error,error,absTol, cConstant->doublePrecThresh); // Alter the step size for the next iteration
+
+            // The step size cannot exceed the total time divided by 2 and cannot be smaller than the total time divided by 1000
+            if (stepSize > (endTime - startTime) / cConstant->min_numsteps) {
+                stepSize = (endTime - startTime) / cConstant->min_numsteps;
+            }
+            else if (stepSize < (endTime - startTime) / cConstant->max_numsteps) {
+                stepSize = (endTime - startTime) / cConstant->max_numsteps;
+            }
+            
+            // shorten the last step to end exactly at the end time
+            if ( (curTime+stepSize) > endTime) {
+                stepSize = (endTime-curTime);
+            }
+
+            //Check to see if the curTime is less than endTime
+            if (curTime < endTime) {
+                //If so, check to see if the child triggers the conditions for a new run
+
+                //See if child has entered MSOI
+                if (marsCraftDist < MSOI*cConstant->MSOI_scale && simStatus != INSIDE_SOI) {
+                    //Set the child status to inside SOI
+                    simStatus = INSIDE_SOI;
+
+                    //Reset start time to the current time
+                    startTime = curTime; 
+
+                    break;
+                }
+
+                //Check if child has exited MSOI after being inside it
+                if (marsCraftDist > MSOI*cConstant->MSOI_scale && simStatus == INSIDE_SOI) {
+                    //Set the child status to outide SOI
+                    simStatus = OUTSIDE_SOI;
+
+                    //Reset start time  to the current time
+                    startTime = curTime; 
+
+                    break;
+                }
+            }
+            //The time is at or past the endTime 
+            else {
+                //if the endTime is at the final time, the simulation is done
+                if (endTime >= timeFinal) {
+                    simStatus = COMPLETED_SIM;
+                }
+                //if not, it means that the simulation is in a SOI and hasn't escaped the SOI by the time the estimated orbit/assist time
+                //set up the next simulation pass by resetting time initial to the current time
+                else {
+                    startTime = curTime;
+                }
+                
+            }
+
+            n++;
+        } //end of while
+    }
+     
+    lastStep = n-1;
 
     // Test outputs to observe difference between rk4sys results with CUDA runge-kutta results
     if (cConstant->orbitalSpeed != NOT_APPLICABLE){//change the calculation if it is a orbital mission 

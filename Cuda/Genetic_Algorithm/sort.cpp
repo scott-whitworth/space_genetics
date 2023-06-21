@@ -237,6 +237,10 @@ void parameterSort(std::vector<Adult> & adults, const objective& sortObjective, 
             std::sort(adults.begin(), adults.begin()+sortSize, LowerTripTime);
             break;
 
+        case MIN_MARS_DIST:
+            std::sort(adults.begin(), adults.begin()+sortSize, LowerMarsDist);
+            break;
+
         case MAX_SPEED_DIFF:
             //Sort by maximum speed diff
             std::sort(adults.begin(), adults.begin()+sortSize, HigherSpeedDiff);

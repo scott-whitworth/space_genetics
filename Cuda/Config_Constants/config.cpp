@@ -33,7 +33,8 @@ cudaConstants::cudaConstants() {
 
 // http://www.cplusplus.com/forum/beginner/11304/ for refesher on reading line by line
 // Input: fileName - string address to the path to open the file being used
-// Output - variable names found in the file that correspond to the cudaConstants' will be assigned the value followed by the name and '=', following a certain format assumption base (refer to config_readme.md for more precise information on format)
+// Output - variable names found in the file that correspond to the cudaConstants' will be assigned the value followed by the 
+// name and '=', following a certain format assumption base (refer to config_readme.md for more precise information on format)
 void cudaConstants::FileRead(std::string fileName) {
     // Use string line to hold a line read from the config file in variable configFile
     std::string line;
@@ -43,7 +44,7 @@ void cudaConstants::FileRead(std::string fileName) {
     if (configFile.is_open()) {
         // Go through line by line
         while ( std::getline(configFile, line) ) {
-            // If line is not empty and the line is not staring as a comment, then the line is expected to be a variable constant being assigned 
+            // If line is not empty and the line is not starting as a comment, then the line is expected to be a variable constant being assigned 
             if (line != "" && ( line.find("//") != 0 )) {
 
                 //First check to see if mission objectives are being imported, since that will be a different process than other config variables
@@ -260,12 +261,9 @@ void cudaConstants::FileRead(std::string fileName) {
                     else if (variableName == "orbitalSpeed"){
                         this->orbitalSpeed = std::stod(variableValue);
                     }
-                    else if (variableName == "MSOI_error"){
-                        this->MSOI_error = std::stod(variableValue);
+                    else if (variableName == "MSOI_scale"){
+                        this->MSOI_scale = std::stod(variableValue);
                     }
-                    else if (variableName == "MSOI_steps"){
-                        this->MSOI_steps = std::stod(variableValue);
-                    }  
                     else if (variableName == "coast_threshold") {
                         this->coast_threshold = std::stod(variableValue);
                     }
@@ -295,6 +293,12 @@ void cudaConstants::FileRead(std::string fileName) {
                     }
                     else if (variableName == "gravAssistDist") {
                         this->gravAssistDist = stod(variableValue);
+                    }
+                    else if (variableName == "gravAssistTime") {
+                        this->gravAssistTime = stod(variableValue);
+                    }
+                    else if (variableName == "gravAssistTimeFrac") {
+                        this->gravAssistTimeFrac = stod(variableValue);
                     }
 
 
@@ -418,6 +422,9 @@ void cudaConstants::importObjective(std::string line) {
     else if (tempStr == "min_orbit_speed_diff") {
         goal = MIN_ORBIT_SPEED_DIFF;
     }
+    else if (tempStr == "min_mars_dist") {
+        goal = MIN_MARS_DIST;
+    }
     else if (tempStr == "max_speed_diff") {
         //Optimize for highest speed
         goal = MAX_SPEED_DIFF; 
@@ -497,7 +504,7 @@ std::ostream& operator<<(std::ostream& os, const cudaConstants& object) {
     os << "\tthruster_type: "   << object.thruster_type   << "\tdry_mass: " << object.dry_mass << "\t\tfuel_mass: " << object.fuel_mass << "\t\twet_mass: " << object.wet_mass << "\n";
     // Display the c3energy assignment, showing c3scale to help clarify that it is not directly from config
     os << "\tc3energy ("        << (object.c3scale * 100) << "%): "         << object.c3energy << "\tv_escape: "    << object.v_escape  << "\n";
-    os << "\tcoast_threshold: " << object.coast_threshold << "\tMSOI_error: " << object.MSOI_error << "\tMSOI_steps: " << object.MSOI_steps << "\n\n";
+    os << "\tcoast_threshold: " << object.coast_threshold << "\tMSOI_scale: " << object.MSOI_scale << "\n\n";
 
     os << "Target Info:\n";
     os << "\t R: " << object.r_fin_target  << "\t 0: " << object.theta_fin_target  << "\t Z: " << object.z_fin_target  << "\n";

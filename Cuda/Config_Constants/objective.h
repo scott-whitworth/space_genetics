@@ -14,7 +14,8 @@ enum parameterGoals {
     MIN_FUEL_SPENT = -3,
     MIN_TRIP_TIME = -4,
     MIN_ORBIT_POS_DIFF = -5,
-    MIN_ORBIT_SPEED_DIFF = -6, 
+    MIN_ORBIT_SPEED_DIFF = -6,
+    MIN_MARS_DIST = -7, 
 
     //Error value
     UNKNOWN = 0, 

@@ -32,13 +32,20 @@ template <class T> struct thruster {
     // thruster type enumeration, used in readibility for the types of thrusters rather than reading hard-coded number values
     enum THRUST_TYPE {
         NO_THRUST = 0,
-        NEXT_C = 1
+        NEXT_C = 1,
+        SPT_140 = 2,
+        AEPS = 3
     };
     
     private:
-        T NEXTP0 = 7330; // initial power (W)
-        T NEXTm_Dot0 = 5.73E-06; // inital fuel flow rate (kg/s)
+        T NEXTP0 = 7330; // maximum power (W)
+        T NEXTm_Dot0 = 5.73e-06; // maximum fuel flow rate (kg/s)
 
+        T SPTP0 = 6000; // maximum power (W)
+        T SPT140m_Dot0 = 1.827e-5; // maximum fuel flow rate (kg/s)
+
+        T AEPSP0 = 13300; // maximum power (W)
+        T AEPSm_Dot0 = 2.22E-05;  // maximum fuel flow rate (kg/s)
 };
 
 template <class T> __host__ __device__ T calc_accel(const T & radius, const T & z, thruster<T> & thrusterType, T & massExpelled, const T & deltaT, const bool & thrusting, const T & wetMass, const cudaConstants* cConstants);

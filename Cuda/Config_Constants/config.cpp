@@ -30,9 +30,6 @@ cudaConstants::cudaConstants() {
     // Now that c3scale and c3energy have been assigned values, derive the final c3energy and v_escape
     this->c3energy *= this->c3scale;
     this->v_escape = sqrt(this->c3energy)/AU;
-
-    // Assign cpu_numsteps to be equivalent to max_numsteps
-    this->cpu_numsteps = this->max_numsteps;
 }
 
 
@@ -79,7 +76,7 @@ void cudaConstants::FileRead(std::string fileName) {
                     std::string variableName = line.substr(0, equals_pivot   );
                     std::string variableValue = line.substr( equals_pivot + 1, end_point - equals_pivot - 1);
                     // Assign variableValue to the appropriate variable based on variableName, with conversion to the right data type
-                    // cudaConstant properties that are not expected in config are wet_mass, v_escape, and cpu_numsteps (those are to be derived in the constructor after this function is complete)
+                    // cudaConstant properties that are not expected in config are wet_mass, v_escape (those are to be derived in the constructor after this function is complete)
 
 
 //////////////////////////////////////////////////////////////////// -- INITIALIZING & RANDOM -- /////////////////////////////////////////////////////////////////////////
@@ -494,7 +491,7 @@ std::ostream& operator<<(std::ostream& os, const cudaConstants& object) {
 
     os << "Runge-Kutta Related Values:\n";
     os << "\trk_tol: "       << object.rk_tol       << "\tdoublePrecThresh: " << object.doublePrecThresh << "\ttimeRes: "      << object.timeRes       << "\tsun_r_min: " << object.sun_r_min << "\n";
-    os << "\tmax_numsteps: " << object.max_numsteps << "\tmin_numsteps: "     << object.min_numsteps     << "\tcpu_numsteps: " << object.cpu_numsteps  << "\n\n";
+    os << "\tmax_numsteps: " << object.max_numsteps << "\tmin_numsteps: "     << object.min_numsteps     << "\n\n";
 
     os << "Output Variables:\n";
     os << "\trecord_mode: " << object.record_mode << "\twrite_freq: " << object.write_freq << "\tdisp_freq: " << object.disp_freq << "\n\n";

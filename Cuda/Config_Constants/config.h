@@ -99,7 +99,6 @@ struct cudaConstants {
 
     double rk_tol;       // The relative/absolute (not sure which one it is) tolerance for the runge kutta algorithm
     double doublePrecThresh; // The smallest allowed double value for runge-kutta
-    int cpu_numsteps;    // Constant higher precision for final CPU RK method, set to be equal to max_numsteps
     int min_numsteps;    // Minimum number of steps in runge kutta 
     int max_numsteps;    // Maximum number of steps in runge kutta 
     int num_individuals; // Number of individuals in the pool, each individual contains its own thread

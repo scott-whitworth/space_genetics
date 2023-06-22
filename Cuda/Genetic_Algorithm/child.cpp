@@ -67,6 +67,7 @@ Child:: Child(const Child& other){
     progress = other.progress;
     stepCount = other.stepCount;
     minMarsDist = other.minMarsDist;
+    simNum = other.simNum;
 }
 
 //Getter for a parameter dependent on the objective that is passed in

@@ -277,7 +277,7 @@ double optimize(const cudaConstants* cConstants, GPUMem & gpuValues) {
     std::chrono::time_point<std::chrono::system_clock> runStartTime = std::chrono::system_clock::now();
     std::chrono::duration<float> totRunTime;
 
-    double worstOPD = 0;
+    //double worstOPD = 0;
 
     //Vector used to report the average parameter value for each objective
     std::vector<double> objectiveAvgValues; 
@@ -333,16 +333,16 @@ double optimize(const cudaConstants* cConstants, GPUMem & gpuValues) {
         //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE CONVERGENCE CHECK-_-_-_-_-_-_-_-_-_\n\n";
         convergence = checkTolerance(oldAdults, cConstants);
 
-        std::sort(allAdults.begin(), allAdults.end(), LowerMarsDist);
-        if (allAdults[0].minMarsDist < MSOI*cConstants->MSOI_scale && worstOPD < allAdults[0].orbitPosDiff) {
-            std::string tempPath = genOutputs.outputPath;
-            genOutputs.outputPath = tempPath+"badAdult\\";
-            mkdir(genOutputs.outputPath.c_str());
-            genOutputs.finalRecord(cConstants, allAdults[0], generation);
-            genOutputs.outputPath = tempPath;
-            worstOPD = allAdults[0].orbitPosDiff;
-            std::cout << "\nBAD ADULT PRINTED\n\n";
-        }
+        //std::sort(allAdults.begin(), allAdults.end(), LowerMarsDist);
+        //if (allAdults[0].minMarsDist < MSOI*cConstants->MSOI_scale && worstOPD < allAdults[0].orbitPosDiff) {
+        //    std::string tempPath = genOutputs.outputPath;
+        //    genOutputs.outputPath = tempPath+"badAdult\\";
+        //    mkdir(genOutputs.outputPath.c_str());
+        //    genOutputs.finalRecord(cConstants, allAdults[0], generation);
+        //    genOutputs.outputPath = tempPath;
+        //    worstOPD = allAdults[0].orbitPosDiff;
+        //    std::cout << "\nBAD ADULT PRINTED\n\n";
+        //}
         std::sort(allAdults.begin(), allAdults.end(), rankDistanceSort);        
         
         //Increment the generation counter

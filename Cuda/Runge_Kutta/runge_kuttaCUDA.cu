@@ -93,9 +93,6 @@ __global__ void rk4SimpleCUDA(Child *children, double *timeInitial, double *star
             
             rkParameters<double> threadRKParameters = children[threadId].startParams; // get the parameters for this thread
 
-            //position of mars at the current time
-            elements<double> mars;
-
             // storing copies of the input values
             double stepSize = *startStepSize;
             double absTol = *absTolInput;
@@ -107,11 +104,11 @@ __global__ void rk4SimpleCUDA(Child *children, double *timeInitial, double *star
             double curTime;
             elements<double> curPos;
 
-            //Set the initial curTime and curPos depending on the child has been ran
+            //Set the initial curTime and curPos depending on if the child has been ran
             if (children[threadId].simStatus == INITIAL_SIM) {
                 //Child has not been simulated, set the initial curTime to the start time of the simulation
                 curTime = *timeInitial;
-                //Set the starttime to the total trip time
+                //Set the start time to the total trip time
                 startTime = *timeInitial;
                 // start with the initial conditions of the spacecraft
                 curPos = threadRKParameters.y0; 
@@ -133,7 +130,7 @@ __global__ void rk4SimpleCUDA(Child *children, double *timeInitial, double *star
                 endTime = startTime + cConstant->gravAssistTime;
                 //endTime = startTime + ((threadRKParameters.tripTime - startTime) * cConstant->gravAssistTimeFrac);
 
-                //Check to make sure that endTime is not further than tripTIme
+                //Check to make sure that endTime is not further than tripTime
                 if(endTime > threadRKParameters.tripTime) {
                     endTime = threadRKParameters.tripTime;
                 }
@@ -147,7 +144,7 @@ __global__ void rk4SimpleCUDA(Child *children, double *timeInitial, double *star
 
             double massFuelSpent = 0; // mass of total fuel expended (kg) starts at 0
 
-            bool coast; // to hold the result from calc_coast()
+            bool coast; //=1 means thrusting, from calc_coast()
 
             elements<double> error; // holds output of previous value from rkCalc
 
@@ -160,18 +157,20 @@ __global__ void rk4SimpleCUDA(Child *children, double *timeInitial, double *star
                 else {
                     coast = calc_coast(threadRKParameters.coeff, curTime, threadRKParameters.tripTime, thrust);
                     curAccel = calc_accel(curPos.r, curPos.z, thrust, massFuelSpent, stepSize, coast, static_cast<double>(cConstant->wet_mass), cConstant);
+                    children[threadId].fuelSpent = massFuelSpent;
                 }
 
                 //Needs to be triptime - curtime to get the correct index for mars
                 //when curtime = triptime, this will give us the final position of mars at impact
-                //this is because getConditionDev takes in seconds before the spacecraft reaches the tarfet
-                mars = getConditionDev(threadRKParameters.tripTime - curTime, cConstant, marsLaunchCon);
+                //this is because getConditionDev takes in seconds before the spacecraft reaches the target
+                elements<double> mars = getConditionDev(threadRKParameters.tripTime - curTime, cConstant, marsLaunchCon);
 
                 //calculate the distance between mars and the spacecraft (|R|^2)
                 double marsCraftDist = sqrt(pow(mars.r, 2) + pow(curPos.r, 2) + pow(curPos.z - mars.z, 2) - (2*curPos.r*mars.r*cos(mars.theta-curPos.theta)));
 
                 //See if the child is closest it has been to Mars so far this run
-                if (marsCraftDist < children[threadId].minMarsDist) {
+                //This is only updated if Mars is in betweem the craft amd the target
+                if ((marsCraftDist < children[threadId].minMarsDist) && (curPos.r < mars.r)) {
                     children[threadId].minMarsDist = marsCraftDist;
                 }
                 
@@ -248,8 +247,8 @@ __global__ void rk4SimpleCUDA(Child *children, double *timeInitial, double *star
 
                         return;
                     }
-                }    
-            }
+                }  //end if (curTime < endTime)
+            } // end while (curTime < endTime)
 
             //Check to see if this simulation has completed its total runtime
             if (endTime >= threadRKParameters.tripTime) {
@@ -263,6 +262,8 @@ __global__ void rk4SimpleCUDA(Child *children, double *timeInitial, double *star
 
                 //The child has finished it's run, set the simStatus to completed
                 children[threadId].simStatus = COMPLETED_SIM;
+
+                //children[threadId].fuelSpent = massFuelSpent;
             }
             //else: endTime != tripTime
             else {

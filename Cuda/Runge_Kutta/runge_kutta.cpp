@@ -12,57 +12,80 @@ template <class T> void rk4sys(const T & timeInitial, const T & timeFinal, T *ti
     //Create a sim status which indidicates the run has not started
     SIM_STATUS simStatus = INITIAL_SIM;
 
-    thruster<T> thrust(cConstant);
-
-    T curTime = timeInitial; // setting time equal to the start time
-    T startTime = timeInitial;
+    T curTime; // setting time equal to the start time
+    T startTime;
     T endTime;
+    T t_SOI;//Time stamp at a SOI boundary
     int n = 0; // setting the initial step number equal to 0
 
-    //mass of fuel expended (kg)
-    //set to 0 initially
-    T massFuelSpent = 0;
-
-    // u - current position
-    // error needs to be defined, but not being used
-    elements<T> u, error;
-
-    // Set the first element of the solution vector to the initial conditions
-    u = y0;
+    elements<T> u;//Current orbital elements (r, theta, z, vr, vtheta, vz)
+    elements<T> y_SOI;//Orbital elements at a SOI boundary
 
     //While loop will continute the calculations until the run has completed
     while (simStatus != COMPLETED_SIM) {
+        
+        if (simStatus == INITIAL_SIM){//Starting from launch conditions
+            //Child has not been simulated, set the initial curTime to the start time of the simulation
+            curTime = timeInitial;
+            //Set the start time to the total trip time
+            startTime =  timeInitial;
+            // start with the initial conditions of the spacecraft
+            u = y0;
+        }
+        else{//Has been partially simulated (has entered a SOI), reset initial conditions
+            curTime = t_SOI;
+            //Set the start time to this simulation's start time
+            startTime = t_SOI;
+            // start with the initial conditions of the spacecraft
+            u = y_SOI;
+        }
         //Set the proper endTime
         //If it is an SOI run, the endTime will be curTime plus the estimated assist/orbital time
         //If not, end time will equal timeFinal
         if (simStatus == INSIDE_SOI) {
-            endTime = curTime + cConstant->gravAssistTime;
+            //If this is a mission inside a SOI, set the final to be a gravAssistTime difference from the start time
+            endTime = startTime + cConstant->gravAssistTime;
             //endTime = curTime + ((timeFinal - startTime) * cConstant->gravAssistTimeFrac);
+
+            //Check to make sure that endTime is not further than tripTime
+            if(endTime > timeFinal) {
+                endTime = timeFinal;
+            }
         }
+        //In all other scenerios, the end time is the triptime
         else {
             endTime = timeFinal;
         }
 
+        thruster<T> thrust(cConstant);
+
+        T massFuelSpent = 0;  //mass of fuel expended (kg), set to 0 initially
+
+        bool coast; //=1 means thrusting, from calc_coast()
+
+        elements<T> error; // error needs to be defined, used in calc_scalingFactor
+
         while (curTime < endTime) { // iterate until time is equal to the stop time
-
-            y_new[n] = u;
-
             times[n] = curTime;
 
             // Check the thruster type before performing calculations, at time 0
             if (cConstant->thruster_type == thruster<double>::NO_THRUST) {
-                gamma[n] = tau[n] = accel_output[n] = fuelSpent[n] = 0;
+                // gamma[n] = tau[n] = accel_output[n] = fuelSpent[n] = 0;
+                coast = accel_output[n] = 0;
             }
             else {
-                // array of gamma for binary output
-                gamma[n] = calc_gamma(coeff, curTime, timeFinal);
-                // array of tau for binary output
-                tau[n] = calc_tau(coeff,curTime, timeFinal);
+                // determines whether the craft is coasting
+                coast = calc_coast(coeff, curTime, timeFinal, thrust);
                 // array of acceleration for binary output
-                accel_output[n] = calc_accel(u.r,u.z, thrust, massFuelSpent, stepSize, calc_coast(coeff, curTime, timeFinal, thrust), wetMass, cConstant);
+                accel_output[n] = calc_accel(u.r,u.z, thrust, massFuelSpent, stepSize, coast, wetMass, cConstant);
+                // array of gamma for binary output
+                //gamma[n] = calc_gamma(coeff, curTime, timeFinal);
+                // array of tau for binary output
+                //tau[n] = calc_tau(coeff,curTime, timeFinal);
                 // array of fuel spent for binary output
                 fuelSpent[n] = massFuelSpent;
             }
+
             //WARNING/NOTE: The indexing of n (not getCondition) for the error here should be double checked
             elements<double> mars = (*marsLaunchCon).getCondition(timeFinal - curTime); //gets Mars' position relative to the Sun
             marsIndex[n] = mars;
@@ -71,6 +94,7 @@ template <class T> void rk4sys(const T & timeInitial, const T & timeFinal, T *ti
             double marsCraftDist = sqrt(pow(mars.r, 2) + pow(u.r, 2) + pow(u.z - mars.z, 2) - (2*u.r*mars.r*cos(mars.theta-u.theta)));
 
             //calculate new position
+            //rkCalc(curTime, timeFinal, stepSize, u, coeff, accel_output[n], error, mars, marsCraftDist);
             rkCalc(curTime, timeFinal, stepSize, u, coeff, accel_output[n], error, mars, marsCraftDist);
 
             //array of time output as t         
@@ -88,8 +112,8 @@ template <class T> void rk4sys(const T & timeInitial, const T & timeFinal, T *ti
             }
             
             // shorten the last step to end exactly at the end time
-            if ( (curTime+stepSize) > endTime) {
-                stepSize = (endTime-curTime);
+            if ( (curTime + stepSize) > endTime) {
+                stepSize = (endTime - curTime); // shorten the last step to end exactly at time final
             }
 
             //Check to see if the curTime is less than endTime
@@ -98,26 +122,33 @@ template <class T> void rk4sys(const T & timeInitial, const T & timeFinal, T *ti
 
                 //See if child has entered MSOI
                 if (marsCraftDist < MSOI*cConstant->MSOI_scale && simStatus != INSIDE_SOI) {
+                    //Reset the conditions
+                    t_SOI = curTime; 
+                    y_SOI = u; 
+
                     //Set the child status to inside SOI
-                    simStatus = INSIDE_SOI;
+                    simStatus = INSIDE_SOI;                
 
-                    //Reset start time to the current time
-                    startTime = curTime; 
+                    std::cout << "\n Enters SOI at step" << n <<" and time" << curTime << "\n";
 
-                    break;
+                    return;
                 }
 
                 //Check if child has exited MSOI after being inside it
                 if (marsCraftDist > MSOI*cConstant->MSOI_scale && simStatus == INSIDE_SOI) {
+                    //Reset the conditions
+                    t_SOI = curTime; 
+                    y_SOI = u;
+
                     //Set the child status to outide SOI
                     simStatus = OUTSIDE_SOI;
 
-                    //Reset start time  to the current time
-                    startTime = curTime; 
-
-                    break;
+                    std::cout << "\n Exits SOI at step" << n <<" and time" << curTime << "\n";
+                    
+                    return;
                 }
-            }
+            } // end if (curTime < endTime)
+
             //The time is at or past the endTime 
             else {
                 //if the endTime is at the final time, the simulation is done
@@ -127,24 +158,58 @@ template <class T> void rk4sys(const T & timeInitial, const T & timeFinal, T *ti
                 //if not, it means that the simulation is in a SOI and hasn't escaped the SOI by the time the estimated orbit/assist time
                 //set up the next simulation pass by resetting time initial to the current time
                 else {
-                    startTime = curTime;
+                    t_SOI = curTime;
+                    y_SOI = u;
                 }
-                
-            }
+            }//end of if-else (curTime < endTime) after updating curTime
 
+            y_new[n] = u;              
             n++;
-        } //end of while
-    }
+        } //end of while (curTime < endTime) before updating curTime
+    }//end of !COMPLETED_SIM
      
-    lastStep = n-1;
+    lastStep = n-1;//Array index begins at 0; n was incremented after y_new was assigned.
+
+    std::cout << "\n\tRK4SYS: " << n << "\n\n";
 
     // Test outputs to observe difference between rk4sys results with CUDA runge-kutta results
-    if (cConstant->orbitalSpeed != NOT_APPLICABLE){//change the calculation if it is a orbital mission 
-        std::cout << "rk4sys posDiff: " << abs(sqrt(pow(cConstant->r_fin_target, 2) + pow(y_new[lastStep].r, 2) + pow(y_new[lastStep].z - cConstant->z_fin_target, 2) - (2*y_new[lastStep].r*cConstant->r_fin_target*cos(cConstant->theta_fin_target-y_new[lastStep].theta))) - cConstant->orbitalRadius) << std::endl;
-        std::cout << "rk4sys speedDiff: " << sqrt(abs((pow(cConstant->vr_fin_target - y_new[lastStep].vr, 2) + pow(cConstant->vtheta_fin_target - y_new[lastStep].vtheta, 2) + pow(cConstant->vz_fin_target - y_new[lastStep].vz, 2)) - pow(cConstant->orbitalSpeed, 2)));
-    }else{
+    if (cConstant->orbitalSpeed == NOT_APPLICABLE){//change the calculation if it is NOT (?) an orbital mission 
         std::cout << "rk4sys posDiff: " << sqrt(pow(cConstant->r_fin_target - y_new[lastStep].r, 2) + pow(cConstant->r_fin_target * cConstant->theta_fin_target - y_new[lastStep].r * fmod(y_new[lastStep].theta, 2 * M_PI), 2) + pow(cConstant->z_fin_target - y_new[lastStep].z, 2)) << std::endl;
         std::cout << "rk4sys speedDiff: " << sqrt(pow(cConstant->vr_fin_target - y_new[lastStep].vr, 2) + pow(cConstant->vtheta_fin_target - y_new[lastStep].vtheta, 2) + pow(cConstant->vz_fin_target - y_new[lastStep].vz, 2));
+    }else{
+            std::cout << "rk4sys orbitalposDiff: " << abs(sqrt(pow(cConstant->r_fin_target, 2) + pow(y_new[lastStep].r, 2) + pow(y_new[lastStep].z - cConstant->z_fin_target, 2) - (2*y_new[lastStep].r*cConstant->r_fin_target*cos(cConstant->theta_fin_target-y_new[lastStep].theta))) - cConstant->orbitalRadius) << std::endl;
+            std::cout << "rk4sys orbitalspeedDiff: " << sqrt(abs((pow(cConstant->vr_fin_target - y_new[lastStep].vr, 2) + pow(cConstant->vtheta_fin_target - y_new[lastStep].vtheta, 2) + pow(cConstant->vz_fin_target - y_new[lastStep].vz, 2)) - pow(cConstant->orbitalSpeed, 2)));
+
+            // std::cout << "\n\nRK4SYS r initial of craft: " << y0.r;
+            // std::cout << "\nRK4SYS theta initial of craft: " << y0.theta;
+            // std::cout << "\nRK4SYS z initial of craft: " << y0.z;
+            //std::cout << "\n\nRK4SYS final R of Target: " << cConstant->r_fin_target;
+            //std::cout << "\nRK4SYS final Theta of Target: " << cConstant->theta_fin_target;
+            //std::cout << "\nRK4SYS final Z of Target: " << cConstant->z_fin_target;
+
+            std::cout << "\n\nRK4SYS r final of craft: " << y_new[lastStep].r;
+            std::cout << "\nRK4SYS theta final of craft: " << y_new[lastStep].theta;
+            std::cout << "\nRK4SYS z final of craft: " << y_new[lastStep].z;
+
+            // std::cout << "\n\nRK4SYS vr initial of craft: " << y0.vr;
+            // std::cout << "\nRK4SYS vtheta initial of craft: " << y0.vtheta;
+            // std::cout << "\nRK4SYS vz initial of craft: " << y0.vz;
+
+            //std::cout << "\n\nRK4SYS final vr of Target: " << cConstant->vr_fin_target;
+            //std::cout << "\nRK4SYS final vTheta of Target: " << cConstant->vtheta_fin_target;
+            //std::cout << "\nRK4SYS final vz of Target: " << cConstant->vz_fin_target;
+            std::cout << "\n\nRK4SYS vr final of craft: " << y_new[lastStep].vr;
+            std::cout << "\nRK4SYS vtheta final of craft: " << y_new[lastStep].vtheta;
+            std::cout << "\nRK4SYS vz final of craft: " << y_new[lastStep].vz<<"\n";
+
+            std::cout << "\nRK4SYS fuel spent: " << fuelSpent[lastStep]<<"\n";
+
+            // std::cout << "\n\nRK4SYS initial r of craft: " << y0.r;
+            // std::cout << "\nRK4SYS initial theta of craft: " << y0.theta;
+            // std::cout << "\nRK4SYS initial z of craft: " << y0.z;
+            // std::cout << "\nRK4SYS initial vr of craft: " << y0.vr;
+            // std::cout << "\nRK4SYS initial vtheta of craft: " << y0.vtheta;
+            // std::cout << "\nRK4SYS initial vz of craft: " << y0.vz;
     }   
 }
 

@@ -429,11 +429,36 @@ void output::finalRecord(const cudaConstants* cConstants, const Adult& bestAdult
   start[ZETA_OFFSET] = bestAdult.startParams.zeta;
 
   // Test outputs
-  std::cout << "Comparison\n";
+  std::cout << "\nComparison\n";
   for (int i = 0; i < cConstants->missionObjectives.size(); i++) {
       std::cout << "CUDA " << cConstants->missionObjectives[i].name << ": ";
       std::cout << bestAdult.getParameters(cConstants->missionObjectives[i]) << "\n";
   }
+    //std::cout << "\nCUDA r final target: " << cConstants->r_fin_target;
+    //std::cout << "\nCUDA theta final target: " << cConstants->theta_fin_target;
+    //std::cout << "\nCUDA z final target: " << cConstants->z_fin_target << "\n";
+
+    // std::cout << "\nCUDA r initial craft: " << bestAdult.startParams.y0.r;
+    // std::cout << "\nCUDA theta initial craft: " << bestAdult.startParams.y0.theta;
+    // std::cout << "\nCUDA z initial craft: " << bestAdult.startParams.y0.z<< "\n";
+
+    std::cout << "\nCUDA r final craft: " << bestAdult.finalPos.r;
+    std::cout << "\nCUDA theta final craft: " << bestAdult.finalPos.theta;
+    std::cout << "\nCUDA z final craft: " << bestAdult.finalPos.z << "\n";
+
+    //std::cout << "\nCUDA vr final target: " << cConstants->vr_fin_target;
+    //std::cout << "\nCUDA vtheta final target: " << cConstants->vtheta_fin_target;
+    //std::cout << "\nCUDA vz final target: " << cConstants->vz_fin_target << "\n";
+
+    // std::cout << "\nCUDA vr initial craft: " << bestAdult.startParams.y0.vr;
+    // std::cout << "\nCUDA vtheta initial craft: " << bestAdult.startParams.y0.vtheta;
+    // std::cout << "\nCUDA vz initial craft: " << bestAdult.startParams.y0.vz << "\n";
+
+    std::cout << "\nCUDA vr final craft: " << bestAdult.finalPos.vr;
+    std::cout << "\nCUDA vtheta final craft: " << bestAdult.finalPos.vtheta;
+    std::cout << "\nCUDA vz final craft: " << bestAdult.finalPos.vz << "\n";
+
+    std::cout << "\nCUDA fuel spent: " << bestAdult.fuelSpent;
 
   // Evaluate and print this solution's information to binary files
   trajectoryPrint(start, generation, cConstants, bestAdult);
@@ -524,6 +549,8 @@ void output::trajectoryPrint( double x[], int generation, const cudaConstants* c
   // int numSteps = best.stepCount+5; // initial guess for the number of time steps, guess for the memory allocated 
   int numSteps = ((best.simNum+1)*cConstants->max_numsteps)+1;
   deltaT = (timeFinal-timeInitial) / numSteps; // initial guess for time step, small is preferable
+
+  std::cout << "\nADULT STEPS: \n\tCUDA: " << best.stepCount;
 
   // setup of thrust angle calculations based off of optimized coefficients
   coefficients<double> coeff;

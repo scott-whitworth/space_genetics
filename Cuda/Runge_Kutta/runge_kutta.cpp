@@ -131,7 +131,7 @@ template <class T> void rk4sys(const T & timeInitial, const T & timeFinal, T *ti
 
                     std::cout << "\n Enters SOI at step" << n <<" and time" << curTime << "\n";
 
-                    return;
+                    break;
                 }
 
                 //Check if child has exited MSOI after being inside it
@@ -145,7 +145,7 @@ template <class T> void rk4sys(const T & timeInitial, const T & timeFinal, T *ti
 
                     std::cout << "\n Exits SOI at step" << n <<" and time" << curTime << "\n";
                     
-                    return;
+                    break;
                 }
             } // end if (curTime < endTime)
 

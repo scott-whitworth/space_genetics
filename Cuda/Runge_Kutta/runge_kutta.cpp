@@ -18,6 +18,8 @@ template <class T> void rk4sys(const T & timeInitial, const T & timeFinal, T *ti
     T t_SOI;//Time stamp at a SOI boundary
     int n = 0; // setting the initial step number equal to 0
 
+    T massFuelSpent = 0;  //mass of fuel expended (kg), set to 0 initially
+
     elements<T> u;//Current orbital elements (r, theta, z, vr, vtheta, vz)
     elements<T> y_SOI;//Orbital elements at a SOI boundary
 
@@ -59,8 +61,6 @@ template <class T> void rk4sys(const T & timeInitial, const T & timeFinal, T *ti
 
         thruster<T> thrust(cConstant);
 
-        T massFuelSpent = 0;  //mass of fuel expended (kg), set to 0 initially
-
         bool coast; //=1 means thrusting, from calc_coast()
 
         elements<T> error; // error needs to be defined, used in calc_scalingFactor
@@ -100,16 +100,18 @@ template <class T> void rk4sys(const T & timeInitial, const T & timeFinal, T *ti
             //array of time output as t         
             curTime += stepSize;
 
-            //This is the way that stepSize was calculated in rk4SimpleCUDA
-            stepSize *= calc_scalingFactor(u-error,error,absTol, cConstant->doublePrecThresh); // Alter the step size for the next iteration
+            ////This is the way that stepSize was calculated in rk4SimpleCUDA
+            //stepSize *= calc_scalingFactor(u-error,error,absTol, cConstant->doublePrecThresh); // Alter the step size for the next iteration
 
-            // The step size cannot exceed the total time divided by 2 and cannot be smaller than the total time divided by 1000
-            if (stepSize > (endTime - startTime) / cConstant->min_numsteps) {
-                stepSize = (endTime - startTime) / cConstant->min_numsteps;
-            }
-            else if (stepSize < (endTime - startTime) / cConstant->max_numsteps) {
-                stepSize = (endTime - startTime) / cConstant->max_numsteps;
-            }
+            //// The step size cannot exceed the total time divided by 2 and cannot be smaller than the total time divided by 1000
+            //if (stepSize > (endTime - startTime) / cConstant->min_numsteps) {
+            //    stepSize = (endTime - startTime) / cConstant->min_numsteps;
+            //}
+            //else if (stepSize < (endTime - startTime) / cConstant->max_numsteps) {
+            //    stepSize = (endTime - startTime) / cConstant->max_numsteps;
+            //}
+            
+            stepSize = (endTime - startTime) / cConstant->max_numsteps;
             
             // shorten the last step to end exactly at the end time
             if ( (curTime + stepSize) > endTime) {
@@ -131,7 +133,7 @@ template <class T> void rk4sys(const T & timeInitial, const T & timeFinal, T *ti
 
                     std::cout << "\n Enters SOI at step" << n <<" and time" << curTime << "\n";
 
-                    return;
+                    break;
                 }
 
                 //Check if child has exited MSOI after being inside it
@@ -145,7 +147,7 @@ template <class T> void rk4sys(const T & timeInitial, const T & timeFinal, T *ti
 
                     std::cout << "\n Exits SOI at step" << n <<" and time" << curTime << "\n";
                     
-                    return;
+                    break;
                 }
             } // end if (curTime < endTime)
 

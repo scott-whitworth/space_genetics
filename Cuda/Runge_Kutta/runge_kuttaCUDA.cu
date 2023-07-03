@@ -80,7 +80,7 @@ __global__ void rk4SimpleCUDA(Child *children, double *timeInitial, double *star
             children[threadId].simNum++;
 
             //Check to see if the child is about to be simulated too many times
-            if (children[threadId].simNum > cConstant->maxSimNum) {
+            if (children[threadId].simNum => cConstant->maxSimNum) {
                 //Assign an error to the child because it has been running for too long
                 children[threadId].errorStatus = SIMNUM_ERROR;
 
@@ -179,15 +179,17 @@ __global__ void rk4SimpleCUDA(Child *children, double *timeInitial, double *star
 
                 curTime += stepSize; // update the current time in the simulation
                 
-                stepSize *= calc_scalingFactor(curPos-error,error,absTol, cConstant->doublePrecThresh); // Alter the step size for the next iteration
+                //stepSize *= calc_scalingFactor(curPos-error,error,absTol, cConstant->doublePrecThresh); // Alter the step size for the next iteration
 
-                // The step size cannot exceed the total time divided by 2 and cannot be smaller than the total time divided by 1000
-                if (stepSize > (endTime - startTime) / cConstant->min_numsteps) {
-                    stepSize = (endTime - startTime) / cConstant->min_numsteps;
-                }
-                else if (stepSize < (endTime - startTime) / cConstant->max_numsteps){
-                    stepSize = (endTime - startTime) / cConstant->max_numsteps;
-                }
+                //// The step size cannot exceed the total time divided by 2 and cannot be smaller than the total time divided by 1000
+                //if (stepSize > (endTime - startTime) / cConstant->min_numsteps) {
+                //    stepSize = (endTime - startTime) / cConstant->min_numsteps;
+                //}
+                //else if (stepSize < (endTime - startTime) / cConstant->max_numsteps){
+                //    stepSize = (endTime - startTime) / cConstant->max_numsteps;
+                //}
+
+                stepSize = (endTime - startTime) / cConstant->max_numsteps;
 
                 //count the steps taken for this threads calculations
                 children[threadId].stepCount++;

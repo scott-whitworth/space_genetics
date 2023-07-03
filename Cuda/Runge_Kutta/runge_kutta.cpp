@@ -79,9 +79,9 @@ template <class T> void rk4sys(const T & timeInitial, const T & timeFinal, T *ti
                 // array of acceleration for binary output
                 accel_output[n] = calc_accel(u.r,u.z, thrust, massFuelSpent, stepSize, coast, wetMass, cConstant);
                 // array of gamma for binary output
-                //gamma[n] = calc_gamma(coeff, curTime, timeFinal);
+                gamma[n] = calc_gamma(coeff, curTime, timeFinal);
                 // array of tau for binary output
-                //tau[n] = calc_tau(coeff,curTime, timeFinal);
+                tau[n] = calc_tau(coeff,curTime, timeFinal);
                 // array of fuel spent for binary output
                 fuelSpent[n] = massFuelSpent;
             }

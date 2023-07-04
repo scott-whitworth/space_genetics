@@ -24,6 +24,11 @@ cudaConstants::cudaConstants() {
         this->triptime_mutate_scale = (this->triptime_max - this->triptime_min);
     }
 
+    //If time mutation scale is not set, set it to the difference between triptime max and min
+    if (this->carryover_individuals > this->num_individuals) {
+        this->carryover_individuals = 0;
+    }
+
     // Now that dry_mass and fuel_mass have been acquired, derive wet_mass
     this->wet_mass = this->dry_mass + this->fuel_mass;
 
@@ -95,6 +100,9 @@ void cudaConstants::FileRead(std::string fileName) {
                     }
                     else if (variableName == "run_count") {
                         this->run_count = std::stoi(variableValue);
+                    }
+                    else if (variableName == "carryover_individuals") {
+                        this->carryover_individuals = std::stoi(variableValue);
                     }
                     else if (variableName == "random_start") {
                         if (variableValue == "false") {

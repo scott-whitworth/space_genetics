@@ -130,61 +130,122 @@ void convertToAdults(std::vector<Adult> & newAdults, Child* newChildren, const c
 void createFirstGeneration(std::vector<Adult>& oldAdults, const cudaConstants* cConstants, std::mt19937_64 rng, const int & generation, GPUMem & gpuValues){
     //int generation = 0; //these are loaded from a file or randomly, so set gen to 0
     Child* initialChildren = new Child[cConstants->num_individuals]; 
-    // Initialize individuals randomly or from a file
-    if (cConstants->random_start) {
+
+    //Try to open the final allAdults excel file from the last run
+    std::string prevIndPath = "../Output_Files/" + std::to_string(cConstants->time_seed-100) + "_1/" + std::to_string(cConstants->time_seed) + "-AllAdults-gen#" + std::to_string(cConstants->max_generations) + ".csv";
+    std::fstream prevIndividuals(prevIndPath);
+    //If this does not open, there are two likely scenerios
+    //  1) This is the first run, so the folder for the previous run doesn't exist
+    //  2) The previous run converged, so the last allAdults excel file isn't the maxGeneration one
+    //For both of these scenerios, we need to randomly generate initial parameters
+
+    // See if there should be a random start
+    //  If carryover_individuls is 0, it means that every run should have a random start
+    //  If the fream isn't good, it means the file didn't open properly (see above for normal reasons why) so the initial values should be randomly generated
+    if (cConstants->carryover_individuals == 0 || !prevIndividuals.good()) {
+        std::cout << "\nStarting with random parameters!\n";
         // individuals set to randomly generated, but reasonable, parameters
         for (int i = 0; i < cConstants->num_individuals; i++) { 
             initialChildren[i] = Child(randomParameters(rng, cConstants), cConstants, generation, 0);
         }
     }
-    // Read from file using cConstants initial_start_file_address to get path
-    else {
-        // **Might be depreciated, not tested summer 2020**
-        // Sets inputParameters to hold initial individuals based from file optimizedVector.bin
-        const int numStarts = 14; // the number of different sets of starting parameters in the input file
-        std::ifstream starts;
-        starts.open(cConstants->initial_start_file_address, std::ifstream::in|std::ios::binary); // a file containing the final parameters of converged results from CPU calculations        
-
+    // Get the initial conditions from the previous run
+    else {   
+        std::cout << "\nStarting with previous run's parameters!\n";
         // sort the data into 2 dimensions
-        // one row is one set of starting parameters
-        // each column is a specific variable:
-        double startDoubles;
+        // each row is an individual
+        // each column is one of the starting parameters
+        std::string startParamVal;
         // arrayCPU needs to be updated to handle the fact that OPTIM_VARS may be flexible
-        double arrayCPU[numStarts][OPTIM_VARS];
-        
-        for (int i = 0; i < OPTIM_VARS; i++) { // rows
-            for (int j = 0; j < numStarts; j++) { // columns
-                starts.read( reinterpret_cast<char*>( &startDoubles ), sizeof startDoubles );
-                arrayCPU[j][i] = startDoubles;
+        // double arrayCPU[OPTIM_VARS][cConstants->carryover_individuals];
+        std::vector<std::vector<double>> baseParams (OPTIM_VARS, std::vector<double>(cConstants->carryover_individuals, 0));
+
+        //String that will store the string of the line
+        std::string adultInfo;
+
+        //Initial getline to clear the header row
+        std::getline(prevIndividuals, adultInfo);
+
+        //Create pivots to parse through line info from allAdults
+        int startPivot, endPivot;
+
+        //for loop will continue until the number of parameter sets wanted have been pulled from prevIndividuals
+        for (int i = 0; i < cConstants->carryover_individuals; i++) {
+            //Get the new line and check to see if the end of the csv has been reached
+            if ( std::getline(prevIndividuals, adultInfo) ) {
+                //A new adult has been pulled, get its starting params
+                //Reset pivots
+                startPivot = endPivot = 0;
+
+                //Set the initial start pivot to the character after the first comma
+                startPivot = adultInfo.find(",") + 1;
+
+                //For loop will get all of the paramters for the line
+                for (int j = 0; j < OPTIM_VARS; j++) {
+                    //Get the next end pivot
+                    //it is the first comma after the start pivot
+                    endPivot = adultInfo.find(",", startPivot);
+
+                    //The next param is the substring between the two pivots 
+                    startParamVal = adultInfo.substr(startPivot, endPivot-startPivot);
+
+                    //Push the value to the arrayCPU array
+                    //The order of the params in the csv file is the same order as the OPTIM_VARS array, so no need to parse
+                    baseParams[j][i] = std::stod(startParamVal);
+                }
+
+            }
+            else {
+                //The csv ended before the requested number of starting params were pulled
+                //This is an error, since carryover_individuals should never be larger than num_individuals
+                //  num_individuals itself would normally only half as large as the number of adults in allAdults
+                //  so something went very wrong (likely many errors at the end of the previous run) if the code is here
+                std::cout << "\nERROR: too few rows in previous run's final allAdults file!\n";
+                break;
             }
         }
-        starts.close();
 
-         // set every thread's input parameters to a set of final values from CPU calculations for use as a good starting point
+        //Counter to cycle through the saved parameters
+        int paramNum = 0;
+        
+        //While loop that will create the children from the saved parameters
         for (int i = 0; i < cConstants->num_individuals; i++) {
-            int row = rng() % numStarts; // Choose a random row to get the parameters from
-
-            double tripTime = arrayCPU[row][TRIPTIME_OFFSET];
-            double alpha = arrayCPU[row][ALPHA_OFFSET];
-            double beta = arrayCPU[row][BETA_OFFSET];
-            double zeta = arrayCPU[row][ZETA_OFFSET];
+            //Get the stored parameters for this individual
+            double tripTime = baseParams[TRIPTIME_OFFSET][paramNum];
+            double alpha = baseParams[ALPHA_OFFSET][paramNum];
+            double beta = baseParams[BETA_OFFSET][paramNum];
+            double zeta = baseParams[ZETA_OFFSET][paramNum];
 
             coefficients<double> testcoeff;
             for (int j = 0; j < testcoeff.gammaSize; j++) {
-                testcoeff.gamma[j] = arrayCPU[row][j + GAMMA_OFFSET];
+                testcoeff.gamma[j] = baseParams[j + GAMMA_OFFSET][paramNum];
             }
 
             for (int j = 0; j < testcoeff.tauSize; j++) {
-                testcoeff.tau[j] =  arrayCPU[row][j + TAU_OFFSET];
+                testcoeff.tau[j] =  baseParams[j + TAU_OFFSET][paramNum];
             }
 
             for (int j = 0; j < testcoeff.coastSize; j++) {
-                testcoeff.coast[j] = arrayCPU[row][j + COAST_OFFSET];
+                testcoeff.coast[j] = baseParams[j + COAST_OFFSET][paramNum];
             }
 
-            rkParameters<double> example(tripTime, alpha, beta, zeta, testcoeff); 
+            //Create the new parameters
+            rkParameters<double> example(tripTime, alpha, beta, zeta, testcoeff);
 
-            initialChildren[i] = Child(example, cConstants, generation, 0);
+            //Mutate the parameters
+            example = mutate(example, rng, cConstants->anneal_initial, cConstants, cConstants->mutation_amplitude, cConstants->default_mutation_chance); 
+
+            //Create a new child with the mutated parameters
+            initialChildren[i] = Child(example, cConstants, generation, 0); 
+
+            //Add one to paramNum to get the next set of parameters
+            paramNum++;
+
+            //Check to make sure paramNum doesn't go above the size of the array (checking the size of the gamma_offset column is arbitrary)
+            if (paramNum >= baseParams[GAMMA_OFFSET].size()) {
+                //Reset paramNum
+                paramNum = 0;
+            }    
         }
     }
     firstGeneration(initialChildren, oldAdults, cConstants, gpuValues);

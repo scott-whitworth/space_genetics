@@ -350,13 +350,13 @@ void output::recordAllIndividuals(std::string name, const cudaConstants * cConst
   outputFile.open(outputPath + std::to_string(static_cast<int>(cConstants->time_seed)) + "-" + name +"-gen#" + std::to_string(generation) + ".csv");
 
   // Setup the header row
-  outputFile << "position,alpha,beta,zeta,tripTime,";
   for (int i = 0; i < GAMMA_ARRAY_SIZE; i++) {
     outputFile << "gamma" << i << ",";
   }
   for (int i = 0; i < TAU_ARRAY_SIZE; i++) {
     outputFile << "tau" << i << ",";
   }
+  outputFile << "position,alpha,beta,zeta,tripTime,";
   for (int i = 0; i < COAST_ARRAY_SIZE; i++) {
     outputFile << "coast" << i << ",";
   }
@@ -373,21 +373,21 @@ void output::recordAllIndividuals(std::string name, const cudaConstants * cConst
   // Record all individuals in the adults vector
   for (int i = 0; i < adults.size(); i++) {
     outputFile << i << ",";
-    outputFile << adults[i].startParams.alpha << ",";
-    outputFile << adults[i].startParams.beta << ",";
-    outputFile << adults[i].startParams.zeta << ",";
-    outputFile << adults[i].startParams.tripTime << ",";
     
-
     for (int j = 0; j < GAMMA_ARRAY_SIZE; j++) {
       outputFile << adults[i].startParams.coeff.gamma[j] << ",";
     }
     for (int j = 0; j < TAU_ARRAY_SIZE; j++) {
       outputFile << adults[i].startParams.coeff.tau[j] << ",";
     }
+    outputFile << adults[i].startParams.alpha << ",";
+    outputFile << adults[i].startParams.beta << ",";
+    outputFile << adults[i].startParams.zeta << ",";
+    outputFile << adults[i].startParams.tripTime << ",";
     for (int j = 0; j < COAST_ARRAY_SIZE; j++) {
       outputFile << adults[i].startParams.coeff.coast[j] << ",";
     }
+    
     for (int j = 0; j < cConstants->missionObjectives.size(); j++)
     {
       outputFile << adults[i].getParameters(cConstants->missionObjectives[j]) << ",";

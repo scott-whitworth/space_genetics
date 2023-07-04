@@ -15,6 +15,7 @@ struct cudaConstants {
     double time_seed;    // Seed used for randomization within optimize function, if it's set to NONE the seed is set to time(0)
     int max_generations; // Maximum number of generations to evaluate in the genetic algorithm if not reaching a solution
     int run_count;       // How many runs of the optimization algorithm to perform using incremental seeds to not just repeat the same value (the actual change in the seed occurs in main)
+    int carryover_individuals; //How many individuals from the previous run to use as basis for starting parameters for this run
     bool random_start;   // If set to false, the initial generation has individuals initialized from a file instead of randomly generated within a range
     bool record_mode;    // If set to true, functions that record information onto files such as genPerformance.csv.  The code still records a valid solution regardless of this setting
     std::string initial_start_file_address; // If random_start is false, use file_address to find what file is being used for the initial start

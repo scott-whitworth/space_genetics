@@ -80,7 +80,7 @@ __global__ void rk4SimpleCUDA(Child *children, double *timeInitial, double *star
             children[threadId].simNum++;
 
             //Check to see if the child is about to be simulated too many times
-            if (children[threadId].simNum => cConstant->maxSimNum) {
+            if (children[threadId].simNum >= cConstant->maxSimNum) {
                 //Assign an error to the child because it has been running for too long
                 children[threadId].errorStatus = SIMNUM_ERROR;
 

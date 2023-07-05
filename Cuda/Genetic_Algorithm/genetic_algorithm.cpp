@@ -132,6 +132,7 @@ void createFirstGeneration(std::vector<Adult>& oldAdults, const cudaConstants* c
     Child* initialChildren = new Child[cConstants->num_individuals]; 
 
     //Try to open the final allAdults excel file from the last run
+    //  Note: the time seeds are subtrracted by 100 because the main difference between runs is the time seed is incremented by 100, so this line will get the previous run's file
     std::string prevIndPath = "../Output_Files/" + std::to_string(static_cast<int>(cConstants->time_seed-100)) + "_1/" + std::to_string(static_cast<int>(cConstants->time_seed-100)) + "-AllAdults-gen#" + std::to_string(cConstants->max_generations) + ".csv";
     std::fstream prevIndividuals(prevIndPath);
 
@@ -197,9 +198,8 @@ void createFirstGeneration(std::vector<Adult>& oldAdults, const cudaConstants* c
                     //The order of the params in the csv file is the same order as the OPTIM_VARS array, so no need to parse
                     baseParams[j][i] = std::stod(startParamVal);
 
+                    //Resetting the start pivot so the next parameter can be pulled
                     startPivot = endPivot + 1;
-
-                    //std::cout << "\nStoring: " << startParamVal << '\n';
                 }
 
             }

@@ -80,11 +80,12 @@ enum ERROR_STATUS{
     VALID = 0,   //not a nan, no problems with any of the parameter values
     SUN_ERROR = 1,   //flew too close to the sun, the posDiff and speedDiff are set to bad values during callRK
     MARS_ERROR = 2, //the spacecraft gets too close to Mars
-    SIMNUM_ERROR = 3, //The individual needed more simulation cycles than the specified max
-    DUPLICATE = 4,  //an adult has been found to be a duplicate of another, original adult
-    NOT_RUN = 5, //child has not been run through callRK (this is the default when created)
-    NAN_ERROR = 6, //there was an issue during the simulation of the child, causing its final pos to be nan
-    OTHER_ERROR = 7,   //any nans not caught during callRk are set to this error status in optimization
+    BAD_ASSIST = 3, //The spacecraft had a net-negative orbital assist
+    SIMNUM_ERROR = 4, //The individual needed more simulation cycles than the specified max
+    DUPLICATE = 5,  //an adult has been found to be a duplicate of another, original adult
+    NOT_RUN = 6, //child has not been run through callRK (this is the default when created)
+    NAN_ERROR = 7, //there was an issue during the simulation of the child, causing its final pos to be nan
+    OTHER_ERROR = 8,   //any nans not caught during callRk are set to this error status in optimization
 };
 
 //Enum will track the simulation status for each child

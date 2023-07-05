@@ -104,6 +104,10 @@ __global__ void rk4SimpleCUDA(Child *children, double *timeInitial, double *star
             double curTime;
             elements<double> curPos;
 
+            //Stores the angular momentum if the individual is entering an SOI
+            //  Used to check if the assist was bad
+            double soiEntryh;
+
             //Set the initial curTime and curPos depending on if the child has been ran
             if (children[threadId].simStatus == INITIAL_SIM) {
                 //Child has not been simulated, set the initial curTime to the start time of the simulation
@@ -129,6 +133,9 @@ __global__ void rk4SimpleCUDA(Child *children, double *timeInitial, double *star
                 //If this is a mission inside a SOI, set the final to be a gravAssistTime difference from the start time
                 endTime = startTime + cConstant->gravAssistTime;
                 //endTime = startTime + ((threadRKParameters.tripTime - startTime) * cConstant->gravAssistTimeFrac);
+
+                //Calculate the entry angular momentum
+                soiEntryh = threadRKParameters.y0.r * threadRKParameters.y0.vtheta;
 
                 //Check to make sure that endTime is not further than tripTime
                 if(endTime > threadRKParameters.tripTime) {
@@ -246,6 +253,13 @@ __global__ void rk4SimpleCUDA(Child *children, double *timeInitial, double *star
 
                         //Set the child status to outide SOI
                         children[threadId].simStatus = OUTSIDE_SOI;
+
+                        //Check to see if this was a bad assist
+                        if (curPos.r * curPos.vtheta < soiEntryh) {
+                            //If it is a bad assist, set the error
+                            children[threadId].errorStatus = BAD_ASSIST;
+                            children[threadId].simStatus = COMPLETED_SIM;
+                        }
 
                         return;
                     }

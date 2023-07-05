@@ -132,8 +132,10 @@ void createFirstGeneration(std::vector<Adult>& oldAdults, const cudaConstants* c
     Child* initialChildren = new Child[cConstants->num_individuals]; 
 
     //Try to open the final allAdults excel file from the last run
-    std::string prevIndPath = "../Output_Files/" + std::to_string(cConstants->time_seed-100) + "_1/" + std::to_string(cConstants->time_seed) + "-AllAdults-gen#" + std::to_string(cConstants->max_generations) + ".csv";
+    std::string prevIndPath = "../Output_Files/" + std::to_string(static_cast<int>(cConstants->time_seed-100)) + "_1/" + std::to_string(static_cast<int>(cConstants->time_seed-100)) + "-AllAdults-gen#" + std::to_string(cConstants->max_generations) + ".csv";
     std::fstream prevIndividuals(prevIndPath);
+
+    std::cout << "\nChecked Path: " << prevIndPath << "\n";
     //If this does not open, there are two likely scenerios
     //  1) This is the first run, so the folder for the previous run doesn't exist
     //  2) The previous run converged, so the last allAdults excel file isn't the maxGeneration one
@@ -151,7 +153,7 @@ void createFirstGeneration(std::vector<Adult>& oldAdults, const cudaConstants* c
     }
     // Get the initial conditions from the previous run
     else {   
-        std::cout << "\nStarting with previous run's parameters!\n";
+        //std::cout << "\nStarting with previous run's parameters!\n";
         // sort the data into 2 dimensions
         // each row is an individual
         // each column is one of the starting parameters
@@ -173,6 +175,8 @@ void createFirstGeneration(std::vector<Adult>& oldAdults, const cudaConstants* c
         for (int i = 0; i < cConstants->carryover_individuals; i++) {
             //Get the new line and check to see if the end of the csv has been reached
             if ( std::getline(prevIndividuals, adultInfo) ) {
+                //std::cout << "\nPulled line:\n\t" << adultInfo << "\n";
+
                 //A new adult has been pulled, get its starting params
                 //Reset pivots
                 startPivot = endPivot = 0;
@@ -192,6 +196,10 @@ void createFirstGeneration(std::vector<Adult>& oldAdults, const cudaConstants* c
                     //Push the value to the arrayCPU array
                     //The order of the params in the csv file is the same order as the OPTIM_VARS array, so no need to parse
                     baseParams[j][i] = std::stod(startParamVal);
+
+                    startPivot = endPivot + 1;
+
+                    //std::cout << "\nStoring: " << startParamVal << '\n';
                 }
 
             }

@@ -43,6 +43,7 @@ Child::Child(rkParameters<double> & childParameters, const cudaConstants* cConst
     stepCount = 0; //no calculations done yet, default is zero
     simStartTime = 0; //Inititially start the simulation at the start of the trip time
     minMarsDist = 100; //Arbitrarily high initial min mars distance
+    orbithChange = 1e-14; //No assist initially, so no angular momentum change initally
 
     simNum = 0; //Has not been simulated yet
 }
@@ -67,6 +68,7 @@ Child:: Child(const Child& other){
     progress = other.progress;
     stepCount = other.stepCount;
     minMarsDist = other.minMarsDist;
+    orbithChange = other.orbithChange;
     simNum = other.simNum;
 }
 
@@ -93,6 +95,9 @@ __host__ double Child::getParameters (const objective & requestObjective) const 
     }
     else if (requestObjective.goal == MIN_MARS_DIST){
         return minMarsDist;
+    }
+    else if (requestObjective.goal == MAX_ORBIT_ASST){
+        return orbithChange;
     }
     else {
         //Indicates error

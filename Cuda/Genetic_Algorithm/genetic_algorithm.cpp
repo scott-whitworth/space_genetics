@@ -154,7 +154,7 @@ void createFirstGeneration(std::vector<Adult>& oldAdults, const cudaConstants* c
     }
     // Get the initial conditions from the previous run
     else {   
-        //std::cout << "\nStarting with previous run's parameters!\n";
+        std::cout << "\nStarting with previous run's parameters!\n";
         // sort the data into 2 dimensions
         // each row is an individual
         // each column is one of the starting parameters

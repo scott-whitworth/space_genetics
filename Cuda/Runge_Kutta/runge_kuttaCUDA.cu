@@ -77,10 +77,12 @@ __global__ void rk4SimpleCUDA(Child *children, double *timeInitial, double *star
         //Check if this child has been simulated already
         if (children[threadId].simStatus != COMPLETED_SIM) {
             //If not, run it's simulation
-            children[threadId].simNum++;
 
             //Check to see if the child is about to be simulated too many times
-            if (children[threadId].simNum >= cConstant->maxSimNum) {
+            if ((children[threadId].simNum + 1) > cConstant->maxSimNum) {
+                //If not, run the next simulation and increase the sim num to reflect this
+                children[threadId].simNum++;
+
                 //Assign an error to the child because it has been running for too long
                 children[threadId].errorStatus = SIMNUM_ERROR;
 
@@ -100,6 +102,9 @@ __global__ void rk4SimpleCUDA(Child *children, double *timeInitial, double *star
             double endTime;
             double curAccel = 0;
 
+            //Stores the total mass of the fuel spent during the simulation
+            double massFuelSpent;
+
             //Initial time and position of the child
             double curTime;
             elements<double> curPos;
@@ -116,6 +121,8 @@ __global__ void rk4SimpleCUDA(Child *children, double *timeInitial, double *star
                 startTime = *timeInitial;
                 // start with the initial conditions of the spacecraft
                 curPos = threadRKParameters.y0; 
+
+                massFuelSpent = 0; // mass of total fuel expended (kg) starts at 0
             }
             else {
                 //Child has been partially simulated (means it has entered a SOI), set initial curTime to the child's simStartTime variable
@@ -125,6 +132,9 @@ __global__ void rk4SimpleCUDA(Child *children, double *timeInitial, double *star
                 startTime = children[threadId].simStartTime;
                 //Get the child's simStartPos, which will have the elements of the child at the last step of the last simulation
                 curPos = children[threadId].simStartPos;
+
+                //Get the mass of how much fuel the child has spent on previous simulations
+                massFuelSpent = children[threadId].fuelSpent;
             }
 
             //Check to see if this simulation occurs within a sphere of influence
@@ -149,11 +159,11 @@ __global__ void rk4SimpleCUDA(Child *children, double *timeInitial, double *star
 
             thruster<double> thrust(cConstant);
 
-            double massFuelSpent = 0; // mass of total fuel expended (kg) starts at 0
-
             bool coast; //=1 means thrusting, from calc_coast()
 
             elements<double> error; // holds output of previous value from rkCalc
+
+            stepSize = (endTime - startTime) / cConstant->max_numsteps;
 
             while (curTime < endTime) {
 
@@ -177,7 +187,7 @@ __global__ void rk4SimpleCUDA(Child *children, double *timeInitial, double *star
 
                 //See if the child is closest it has been to Mars so far this run
                 //This is only updated if Mars is in betweem the craft amd the target
-                if ((marsCraftDist < children[threadId].minMarsDist) && (curPos.r < mars.r)) {
+                if (marsCraftDist < children[threadId].minMarsDist) {
                     children[threadId].minMarsDist = marsCraftDist;
                 }
                 
@@ -195,8 +205,6 @@ __global__ void rk4SimpleCUDA(Child *children, double *timeInitial, double *star
                 //else if (stepSize < (endTime - startTime) / cConstant->max_numsteps){
                 //    stepSize = (endTime - startTime) / cConstant->max_numsteps;
                 //}
-
-                stepSize = (endTime - startTime) / cConstant->max_numsteps;
 
                 //count the steps taken for this threads calculations
                 children[threadId].stepCount++;
@@ -254,12 +262,19 @@ __global__ void rk4SimpleCUDA(Child *children, double *timeInitial, double *star
                         //Set the child status to outide SOI
                         children[threadId].simStatus = OUTSIDE_SOI;
 
-                        //Check to see if this was a bad assist
-                        if (curPos.r * curPos.vtheta < soiEntryh) {
-                            //If it is a bad assist, set the error
-                            children[threadId].errorStatus = BAD_ASSIST;
-                            children[threadId].simStatus = COMPLETED_SIM;
+                        children[threadId].orbithChange = (curPos.r * curPos.vtheta) - soiEntryh;
+
+                        //Check to make sure the orbithChange isn't less than 0 
+                        if (children[threadId].orbithChange < 1e-14) {
+                            children[threadId].orbithChange = 5e-15;
                         }
+
+                        //Check to see if this was a bad assist
+                        // if (curPos.r * curPos.vtheta < soiEntryh) {
+                        //     //If it is a bad assist, set the error
+                        //     children[threadId].errorStatus = BAD_ASSIST;
+                        //     children[threadId].simStatus = COMPLETED_SIM;
+                        // }
 
                         return;
                     }

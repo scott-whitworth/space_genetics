@@ -238,7 +238,13 @@ void parameterSort(std::vector<Adult> & adults, const objective& sortObjective, 
             break;
 
         case MIN_MARS_DIST:
+            //Sort by lowest mars distance
             std::sort(adults.begin(), adults.begin()+sortSize, LowerMarsDist);
+            break;
+
+        case MAX_ORBIT_ASST:
+            //Sort by highest orbithChange
+            std::sort(adults.begin(), adults.begin()+sortSize, HigherOrbitHChange);
             break;
 
         case MAX_SPEED_DIFF:

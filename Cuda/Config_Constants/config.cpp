@@ -104,19 +104,6 @@ void cudaConstants::FileRead(std::string fileName) {
                     else if (variableName == "carryover_individuals") {
                         this->carryover_individuals = std::stoi(variableValue);
                     }
-                    else if (variableName == "random_start") {
-                        if (variableValue == "false") {
-                            this->random_start = false;
-                        }
-                        else {
-                            // If not set to false, then it is assumed the value is for true
-                            this->random_start = true;
-                        }
-                    }
-                    else if (variableName == "initial_start_file_address") {
-                        // Assumption that the address does not need to be converted/checked
-                        this->initial_start_file_address = variableValue;
-                    }
 
 
 //////////////////////////////////////////////////////////////////////// -- RUNGE KUTTA -- /////////////////////////////////////////////////////////////////////////////
@@ -443,6 +430,10 @@ void cudaConstants::importObjective(std::string line) {
         //Optimize for highest speed
         goal = MAX_SPEED_DIFF; 
     }
+    else if (tempStr == "max_orbit_asst"){
+        //Optimize for the highest change in angular momentum during an assist
+        goal = MAX_ORBIT_ASST;
+    }
     else {
         //No parameter goal identified
         goal = UNKNOWN; 
@@ -493,7 +484,7 @@ std::ostream& operator<<(std::ostream& os, const cudaConstants& object) {
     os << std::setprecision(12);
     os << "\n==========CONFIG=DATA===============================================================================\n";
     os << "Genetic Algorithm Related Values:\n";
-    os << "\ttime_seed: "      << object.time_seed      << "\trandom_start: "    << object.random_start    << "\tnon_r_start_address: " << object.initial_start_file_address << "\n";
+    os << "\ttime_seed: "      << object.time_seed      << "\n";
     os << "\tanneal_initial: " << object.anneal_initial << "\tnum_individuals: " << object.num_individuals << "\tthread_block_size: "   << object.thread_block_size          << "\n";
     os << "\tsurvivor_count: " << object.survivor_count << "\tbest_count: "      << object.best_count      << "\tmax_generations: "     << object.max_generations            << "\trun_count: " << object.run_count << "\n\n";
 

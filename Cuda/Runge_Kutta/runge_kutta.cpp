@@ -18,7 +18,7 @@ template <class T> void rk4sys(const T & timeInitial, const T & timeFinal, T *ti
     T t_SOI;//Time stamp at a SOI boundary
     int n = 0; // setting the initial step number equal to 0
 
-    T massFuelSpent = 0;  //mass of fuel expended (kg), set to 0 initially
+    T massFuelSpent;  //mass of fuel expended (kg), set to 0 initially
 
     elements<T> u;//Current orbital elements (r, theta, z, vr, vtheta, vz)
     elements<T> y_SOI;//Orbital elements at a SOI boundary
@@ -33,6 +33,9 @@ template <class T> void rk4sys(const T & timeInitial, const T & timeFinal, T *ti
             startTime =  timeInitial;
             // start with the initial conditions of the spacecraft
             u = y0;
+
+            //No fuel has been spent initially
+            massFuelSpent = 0;
         }
         else{//Has been partially simulated (has entered a SOI), reset initial conditions
             curTime = t_SOI;

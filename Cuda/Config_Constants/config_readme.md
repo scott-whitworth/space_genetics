@@ -48,8 +48,6 @@
 | time_seed                  	| int/string 	| None  	| Sets the seed used in random generation initialization and labeling file outputs, either specify a seed to use or place "NONE" for the seed to be time(0)                         |   	|
 | max_generations               | int           | None      | Determines how many generations the genetic algorithim will run before "giving up" and trying again on a new run   |       |
 | run_count                     | int           | None      | The number of runs that will be completed before ending the program   |       |
-| random_start               	| boolean    	| None  	| If "true", sets initial generation's individuals to hold parameters with random values of set range (refer to Table 4), if "false" it initializes the individuals from a provided file    |   	|
-| initial_start_file_address 	| string     	| None  	| If random_start is false, the program uses this address to get parameter values for the initial individuals with the assumption that the file hold 14 sets    |   	|
 
 ## GPU/Algorithim Variables
 | Variable Name              	| Data Type  	| Units 	| Usage                                                                                                                                                      	                    |   	|
@@ -167,6 +165,5 @@ A table to elaborate on why some variables are assigned certain values
 | num_individuals               | 2880      | Population size is based on the number of available threads in the Tesla GPU, optimizing the rate a pool can be calculated.   |       |
 | survivor_count                | 720       | The genetic algorithim is able to dynamically create children as needed. However, through testing we have found 720 individuals to be a goood middle-ground value.    |       |
 | thread_block_size             | 32        | Based on the Tesla GPU.   |       |
-| random_start                  | true      | Random starting parameters allow for more diverse possible solutions, rather than a constrained initial start from a file.    |       |
 | best_count                    | 1         | It was found that in a given run, the best individuals when convergence occurs are very similar to each other, so setting more than 1 does not lead to more different solutions in a single run.  |       |
 | doublePrecThresh              | 1e-12     | The double data type experiences loss in precision for differences in two elements within runge-kutta that as a result could lead to differences between the CPU and GPU computations of runge-kutta.  This value is a starting point in finding the smallest threshold for that difference. |     |

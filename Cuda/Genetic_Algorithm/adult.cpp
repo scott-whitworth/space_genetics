@@ -153,6 +153,24 @@ bool LowerMarsDist(const Adult& personA, const Adult& personB) {
     }
 }
 
+// Compare two individuals by their orbithChange values, used in standard sort to have array contain highest orbithChange individual at start
+// input: two individuals
+// output: returns true if personA has a higher orbithChange than personB
+bool HigherOrbitHChange(const Adult& personA, const Adult& personB){
+        if(personA.errorStatus !=  VALID && personA.errorStatus != DUPLICATE){
+        return false;
+    }
+    else if(personB.errorStatus !=  VALID && personB.errorStatus != DUPLICATE){
+        return true;
+    }
+    else if (personA.orbithChange > personB.orbithChange) {
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
 //compares two individuals and sorts based on which individual is closer to 1
 //WARNING: this may be implemented in output.cpp in printFinalGen() when it may not need to be (use for test reasons)
 //input: two individuals

@@ -21,6 +21,7 @@ enum parameterGoals {
     UNKNOWN = 0, 
 
     //Maximization goals
+    MAX_ORBIT_ASST = 1,
     MAX_SPEED_DIFF = 2, 
 };
 

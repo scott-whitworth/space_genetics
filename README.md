@@ -2,7 +2,7 @@
 Based on previous work 2019 - 2021 Sankaran / Griffith summer research  
 2019: Mateo, Lauren, Ben  
 2020: Matthew, Noah, Andrew, Jeremy  
-2021: Cassie, Trevor
+2021: Cassie, Trevor  
 2022: Caleb, Connor, Meg
 
 2023: Caleb, Sierra

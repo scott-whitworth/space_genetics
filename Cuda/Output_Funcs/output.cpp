@@ -631,7 +631,6 @@ void output::trajectoryPrint(int generation, const cudaConstants* cConstants, co
   // calculate the error in conservation of mechanical energy due to the thruster
   errorCheck(times, yp, gamma, tau, lastStepInt, accel_output, fuelSpent, wetMass, work, dE, Etot_avg, cConstants, marsIndex);
 
-
   //Get the seed for outputs
   int seed = cConstants->time_seed;
 

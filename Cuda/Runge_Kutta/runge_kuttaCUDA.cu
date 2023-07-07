@@ -80,8 +80,6 @@ __global__ void rk4CUDASim(Child *children, double *absTolInput, int n, const cu
 
             //Check to see if the child is about to be simulated too many times
             if ((children[threadId].simNum + 1) > cConstant->maxSimNum) {
-                //If not, run the next simulation and increase the sim num to reflect this
-                children[threadId].simNum++;
 
                 //Assign an error to the child because it has been running for too long
                 children[threadId].errorStatus = SIMNUM_ERROR;
@@ -92,6 +90,9 @@ __global__ void rk4CUDASim(Child *children, double *absTolInput, int n, const cu
                 //Quit the simulation
                 return;
             }
+
+            //If not, run the next simulation and increase the sim num to reflect this
+            children[threadId].simNum++;
             
             rkParameters<double> threadRKParameters = children[threadId].startParams; // get the parameters for this thread
 

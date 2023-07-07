@@ -25,6 +25,8 @@ template <class T> void rk4sys(const T & timeInitial, const T & timeFinal, T *ti
 
     //While loop will continute the calculations until the run has completed
     while (simStatus != COMPLETED_SIM) {
+
+        std::cout << "\nNEW sim cycle with stats: " << simStatus << "\n";
         
         if (simStatus == INITIAL_SIM){//Starting from launch conditions
             //Child has not been simulated, set the initial curTime to the start time of the simulation
@@ -103,7 +105,7 @@ template <class T> void rk4sys(const T & timeInitial, const T & timeFinal, T *ti
             //array of time output as t         
             curTime += stepSize;
 
-            ////This is the way that stepSize was calculated in rk4SimpleCUDA
+            ////This is the way that stepSize was calculated in rk4CUDASim
             //stepSize *= calc_scalingFactor(u-error,error,absTol, cConstant->doublePrecThresh); // Alter the step size for the next iteration
 
             //// The step size cannot exceed the total time divided by 2 and cannot be smaller than the total time divided by 1000
@@ -158,6 +160,7 @@ template <class T> void rk4sys(const T & timeInitial, const T & timeFinal, T *ti
             else {
                 //if the endTime is at the final time, the simulation is done
                 if (endTime >= timeFinal) {
+                    std::cout << "\nCompleted Sim status assigned at step " << n << " at time " << curTime << "\n";
                     simStatus = COMPLETED_SIM;
                 }
                 //if not, it means that the simulation is in a SOI and hasn't escaped the SOI by the time the estimated orbit/assist time
@@ -172,6 +175,8 @@ template <class T> void rk4sys(const T & timeInitial, const T & timeFinal, T *ti
             n++;
         } //end of while (curTime < endTime) before updating curTime
     }//end of !COMPLETED_SIM
+
+    std::cout << "\nCOMPLETED SIM\n";
      
     lastStep = n-1;//Array index begins at 0; n was incremented after y_new was assigned.
 

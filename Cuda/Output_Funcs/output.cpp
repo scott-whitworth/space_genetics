@@ -52,7 +52,7 @@ void output::printGeneration(const cudaConstants * cConstants, const std::vector
 }
 
 //Function will handle printing at the end of a run
-void output::printFinalGen(const cudaConstants * cConstants, std::vector<Adult>& allAdults, const bool& converged, const int& generation, int& errorNum, const int& duplicateNum, const int& oldestBirthday, const float& avgGenTime) {
+void output::printFinalGen(const cudaConstants * cConstants, std::vector<Adult>& allAdults, GPUMem & gpuValues, const bool& converged, const int& generation, int& errorNum, const int& duplicateNum, const int& oldestBirthday, const float& avgGenTime) {
   //Call for a print of allIndividuals if in record mode and if it is not a report generation already
   //  Note: second check is simply so redundant files aren't created
   if ((cConstants->record_mode == true) && (generation % cConstants->all_write_freq != 0)) {
@@ -70,7 +70,7 @@ void output::printFinalGen(const cudaConstants * cConstants, std::vector<Adult>&
   //if (converged) {
     //Create the trajectory bin file
     //std::sort(allAdults.begin(), allAdults.end(), bestProgress); //remove if not needed, puts the best progress individual first
-    finalRecord(cConstants, allAdults[0], generation);
+    finalRecord(cConstants, allAdults[0], generation, gpuValues);
   //}
 }
 
@@ -410,7 +410,7 @@ void output::recordAllIndividuals(std::string name, const cudaConstants * cConst
 
 //!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Method for doing recording information at the end of the optimization process
-void output::finalRecord(const cudaConstants* cConstants, const Adult& bestAdult, const int& generation) {
+void output::finalRecord(const cudaConstants* cConstants, const Adult& bestAdult, const int& generation, GPUMem & gpuValues) {
   // To store parameter values and pass onto writeTrajectoryToFile
   double *start = new double[OPTIM_VARS];
 
@@ -463,7 +463,7 @@ void output::finalRecord(const cudaConstants* cConstants, const Adult& bestAdult
     std::cout << "\nCUDA fuel spent: " << bestAdult.fuelSpent;
 
   // Evaluate and print this solution's information to binary files
-  trajectoryPrint(start, generation, cConstants, bestAdult);
+  trajectoryPrint(generation, cConstants, bestAdult, gpuValues);
 
   // cleaning up dynamic memory
   delete [] start;
@@ -521,7 +521,7 @@ void output::reportRun(const cudaConstants* cConstants, const std::vector<Adult>
 }
 
 // Main Output, final results of genetic algorithm
-void output::trajectoryPrint( double x[], int generation, const cudaConstants* cConstants, const Adult& best) {
+void output::trajectoryPrint(int generation, const cudaConstants* cConstants, const Adult& best, GPUMem & gpuValues) {
   /*set the target and inital conditions for the earth and spacecraft:
   constructor takes in radial position(au), angluar position(rad), axial position(au),
   radial velocity(au/s), tangential velocity(au/s), axial velocity(au/s)*/
@@ -533,31 +533,27 @@ void output::trajectoryPrint( double x[], int generation, const cudaConstants* c
   elements<double> mars = elements<double>(cConstants->r_fin_mars, cConstants->theta_fin_mars, cConstants->z_fin_mars, cConstants->vr_fin_mars, cConstants->vtheta_fin_mars, cConstants->vz_fin_mars);
 
   // setting initial conditions of earth based off of the impact date (Sept 30, 2022) minus the trip time (optimized).
-  elements<double> earth =  launchCon->getCondition(x[TRIPTIME_OFFSET]);
+  elements<double> earth =  launchCon->getCondition(best.startParams.tripTime);
   
   // setting initial conditions of the spacecraft
-  elements<double> spaceCraft = elements<double>(earth.r+ESOI*cos(x[ALPHA_OFFSET]),
-                                                 earth.theta + asin(sin(M_PI-x[ALPHA_OFFSET])*ESOI/earth.r),
+  elements<double> spaceCraft = elements<double>(earth.r+ESOI*cos(best.startParams.alpha),
+                                                 earth.theta + asin(sin(M_PI-best.startParams.alpha)*ESOI/earth.r),
                                                  earth.z,
-                                                 earth.vr + cos(x[ZETA_OFFSET])*sin(x[BETA_OFFSET])*cConstants->v_escape,
-                                                 earth.vtheta + cos(x[ZETA_OFFSET])*cos(x[BETA_OFFSET])*cConstants->v_escape,
-                                                 earth.vz + sin(x[ZETA_OFFSET])*cConstants->v_escape);
+                                                 earth.vr + cos(best.startParams.zeta)*sin(best.startParams.beta)*cConstants->v_escape,
+                                                 earth.vtheta + cos(best.startParams.zeta)*cos(best.startParams.beta)*cConstants->v_escape,
+                                                 earth.vz + sin(best.startParams.zeta)*cConstants->v_escape);
 
   // setting time parameters
-  double timeInitial=0; 
   double timeFinal=cConstants->triptime_min; // The shortest possible triptime to make the initial deltaT a small but reasonable size
-  double deltaT; // time step
+
   //int numSteps = cConstants->max_numsteps*7; // initial guess for the number of time steps, guess for the memory allocated 
   // int numSteps = best.stepCount+5; // initial guess for the number of time steps, guess for the memory allocated 
-  int numSteps = ((best.simNum+1)*cConstants->max_numsteps)+1;
-  deltaT = (timeFinal-timeInitial) / numSteps; // initial guess for time step, small is preferable
+  int numSteps = (cConstants->maxSimNum * (cConstants->max_numsteps + 1))+1;
 
   std::cout << "\nADULT STEPS: \n\tCUDA: " << best.stepCount;
 
   // setup of thrust angle calculations based off of optimized coefficients
-  coefficients<double> coeff;
-  initCoefficient(x,coeff, cConstants);
-  // Assigning coast threshold (now done in coefficients because is a constant)
+  coefficients<double> coeff = best.startParams.coeff;
 
   // Assigning wetMass
   double wetMass = cConstants->wet_mass;
@@ -581,14 +577,56 @@ void output::trajectoryPrint( double x[], int generation, const cudaConstants* c
   // used to track the cost function throughout a run via output and outputs to a binary
   int lastStepInt;
 
+  const int numThreads = gpuValues.numThreads;
+  const int blockThreads = cConstants->thread_block_size;
+
+  //Create new dummy child from the best Adult
+  rkParameters<double> bestParams = best.startParams;
+  Child *convergedChild = new Child(bestParams, cConstants, best.birthday, best.avgParentProgress);
+
+  std::cout << "\nCALLING RK4SYS\n";
+
+  while ((*convergedChild).simStatus != COMPLETED_SIM) {
+
+    cudaEvent_t kernelStart, kernelEnd;
+    cudaEventCreate(&kernelStart);
+    cudaEventCreate(&kernelEnd);
+
+    // copy values of parameters passed from host onto device
+    cudaMemcpy(gpuValues.devGeneration, convergedChild, sizeof(Child), cudaMemcpyHostToDevice);
+
+    cudaEventRecord(kernelStart);
+    rk4CUDASim<<<(numThreads+blockThreads-1)/blockThreads,blockThreads>>>(gpuValues.devGeneration, gpuValues.devAbsTol, 1, gpuValues.devCConstant, gpuValues.devMarsLaunchCon, gpuValues.devTime_steps, gpuValues.devY_steps, gpuValues.devGamma_steps, gpuValues.devTau_steps, gpuValues.devAccel_steps, gpuValues.devFuel_steps);
+    cudaEventRecord(kernelEnd);
+
+    // copy the result of the kernel onto the host
+    cudaMemcpy(convergedChild, gpuValues.devGeneration, sizeof(Child), cudaMemcpyDeviceToHost);
+
+    float kernelT;
+        
+    cudaEventSynchronize(kernelEnd);
+
+    cudaEventElapsedTime(&kernelT, kernelStart, kernelEnd);
+  }
+
+  //Getting the step pointers
+  cudaMemcpy(times, gpuValues.devTime_steps, numSteps * sizeof(double), cudaMemcpyDeviceToHost);
+  cudaMemcpy(yp, gpuValues.devY_steps, numSteps * sizeof(elements<double>), cudaMemcpyDeviceToHost);
+  cudaMemcpy(gamma, gpuValues.devGamma_steps, numSteps * sizeof(double), cudaMemcpyDeviceToHost);
+  cudaMemcpy(tau, gpuValues.devTau_steps, numSteps * sizeof(double), cudaMemcpyDeviceToHost);
+  cudaMemcpy(accel_output, gpuValues.devAccel_steps, numSteps * sizeof(double), cudaMemcpyDeviceToHost);
+  cudaMemcpy(fuelSpent, gpuValues.devFuel_steps, numSteps * sizeof(double), cudaMemcpyDeviceToHost);
+
   // integrate the trajectory of the input starting conditions
-  rk4sys(timeInitial, x[TRIPTIME_OFFSET] , times, spaceCraft, deltaT, yp, absTol, coeff, gamma, tau, lastStepInt, accel_output, fuelSpent, wetMass, cConstants, marsIndex);
+  // rk4sys(timeInitial, x[TRIPTIME_OFFSET] , times, spaceCraft, deltaT, yp, absTol, coeff, gamma, tau, lastStepInt, accel_output, fuelSpent, wetMass, cConstants, marsIndex);
 
   // store the number of steps as a double for binary output
-  double lastStep = lastStepInt;
+  double lastStep = (*convergedChild).stepCount;
 
   // gets the final y values of the spacecrafts for the cost function.
   //elements<double> yOut = yp[lastStepInt];
+
+  std::cout << "\nCALLING ERROR CHECK\n";
 
   // calculate the error in conservation of mechanical energy due to the thruster
   errorCheck(times, yp, gamma, tau, lastStepInt, accel_output, fuelSpent, wetMass, work, dE, Etot_avg, cConstants, marsIndex);
@@ -607,6 +645,8 @@ void output::trajectoryPrint( double x[], int generation, const cudaConstants* c
 
   // binary outputs
   std::ofstream output;
+
+  std::cout << "\nWRITING TO OUTPUT\n";
   
   output.open(outputPath + "orbitalMotion-"+std::to_string(seed)+".bin", std::ios::binary);
   // output.open("orbitalMotion-"+std::to_string(static_cast<int>(seed))+"-"+std::to_string(threadRank)+".bin", std::ios::binary);
@@ -664,8 +704,18 @@ void output::trajectoryPrint( double x[], int generation, const cudaConstants* c
   output.write((char*)&csize, sizeof(double));
 
   // Optimized variables
-  for (int j = 0; j < OPTIM_VARS; j++) {
-    output.write((char*)&x[j], sizeof (double));
+  for (int i = 0; i < GAMMA_ARRAY_SIZE; i++) {
+    output.write((char*)&best.startParams.coeff.gamma[i], sizeof (double));
+  }
+  for (int i = 0; i < TAU_ARRAY_SIZE; i++) {
+    output.write((char*)&best.startParams.coeff.tau[i], sizeof (double)); 
+  }
+  output.write((char*)&best.startParams.alpha, sizeof (double));
+  output.write((char*)&best.startParams.beta, sizeof (double));
+  output.write((char*)&best.startParams.zeta, sizeof (double));
+  output.write((char*)&best.startParams.tripTime, sizeof (double));
+  for (int i = 0; i < COAST_ARRAY_SIZE; i++) {
+    output.write((char*)&best.startParams.coeff.coast[i], sizeof (double));
   }
   
   // Number of steps taken in final RK calculation

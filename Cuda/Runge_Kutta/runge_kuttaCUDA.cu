@@ -33,12 +33,12 @@ void callRK(double & calcPerS, Child *generation, const cudaConstants* cConstant
 
         // copy values of parameters passed from host onto device
         cudaMemcpy(gpuValues.devGeneration, generation, numThreads * sizeof(Child), cudaMemcpyHostToDevice);
-        cudaMemcpy(gpuValues.devTimeInitial, &timeInitial, sizeof(double), cudaMemcpyHostToDevice);
-        cudaMemcpy(gpuValues.devStepSize, &stepSize, sizeof(double), cudaMemcpyHostToDevice);
+        // cudaMemcpy(gpuValues.devTimeInitial, &timeInitial, sizeof(double), cudaMemcpyHostToDevice);
+        // cudaMemcpy(gpuValues.devStepSize, &stepSize, sizeof(double), cudaMemcpyHostToDevice);
 
         // GPU version of rk4Simple()
         cudaEventRecord(kernelStart);
-        rk4SimpleCUDA<<<(numThreads+blockThreads-1)/blockThreads,blockThreads>>>(gpuValues.devGeneration, gpuValues.devTimeInitial, gpuValues.devStepSize, gpuValues.devAbsTol, numThreads, gpuValues.devCConstant, gpuValues.devMarsLaunchCon);
+        rk4CUDASim<<<(numThreads+blockThreads-1)/blockThreads,blockThreads>>>(gpuValues.devGeneration, gpuValues.devAbsTol, numThreads, gpuValues.devCConstant, gpuValues.devMarsLaunchCon, gpuValues.devTime_steps, gpuValues.devY_steps, gpuValues.devGamma_steps, gpuValues.devTau_steps, gpuValues.devAccel_steps, gpuValues.devFuel_steps);
         cudaEventRecord(kernelEnd);
 
         // copy the result of the kernel onto the host
@@ -69,7 +69,7 @@ void callRK(double & calcPerS, Child *generation, const cudaConstants* cConstant
 }
 
 // seperate conditions are passed for each thread, but timeInitial, stepSize, and absTol are the same for every thread
-__global__ void rk4SimpleCUDA(Child *children, double *timeInitial, double *startStepSize, double *absTolInput, int n, const cudaConstants* cConstant, elements<double>* marsLaunchCon) {
+__global__ void rk4CUDASim(Child *children, double *absTolInput, int n, const cudaConstants* cConstant, elements<double> * marsLaunchCon, double *time_steps, elements<double> *y_steps, double *gamma_steps, double *tau_steps, double *accel_steps, double *fuel_steps) {
    
    int threadId = threadIdx.x + blockIdx.x * blockDim.x;
     if (threadId < n) {
@@ -96,7 +96,7 @@ __global__ void rk4SimpleCUDA(Child *children, double *timeInitial, double *star
             rkParameters<double> threadRKParameters = children[threadId].startParams; // get the parameters for this thread
 
             // storing copies of the input values
-            double stepSize = *startStepSize;
+            double stepSize;
             double absTol = *absTolInput;
             double startTime;
             double endTime;
@@ -116,9 +116,10 @@ __global__ void rk4SimpleCUDA(Child *children, double *timeInitial, double *star
             //Set the initial curTime and curPos depending on if the child has been ran
             if (children[threadId].simStatus == INITIAL_SIM) {
                 //Child has not been simulated, set the initial curTime to the start time of the simulation
-                curTime = *timeInitial;
+                //Set at 0 initially as no time has passed within the simulation yet
+                curTime = 0;
                 //Set the start time to the total trip time
-                startTime = *timeInitial;
+                startTime = curTime;
                 // start with the initial conditions of the spacecraft
                 curPos = threadRKParameters.y0; 
 
@@ -166,6 +167,7 @@ __global__ void rk4SimpleCUDA(Child *children, double *timeInitial, double *star
             stepSize = (endTime - startTime) / cConstant->max_numsteps;
 
             while (curTime < endTime) {
+                time_steps[children[threadId].stepCount] = curTime;
 
                 // Check the thruster type before performing calculations
                 if (cConstant->thruster_type == thruster<double>::NO_THRUST) {
@@ -173,9 +175,18 @@ __global__ void rk4SimpleCUDA(Child *children, double *timeInitial, double *star
                 }
                 else {
                     coast = calc_coast(threadRKParameters.coeff, curTime, threadRKParameters.tripTime, thrust);
+
                     curAccel = calc_accel(curPos.r, curPos.z, thrust, massFuelSpent, stepSize, coast, static_cast<double>(cConstant->wet_mass), cConstant);
+
+                    gamma_steps[children[threadId].stepCount] = calc_gamma(children[threadId].startParams.coeff, curTime, threadRKParameters.tripTime);
+
+                    tau_steps[children[threadId].stepCount] = calc_tau(children[threadId].startParams.coeff, curTime, threadRKParameters.tripTime);
+
                     children[threadId].fuelSpent = massFuelSpent;
                 }
+
+                accel_steps[children[threadId].stepCount] = curAccel;
+                fuel_steps[children[threadId].stepCount] = massFuelSpent;
 
                 //Needs to be triptime - curtime to get the correct index for mars
                 //when curtime = triptime, this will give us the final position of mars at impact
@@ -205,9 +216,6 @@ __global__ void rk4SimpleCUDA(Child *children, double *timeInitial, double *star
                 //else if (stepSize < (endTime - startTime) / cConstant->max_numsteps){
                 //    stepSize = (endTime - startTime) / cConstant->max_numsteps;
                 //}
-
-                //count the steps taken for this threads calculations
-                children[threadId].stepCount++;
 
                 if ( (curTime + stepSize) > endTime) {
                     stepSize = (endTime - curTime); // shorten the last step to end exactly at time final
@@ -278,6 +286,12 @@ __global__ void rk4SimpleCUDA(Child *children, double *timeInitial, double *star
 
                         return;
                     }
+
+                    y_steps[children[threadId].stepCount] = curPos;
+                
+                    //count the steps taken for this threads calculations
+                    children[threadId].stepCount++;
+
                 }  //end if (curTime < endTime)
             } // end while (curTime < endTime)
 

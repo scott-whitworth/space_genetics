@@ -4,6 +4,11 @@
 #include <fstream> //for file input/output
 #include <vector> //allows for using vectors instead of just dynamic arrays
 
+#include "..\Runge_Kutta\rkParameters.h"
+#include "..\Config_Constants\config.h"
+#include "../Runge_Kutta/gpuMem.cuh"
+#include "../Runge_Kutta/runge_kuttaCUDA.cuh"
+
 //Structure will hold the run's output folder address, many output functions, and will handle generational & final outputs
 //This will help make output folders more flexible
 struct output 
@@ -36,7 +41,7 @@ struct output
     // Inputs: Passed to recordAllIndividuals(), printBestAdults(), reportRun(), & finalRecord()
     //              See those functions' header files for detail on how the inputs are used
     // Outputs: printBestAdults() and reportRun() will be called regardless, with recordAllIndividuals() and finalRecord() being called conditionally
-    void printFinalGen(const cudaConstants * cConstants, std::vector<Adult>& allAdults, const bool& converged, const int& generation, int& errorNum, const int& duplicateNum, const int& oldestBirthday, const float& avgGenTime); 
+    void printFinalGen(const cudaConstants * cConstants, std::vector<Adult>& allAdults, GPUMem & gpuValues, const bool& converged, const int& generation, int& errorNum, const int& duplicateNum, const int& oldestBirthday, const float& avgGenTime); 
     
     // Initialize genPerformance with header rows
     // input: cConstants - to access time_seed for deriving file name conventions
@@ -101,7 +106,7 @@ struct output
     //        bestAdult - The final best individual
     //        generation - to record the generation value 
     // output: trajectoryPrint is called to generate binary files for MATLAB plotting
-    void finalRecord(const cudaConstants* cConstants, const Adult& bestAdult, const int& generation);
+    void finalRecord(const cudaConstants* cConstants, const Adult& bestAdult, const int& generation, GPUMem & gpuValues);
 
     // Function which prints the general info of a run when its over
     // Inputs: cConstants - cuda constants, used for accessing seed and objectives
@@ -120,7 +125,7 @@ struct output
     //        best - To access the best individual (pool[0])
     // output: file orbitalMotion-[time_seed].bin is created that holds spacecraft RK steps and error
     //         file finalOptimization-[time_seed].bin is created that holds earth/ast/ and trajectory parameter values
-    void trajectoryPrint(double x[], int generation, const cudaConstants* cConstants, const Adult& best);
+    void output::trajectoryPrint(int generation, const cudaConstants* cConstants, const Adult& best, GPUMem & gpuValues);
 
     // Records error in energy conservation due to thrust calculations
     // For a single set of rkParameters

@@ -101,13 +101,6 @@ struct output
     // output: file generation#[generation]-[time_seed].csv is created with each row holding parameter values of individuals
     void recordAllIndividuals(std::string name, const cudaConstants * cConstants, const std::vector<Adult>& adults, const int& generation);
 
-    // Method for doing recording information at the end of the optimization process
-    // input: cConstants - to access config info
-    //        bestAdult - The final best individual
-    //        generation - to record the generation value 
-    // output: trajectoryPrint is called to generate binary files for MATLAB plotting
-    void finalRecord(const cudaConstants* cConstants, const Adult& bestAdult, const int& generation, GPUMem & gpuValues);
-
     // Function which prints the general info of a run when its over
     // Inputs: cConstants - cuda constants, used for accessing seed and objectives
     //         oldAdults - the oldAdult vector, will report the parameters from the top adults within the vector

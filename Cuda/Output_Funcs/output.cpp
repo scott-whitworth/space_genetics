@@ -68,9 +68,8 @@ void output::printFinalGen(const cudaConstants * cConstants, std::vector<Adult>&
 
   //Check to see if there is a convergence before printing the trajectory
   //if (converged) {
-    //Create the trajectory bin file
-    //std::sort(allAdults.begin(), allAdults.end(), bestProgress); //remove if not needed, puts the best progress individual first
-    finalRecord(cConstants, allAdults[0], generation, gpuValues);
+      // Evaluate and print this solution's information to binary files
+      trajectoryPrint(generation, cConstants, allAdults[0], gpuValues);
   //}
 }
 
@@ -409,67 +408,6 @@ void output::recordAllIndividuals(std::string name, const cudaConstants * cConst
 }
 
 //!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-// Method for doing recording information at the end of the optimization process
-void output::finalRecord(const cudaConstants* cConstants, const Adult& bestAdult, const int& generation, GPUMem & gpuValues) {
-  // To store parameter values and pass onto writeTrajectoryToFile
-  double *start = new double[OPTIM_VARS];
-
-  // Output the final best individual
-  for (int j = 0; j < bestAdult.startParams.coeff.gammaSize; j++) {
-      start[GAMMA_OFFSET + j] = bestAdult.startParams.coeff.gamma[j];
-  }
-  for (int j = 0; j < bestAdult.startParams.coeff.tauSize; j++) {
-      start[TAU_OFFSET + j] = bestAdult.startParams.coeff.tau[j];
-  }
-  for (int j = 0; j < bestAdult.startParams.coeff.coastSize; j++) {
-      start[COAST_OFFSET + j] = bestAdult.startParams.coeff.coast[j];
-  }
-
-  start[TRIPTIME_OFFSET] = bestAdult.startParams.tripTime;
-  start[ALPHA_OFFSET] = bestAdult.startParams.alpha;
-  start[BETA_OFFSET] = bestAdult.startParams.beta;
-  start[ZETA_OFFSET] = bestAdult.startParams.zeta;
-
-  // Test outputs
-  std::cout << "\nComparison\n";
-  for (int i = 0; i < cConstants->missionObjectives.size(); i++) {
-      std::cout << "CUDA " << cConstants->missionObjectives[i].name << ": ";
-      std::cout << bestAdult.getParameters(cConstants->missionObjectives[i]) << "\n";
-  }
-    //std::cout << "\nCUDA r final target: " << cConstants->r_fin_target;
-    //std::cout << "\nCUDA theta final target: " << cConstants->theta_fin_target;
-    //std::cout << "\nCUDA z final target: " << cConstants->z_fin_target << "\n";
-
-    // std::cout << "\nCUDA r initial craft: " << bestAdult.startParams.y0.r;
-    // std::cout << "\nCUDA theta initial craft: " << bestAdult.startParams.y0.theta;
-    // std::cout << "\nCUDA z initial craft: " << bestAdult.startParams.y0.z<< "\n";
-
-    std::cout << "\nCUDA r final craft: " << bestAdult.finalPos.r;
-    std::cout << "\nCUDA theta final craft: " << bestAdult.finalPos.theta;
-    std::cout << "\nCUDA z final craft: " << bestAdult.finalPos.z << "\n";
-
-    //std::cout << "\nCUDA vr final target: " << cConstants->vr_fin_target;
-    //std::cout << "\nCUDA vtheta final target: " << cConstants->vtheta_fin_target;
-    //std::cout << "\nCUDA vz final target: " << cConstants->vz_fin_target << "\n";
-
-    // std::cout << "\nCUDA vr initial craft: " << bestAdult.startParams.y0.vr;
-    // std::cout << "\nCUDA vtheta initial craft: " << bestAdult.startParams.y0.vtheta;
-    // std::cout << "\nCUDA vz initial craft: " << bestAdult.startParams.y0.vz << "\n";
-
-    std::cout << "\nCUDA vr final craft: " << bestAdult.finalPos.vr;
-    std::cout << "\nCUDA vtheta final craft: " << bestAdult.finalPos.vtheta;
-    std::cout << "\nCUDA vz final craft: " << bestAdult.finalPos.vz << "\n";
-
-    std::cout << "\nCUDA fuel spent: " << bestAdult.fuelSpent;
-
-  // Evaluate and print this solution's information to binary files
-  trajectoryPrint(generation, cConstants, bestAdult, gpuValues);
-
-  // cleaning up dynamic memory
-  delete [] start;
-}
-
-//!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 // Function which prints the general info of a run when its over
 void output::reportRun(const cudaConstants* cConstants, const std::vector<Adult>& adults, const bool& converged, const int& generation, const float& avgGenTime) {
@@ -543,22 +481,11 @@ void output::trajectoryPrint(int generation, const cudaConstants* cConstants, co
                                                  earth.vtheta + cos(best.startParams.zeta)*cos(best.startParams.beta)*cConstants->v_escape,
                                                  earth.vz + sin(best.startParams.zeta)*cConstants->v_escape);
 
-  // setting time parameters
-  double timeFinal=cConstants->triptime_min; // The shortest possible triptime to make the initial deltaT a small but reasonable size
-
-  //int numSteps = cConstants->max_numsteps*7; // initial guess for the number of time steps, guess for the memory allocated 
-  // int numSteps = best.stepCount+5; // initial guess for the number of time steps, guess for the memory allocated 
+  //Calculate the maximum possible number of steps taken to make enough memory is allocated
   int numSteps = (cConstants->maxSimNum * (cConstants->max_numsteps + 1))+1;
-
-  std::cout << "\nADULT STEPS: \n\tCUDA: " << best.stepCount;
-
-  // setup of thrust angle calculations based off of optimized coefficients
-  coefficients<double> coeff = best.startParams.coeff;
 
   // Assigning wetMass
   double wetMass = cConstants->wet_mass;
-  // setting Runge-Kutta tolerance
-  double absTol = cConstants->rk_tol;
 
   // Initialize memory for the solution vector of the dependant solution
   elements<double>* yp = new elements<double>[numSteps];
@@ -574,9 +501,7 @@ void output::trajectoryPrint(int generation, const cudaConstants* cConstants, co
   dE = new double[numSteps];  // Initialize memory for delta-E array
   Etot_avg = new double[numSteps];  // Initialize memory for average mechanical energy array
 
-  // used to track the cost function throughout a run via output and outputs to a binary
-  int lastStepInt;
-
+  //store the number of threads
   const int numThreads = gpuValues.numThreads;
   const int blockThreads = cConstants->thread_block_size;
 
@@ -584,10 +509,10 @@ void output::trajectoryPrint(int generation, const cudaConstants* cConstants, co
   rkParameters<double> bestParams = best.startParams;
   Child *convergedChild = new Child(bestParams, cConstants, best.birthday, best.avgParentProgress);
 
-  std::cout << "\nCALLING RK4SYS\n";
-
+  //Will simulate the best individual until they have completed their simulation
   while ((*convergedChild).simStatus != COMPLETED_SIM) {
 
+    //Create CUDA event
     cudaEvent_t kernelStart, kernelEnd;
     cudaEventCreate(&kernelStart);
     cudaEventCreate(&kernelEnd);
@@ -595,6 +520,7 @@ void output::trajectoryPrint(int generation, const cudaConstants* cConstants, co
     // copy values of parameters passed from host onto device
     cudaMemcpy(gpuValues.devGeneration, convergedChild, sizeof(Child), cudaMemcpyHostToDevice);
 
+    //Run CUDA simulation
     cudaEventRecord(kernelStart);
     rk4CUDASim<<<(numThreads+blockThreads-1)/blockThreads,blockThreads>>>(gpuValues.devGeneration, gpuValues.devAbsTol, 1, gpuValues.devCConstant, gpuValues.devMarsLaunchCon, gpuValues.devTime_steps, gpuValues.devY_steps, gpuValues.devGamma_steps, gpuValues.devTau_steps, gpuValues.devAccel_steps, gpuValues.devFuel_steps);
     cudaEventRecord(kernelEnd);
@@ -602,14 +528,13 @@ void output::trajectoryPrint(int generation, const cudaConstants* cConstants, co
     // copy the result of the kernel onto the host
     cudaMemcpy(convergedChild, gpuValues.devGeneration, sizeof(Child), cudaMemcpyDeviceToHost);
 
-    float kernelT;
-        
+    //wait for CUDA sim to finish
+    float kernelT;   
     cudaEventSynchronize(kernelEnd);
-
     cudaEventElapsedTime(&kernelT, kernelStart, kernelEnd);
   }
 
-  //Getting the step pointers
+  //Copy the step-by-step values off of the GPU
   cudaMemcpy(times, gpuValues.devTime_steps, numSteps * sizeof(double), cudaMemcpyDeviceToHost);
   cudaMemcpy(yp, gpuValues.devY_steps, numSteps * sizeof(elements<double>), cudaMemcpyDeviceToHost);
   cudaMemcpy(gamma, gpuValues.devGamma_steps, numSteps * sizeof(double), cudaMemcpyDeviceToHost);
@@ -617,23 +542,34 @@ void output::trajectoryPrint(int generation, const cudaConstants* cConstants, co
   cudaMemcpy(accel_output, gpuValues.devAccel_steps, numSteps * sizeof(double), cudaMemcpyDeviceToHost);
   cudaMemcpy(fuelSpent, gpuValues.devFuel_steps, numSteps * sizeof(double), cudaMemcpyDeviceToHost);
 
-  // integrate the trajectory of the input starting conditions
-  // rk4sys(timeInitial, x[TRIPTIME_OFFSET] , times, spaceCraft, deltaT, yp, absTol, coeff, gamma, tau, lastStepInt, accel_output, fuelSpent, wetMass, cConstants, marsIndex);
-
-  // store the number of steps as a double for binary output
-  double lastStep = (*convergedChild).stepCount;
-
-  // gets the final y values of the spacecrafts for the cost function.
-  //elements<double> yOut = yp[lastStepInt];
-
-  std::cout << "\nCALLING ERROR CHECK\n";
-
   // calculate the error in conservation of mechanical energy due to the thruster
-  errorCheck(times, yp, gamma, tau, lastStepInt, accel_output, fuelSpent, wetMass, work, dE, Etot_avg, cConstants, marsIndex);
+  errorCheck(times, yp, gamma, tau, static_cast<int>((*convergedChild).stepCount), accel_output, fuelSpent, wetMass, work, dE, Etot_avg, cConstants, marsIndex);
 
   //Get the seed for outputs
   int seed = cConstants->time_seed;
 
+  // Test outputs
+  std::cout << "\nComparison\n";
+  for (int i = 0; i < cConstants->missionObjectives.size(); i++) {
+      std::cout << "Main Run " << cConstants->missionObjectives[i].name << ": ";
+      std::cout << best.getParameters(cConstants->missionObjectives[i]) << "\n";
+  }
+  std::cout << "Main Run steps: " << best.stepCount << "\n\n";
+
+  //Get equivalent outputs for convergedChild
+  (*convergedChild).getPosDiff(cConstants);
+  (*convergedChild).getSpeedDiff(cConstants);
+  (*convergedChild).getOrbitPosDiff(cConstants);
+  (*convergedChild).getOrbitSpeedDiff(cConstants);
+
+  //Outputting equivalent outputs
+  for (int i = 0; i < cConstants->missionObjectives.size(); i++) {
+      std::cout << "Bin Run " << cConstants->missionObjectives[i].name << ": ";
+      std::cout << (*convergedChild).getParameters(cConstants->missionObjectives[i]) << "\n";
+  }
+  std::cout << "Bin Run steps: " << (*convergedChild).stepCount << "\n\n";
+
+  // OUTDATED SINCE 2023
   // This function is used to compare the final best thread with other runs
   // append this thread's info to a csv file
   //if (cConstants->record_mode == true) {
@@ -645,12 +581,11 @@ void output::trajectoryPrint(int generation, const cudaConstants* cConstants, co
   // binary outputs
   std::ofstream output;
 
-  std::cout << "\nWRITING TO OUTPUT\n";
-  
+  //step-by-step bin file
   output.open(outputPath + "orbitalMotion-"+std::to_string(seed)+".bin", std::ios::binary);
-  // output.open("orbitalMotion-"+std::to_string(static_cast<int>(seed))+"-"+std::to_string(threadRank)+".bin", std::ios::binary);
-  for(int i = 0; i <= lastStepInt; i++) {
+
   // Output this thread's data at each time step
+  for(int i = 0; i <= static_cast<int>((*convergedChild).stepCount); i++) {
     output.write((char*)&yp[i], sizeof (elements<double>));
     output.write((char*)&times[i], sizeof (double));
     output.write((char*)&gamma[i], sizeof (double));
@@ -664,9 +599,10 @@ void output::trajectoryPrint(int generation, const cudaConstants* cConstants, co
   output.close();
 
 
-  double gsize = GAMMA_ARRAY_SIZE, tsize = TAU_ARRAY_SIZE, csize = COAST_ARRAY_SIZE;
+  //Setup conditions file
   output.open(outputPath + "finalOptimization-" + std::to_string(seed)+".bin", std::ios::binary);
-  // output.open ("finalOptimization-"+std::to_string(static_cast<int>(seed))+"-"+std::to_string(threadRank)+".bin", std::ios::binary);
+
+  double gsize = GAMMA_ARRAY_SIZE, tsize = TAU_ARRAY_SIZE, csize = COAST_ARRAY_SIZE;
 
   // Impact conditions
   output.write((char*)&cConstants->r_fin_target, sizeof(double));
@@ -702,7 +638,7 @@ void output::trajectoryPrint(int generation, const cudaConstants* cConstants, co
   output.write((char*)&tsize, sizeof(double));
   output.write((char*)&csize, sizeof(double));
 
-  // Optimized variables
+  // Optimized starting parameters
   for (int i = 0; i < GAMMA_ARRAY_SIZE; i++) {
     output.write((char*)&best.startParams.coeff.gamma[i], sizeof (double));
   }
@@ -718,7 +654,7 @@ void output::trajectoryPrint(int generation, const cudaConstants* cConstants, co
   }
   
   // Number of steps taken in final RK calculation
-  output.write((char*)&lastStep, sizeof (double));
+  output.write((char*)&(*convergedChild).stepCount, sizeof (double));
 
   output.close();
   

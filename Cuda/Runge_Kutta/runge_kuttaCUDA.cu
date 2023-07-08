@@ -98,7 +98,6 @@ __global__ void rk4CUDASim(Child *children, double *absTolInput, int n, const cu
 
             // storing copies of the input values
             double stepSize;
-            double absTol = *absTolInput;
             double startTime;
             double endTime;
             double curAccel = 0;
@@ -165,9 +164,12 @@ __global__ void rk4CUDASim(Child *children, double *absTolInput, int n, const cu
 
             elements<double> error; // holds output of previous value from rkCalc
 
+            //Calculation of the simulation's step size
+            //  Setting the value to be as small as possible
             stepSize = (endTime - startTime) / cConstant->max_numsteps;
 
             while (curTime < endTime) {
+                //Save the time of the current step
                 time_steps[children[threadId].stepCount] = curTime;
 
                 // Check the thruster type before performing calculations
@@ -175,17 +177,22 @@ __global__ void rk4CUDASim(Child *children, double *absTolInput, int n, const cu
                     coast = curAccel = 0;
                 }
                 else {
+                    //Calc if the thruster is activated
                     coast = calc_coast(threadRKParameters.coeff, curTime, threadRKParameters.tripTime, thrust);
-
+                    
+                    //Calc current step's acceleration
                     curAccel = calc_accel(curPos.r, curPos.z, thrust, massFuelSpent, stepSize, coast, static_cast<double>(cConstant->wet_mass), cConstant);
-
+                    
+                    //Record the gamma value of the current step
                     gamma_steps[children[threadId].stepCount] = calc_gamma(children[threadId].startParams.coeff, curTime, threadRKParameters.tripTime);
 
+                    //Record the tau value of the current step
                     tau_steps[children[threadId].stepCount] = calc_tau(children[threadId].startParams.coeff, curTime, threadRKParameters.tripTime);
 
+                    //Update the child with how much fuel it has used 
                     children[threadId].fuelSpent = massFuelSpent;
                 }
-
+                //Record the acceleration and fuel spent values of the current step
                 accel_steps[children[threadId].stepCount] = curAccel;
                 fuel_steps[children[threadId].stepCount] = massFuelSpent;
 
@@ -208,6 +215,7 @@ __global__ void rk4CUDASim(Child *children, double *absTolInput, int n, const cu
 
                 curTime += stepSize; // update the current time in the simulation
                 
+                //TODO: This is unused as of summer 2023 (as the minimum step size was nearly always exceeded), should this be a permenant change?
                 //stepSize *= calc_scalingFactor(curPos-error,error,absTol, cConstant->doublePrecThresh); // Alter the step size for the next iteration
 
                 //// The step size cannot exceed the total time divided by 2 and cannot be smaller than the total time divided by 1000
@@ -288,6 +296,7 @@ __global__ void rk4CUDASim(Child *children, double *absTolInput, int n, const cu
                         return;
                     }
 
+                    //Save the position and velocity of the current time step
                     y_steps[children[threadId].stepCount] = curPos;
                 
                     //count the steps taken for this threads calculations

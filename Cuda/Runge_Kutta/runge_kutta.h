@@ -25,6 +25,7 @@
 //      wetMass: mass of the spacecraft including fuel (kg)
 
 // 1.
+    // UNUSED AS OF SUMMER 2023
     // Extra parameters:
     //      Primarily used for file output
     //      lastStep: returns the index of the last element of y

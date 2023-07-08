@@ -8,13 +8,10 @@
 //This struct has all the device parameters need for the callRK process
 struct GPUMem
 {
-    // double stepSize; 
     double absTol;
     int numThreads;
 
-    Child *devGeneration; 
-    // double *devTimeInitial;
-    // double *devStepSize;
+    Child *devGeneration;
     double *devAbsTol;
     cudaConstants *devCConstant;
     elements<double> *devMarsLaunchCon;

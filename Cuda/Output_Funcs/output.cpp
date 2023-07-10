@@ -585,7 +585,7 @@ void output::trajectoryPrint(int generation, const cudaConstants* cConstants, co
   output.open(outputPath + "orbitalMotion-"+std::to_string(seed)+".bin", std::ios::binary);
 
   // Output this thread's data at each time step
-  for(int i = 0; i <= static_cast<int>((*convergedChild).stepCount); i++) {
+  for(int i = 0; i <= (*convergedChild).stepCount; i++) {
     output.write((char*)&yp[i], sizeof (elements<double>));
     output.write((char*)&times[i], sizeof (double));
     output.write((char*)&gamma[i], sizeof (double));
@@ -652,9 +652,12 @@ void output::trajectoryPrint(int generation, const cudaConstants* cConstants, co
   for (int i = 0; i < COAST_ARRAY_SIZE; i++) {
     output.write((char*)&best.startParams.coeff.coast[i], sizeof (double));
   }
+
+  //Matlab can only take in one data type when pulling in the data, so beacuse everything else is a double, step counts need to be too
+  double lastStepDouble = static_cast<double>((*convergedChild).stepCount);
   
   // Number of steps taken in final RK calculation
-  output.write((char*)&(*convergedChild).stepCount, sizeof (double));
+  output.write((char*)&lastStepDouble, sizeof (double));
 
   output.close();
   

@@ -116,31 +116,41 @@ bool checkTolerance(std::vector<Adult>& oldAdults, const cudaConstants* cConstan
     //Iterate through the objectives
     for (int i = 0; i < cConstants->missionObjectives.size(); i++) {
 
-        if (cConstants->missionObjectives[i].goal < 0) {//Minimization
-            //Check to see if the top best_count adults have met convergence for this parameter
-            for (int j = 0; j < cConstants->best_count; j++) {
+        //Check to see if the top best_count adults have met convergence for this parameter
+        for (int j = 0; j < cConstants->best_count; j++) {
 
-                //Check to see if the adult's parameter is larger than the convergence 
-                if (oldAdults[j].getParameters(cConstants->missionObjectives[i]) > cConstants->missionObjectives[i].convergenceThreshold) {
-                    //Return false as a parameter that needs to be minimized is larger than the convergence threshold
-                    return false;
-                }
+            //Check to see if the adult's parameter is larger than the convergence 
+            if (oldAdults[j].getParameters(cConstants->missionObjectives[i]) > cConstants->missionObjectives[i].convergenceThreshold) {
+                //Return false as a parameter that needs to be minimized is larger than the convergence threshold
+                return false;
             }
         }
-        else if (cConstants->missionObjectives[i].goal > 0) {//Maximization
-            //Check to see if the top best_count adults have met convergence for this parameter
-            for (int j = 0; j < cConstants->best_count; j++) {
-                //Check to see if the adult's parameter is smaller than the convergence 
-                if (oldAdults[j].getParameters(cConstants->missionObjectives[i]) < cConstants->missionObjectives[i].convergenceThreshold) {
-                    //Return false as a parameter that needs to be maximized is smaller than the convergence threshold
-                    return false;
-                }
-            }
-        }
-        //No mission type was identified 
-        else {
-            std::cout << "\n_-_-_-_-_-_-_-_-_-Error Identifying Parameter Goal_-_-_-_-_-_-_-_-_-\n";
-        }
+
+        // if (cConstants->missionObjectives[i].goal < 0) {//Minimization
+        //     //Check to see if the top best_count adults have met convergence for this parameter
+        //     for (int j = 0; j < cConstants->best_count; j++) {
+
+        //         //Check to see if the adult's parameter is larger than the convergence 
+        //         if (oldAdults[j].getParameters(cConstants->missionObjectives[i]) > cConstants->missionObjectives[i].convergenceThreshold) {
+        //             //Return false as a parameter that needs to be minimized is larger than the convergence threshold
+        //             return false;
+        //         }
+        //     }
+        // }
+        // else if (cConstants->missionObjectives[i].goal > 0) {//Maximization
+        //     //Check to see if the top best_count adults have met convergence for this parameter
+        //     for (int j = 0; j < cConstants->best_count; j++) {
+        //         //Check to see if the adult's parameter is smaller than the convergence 
+        //         if (oldAdults[j].getParameters(cConstants->missionObjectives[i]) < cConstants->missionObjectives[i].convergenceThreshold) {
+        //             //Return false as a parameter that needs to be maximized is smaller than the convergence threshold
+        //             return false;
+        //         }
+        //     }
+        // }
+        // //No mission type was identified 
+        // else {
+        //     std::cout << "\n_-_-_-_-_-_-_-_-_-Error Identifying Parameter Goal_-_-_-_-_-_-_-_-_-\n";
+        // }
     }
 
     //If the program reaches this spot, it means all of the adult's parameters have met the convergence threshold
@@ -203,7 +213,17 @@ void calculateGenerationValues (const std::vector<Adult> & allAdults, const std:
 
         //Add the adult's parameter values to the necessary spot in the objective average value vector
         for (int j = 0; j < objectives.size(); j++) {
-            objectiveAvgValues[j] += allAdults[i].getParameters(objectives[j]);
+            //See if it is a minimization or maximization objective
+            //If it is a maximization the individual's total needs to be subtracted from the avg value as the value is stored as a negative in the individual
+            if (objectives[j].goal < 0) {
+                //Minimization
+                objectiveAvgValues[j] += allAdults[i].getParameters(objectives[j]);
+            }
+            else {
+                //Maximization
+                objectiveAvgValues[j] -= allAdults[i].getParameters(objectives[j]);
+            }
+            
         }
         
         //Add to the avg age values

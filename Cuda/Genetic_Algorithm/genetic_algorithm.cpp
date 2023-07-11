@@ -112,6 +112,21 @@ void convertToAdults(std::vector<Adult> & newAdults, Child* newChildren, const c
         newChildren[i].getSpeedDiff(cConstants);
         newChildren[i].getOrbitPosDiff(cConstants);
         newChildren[i].getOrbitSpeedDiff(cConstants);
+
+        //Handle maximization missions
+        //So everything can be treated as a minimization in the code, the outputs for the maximization objectives are stored as a negative number
+        //Max h change
+        newChildren[i].orbithChange = -(newChildren[i].orbithChange);
+
+        //To see if the speedDiff needs to be changed, all of the objectives need to be checked to see if one of them is a speedDiff maximization
+        for (int j = 0; j < cConstants->missionObjectives.size(); j++) {
+            if (cConstants->missionObjectives[j].goal == MAX_SPEED_DIFF) {
+                //Set the speedDiff to the negative of its value
+                newChildren[i].speedDiff = -newChildren[i].speedDiff;
+            }
+        }
+
+        //Get progress now that all of the outputs are ready
         newChildren[i].getProgress(cConstants);
     }
     

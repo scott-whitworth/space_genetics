@@ -34,9 +34,10 @@ enum parameterGoals {
 //  1) Make sure the parameter is accessible from within the child class
 //  2) Add the goal to the parameterGoals enum, making sure that if its a minimization objective, the set number is negative and vice versa
 //  3) Add the new objective goal to the importObjective function within config.cpp
-//  4) Add to child's getParameter function so that it returns the correct parameter
-//  5) Add a new sort function to the adult.cpp to allow the program to sort by the objective's parameter in the desired order
-//  6) Add to the parameterSort() function in sort.cpp so that the program uses the new sort when the function is called with the new goal
+//  4) If the objective is a maximization, make sure it is set as a negative value in convertToAdults()
+//  5) Add to child's getParameter function so that it returns the correct parameter
+//  6) Add a new sort function to the adult.cpp to allow the program to sort by the objective's parameter in the desired order
+//  7) Add to the parameterSort() function in sort.cpp so that the program uses the new sort when the function is called with the new goal
 
 struct objective {
     //The name the program will use for the objective

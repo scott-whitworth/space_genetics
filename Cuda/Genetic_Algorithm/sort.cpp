@@ -136,55 +136,66 @@ void giveDistance(std::vector<Adult> & allAdults, const cudaConstants* cConstant
         //Value should be set to the largest valid value for the objective, which will be located at different points depending on the objective
         double normalizationValue = 0;
 
-        //Find how many adults have met the threshold
-        //Need to determine the optimization direction for the right comparison operator
-        if (cConstants->missionObjectives[i].goal < 0) { //Minimize
-            //For minimizations, the normalization value will be set to the last valid value
-            normalizationValue = allAdults[validAdults-1].getParameters(cConstants->missionObjectives[i]);
-
-            //Go through the non-extreme valid adults and see if they have met the threshold
-            //TODO: NOTE (for future students): We are still unsure if this is a valid way of giving distance to those that are under convergence
-            for (int j = 1; j < validAdults-1; j++) {
-                if (allAdults[j].getParameters(cConstants->missionObjectives[i]) < cConstants->missionObjectives[i].convergenceThreshold) {
-                    //Add one to the metThreshold tracker
-                    metThreshold++;
-
-                    //Add the max distance to the adult's distance to further promote it
-                    allAdults[j].distance += MAX_DISTANCE;
-                }
-                else {
-                    //Since the allAdults vector is sorted for this objective, if the code is here, it means all adults who meet the threshold have been passed
-                    //So it is safe to break the for loop
-                    break;
-                    //Scott would like to document his displeasure with break statements here and below in the other loop
-                }
-            }
-            
-        }
-        else if (cConstants->missionObjectives[i].goal > 0) { //Maximize
-            //Go through the non-extreme valid adults and see if they have met the threshold
-            for (int j = 1; j < validAdults-1; j++) {
-                if (allAdults[j].getParameters(cConstants->missionObjectives[i]) > cConstants->missionObjectives[i].convergenceThreshold) {
-                    //Add one to the metThreshold tracker
-                    metThreshold++;
-
-                    //Add the max distance to the adult's distance to further promote it
-                    allAdults[j].distance += MAX_DISTANCE;
-                }
-                else {
-                    //Since the allAdults vector is sorted for this objective, if the code is here, it means all adults who meet the threshold have been passed
-                    //First, set the normalization value to the highest non-converged value, which is the metThreshold'th individual
-                    normalizationValue = allAdults[metThreshold].getParameters(cConstants->missionObjectives[i]);
-
-                    //Next it is safe to break the for loop
-                    break;
-                }
-            }
+        //Get the largest value for the normalization
+        //For minimizations, its the last value in the vector
+        //For maximizations, its the first value
+        if (cConstants->missionObjectives[i].goal < 0) {
+           normalizationValue = allAdults[validAdults-1].getParameters(cConstants->missionObjectives[i]); 
         }
         else {
-            //Error getting the goal
-            std::cout << "\n_-_-_-_-_-_-_-_-_-Error Identifying Parameter Goal_-_-_-_-_-_-_-_-_-\n";
+            normalizationValue = allAdults[0].getParameters(cConstants->missionObjectives[i]);
         }
+        
+
+        //Find how many adults have met the threshold
+        //Need to determine the optimization direction for the right comparison operator
+        // if (cConstants->missionObjectives[i].goal < 0) { //Minimize
+        //     //For minimizations, the normalization value will be set to the last valid value
+        //     normalizationValue = allAdults[validAdults-1].getParameters(cConstants->missionObjectives[i]);
+
+        //     //Go through the non-extreme valid adults and see if they have met the threshold
+        //     //TODO: NOTE (for future students): We are still unsure if this is a valid way of giving distance to those that are under convergence
+        //     for (int j = 1; j < validAdults-1; j++) {
+        //         if (allAdults[j].getParameters(cConstants->missionObjectives[i]) < cConstants->missionObjectives[i].convergenceThreshold) {
+        //             //Add one to the metThreshold tracker
+        //             metThreshold++;
+
+        //             //Add the max distance to the adult's distance to further promote it
+        //             allAdults[j].distance += MAX_DISTANCE;
+        //         }
+        //         else {
+        //             //Since the allAdults vector is sorted for this objective, if the code is here, it means all adults who meet the threshold have been passed
+        //             //So it is safe to break the for loop
+        //             break;
+        //             //Scott would like to document his displeasure with break statements here and below in the other loop
+        //         }
+        //     }
+            
+        // }
+        // else if (cConstants->missionObjectives[i].goal > 0) { //Maximize
+        //     //Go through the non-extreme valid adults and see if they have met the threshold
+        //     for (int j = 1; j < validAdults-1; j++) {
+        //         if (allAdults[j].getParameters(cConstants->missionObjectives[i]) > cConstants->missionObjectives[i].convergenceThreshold) {
+        //             //Add one to the metThreshold tracker
+        //             metThreshold++;
+
+        //             //Add the max distance to the adult's distance to further promote it
+        //             allAdults[j].distance += MAX_DISTANCE;
+        //         }
+        //         else {
+        //             //Since the allAdults vector is sorted for this objective, if the code is here, it means all adults who meet the threshold have been passed
+        //             //First, set the normalization value to the highest non-converged value, which is the metThreshold'th individual
+        //             normalizationValue = allAdults[metThreshold].getParameters(cConstants->missionObjectives[i]);
+
+        //             //Next it is safe to break the for loop
+        //             break;
+        //         }
+        //     }
+        // }
+        // else {
+        //     //Error getting the goal
+        //     std::cout << "\n_-_-_-_-_-_-_-_-_-Error Identifying Parameter Goal_-_-_-_-_-_-_-_-_-\n";
+        // }
         
         //Add the distance to all non-converged individuals for this objective
         for(int j = metThreshold + 1; j < validAdults - 1; j++) {
@@ -207,6 +218,7 @@ void parameterSort(std::vector<Adult> & adults, const objective& sortObjective, 
         //  MIN_POS_DIFF is trying to make the position difference between the spacecraft and its target basically 0
         //  MIN_ORBITAL_POS_DIFF is trying to make the difference position difference between the spacecraft and its target equal to the orbital radius
         //  A similar thing is true with MIN_SPEED_DIFF & MIN_ORBITAL_SPEED_DIFF (going to 0 vs going to orbital speed)
+        //  Because maximizations and minimizations are handled the same way, even maximizations need to be sorted by the lowest value
         case MIN_POS_DIFF:
             //Sort by lowest pos diff
             std::sort(adults.begin(), adults.begin()+sortSize, LowerPosDiff);
@@ -243,13 +255,13 @@ void parameterSort(std::vector<Adult> & adults, const objective& sortObjective, 
             break;
 
         case MAX_ORBIT_ASST:
-            //Sort by highest orbithChange
-            std::sort(adults.begin(), adults.begin()+sortSize, HigherOrbitHChange);
+            //Sort by lowest orbithChange
+            std::sort(adults.begin(), adults.begin()+sortSize, LowerOrbitHChange);
             break;
 
         case MAX_SPEED_DIFF:
-            //Sort by maximum speed diff
-            std::sort(adults.begin(), adults.begin()+sortSize, HigherSpeedDiff);
+            //Sort by minimum speed diff
+            std::sort(adults.begin(), adults.begin()+sortSize, LowerSpeedDiff);
             break;
 
         default:

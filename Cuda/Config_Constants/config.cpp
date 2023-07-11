@@ -473,7 +473,13 @@ void cudaConstants::importObjective(std::string line) {
     else if (goal > 0 && dominationThreshold < convergenceThreshold) {
         std::cout << "\n-----DOMINATION THRESHOLD SET TOO LOW; BAD OBJECTIVE: " << name << "-----\n";
     }
-    
+
+    //See if the objective is a maximization
+    //If so, set the thresholds as a negative so the rest of the code can treat it as a minimization
+    if (goal > 0) {
+        convergenceThreshold = -convergenceThreshold;
+        dominationThreshold = -dominationThreshold;
+    }    
 
     //Add the objective to the mission objectives vector using the gathered information
     missionObjectives.push_back(objective(name, goal, convergenceThreshold, dominationThreshold, equateTolerance)); 

@@ -32,7 +32,10 @@ struct Child {
     double orbithChange; // The change in angular momentum from an orbital assist
 
     double progress; //progress of the individual's combined outputs. 0 to 1 scale with 0 being poor and 1 meaning that the individual have completed all objectives
-    std::vector<double> objectiveProg; //Progress for each output/objective for the child. The size of the vector will be the same as the number of objectives
+    //Cost for each output/objective for the child. The size of the vector will be the same as the number of objectives
+    //  Cost is a 0 to 1 scale, with 0 being being best
+    //  Cost is simply a measure of 1-progress for each objective
+    std::vector<double> objectiveCost; 
     double avgParentProgress; //The average of the two parents progress
 
     int birthday; //keeps track of the generation this individual was created in 

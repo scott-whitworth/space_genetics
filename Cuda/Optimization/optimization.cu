@@ -7,6 +7,7 @@
 #include "../Runge_Kutta/runge_kuttaCUDA.cuh" // for testing rk4simple; includes calcFourier, motion_eqns, child, & gpuMem
 #include "../Genetic_Algorithm/ga_crossover.h" // for selectSurvivors() and newGeneration(); includes constants.h, adult, & child
 #include "../Genetic_Algorithm/genetic_algorithm.h" //For functions that set up new generations; includes constants.h, adult, child, ga_crossover, & sort
+#include "../Genetic_Algorithm/referencePoints.h" //For the ReferencePoints class which deals with calculating reference points and setting adult's rarity
 #include "../Genetic_Algorithm/sort.h" //For functions that will allow for sorting of the adult arrays by giving them ranks and distances; includes constants.h & adult
 #include "../Genetic_Algorithm/anneal.h" //For all the annealing functions; includes constants.h & adult
 #include "../Runge_Kutta/gpuMem.cuh" // for initializing and deallocating; includes child, rkParameters, & config.h
@@ -52,7 +53,7 @@ void calculateGenerationValues (const std::vector<Adult> & allAdults, const std:
 // - manages memory needs for genetic algorithm
 // - deals with processing calls to CUDA callRK
 // - exits when individuals converge on tolerance defined in Constants
-double optimize(const cudaConstants* cConstants, GPUMem & gpuValues);
+double optimize(const cudaConstants* cConstants, GPUMem & gpuValues, const ReferencePoints & refPoints);
 
 //-----------------------------------------------------------------------------------------------------------------------------
 int main () {
@@ -70,6 +71,12 @@ int main () {
     //preallocates all the memory for the varaibles used by the GPU
     //also allows the GPU to access the marsLaunchCon without reloading it everytime
     GPUMem gpuValues;
+
+    //Creates the reference points for the rest of the program
+    ReferencePoints refPoints(cConstants);
+
+    //Display the number of reference points created as a sanity check
+    std::cout << "\n" << refPoints.points.size() << " reference points created.\n";
 
     // Sets run0 seed, used to change seed between runs
     // Seed is set in cudaConstants: current time or passed in via config
@@ -94,7 +101,7 @@ int main () {
         gpuValues.initialize(cConstants, marsConSize, marsLaunchCon->getAllPositions());
 
         // Call optimize with the current parameters in cConstants
-        optimize(cConstants, gpuValues);
+        optimize(cConstants, gpuValues, refPoints);
         
         // Deallocate launchCon info for this run as it may be using a different time range in the next run
         delete launchCon; 
@@ -110,7 +117,7 @@ int main () {
 //Returns true if top best_count adults within the oldAdults vector are within the tolerance
 bool checkTolerance(std::vector<Adult>& oldAdults, const cudaConstants* cConstants) {
     //Sort the vector by rank distance to make sure the program checks the correct adult
-    std::sort(oldAdults.begin(), oldAdults.end(), rankDistanceSort); 
+    std::sort(oldAdults.begin(), oldAdults.end(), rankRaritySort); 
 
     //The function needs to check if the best adult meets the convergence tolerance for each objective
     //Iterate through the objectives
@@ -245,7 +252,7 @@ void calculateGenerationValues (const std::vector<Adult> & allAdults, const std:
 }
 
 //Function that will facilitate the process of finding an optimal flight path
-double optimize(const cudaConstants* cConstants, GPUMem & gpuValues) {
+double optimize(const cudaConstants* cConstants, GPUMem & gpuValues, const ReferencePoints & refPoints) {
     // Not used, previously used for reporting computational performance
     double calcPerS = 0;
 
@@ -306,7 +313,7 @@ double optimize(const cudaConstants* cConstants, GPUMem & gpuValues) {
     //Need to make children, then callRK, then make into adults (not currently doing that)
     //oldAdults goes into this function empty and comes out filled with num_individuals Adults
     //      these adults are either randomly generated or pulled from a file
-    createFirstGeneration(oldAdults, cConstants, rng, generation, gpuValues); 
+    createFirstGeneration(oldAdults, cConstants, rng, generation, gpuValues, refPoints); 
 
 
     // main gentic algorithm loop
@@ -328,7 +335,7 @@ double optimize(const cudaConstants* cConstants, GPUMem & gpuValues) {
         //      by the end of the function, it is cleared
         //oldAdults goes in with the pool of potential parents that may have generated the newAdults
         //      by the end of the function, it is filled with the best num_individuals adults from allAdults (sorted by rankDistanceSort) 
-        preparePotentialParents(allAdults, newAdults, oldAdults, numErrors, duplicateNum, cConstants, generation, currentAnneal, marsErrors);
+        preparePotentialParents(allAdults, newAdults, oldAdults, numErrors, duplicateNum, cConstants, refPoints, generation, currentAnneal, marsErrors);
 
         // Display a '.' to the terminal to show that a generation has been performed
         // This also serves to visually seperate the terminalDisplay() calls across generations 
@@ -363,7 +370,7 @@ double optimize(const cudaConstants* cConstants, GPUMem & gpuValues) {
         //    worstOPD = allAdults[0].orbitPosDiff;
         //    std::cout << "\nBAD ADULT PRINTED\n\n";
         //}
-        std::sort(allAdults.begin(), allAdults.end(), rankDistanceSort);        
+        std::sort(allAdults.begin(), allAdults.end(), rankRaritySort);        
         
         //Increment the generation counter
         ++generation;

@@ -5,6 +5,8 @@
 Adult::Adult(){
     rank = INT_MAX; //might change later?
     distance = -1;
+    rarity = INT_MAX;
+    associatedRefPoint = 0;
 }
 
 //!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -311,6 +313,30 @@ bool rankDistanceSort(const Adult& personA, const Adult& personB) {
         return true;
     }
     else if (personA.rank == personB.rank && personA.distance > personB.distance){
+        return true;
+    }
+    else {
+        return false;
+    }  
+
+}
+
+//Compare two individuals by their rank and rarity
+//input: two individuals
+//output: if person A's rank is lower than person B's rank, return true
+//        if person A and person B have the same rank and person A has a better (lower) rarity than person B, return true
+//Sorts the whole pool from lowest to highest rank. Individuals of the same rank are sorted from lowest (best) to highest (worst) rarity score
+bool rankRaritySort(const Adult& personA, const Adult& personB) {
+    if (personA.errorStatus != VALID && personA.errorStatus != DUPLICATE){
+        return false;
+    }
+    else if (personB.errorStatus != VALID && personB.errorStatus != DUPLICATE){ //if personA is not a nan, but personB is, personA is better
+        return true;
+    }
+    if(personA.rank < personB.rank){
+        return true;
+    }
+    else if (personA.rank == personB.rank && personA.rarity < personB.rarity){
         return true;
     }
     else {

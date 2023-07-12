@@ -89,8 +89,8 @@ void output::initializeGenPerformance(const cudaConstants * cConstants) {
 
   //Names for each objective
   for (int i = 0; i < cConstants->missionObjectives.size(); i++) {
-    excelFile << "rankDistance" << cConstants->missionObjectives[i].name << ",";
-    excelFile << "rankDistance" << cConstants->missionObjectives[i].name << "Progress,";
+    excelFile << "rankRarity" << cConstants->missionObjectives[i].name << ",";
+    excelFile << "rankRarity" << cConstants->missionObjectives[i].name << "Cost,";
   }
   for (int i = 0; i < cConstants->missionObjectives.size(); i++) {
     excelFile << "best" << cConstants->missionObjectives[i].name << ",";
@@ -153,12 +153,12 @@ void output::initializeSimpleGenPerformance(const cudaConstants* cConstants) {
   excelFile.open(outputPath + "simpleGenPerformance-" + fileId + ".csv", std::ios_base::app);
 
   //Generation and progress
-  excelFile << "gen,Rank-Distance Progress,";
+  excelFile << "gen,Rank-Rarity Progress,";
 
   //Names for each objective
 
   for (int i = 0; i < cConstants->missionObjectives.size(); i++) {
-    excelFile << "rankDistance" << cConstants->missionObjectives[i].name << ",";
+    excelFile << "rankRarity" << cConstants->missionObjectives[i].name << ",";
   }
   for (int i = 0; i < cConstants->missionObjectives.size(); i++) {
     excelFile << "best" << cConstants->missionObjectives[i].name << ",";
@@ -257,7 +257,7 @@ void output::recordGenerationPerformance(const cudaConstants * cConstants, std::
     else {
       excelFile << -(adults[0].getParameters(cConstants->missionObjectives[i])) << ",";
     }
-    excelFile << adults[0].objectiveProg[i] << ",";
+    excelFile << adults[0].objectiveCost[i] << ",";
   }
   //Output the objective parameter for the best adult and the average for each objective
   for (int i = 0; i < cConstants->missionObjectives.size(); i++) {
@@ -378,10 +378,10 @@ void output::recordAllIndividuals(std::string name, const cudaConstants * cConst
   }
   for (int i = 0; i < cConstants->missionObjectives.size(); i++) {
     outputFile << cConstants->missionObjectives[i].name << ",";
-    outputFile << cConstants->missionObjectives[i].name << "Progress,";
+    outputFile << cConstants->missionObjectives[i].name << "Cost,";
   }
   
-  outputFile << "age,birthday,rank,distance,numSteps,avgParentProgress,progress,parentChildProgressRatio";
+  outputFile << "age,birthday,rank,rarity,numSteps,avgParentProgress,progress,parentChildProgressRatio";
   outputFile << '\n';
 
   outputFile << std::setprecision(20);
@@ -408,13 +408,13 @@ void output::recordAllIndividuals(std::string name, const cudaConstants * cConst
     for (int j = 0; j < cConstants->missionObjectives.size(); j++)
     {
       outputFile << adults[i].getParameters(cConstants->missionObjectives[j]) << ",";
-      outputFile << adults[i].objectiveProg[j] << ",";
+      outputFile << adults[i].objectiveCost[j] << ",";
     }
     
     outputFile << generation-adults[i].birthday << ",";
     outputFile << adults[i].birthday << ",";
     outputFile << adults[i].rank << ",";
-    outputFile << adults[i].distance << ",";
+    outputFile << adults[i].rarity << ",";
     outputFile << adults[i].stepCount << ",";
     outputFile << adults[i].avgParentProgress << ",";
     outputFile << adults[i].progress << ",";
@@ -785,9 +785,9 @@ void printBestAdults(const cudaConstants* cConstants, std::vector<Adult> adults,
       terminalDisplay(adults[0], cConstants->missionObjectives);
   }
 
-  //display to the terminal the best individual based on rankDistance
-  std::cout << "\nBest Rank Distance Individual:";
-  std::sort(adults.begin(), adults.end(), rankDistanceSort);
+  //display to the terminal the best individual based on rankRarity
+  std::cout << "\nBest Rank Rarity Individual:";
+  std::sort(adults.begin(), adults.end(), rankRaritySort);
   terminalDisplay(adults[0], cConstants->missionObjectives);
 
   //Display number of errors
@@ -803,7 +803,7 @@ void printBestAdults(const cudaConstants* cConstants, std::vector<Adult> adults,
   std::cout << "\nBest step count: " << adults[0].stepCount << "\n";
 
   //Display the progress of the best rank distance individual 
-  std::cout << "\nBest rank-distance adult progress: " << adults[0].progress << "\n\n";
+  std::cout << "\nBest rank-rarity adult progress: " << adults[0].progress << "\n\n";
 }
 
 // Utility function to display the currently best individual onto the terminal while the algorithm is still running
@@ -820,7 +820,7 @@ void terminalDisplay(const Adult& individual, const std::vector<objective> objec
     }
 
     //Print the progress of the objective
-    std::cout << "\n\t" << objectives[i].name << " progress: " << individual.objectiveProg[i];
+    std::cout << "\n\t" << objectives[i].name << " progress: " << individual.objectiveCost[i];
   }
 
   std::cout << std::endl;

@@ -51,8 +51,8 @@ void fillParents(std::vector<Adult> & oldAdults, std::vector<Adult> & parents, c
         }   
     }else{
 
-        //sort all the oldAdults by rankDistance, so the best will be chosen as survivors/parents
-        std::sort(oldAdults.begin(), oldAdults.end(), rankDistanceSort);
+        //sort all the oldAdults by rankRarity, so the best will be chosen as survivors/parents
+        std::sort(oldAdults.begin(), oldAdults.end(), rankRaritySort);
         
         //Iterate through the best of oldAdults and sort the individuals into parents
         for (int i = 0; i < cConstants->survivor_count; i++)
@@ -142,7 +142,7 @@ void convertToAdults(std::vector<Adult> & newAdults, Child* newChildren, const c
 
 
 //Creating a generation either randomly or based on values from a file
-void createFirstGeneration(std::vector<Adult>& oldAdults, const cudaConstants* cConstants, std::mt19937_64 rng, const int & generation, GPUMem & gpuValues){
+void createFirstGeneration(std::vector<Adult>& oldAdults, const cudaConstants* cConstants, std::mt19937_64 rng, const int & generation, GPUMem & gpuValues, const ReferencePoints & refPoints){
     //int generation = 0; //these are loaded from a file or randomly, so set gen to 0
     Child* initialChildren = new Child[cConstants->num_individuals]; 
 
@@ -271,12 +271,12 @@ void createFirstGeneration(std::vector<Adult>& oldAdults, const cudaConstants* c
             }    
         }
     }
-    firstGeneration(initialChildren, oldAdults, cConstants, gpuValues);
+    firstGeneration(initialChildren, oldAdults, cConstants, gpuValues, refPoints);
     delete[] initialChildren;
 }
 
 //Will create the first generation of adults from random parameters so that future generations have a pre-existing base of adults
-void firstGeneration(Child* initialChildren, std::vector<Adult>& oldAdults, const cudaConstants* cConstants, GPUMem & gpuValues){
+void firstGeneration(Child* initialChildren, std::vector<Adult>& oldAdults, const cudaConstants* cConstants, GPUMem & gpuValues, const ReferencePoints & refPoints){
     double timeIntial = 0;
     double calcPerS  = 0;
 
@@ -286,13 +286,16 @@ void firstGeneration(Child* initialChildren, std::vector<Adult>& oldAdults, cons
     callRK(calcPerS, initialChildren, cConstants, gpuValues, timeIntial); 
 
     //Now that the children have been simulated, convert the children into adults
-    //This will calc the posDiff and speedDiff for each child
+    //This will calc the objective outputs for each child
     //It will also put the converted children into the newAdults vector
     convertToAdults(oldAdults, initialChildren, cConstants); 
+
+    //Find the closest reference points for the initial group of adults
+    findAssociatedPoints(cConstants, refPoints, oldAdults);
 }
 
 //fills oldAdults with the best adults from this generation and the previous generation so that the best parents can be selected
-void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& newAdults, std::vector<Adult>& oldAdults, int& numErrors, int& duplicateNum, const cudaConstants* cConstants, const int & generation, const double& currentAnneal, int & marsErrors){
+void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& newAdults, std::vector<Adult>& oldAdults, int& numErrors, int& duplicateNum, const cudaConstants* cConstants, const ReferencePoints & refPoints, const int & generation, const double& currentAnneal, int & marsErrors){
     std::vector<Adult>().swap(allAdults); //ensures this vector is empty and ready for new inputs
     //Reset duplicate and error count variables
     numErrors = 0;
@@ -301,6 +304,9 @@ void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& 
 
     //Iterate through allAdults and find any duplicate adults
     findDuplicates(newAdults, oldAdults, cConstants, currentAnneal);
+
+    //Find the closest reference points to each adult in the new generation
+    findAssociatedPoints(cConstants, refPoints, newAdults);
 
     //get rid of any invalid or old adults, as well as adults with bad posDiffs or speedDiffs that are too small
     //check the errorStatus of all the newAdults and add them to allAdults
@@ -318,9 +324,9 @@ void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& 
     }else if(allAdults.size() < cConstants->survivor_count){
         std::cout << "ERROR: The size of allAdults is smaller than survivor count!" << std::endl;
     }
-
     
-
+    //Calculate the rarity of all of the adults
+    calculateRarity(cConstants, refPoints, allAdults);
 
     //Calculate rank of each adult based on domination sort
     //* Ignore any nans at the end of allAdults
@@ -330,7 +336,7 @@ void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& 
     //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE GIVE DISTANCE-_-_-_-_-_-_-_-_-_\n\n";
     giveDistance(allAdults, cConstants); //gives a distance to each adult
     //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE GIVE SORT-_-_-_-_-_-_-_-_-_\n\n";
-    std::sort(allAdults.begin(), allAdults.end(), rankDistanceSort); //sorts allAdults using rankDistance sort
+    std::sort(allAdults.begin(), allAdults.end(), rankRaritySort); //sorts allAdults using rankRarity sort
 
     oldAdults.clear(); //empties oldAdults so new values can be put in it
     int counter = 0; //a variable that ensures we put the correct number of adults in oldAdults

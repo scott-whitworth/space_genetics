@@ -282,9 +282,9 @@ __global__ void rk4CUDASim(Child *children, double *absTolInput, int n, const cu
                         children[threadId].orbithChange = (curPos.r * curPos.vtheta) - soiEntryh;
 
                         //Check to make sure the orbithChange isn't less than 0 
-                        if (children[threadId].orbithChange < 1e-14) {
-                            children[threadId].orbithChange = 5e-15;
-                        }
+                        // if (children[threadId].orbithChange < 1e-14) {
+                        //     children[threadId].orbithChange = 5e-15;
+                        // }
 
                         //Check to see if this was a bad assist
                         // if (curPos.r * curPos.vtheta < soiEntryh) {

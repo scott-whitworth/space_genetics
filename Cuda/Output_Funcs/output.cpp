@@ -820,7 +820,7 @@ void terminalDisplay(const Adult& individual, const std::vector<objective> objec
     }
 
     //Print the progress of the objective
-    std::cout << "\n\t" << objectives[i].name << " progress: " << individual.objectiveCost[i];
+    std::cout << "\n\t" << objectives[i].name << " cost: " << individual.objectiveCost[i];
   }
 
   std::cout << std::endl;

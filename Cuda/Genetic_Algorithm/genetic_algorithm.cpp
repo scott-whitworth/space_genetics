@@ -280,8 +280,8 @@ void firstGeneration(Child* initialChildren, std::vector<Adult>& oldAdults, cons
     double timeIntial = 0;
     double calcPerS  = 0;
 
-     // Each child represents an individual set of starting parameters 
-        // GPU based runge kutta process determines final position and velocity based on parameters
+    // Each child represents an individual set of starting parameters
+    // GPU based runge kutta process determines final position and velocity based on parameters
     //Will fill in the final variables (final position & speed, posDiff, speedDiff) for each child
     callRK(calcPerS, initialChildren, cConstants, gpuValues, timeIntial); 
 

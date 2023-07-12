@@ -72,6 +72,9 @@ int main () {
     //also allows the GPU to access the marsLaunchCon without reloading it everytime
     GPUMem gpuValues;
 
+    //Tell user when the referemnce points are being created
+    std::cout << "\nCreating reference points...\n";
+
     //Creates the reference points for the rest of the program
     ReferencePoints refPoints(cConstants);
 

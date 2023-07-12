@@ -1,4 +1,5 @@
 #include <math.h>
+#define _USE_MATH_DEFINES //For INT_MAX
 
 //Constructor which will calculate the values of all of the reference points based on the number of objectives and divisions per objectives
 ReferencePoints::ReferencePoints(const cudaConstants* cConstants) {
@@ -132,6 +133,7 @@ void calculateRarity (const cudaConstants *cConstants, const ReferencePoints & r
     while (rarityCount < allAdults.size()) {
         //Go through all points and find which one has the fewest associations
         for (int i = 0; i < refPointAssocNum.size(); i++) {
+
             //Check to see if the current reference point has a new minimum amount of associations
             if (refPointAssocNum[i] < minAssocNum) {
                 //Save the info of the new minimum
@@ -144,7 +146,8 @@ void calculateRarity (const cudaConstants *cConstants, const ReferencePoints & r
         //First check to see if the reference point with the fewest associations has no associations
         if (refPointAssocNum[minAssocIndex] == 0) {
             //Set the reference points association number very high so it is not considered anymore
-            refPointAssocNum[minAssocIndex] = allAdults.size() + 1;
+            refPointAssocNum[minAssocIndex] = INT_MAX;
+
         }        
         else {
             //Pick an adult from the points associated adults and assign the current rarity value
@@ -154,8 +157,16 @@ void calculateRarity (const cudaConstants *cConstants, const ReferencePoints & r
             //Remove the adult from the point's associations so it isn't assigned a new rarity
             refPointAssociations[minAssocIndex].pop_back();
 
-            //Add one to the points association count so other points can be considered
-            refPointAssocNum[minAssocIndex]++;
+            //Check to see if this was the last adult from this reference point
+            if (refPointAssociations[minAssocIndex].size() == 0) {
+                //No other adults are associated with the point, remove it from consideration
+                refPointAssocNum[minAssocIndex] = INT_MAX;
+            }
+            else {
+                //There are still adults so this point needs to be returned to
+                //Add one to the points association count so other points can be considered
+                refPointAssocNum[minAssocIndex]--; 
+            }
 
             //Add one to the rarity counter for the next adult
             rarityCount++;

@@ -214,11 +214,11 @@ __host__ void Child::getProgress(const cudaConstants* cConstants){
             
             //Add the objective's progress to the total progress
             calcProgress += objectiveCost[i];
+        }
 
-            //Convert objective progress to cost using cost=1-progress
-            for (int j = 0; j < objectiveCost.size(); j++) {
-                objectiveCost[j] = (1 - objectiveCost[j]); 
-            }
+        //Convert objective progress to cost using cost=1-progress
+        for (int j = 0; j < objectiveCost.size(); j++) {
+            objectiveCost[j] = (1 - objectiveCost[j]); 
         }
 
         //The total progress has been calculated

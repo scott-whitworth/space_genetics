@@ -28,6 +28,9 @@ class ReferencePoints {
     void addPoint(const std::vector<double> values, const cudaConstants* cConstants);
 };
 
+//Calculates the objective-by-objective relative cost for the adults passed into the function
+void calculateRelCost (const cudaConstants *cConstants, std::vector<Adult> & allAdults);
+
 //Will find the closest reference points to each adult in the newAdults vector
 void findAssociatedPoints (const cudaConstants *cConstants, const ReferencePoints & refPoints, std::vector<Adult> & newAdults);
 

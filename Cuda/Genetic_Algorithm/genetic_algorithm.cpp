@@ -290,6 +290,9 @@ void firstGeneration(Child* initialChildren, std::vector<Adult>& oldAdults, cons
     //It will also put the converted children into the newAdults vector
     convertToAdults(oldAdults, initialChildren, cConstants); 
 
+    //Calculate the relative cost for the initial group of adults
+    calculateRelCost(cConstants, oldAdults);
+
     //Find the closest reference points for the initial group of adults
     findAssociatedPoints(cConstants, refPoints, oldAdults);
 }
@@ -304,9 +307,6 @@ void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& 
 
     //Iterate through allAdults and find any duplicate adults
     findDuplicates(newAdults, oldAdults, cConstants, currentAnneal);
-
-    //Find the closest reference points to each adult in the new generation
-    findAssociatedPoints(cConstants, refPoints, newAdults);
 
     //get rid of any invalid or old adults, as well as adults with bad posDiffs or speedDiffs that are too small
     //check the errorStatus of all the newAdults and add them to allAdults
@@ -324,6 +324,12 @@ void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& 
     }else if(allAdults.size() < cConstants->survivor_count){
         std::cout << "ERROR: The size of allAdults is smaller than survivor count!" << std::endl;
     }
+
+    //Calculate the relative cost for the combined adult pool
+    calculateRelCost(cConstants, allAdults);
+    
+    //Find the closest reference points to each adult based on the new relative cost
+    findAssociatedPoints(cConstants, refPoints, allAdults);
     
     //Calculate the rarity of all of the adults
     calculateRarity(cConstants, refPoints, allAdults);

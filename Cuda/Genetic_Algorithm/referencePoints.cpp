@@ -64,6 +64,52 @@ void ReferencePoints::addPoint(const std::vector<double> values, const cudaConst
     return;
 }
 
+//Calculates the objective-by-objective relative cost for the adults passed into the function
+void calculateRelCost (const cudaConstants *cConstants, std::vector<Adult> & allAdults) {
+    //Vector will hold the relative normalization values for all of the objectives
+    //  The normalization value should be the overall worst value for the objective
+    std::vector<double> normalizations (cConstants->missionObjectives.size(), 0);
+
+    //Find the normalizations for each objective
+    for (int i = 0; i < cConstants->missionObjectives.size(); i++) {
+
+        //First set the normalization value to first adult in the allAdult vector
+        normalizations[i] = allAdults[0].getParameters(cConstants->missionObjectives[i]);
+
+        //Go through the rest of the adults to see if there is a worst value
+        for (int j = 1; j < allAdults.size(); j++){
+
+            //Because maximizations are stored as negatives, worse values are going to be larger values, regardless of objective
+            //Check to see if this adult has a worse value
+            if (allAdults[j].getParameters(cConstants->missionObjectives[i]) > normalizations[i]) {
+
+                //Found a worse value, store it as a new normalization
+                normalizations[i] = allAdults[j].getParameters(cConstants->missionObjectives[i]);
+            }
+        }
+    }
+
+    //The normalization values have been found, go through the adults and calculate the objective costs
+    for (int i = 0; i < allAdults.size(); i++) {
+
+        //Calculate the cost for each objective
+        for (int j = 0; j < cConstants->missionObjectives.size(); j++){
+            //Store this objective's progress with the calculation (adult's objective value / normalization)
+            double objProg = (allAdults[i].getParameters(cConstants->missionObjectives[j])/normalizations[j]);
+
+            //If the objective is a maximization, the progress is not a 0 to 1 scale, so we need the inverse
+            if (cConstants->missionObjectives[j].goal > 0) {
+                objProg = 1/objProg;
+            }
+
+            //Calculate the cost as 1 - objProg
+            allAdults[i].objectiveCost[j] = 1-objProg;
+        }
+    }
+
+    return;
+}
+
 //Will find the closest reference points to each adult in the newAdults vector
 void findAssociatedPoints (const cudaConstants *cConstants, const ReferencePoints & refPoints, std::vector<Adult> & newAdults) {
     //Trackers for finding the closest reference point

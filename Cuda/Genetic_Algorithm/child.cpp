@@ -191,34 +191,32 @@ __host__ void Child::getProgress(const cudaConstants* cConstants){
         //  It will then be divided by the number of objectives and assigned to the child
         double calcProgress = 0; 
 
+        //Holds the progress of a single objective before it is added to the combined calcProgress variable
+        double objProgress;
+
         //Iterate through the objectives
         for (int i = 0; i < cConstants->missionObjectives.size(); i++) {
 
             //See if the child has met the the convergence threshold for this parameter
             if (getParameters(cConstants->missionObjectives[i]) < cConstants->missionObjectives[i].convergenceThreshold) {
                 //Set progress to one to signify that the parameter has met the goal
-                objectiveCost[i] = 1;
+                objProgress = 1;
             }
             //The child hasn't met the parameter goal
             else {
                 //Add the progress for this parameter to the goal
                 //The progress is calculated by dividing the threshold by the child's parameter value
-                objectiveCost[i] = abs((cConstants->missionObjectives[i].convergenceThreshold/getParameters(cConstants->missionObjectives[i]))); 
+                objProgress = abs((cConstants->missionObjectives[i].convergenceThreshold/getParameters(cConstants->missionObjectives[i]))); 
             }
 
             //If the objective is a maximization, store the inverse of the progress for each individual so it is a 0 to 1 scale
             if (cConstants->missionObjectives[i].goal > 0){
-               objectiveCost[i] = (1/objectiveCost[i]); 
+               objProgress = (1/objProgress); 
             }
             //If the goal is a minimization, the progress for the objective is already on a 0 to 1 scale
             
             //Add the objective's progress to the total progress
-            calcProgress += objectiveCost[i];
-        }
-
-        //Convert objective progress to cost using cost=1-progress
-        for (int j = 0; j < objectiveCost.size(); j++) {
-            objectiveCost[j] = (1 - objectiveCost[j]); 
+            calcProgress += objProgress;
         }
 
         //The total progress has been calculated

@@ -94,16 +94,16 @@ void calculateRelCost (const cudaConstants *cConstants, std::vector<Adult> & all
 
         //Calculate the cost for each objective
         for (int j = 0; j < cConstants->missionObjectives.size(); j++){
-            //Store this objective's progress with the calculation (adult's objective value / normalization)
-            double objProg = (allAdults[i].getParameters(cConstants->missionObjectives[j])/normalizations[j]);
+            //Store this objective's cost with the calculation (adult's objective value / normalization)
+            double objCost = (allAdults[i].getParameters(cConstants->missionObjectives[j])/normalizations[j]);
 
-            //If the objective is a maximization, the progress is not a 0 to 1 scale, so we need the inverse
+            //If the objective is a maximization, the cost is not a 0 to 1 scale, so we need the inverse
             if (cConstants->missionObjectives[j].goal > 0) {
-                objProg = 1/objProg;
+                objCost = 1/objCost;
             }
 
-            //Calculate the cost as 1 - objProg
-            allAdults[i].objectiveCost[j] = 1-objProg;
+            //Save the objective's cost
+            allAdults[i].objectiveCost[j] = objCost;
         }
     }
 
@@ -211,7 +211,7 @@ void calculateRarity (const cudaConstants *cConstants, const ReferencePoints & r
             else {
                 //There are still adults so this point needs to be returned to
                 //Add one to the points association count so other points can be considered
-                refPointAssocNum[minAssocIndex]--; 
+                refPointAssocNum[minAssocIndex]++; 
             }
 
             //Add one to the rarity counter for the next adult

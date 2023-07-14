@@ -94,20 +94,70 @@ void calculateRelCost (const cudaConstants *cConstants, std::vector<Adult> & all
 
         //Calculate the cost for each objective
         for (int j = 0; j < cConstants->missionObjectives.size(); j++){
-            //Store this objective's cost with the calculation (adult's objective value / normalization)
-            double objCost = (allAdults[i].getParameters(cConstants->missionObjectives[j])/normalizations[j]);
+            double objCost = 0;
 
-            //If the objective is a maximization, the cost is not a 0 to 1 scale, so we need the inverse
-            if (cConstants->missionObjectives[j].goal > 0) {
-                objCost = 1/objCost;
+            if (cConstants->missionObjectives[j].goal < 0) {
+               //Store this objective's progress with the calculation (adult's objective value / normalization)
+               objCost = (allAdults[i].getParameters(cConstants->missionObjectives[j])/normalizations[j]); 
             }
+            else {
+                objCost = 1-(allAdults[i].getParameters(cConstants->missionObjectives[j])/cConstants->missionObjectives[j].convergenceThreshold);
 
-            //Save the objective's cost
+                if (objCost < 0) {
+                    objCost = 0;
+                }
+            }
+            
+
+            // //If the objective is a maximization, the progress is not a 0 to 1 scale, so we need the inverse
+            // if (cConstants->missionObjectives[j].goal > 0) {
+            //     objCost = 1/objCost;
+            // }
+
+            //Calculate the cost as 1 - objCost
             allAdults[i].objectiveCost[j] = objCost;
         }
     }
 
     return;
+}
+
+//Finds the distance between the submitted point and the normalized adult
+double findPointDist (const std::vector<double> & point, const Adult & adult) {
+    //The distance between a point and a line where A = point on line (origin), B = second point on line (reference point), P = point of interest (adult)
+    //  pa = P - A; -> pa = P (adult point)
+    //  ba = B - A; -> ba = B (reference point)
+    //  t = dot(pa, ba)/dot(ba, ba);
+    //  your_dist = norm(pa - t * ba,2)
+
+    //holds the dot product of pa & ba
+    double numDot = 0;
+    //holds the dot product of ba with itself
+    double denDot = 0;
+
+    //Calculate the dot products
+    for (int i = 0; i < point.size(); i++) {
+        numDot += (point[i] * adult.objectiveCost[i]);
+        denDot += (point[i] * point[i]);
+    }
+
+    //Calculate t with the dot products
+    double t = numDot/denDot;
+
+    //Calculate the distance
+    double distance = 0;
+
+    //The norm is the square of each of the components squared
+    //Calculate the sum of each compenent squared]
+    for (int i = 0; i < point.size(); i++) {
+        distance += pow(adult.objectiveCost[i] - (t * point[i]), 2);
+    }
+
+    //The norm (and thus distance) is the square root of the sum
+    distance = sqrt(distance);
+
+    //return the distance
+    return distance;
 }
 
 //Will find the closest reference points to each adult in the newAdults vector
@@ -126,13 +176,14 @@ void findAssociatedPoints (const cudaConstants *cConstants, const ReferencePoint
             
             //Calculate the distance to the reference point
             //First add the squares of the differences for each objective/component
-            for (int k = 0; k < refPoints.points[0].size(); k++) {
+            // for (int k = 0; k < refPoints.points[0].size(); k++) {
                 
-                curDist += pow((refPoints.points[j][k] - newAdults[i].objectiveCost[k]), 2);
-            }
+            //     curDist += pow((refPoints.points[j][k] - newAdults[i].objectiveCost[k]), 2);
+            // }
 
             //Finally take the square root to find the distance
-            curDist = sqrt(curDist);
+            // curDist = sqrt(curDist);
+            curDist = findPointDist(refPoints.points[j], newAdults[i]);
 
             //See if it is better than the current minimum distance
             if (curDist <  minDistVal) {

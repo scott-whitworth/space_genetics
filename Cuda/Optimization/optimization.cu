@@ -288,6 +288,7 @@ double optimize(const cudaConstants* cConstants, GPUMem & gpuValues, const Refer
 
     genOutputs.recordMarsData(cConstants,generation);
     genOutputs.recordEarthData(cConstants,generation);
+    genOutputs.recordReferencePoints(cConstants, refPoints);
 
     // Flag for finishing the genetic process
     // set by checkTolerance()

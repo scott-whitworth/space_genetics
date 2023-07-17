@@ -394,8 +394,8 @@ void generateChildrenFromCrossover(std::vector<Adult> &parents, Child *newChildr
         mask.push_back(AVG);
     }
 
-    //Sort the parents by rank distance to make sure only the best adults pass on genes
-    std::sort(parents.begin(), parents.end(), rankDistanceSort);
+    //Sort the parents by rank rarity to make sure only the best adults pass on genes
+    std::sort(parents.begin(), parents.end(), rankRaritySort);
 
     // Vector that determines which parents will be paired up to generate children
     // it will contain indexes of adults that are deemed to be parents

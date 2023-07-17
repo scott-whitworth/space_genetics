@@ -38,14 +38,18 @@ Child::Child(rkParameters<double> & childParameters, const cudaConstants* cConst
     funcStatus = FUNCTIONAL_CHILD;//ready to be an adult
     errorStatus = NOT_RUN; //not run through callRK yet
     simStatus = INITIAL_SIM; //Has not been simulated yet
+
     birthday = genCreated; //Set the child's birthday to the current generation
+
     avgParentProgress = calcAvgParentProgress; //The avg progress of the creating parents, if any (0 for randomly generated children)
+    normalizedObj = std::vector<double>(cConstants->missionObjectives.size(), INT_MAX); //Resize the objective progress vector to match the number of objectives and set the default progress to be a bad value
+
     stepCount = 0; //no calculations done yet, default is zero
     simStartTime = 0; //Inititially start the simulation at the start of the trip time
+    simNum = 0; //Has not been simulated yet
+
     minMarsDist = 100; //Arbitrarily high initial min mars distance
     orbithChange = 1e-14; //No assist initially, so no angular momentum change initally
-
-    simNum = 0; //Has not been simulated yet
 }
 
 // Copy constructor
@@ -66,6 +70,7 @@ Child:: Child(const Child& other){
     birthday = other.birthday;
     avgParentProgress = other.avgParentProgress;
     progress = other.progress;
+    normalizedObj = other.normalizedObj;
     stepCount = other.stepCount;
     minMarsDist = other.minMarsDist;
     orbithChange = other.orbithChange;
@@ -229,6 +234,39 @@ __host__ void Child::getProgress(const cudaConstants* cConstants){
         //The total cost has been calculated
         //It needs to be divided by the number of objectives to find the weighted average progress for each objective
         calcProgress = cConstants->missionObjectives.size()/calcProgress;
+
+
+        // //Holds the progress of a single objective before it is added to the combined calcProgress variable
+        // double objProgress;
+
+        // //Iterate through the objectives
+        // for (int i = 0; i < cConstants->missionObjectives.size(); i++) {
+
+        //     //See if the child has met the the convergence threshold for this parameter
+        //     if (getParameters(cConstants->missionObjectives[i]) < cConstants->missionObjectives[i].convergenceThreshold) {
+        //         //Set progress to one to signify that the parameter has met the goal
+        //         objProgress = 1;
+        //     }
+        //     //The child hasn't met the parameter goal
+        //     else {
+        //         //Add the progress for this parameter to the goal
+        //         //The progress is calculated by dividing the threshold by the child's parameter value
+        //         objProgress = abs((cConstants->missionObjectives[i].convergenceThreshold/getParameters(cConstants->missionObjectives[i]))); 
+        //     }
+
+        //     //If the objective is a maximization, store the inverse of the progress for each individual so it is a 0 to 1 scale
+        //     if (cConstants->missionObjectives[i].goal > 0){
+        //        objProgress = (1/objProgress); 
+        //     }
+        //     //If the goal is a minimization, the progress for the objective is already on a 0 to 1 scale
+            
+        //     //Add the objective's progress to the total progress
+        //     calcProgress += objProgress;
+        // }
+
+        // //The total progress has been calculated
+        // //It needs to be divided by the number of objectives to find the weighted average progress for each objective
+        // calcProgress /= cConstants->missionObjectives.size();
 
         //Assign the weighted progress to the child
         progress = calcProgress;

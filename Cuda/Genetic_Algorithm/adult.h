@@ -35,8 +35,12 @@ struct Adult: public Child {
     //A large distance can be thought of as a high degree of genetic diversity for the adult
     double distance; 
 
-    //this is changed/checked in newGeneration()
-    //meant to make sure there is not more than one instance of the same adult in the next generation
+    //Rarity measures how distinct this adult is compared to others in its generation
+    //  A lower value is considered more distinct
+    int rarity; 
+
+    //Tracker which is assigned the index for the reference point that is closest to this adult
+    int associatedRefPoint; 
 
 
 //!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -50,7 +54,7 @@ struct Adult: public Child {
     // Input: A child - this has cConstants, a set of rkParameters, and elements in it already, as well as the speedDiff and posDiff
     // Output: a child is turned into an adult
     // NOTE: This will be called by convertToAdults within newGeneration & ga_crossover.cu. Children that have just been simulated will be converted from a child into an adult
-    Adult(const Child& c): Child(c), rank(INT_MAX), distance(-1){}
+    Adult(const Child& c): Child(c), rank(INT_MAX), distance(-1), rarity(INT_MAX), associatedRefPoint(0){}
 
     #ifdef UNITTEST //this should be defined in unit testing
 
@@ -151,6 +155,13 @@ bool rankSort(const Adult& personA, const Adult& personB);
 //      It is used in via callSorts to put the best adults into oldAdults
 //      It is used in reportGeneration to print the best performing individual 
 bool rankDistanceSort(const Adult& personA, const Adult& personB);
+
+//Compare two individuals by their rank and rarity
+//input: two individuals
+//output: if person A's rank is lower than person B's rank, return true
+//        if person A and person B have the same rank and person A has a better (lower) rarity than person B, return true
+//Sorts the whole pool from lowest to highest rank. Individuals of the same rank are sorted from lowest (best) to highest (worst) rarity score
+bool rankRaritySort(const Adult& personA, const Adult& personB);
 
 //!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 //compares two adults to see if they have the same posDiff and speedDiff

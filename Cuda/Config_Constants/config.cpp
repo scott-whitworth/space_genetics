@@ -268,6 +268,9 @@ void cudaConstants::FileRead(std::string fileName) {
                     else if (variableName == "coast_threshold") {
                         this->coast_threshold = std::stod(variableValue);
                     }
+                    else if (variableName == "divisions") {
+                        this->divisions = std::stoi(variableValue);
+                    }
 
 
 /////////////////////////////////////////////////////////////////////////// -- TARGET -- //////////////////////////////////////////////////////////////////////////////////

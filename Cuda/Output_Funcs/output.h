@@ -8,6 +8,7 @@
 #include "..\Config_Constants\config.h"
 #include "../Runge_Kutta/gpuMem.cuh"
 #include "../Runge_Kutta/runge_kuttaCUDA.cuh"
+#include "../Genetic_Algorithm/referencePoints.h"
 
 //Structure will hold the run's output folder address, many output functions, and will handle generational & final outputs
 //This will help make output folders more flexible
@@ -148,6 +149,9 @@ struct output
     //        launchCon (global variable) - access elements of planet 
     // output: PlanetCheckValues.csv is created and holds rows of element info on planet with timeStamp on each row
     void recordEarthData(const cudaConstants * cConstants, const int & generation);
+
+    //Method used to print a run's used reference points
+    void recordReferencePoints(const cudaConstants * cConstants, const ReferencePoints & refPoints);
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -161,7 +165,7 @@ struct output
 //         numErrors - the number of errors in this generation
 //         numDuplicates - the number of duplicates found in this generation
 //         oldestBirthday - the oldest borthday from this generation
-// Output: the top individual for rank distance and for each objective will have their stats printed to the terminal
+// Output: the top individual for rank rarity and for each objective will have their stats printed to the terminal
 void printBestAdults(const cudaConstants* cConstants, std::vector<Adult> adults, const int& generation, int& numErrors, const int& numDuplicates, const int& oldestBirthday); 
 
 // Utility function to display the currently best individual onto the terminal while the algorithm is still running

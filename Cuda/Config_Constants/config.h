@@ -18,6 +18,8 @@ struct cudaConstants {
     int carryover_individuals; //How many individuals from the previous run to use as basis for starting parameters for this run
     bool record_mode;    // If set to true, functions that record information onto files such as genPerformance.csv.  The code still records a valid solution regardless of this setting
 
+    int divisions;       // The number of divisions for each objective when calculating reference points
+
     //Variables used in orbit missions to determine the desired final orbital radius and speed
     //They are initially set to -1 to allow the program to quickly determine if the goal is an orbit vs an impact/rendezvous
     double orbitalRadius = -1; // the radius of the orbit around a body

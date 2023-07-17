@@ -19,6 +19,13 @@ class ReferencePoints {
     //  The second dimension will store the values for each objective
     std::vector<std::vector<double>> points;
 
+    //Vectors that will assist with normalization
+    //  To do proper normalization, both the overall worst and best value for each objective need to be stored
+    //Worst objective values
+    std::vector<double> objWorst;
+    //Best objective values
+    std::vector<double> objBest;
+
     //Constructor which will calculate the values of all of the reference points based on the number of objectives and divisions per objectives
     ReferencePoints(const cudaConstants* cConstants);
 
@@ -29,7 +36,7 @@ class ReferencePoints {
 };
 
 //Calculates the objective-by-objective relative cost for the adults passed into the function
-void calculateRelCost (const cudaConstants *cConstants, std::vector<Adult> & allAdults);
+void calculateRelCost (const cudaConstants *cConstants, ReferencePoints & refPoints, std::vector<Adult> & allAdults);
 
 //Finds the distance between the submitted point and the normalized adult
 double findPointDist (const std::vector<double> & point, const Adult & adult);

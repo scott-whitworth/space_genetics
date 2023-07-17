@@ -257,7 +257,7 @@ void output::recordGenerationPerformance(const cudaConstants * cConstants, std::
     else {
       excelFile << -(adults[0].getParameters(cConstants->missionObjectives[i])) << ",";
     }
-    excelFile << adults[0].objectiveCost[i] << ",";
+    excelFile << adults[0].normalizedObj[i] << ",";
   }
   //Output the objective parameter for the best adult and the average for each objective
   for (int i = 0; i < cConstants->missionObjectives.size(); i++) {
@@ -408,7 +408,7 @@ void output::recordAllIndividuals(std::string name, const cudaConstants * cConst
     for (int j = 0; j < cConstants->missionObjectives.size(); j++)
     {
       outputFile << adults[i].getParameters(cConstants->missionObjectives[j]) << ",";
-      outputFile << adults[i].objectiveCost[j] << ",";
+      outputFile << adults[i].normalizedObj[j] << ",";
     }
     
     outputFile << generation-adults[i].birthday << ",";
@@ -851,7 +851,7 @@ void terminalDisplay(const Adult& individual, const std::vector<objective> objec
     }
 
     //Print the progress of the objective
-    std::cout << "\n\t" << objectives[i].name << " cost: " << individual.objectiveCost[i];
+    std::cout << "\n\t" << objectives[i].name << " cost: " << individual.normalizedObj[i];
   }
 
   std::cout << std::endl;

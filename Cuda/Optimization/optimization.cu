@@ -53,7 +53,7 @@ void calculateGenerationValues (const std::vector<Adult> & allAdults, const std:
 // - manages memory needs for genetic algorithm
 // - deals with processing calls to CUDA callRK
 // - exits when individuals converge on tolerance defined in Constants
-double optimize(const cudaConstants* cConstants, GPUMem & gpuValues, const ReferencePoints & refPoints);
+double optimize(const cudaConstants* cConstants, GPUMem & gpuValues, ReferencePoints & refPoints);
 
 //-----------------------------------------------------------------------------------------------------------------------------
 int main () {
@@ -255,7 +255,7 @@ void calculateGenerationValues (const std::vector<Adult> & allAdults, const std:
 }
 
 //Function that will facilitate the process of finding an optimal flight path
-double optimize(const cudaConstants* cConstants, GPUMem & gpuValues, const ReferencePoints & refPoints) {
+double optimize(const cudaConstants* cConstants, GPUMem & gpuValues, ReferencePoints & refPoints) {
     // Not used, previously used for reporting computational performance
     double calcPerS = 0;
 

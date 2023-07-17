@@ -42,7 +42,7 @@ Child::Child(rkParameters<double> & childParameters, const cudaConstants* cConst
     birthday = genCreated; //Set the child's birthday to the current generation
 
     avgParentProgress = calcAvgParentProgress; //The avg progress of the creating parents, if any (0 for randomly generated children)
-    objectiveCost = std::vector<double>(cConstants->missionObjectives.size(), 0); //Resize the objective progress vector to match the number of objectives and set the default progress to be 0 (bad value)
+    normalizedObj = std::vector<double>(cConstants->missionObjectives.size(), 0); //Resize the objective progress vector to match the number of objectives and set the default progress to be 0 (bad value)
 
     stepCount = 0; //no calculations done yet, default is zero
     simStartTime = 0; //Inititially start the simulation at the start of the trip time
@@ -70,7 +70,7 @@ Child:: Child(const Child& other){
     birthday = other.birthday;
     avgParentProgress = other.avgParentProgress;
     progress = other.progress;
-    objectiveCost = other.objectiveCost;
+    normalizedObj = other.normalizedObj;
     stepCount = other.stepCount;
     minMarsDist = other.minMarsDist;
     orbithChange = other.orbithChange;

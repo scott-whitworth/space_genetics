@@ -35,7 +35,7 @@ struct Child {
     //Cost for each output/objective for the child. The size of the vector will be the same as the number of objectives
     //  Cost is a 0 to 1 scale, with 0 being being best
     //  Cost is simply a measure of 1-progress for each objective
-    std::vector<double> objectiveCost; 
+    std::vector<double> normalizedObj; 
     double avgParentProgress; //The average of the two parents progress
 
     int birthday; //keeps track of the generation this individual was created in 

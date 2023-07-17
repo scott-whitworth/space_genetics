@@ -257,7 +257,7 @@ void output::recordGenerationPerformance(const cudaConstants * cConstants, std::
     else {
       excelFile << -(adults[0].getParameters(cConstants->missionObjectives[i])) << ",";
     }
-    excelFile << adults[0].objectiveCost[i] << ",";
+    excelFile << adults[0].normalizedObj[i] << ",";
   }
   //Output the objective parameter for the best adult and the average for each objective
   for (int i = 0; i < cConstants->missionObjectives.size(); i++) {
@@ -408,7 +408,7 @@ void output::recordAllIndividuals(std::string name, const cudaConstants * cConst
     for (int j = 0; j < cConstants->missionObjectives.size(); j++)
     {
       outputFile << adults[i].getParameters(cConstants->missionObjectives[j]) << ",";
-      outputFile << adults[i].objectiveCost[j] << ",";
+      outputFile << adults[i].normalizedObj[j] << ",";
     }
     
     outputFile << generation-adults[i].birthday << ",";
@@ -764,6 +764,37 @@ void output::recordMarsData(const cudaConstants * cConstants, const int & genera
   planetValues.close();
 }
 
+//Method used to print a run's used reference points
+void output::recordReferencePoints(const cudaConstants * cConstants, const ReferencePoints & refPoints) {
+
+  // seed to hold time_seed value to identify the file
+  int seed = cConstants->time_seed;
+
+  // Open file
+  std::ofstream output;
+  output.open(outputPath + "referencePoints-"+ std::to_string(seed) + ".csv");
+
+  //Print the number of objectives as a header
+  for (int i = 0; i < refPoints.points[0].size(); i++) {
+    output << "Objective" << i << ",";  
+  }
+
+  //Print all of the points
+  for (int i = 0; i < refPoints.points.size(); i++) {
+    //New line for new point
+    output << "\n";
+
+    for (int j = 0; j < refPoints.points[i].size(); j++) {
+
+      //Print one part of the point
+      output << refPoints.points[i][j] << ",";
+    }
+  }
+  
+  //Close the file
+  output.close();
+}
+
 //!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 //General Functions
 
@@ -820,7 +851,7 @@ void terminalDisplay(const Adult& individual, const std::vector<objective> objec
     }
 
     //Print the progress of the objective
-    std::cout << "\n\t" << objectives[i].name << " cost: " << individual.objectiveCost[i];
+    std::cout << "\n\t" << objectives[i].name << " cost: " << individual.normalizedObj[i];
   }
 
   std::cout << std::endl;

@@ -142,7 +142,7 @@ void convertToAdults(std::vector<Adult> & newAdults, Child* newChildren, const c
 
 
 //Creating a generation either randomly or based on values from a file
-void createFirstGeneration(std::vector<Adult>& oldAdults, const cudaConstants* cConstants, std::mt19937_64 rng, const int & generation, GPUMem & gpuValues, const ReferencePoints & refPoints){
+void createFirstGeneration(std::vector<Adult>& oldAdults, const cudaConstants* cConstants, std::mt19937_64 rng, const int & generation, GPUMem & gpuValues, ReferencePoints & refPoints){
     //int generation = 0; //these are loaded from a file or randomly, so set gen to 0
     Child* initialChildren = new Child[cConstants->num_individuals]; 
 
@@ -276,7 +276,7 @@ void createFirstGeneration(std::vector<Adult>& oldAdults, const cudaConstants* c
 }
 
 //Will create the first generation of adults from random parameters so that future generations have a pre-existing base of adults
-void firstGeneration(Child* initialChildren, std::vector<Adult>& oldAdults, const cudaConstants* cConstants, GPUMem & gpuValues, const ReferencePoints & refPoints){
+void firstGeneration(Child* initialChildren, std::vector<Adult>& oldAdults, const cudaConstants* cConstants, GPUMem & gpuValues, ReferencePoints & refPoints){
     double timeIntial = 0;
     double calcPerS  = 0;
 
@@ -291,14 +291,14 @@ void firstGeneration(Child* initialChildren, std::vector<Adult>& oldAdults, cons
     convertToAdults(oldAdults, initialChildren, cConstants); 
 
     //Calculate the relative cost for the initial group of adults
-    calculateRelCost(cConstants, oldAdults);
+    calculateRelCost(cConstants, refPoints, oldAdults);
 
     //Find the closest reference points for the initial group of adults
     findAssociatedPoints(cConstants, refPoints, oldAdults);
 }
 
 //fills oldAdults with the best adults from this generation and the previous generation so that the best parents can be selected
-void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& newAdults, std::vector<Adult>& oldAdults, int& numErrors, int& duplicateNum, const cudaConstants* cConstants, const ReferencePoints & refPoints, const int & generation, const double& currentAnneal, int & marsErrors){
+void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& newAdults, std::vector<Adult>& oldAdults, int& numErrors, int& duplicateNum, const cudaConstants* cConstants, ReferencePoints & refPoints, const int & generation, const double& currentAnneal, int & marsErrors){
     std::vector<Adult>().swap(allAdults); //ensures this vector is empty and ready for new inputs
     //Reset duplicate and error count variables
     numErrors = 0;
@@ -326,7 +326,7 @@ void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& 
     }
 
     //Calculate the relative cost for the combined adult pool
-    calculateRelCost(cConstants, allAdults);
+    calculateRelCost(cConstants, refPoints, allAdults);
     
     //Find the closest reference points to each adult based on the new relative cost
     findAssociatedPoints(cConstants, refPoints, allAdults);

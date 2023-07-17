@@ -3,6 +3,17 @@
 
 //Constructor which will calculate the values of all of the reference points based on the number of objectives and divisions per objectives
 ReferencePoints::ReferencePoints(const cudaConstants* cConstants) {
+    //Set the size of the objective values to be the size of the mission objectives
+    for (int i = 0; i < cConstants->missionObjectives.size(); i++){
+        //The worst values will start at an arbitrary low number as worse values will always be higher
+        objWorst.push_back(-INT_MAX);
+
+        //The best values will start at an arbitrary high number as worst values will always be lower 
+        objBest.push_back(INT_MAX);
+    }
+    // objWorst = std::vector<double>(cConstants->missionObjectives.size() - 1, -INT_MAX);
+    // objBest = std::vector<double>(cConstants->missionObjectives.size() - 1, INT_MAX);
+
     //Create the vector that will be used to calculate the new values
     std::vector<double> newValues(cConstants->missionObjectives.size() - 1, 0);
 
@@ -65,27 +76,35 @@ void ReferencePoints::addPoint(const std::vector<double> values, const cudaConst
 }
 
 //Calculates the objective-by-objective relative cost for the adults passed into the function
-void calculateRelCost (const cudaConstants *cConstants, std::vector<Adult> & allAdults) {
-    //Vector will hold the relative normalization values for all of the objectives
-    //  The normalization value should be the overall worst value for the objective
-    std::vector<double> normalizations (cConstants->missionObjectives.size(), 0);
+void calculateRelCost (const cudaConstants *cConstants, ReferencePoints & refPoints, std::vector<Adult> & allAdults) {
+
+    // std::cout << "\nTEST: Starting to calculate normalization\n";
 
     //Find the normalizations for each objective
     for (int i = 0; i < cConstants->missionObjectives.size(); i++) {
 
-        //First set the normalization value to first adult in the allAdult vector
-        normalizations[i] = allAdults[0].getParameters(cConstants->missionObjectives[i]);
+        //Go through the rest of the adults to see if there are new best/worst values
+        for (int j = 1; j < allAdults.size(); j++) {
 
-        //Go through the rest of the adults to see if there is a worst value
-        for (int j = 1; j < allAdults.size(); j++){
+            // std::cout << "\nTEST: comparing value of " << allAdults[j].getParameters(cConstants->missionObjectives[i]) << " for objective "  << i << " against worst " << refPoints.objWorst[i] << " and best " << refPoints.objBest[i] << ".\n";
 
+            //Check to see if the adult has the new worst value for this objective
             //Because maximizations are stored as negatives, worse values are going to be larger values, regardless of objective
-            //Check to see if this adult has a worse value
-            if (allAdults[j].getParameters(cConstants->missionObjectives[i]) > normalizations[i]) {
+            if (allAdults[j].getParameters(cConstants->missionObjectives[i]) > refPoints.objWorst[i]) {
+
+                // std::cout << "\nTEST: Found new worst value " << allAdults[j].getParameters(cConstants->missionObjectives[i]) << " of obj " << i << " at adult " << j << ".\n";
 
                 //Found a worse value, store it as a new normalization
-                normalizations[i] = allAdults[j].getParameters(cConstants->missionObjectives[i]);
+                refPoints.objWorst[i] = allAdults[j].getParameters(cConstants->missionObjectives[i]);
             }
+            //Check if the adult has the new best value for this objective
+            else if (allAdults[j].getParameters(cConstants->missionObjectives[i]) < refPoints.objBest[i]) {
+
+                // std::cout << "\nTEST: Found new best value " << allAdults[j].getParameters(cConstants->missionObjectives[i]) << " of obj " << i << " at adult " << j << ".\n";
+
+                //Found a new best value, store it as a new normalization
+                refPoints.objBest[i] = allAdults[j].getParameters(cConstants->missionObjectives[i]);
+            }          
         }
     }
 
@@ -94,25 +113,90 @@ void calculateRelCost (const cudaConstants *cConstants, std::vector<Adult> & all
 
         //Calculate the cost for each objective
         for (int j = 0; j < cConstants->missionObjectives.size(); j++){
-            //Store this objective's cost with the calculation (adult's objective value / normalization)
-            double objCost = (allAdults[i].getParameters(cConstants->missionObjectives[j])/normalizations[j]);
+            // double objCost = 0;
 
-            //If the objective is a maximization, the cost is not a 0 to 1 scale, so we need the inverse
-            if (cConstants->missionObjectives[j].goal > 0) {
-                objCost = 1/objCost;
+            double num = allAdults[i].getParameters(cConstants->missionObjectives[j]) - refPoints.objBest[j];
+            double denom = refPoints.objWorst[j] - refPoints.objBest[j];
+
+            if (abs(denom) < 1e-14 && cConstants->missionObjectives[j].goal < 0) {
+                denom = 1e-14;
+            }
+            else if (abs(denom) < 1e-14 && cConstants->missionObjectives[j].goal > 0) {
+                denom = -1e-14;
             }
 
-            //Save the objective's cost
-            allAdults[i].objectiveCost[j] = objCost;
+            allAdults[i].normalizedObj[j] = num/denom;
+
+            // if (cConstants->missionObjectives[j].goal < 0) {
+            //    //Store this objective's progress with the calculation (adult's objective value / normalization)
+            //    objCost = (allAdults[i].getParameters(cConstants->missionObjectives[j])/normalizations[j]); 
+            // }
+            // else {
+            //     objCost = 1-(allAdults[i].getParameters(cConstants->missionObjectives[j])/cConstants->missionObjectives[j].convergenceThreshold);
+
+            //     if (objCost < 0) {
+            //         objCost = 0;
+            //     }
+            // }
+            
+
+            // //If the objective is a maximization, the progress is not a 0 to 1 scale, so we need the inverse
+            // if (cConstants->missionObjectives[j].goal > 0) {
+            //     objCost = 1/objCost;
+            // }
+
+            //Calculate the cost as 1 - objCost
+            // allAdults[i].normalizedObj[j] = objCost;
         }
     }
 
+    // std::cout << "\nTEST: Finished calculating normalization\n";
+
     return;
+}
+
+//Finds the distance between the submitted point and the normalized adult
+double findPointDist (const std::vector<double> & point, const Adult & adult) {
+    //The distance between a point and a line where A = point on line (origin), B = second point on line (reference point), P = point of interest (adult)
+    //  pa = P - A; -> pa = P (adult point)
+    //  ba = B - A; -> ba = B (reference point)
+    //  t = dot(pa, ba)/dot(ba, ba);
+    //  your_dist = norm(pa - t * ba,2)
+
+    //holds the dot product of pa & ba
+    double numDot = 0;
+    //holds the dot product of ba with itself
+    double denDot = 0;
+
+    //Calculate the dot products
+    for (int i = 0; i < point.size(); i++) {
+        numDot += (point[i] * adult.normalizedObj[i]);
+        denDot += (point[i] * point[i]);
+    }
+
+    //Calculate t with the dot products
+    double t = numDot/denDot;
+
+    //Calculate the distance
+    double distance = 0;
+
+    //The norm is the square of each of the components squared
+    //Calculate the sum of each compenent squared]
+    for (int i = 0; i < point.size(); i++) {
+        distance += pow(adult.normalizedObj[i] - (t * point[i]), 2);
+    }
+
+    //The norm (and thus distance) is the square root of the sum
+    distance = sqrt(distance);
+
+    //return the distance
+    return distance;
 }
 
 //Will find the closest reference points to each adult in the newAdults vector
 void findAssociatedPoints (const cudaConstants *cConstants, const ReferencePoints & refPoints, std::vector<Adult> & newAdults) {
     //Trackers for finding the closest reference point
+    //In the normalized coordinates, the farthest corner (1,1,1) is at a distance of sqrt(3)=1.732... from the origin.
     double minDistVal = 2;      //Tracks the distance of the reference point currently the closest from the adult
 
     //Value that holds the distance from the adult to the reference point being checked
@@ -126,13 +210,14 @@ void findAssociatedPoints (const cudaConstants *cConstants, const ReferencePoint
             
             //Calculate the distance to the reference point
             //First add the squares of the differences for each objective/component
-            for (int k = 0; k < refPoints.points[0].size(); k++) {
+            // for (int k = 0; k < refPoints.points[0].size(); k++) {
                 
-                curDist += pow((refPoints.points[j][k] - newAdults[i].objectiveCost[k]), 2);
-            }
+            //     curDist += pow((refPoints.points[j][k] - newAdults[i].normalizedObj[k]), 2);
+            // }
 
             //Finally take the square root to find the distance
-            curDist = sqrt(curDist);
+            // curDist = sqrt(curDist);
+            curDist = findPointDist(refPoints.points[j], newAdults[i]);
 
             //See if it is better than the current minimum distance
             if (curDist <  minDistVal) {

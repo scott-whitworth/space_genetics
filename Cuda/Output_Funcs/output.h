@@ -8,6 +8,7 @@
 #include "..\Config_Constants\config.h"
 #include "../Runge_Kutta/gpuMem.cuh"
 #include "../Runge_Kutta/runge_kuttaCUDA.cuh"
+#include "../Genetic_Algorithm/referencePoints.h"
 
 //Structure will hold the run's output folder address, many output functions, and will handle generational & final outputs
 //This will help make output folders more flexible
@@ -148,6 +149,9 @@ struct output
     //        launchCon (global variable) - access elements of planet 
     // output: PlanetCheckValues.csv is created and holds rows of element info on planet with timeStamp on each row
     void recordEarthData(const cudaConstants * cConstants, const int & generation);
+
+    //Method used to print a run's used reference points
+    void recordReferencePoints(const cudaConstants * cConstants, const ReferencePoints & refPoints);
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////

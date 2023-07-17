@@ -191,37 +191,82 @@ __host__ void Child::getProgress(const cudaConstants* cConstants){
         //  It will then be divided by the number of objectives and assigned to the child
         double calcProgress = 0; 
 
-        //Holds the progress of a single objective before it is added to the combined calcProgress variable
-        double objProgress;
-
         //Iterate through the objectives
         for (int i = 0; i < cConstants->missionObjectives.size(); i++) {
-
-            //See if the child has met the the convergence threshold for this parameter
-            if (getParameters(cConstants->missionObjectives[i]) < cConstants->missionObjectives[i].convergenceThreshold) {
-                //Set progress to one to signify that the parameter has met the goal
-                objProgress = 1;
+            //Check to see if the goal for this objective is to minimize or maximize the parameter 
+            //  Necessary because the progress values are calculated differently depending on the direction 
+            //  See the objective header for details on how objective direction is determined
+            if (cConstants->missionObjectives[i].goal < 0) {//Minimization
+                
+                //See if the child has met the the convergence threshold for this parameter
+                if (getParameters(cConstants->missionObjectives[i]) < cConstants->missionObjectives[i].convergenceThreshold) {
+                    //Add one to the progress to signify that the parameter has met the goal
+                    calcProgress += 1; 
+                }
+                //The child hasn't met the parameter goal
+                else {
+                    //Add the progress for this parameter to the goal
+                    //For minimization, the progress is the parameter divided by the threshold
+                    calcProgress += (getParameters(cConstants->missionObjectives[i])/cConstants->missionObjectives[i].convergenceThreshold); 
+                }
             }
-            //The child hasn't met the parameter goal
+            //Maximization is very similar minimization, but the signs are flipped and an inverse fraction is used
+            else if (cConstants->missionObjectives[i].goal > 0) {//Maximization
+                
+                //See if the child has met the the convergence threshold for this parameter
+                if (getParameters(cConstants->missionObjectives[i]) > cConstants->missionObjectives[i].convergenceThreshold) {
+                    //Add one to the progress to signify that the parameter has met the goal
+                    calcProgress += 1; 
+                }
+                //The child hasn't met the parameter goal
+                else {
+                    //Add the progress for this parameter to the goal
+                    //For maximization, the progress is the threshold divided by the parameter
+                    calcProgress += (cConstants->missionObjectives[i].convergenceThreshold/getParameters(cConstants->missionObjectives[i])); 
+                }
+            }
+            //No mission type was identified 
             else {
-                //Add the progress for this parameter to the goal
-                //The progress is calculated by dividing the threshold by the child's parameter value
-                objProgress = abs((cConstants->missionObjectives[i].convergenceThreshold/getParameters(cConstants->missionObjectives[i]))); 
+                std::cout << "\n_-_-_-_-_-_-_-_-_-Error Identifying Parameter Goal_-_-_-_-_-_-_-_-_-\n";
             }
-
-            //If the objective is a maximization, store the inverse of the progress for each individual so it is a 0 to 1 scale
-            if (cConstants->missionObjectives[i].goal > 0){
-               objProgress = (1/objProgress); 
-            }
-            //If the goal is a minimization, the progress for the objective is already on a 0 to 1 scale
-            
-            //Add the objective's progress to the total progress
-            calcProgress += objProgress;
         }
 
-        //The total progress has been calculated
+        //The total cost has been calculated
         //It needs to be divided by the number of objectives to find the weighted average progress for each objective
-        calcProgress /= cConstants->missionObjectives.size();
+        calcProgress = cConstants->missionObjectives.size()/calcProgress;
+
+
+        // //Holds the progress of a single objective before it is added to the combined calcProgress variable
+        // double objProgress;
+
+        // //Iterate through the objectives
+        // for (int i = 0; i < cConstants->missionObjectives.size(); i++) {
+
+        //     //See if the child has met the the convergence threshold for this parameter
+        //     if (getParameters(cConstants->missionObjectives[i]) < cConstants->missionObjectives[i].convergenceThreshold) {
+        //         //Set progress to one to signify that the parameter has met the goal
+        //         objProgress = 1;
+        //     }
+        //     //The child hasn't met the parameter goal
+        //     else {
+        //         //Add the progress for this parameter to the goal
+        //         //The progress is calculated by dividing the threshold by the child's parameter value
+        //         objProgress = abs((cConstants->missionObjectives[i].convergenceThreshold/getParameters(cConstants->missionObjectives[i]))); 
+        //     }
+
+        //     //If the objective is a maximization, store the inverse of the progress for each individual so it is a 0 to 1 scale
+        //     if (cConstants->missionObjectives[i].goal > 0){
+        //        objProgress = (1/objProgress); 
+        //     }
+        //     //If the goal is a minimization, the progress for the objective is already on a 0 to 1 scale
+            
+        //     //Add the objective's progress to the total progress
+        //     calcProgress += objProgress;
+        // }
+
+        // //The total progress has been calculated
+        // //It needs to be divided by the number of objectives to find the weighted average progress for each objective
+        // calcProgress /= cConstants->missionObjectives.size();
 
         //Assign the weighted progress to the child
         progress = calcProgress;

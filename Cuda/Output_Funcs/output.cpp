@@ -278,6 +278,8 @@ void output::recordGenerationPerformance(const cudaConstants * cConstants, std::
     excelFile << objectiveAvgValues[i] << ",";
   }
 
+  //Reset the sort to rankRarity
+  std::sort(adults.begin(), adults.end(), rankRaritySort);
 
   // Record best individual's parameters
   excelFile << adults[0].startParams.alpha << ",";

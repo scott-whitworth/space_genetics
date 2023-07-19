@@ -21,10 +21,10 @@ class ReferencePoints {
 
     //Vectors that will assist with normalization
     //  To do proper normalization, both the overall worst and best value for each objective need to be stored
-    //Worst objective values
-    std::vector<double> objWorst;
-    //Best objective values
-    std::vector<double> objBest;
+    //Store the adults with the worst values
+    std::vector<Adult> objWorst;
+    //Store the adults with the best values
+    std::vector<Adult> objBest;
 
     //Constructor which will calculate the values of all of the reference points based on the number of objectives and divisions per objectives
     ReferencePoints(const cudaConstants* cConstants);

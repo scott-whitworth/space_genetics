@@ -120,7 +120,7 @@ int main () {
 //Returns true if top best_count adults within the oldAdults vector are within the tolerance
 bool checkTolerance(std::vector<Adult>& oldAdults, const cudaConstants* cConstants) {
     //Sort the vector by rank distance to make sure the program checks the correct adult
-    std::sort(oldAdults.begin(), oldAdults.end(), rankRaritySort); 
+    //std::sort(oldAdults.begin(), oldAdults.end(), rankRaritySort); 
 
     //The function needs to check if the best adult meets the convergence tolerance for each objective
     //Iterate through the objectives
@@ -135,32 +135,6 @@ bool checkTolerance(std::vector<Adult>& oldAdults, const cudaConstants* cConstan
                 return false;
             }
         }
-
-        // if (cConstants->missionObjectives[i].goal < 0) {//Minimization
-        //     //Check to see if the top best_count adults have met convergence for this parameter
-        //     for (int j = 0; j < cConstants->best_count; j++) {
-
-        //         //Check to see if the adult's parameter is larger than the convergence 
-        //         if (oldAdults[j].getParameters(cConstants->missionObjectives[i]) > cConstants->missionObjectives[i].convergenceThreshold) {
-        //             //Return false as a parameter that needs to be minimized is larger than the convergence threshold
-        //             return false;
-        //         }
-        //     }
-        // }
-        // else if (cConstants->missionObjectives[i].goal > 0) {//Maximization
-        //     //Check to see if the top best_count adults have met convergence for this parameter
-        //     for (int j = 0; j < cConstants->best_count; j++) {
-        //         //Check to see if the adult's parameter is smaller than the convergence 
-        //         if (oldAdults[j].getParameters(cConstants->missionObjectives[i]) < cConstants->missionObjectives[i].convergenceThreshold) {
-        //             //Return false as a parameter that needs to be maximized is smaller than the convergence threshold
-        //             return false;
-        //         }
-        //     }
-        // }
-        // //No mission type was identified 
-        // else {
-        //     std::cout << "\n_-_-_-_-_-_-_-_-_-Error Identifying Parameter Goal_-_-_-_-_-_-_-_-_-\n";
-        // }
     }
 
     //If the program reaches this spot, it means all of the adult's parameters have met the convergence threshold
@@ -364,17 +338,7 @@ double optimize(const cudaConstants* cConstants, GPUMem & gpuValues, ReferencePo
         //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE CONVERGENCE CHECK-_-_-_-_-_-_-_-_-_\n\n";
         convergence = checkTolerance(oldAdults, cConstants);
 
-        //std::sort(allAdults.begin(), allAdults.end(), LowerMarsDist);
-        //if (allAdults[0].minMarsDist < MSOI*cConstants->MSOI_scale && worstOPD < allAdults[0].orbitPosDiff) {
-        //    std::string tempPath = genOutputs.outputPath;
-        //    genOutputs.outputPath = tempPath+"badAdult\\";
-        //    mkdir(genOutputs.outputPath.c_str());
-        //    genOutputs.finalRecord(cConstants, allAdults[0], generation);
-        //    genOutputs.outputPath = tempPath;
-        //    worstOPD = allAdults[0].orbitPosDiff;
-        //    std::cout << "\nBAD ADULT PRINTED\n\n";
-        //}
-        std::sort(allAdults.begin(), allAdults.end(), rankRaritySort);        
+        //std::sort(allAdults.begin(), allAdults.end(), rankRaritySort);        
         
         //Increment the generation counter
         ++generation;

@@ -279,12 +279,13 @@ __global__ void rk4CUDASim(Child *children, double *absTolInput, int n, const cu
                         //Set the child status to outide SOI
                         children[threadId].simStatus = OUTSIDE_SOI;
 
+                        //Calculate the change in angular momentum during the child's time in the SOI
                         children[threadId].orbithChange = (curPos.r * curPos.vtheta) - soiEntryh;
 
-                        //Check to make sure the orbithChange isn't less than 0 
-                        // if (children[threadId].orbithChange < 1e-14) {
-                        //     children[threadId].orbithChange = 5e-15;
-                        // }
+                        //Check to make sure the orbithChange isn't less than 0, if the value is less than 0 the intercept calculations will mess up
+                        if (children[threadId].orbithChange < 1e-14) {
+                            children[threadId].orbithChange = 5e-15;
+                        }
 
                         //Check to see if this was a bad assist
                         // if (curPos.r * curPos.vtheta < soiEntryh) {

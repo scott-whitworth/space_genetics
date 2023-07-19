@@ -90,7 +90,7 @@ void output::initializeGenPerformance(const cudaConstants * cConstants) {
   //Names for each objective
   for (int i = 0; i < cConstants->missionObjectives.size(); i++) {
     excelFile << "rankRarity" << cConstants->missionObjectives[i].name << ",";
-    excelFile << "rankRarity" << cConstants->missionObjectives[i].name << "Cost,";
+    excelFile << "rankRarity" << cConstants->missionObjectives[i].name << "Normalization,";
   }
   for (int i = 0; i < cConstants->missionObjectives.size(); i++) {
     excelFile << "best" << cConstants->missionObjectives[i].name << ",";
@@ -278,6 +278,8 @@ void output::recordGenerationPerformance(const cudaConstants * cConstants, std::
     excelFile << objectiveAvgValues[i] << ",";
   }
 
+  //Reset the sort to rankRarity
+  std::sort(adults.begin(), adults.end(), rankRaritySort);
 
   // Record best individual's parameters
   excelFile << adults[0].startParams.alpha << ",";
@@ -352,6 +354,9 @@ void output::recordGenSimple (const cudaConstants* cConstants, std::vector<Adult
     excelFile << objectiveAvgValues[i] << ",";
   }
 
+  //Re-sort the adults in rank-rarity order
+  std::sort(adults.begin(), adults.end(), rankRaritySort);
+
   //End the line for this generation and close the file
   excelFile << "\n"; 
   excelFile.close(); 
@@ -378,7 +383,7 @@ void output::recordAllIndividuals(std::string name, const cudaConstants * cConst
   }
   for (int i = 0; i < cConstants->missionObjectives.size(); i++) {
     outputFile << cConstants->missionObjectives[i].name << ",";
-    outputFile << cConstants->missionObjectives[i].name << "Cost,";
+    outputFile << cConstants->missionObjectives[i].name << "Normalization,";
   }
   
   outputFile << "age,birthday,rank,rarity,numSteps,avgParentProgress,progress,parentChildProgressRatio";
@@ -851,7 +856,7 @@ void terminalDisplay(const Adult& individual, const std::vector<objective> objec
     }
 
     //Print the progress of the objective
-    std::cout << "\n\t" << objectives[i].name << " cost: " << individual.normalizedObj[i];
+    std::cout << "\n\t" << objectives[i].name << " normalization: " << individual.normalizedObj[i];
   }
 
   std::cout << std::endl;

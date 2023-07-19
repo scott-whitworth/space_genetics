@@ -340,7 +340,7 @@ void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& 
     //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE GIVE RANK-_-_-_-_-_-_-_-_-_\n\n";
     giveRank(allAdults, cConstants); //gives a rank to each adult
     //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE GIVE DISTANCE-_-_-_-_-_-_-_-_-_\n\n";
-    giveDistance(allAdults, cConstants); //gives a distance to each adult
+    //giveDistance(allAdults, cConstants); //gives a distance to each adult
     //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE GIVE SORT-_-_-_-_-_-_-_-_-_\n\n";
     std::sort(allAdults.begin(), allAdults.end(), rankRaritySort); //sorts allAdults using rankRarity sort
 
@@ -360,8 +360,6 @@ void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& 
 
     //Clear the newAdult vector so that it is ready to receive new children
     newAdults.clear(); 
-
-
 }
 
 void addToAllAdults(std::vector<Adult> & adultPool, std::vector<Adult> & allAdults, const int & index, int& numErrors, int& duplicateNum, int& marsErrors){

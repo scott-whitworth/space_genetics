@@ -3,17 +3,6 @@
 
 //Constructor which will calculate the values of all of the reference points based on the number of objectives and divisions per objectives
 ReferencePoints::ReferencePoints(const cudaConstants* cConstants) {
-    //Set the size of the objective values to be the size of the mission objectives
-    for (int i = 0; i < cConstants->missionObjectives.size(); i++){
-        //The worst values will start at an arbitrary low number as worse values will always be higher
-        objWorst.push_back(-INT_MAX);
-
-        //The best values will start at an arbitrary high number as worst values will always be lower 
-        objBest.push_back(INT_MAX);
-    }
-    // objWorst = std::vector<double>(cConstants->missionObjectives.size() - 1, -INT_MAX);
-    // objBest = std::vector<double>(cConstants->missionObjectives.size() - 1, INT_MAX);
-
     //Create the vector that will be used to calculate the new values
     std::vector<double> newValues(cConstants->missionObjectives.size() - 1, 0);
 
@@ -78,34 +67,105 @@ void ReferencePoints::addPoint(const std::vector<double> values, const cudaConst
 //Calculates the objective-by-objective relative cost for the adults passed into the function
 void calculateRelCost (const cudaConstants *cConstants, ReferencePoints & refPoints, std::vector<Adult> & allAdults) {
 
-    // std::cout << "\nTEST: Starting to calculate normalization\n";
+    //See if the adult vectors need to be filled in
+    //  If the size of the best/worst value vectors is 0, it means this is the first generation and they need to be set to an arbitrary adult
+    // if (refPoints.objBest.size() == 0) {
+        //Push back a random adult for each objective
+        for (int i = 0; i < cConstants->missionObjectives.size(); i++) {
+            refPoints.objWorst.push_back(allAdults[0]);
+            refPoints.objBest.push_back(allAdults[0]);
+        }
+    // }
 
     //Find the normalizations for each objective
     for (int i = 0; i < cConstants->missionObjectives.size(); i++) {
 
         //Go through the rest of the adults to see if there are new best/worst values
-        for (int j = 1; j < allAdults.size(); j++) {
+        for (int j = 0; j < allAdults.size(); j++) {
 
-            // std::cout << "\nTEST: comparing value of " << allAdults[j].getParameters(cConstants->missionObjectives[i]) << " for objective "  << i << " against worst " << refPoints.objWorst[i] << " and best " << refPoints.objBest[i] << ".\n";
+            // std::cout << "\nTEST: comparing value of " << allAdults[j].getParameters(cConstants->missionObjectives[i]) << " for objective "  << i;
+            // std::cout << " against worst " << refPoints.objWorstValue[i];
+            // std::cout << " and best " << refPoints.objBestValue[i] << ".\n";
 
             //Check to see if the adult has the new worst value for this objective
             //Because maximizations are stored as negatives, worse values are going to be larger values, regardless of objective
-            if (allAdults[j].getParameters(cConstants->missionObjectives[i]) > refPoints.objWorst[i]) {
+            if (allAdults[j].getParameters(cConstants->missionObjectives[i]) > refPoints.objWorst[i].getParameters(cConstants->missionObjectives[i])) {
 
                 // std::cout << "\nTEST: Found new worst value " << allAdults[j].getParameters(cConstants->missionObjectives[i]) << " of obj " << i << " at adult " << j << ".\n";
 
-                //Found a worse value, store it as a new normalization
-                refPoints.objWorst[i] = allAdults[j].getParameters(cConstants->missionObjectives[i]);
+                //Found a new worse value, store the adult
+                refPoints.objWorst[i] = allAdults[j];
             }
             //Check if the adult has the new best value for this objective
-            else if (allAdults[j].getParameters(cConstants->missionObjectives[i]) < refPoints.objBest[i]) {
+            else if (allAdults[j].getParameters(cConstants->missionObjectives[i]) < refPoints.objBest[i].getParameters(cConstants->missionObjectives[i])) {
 
                 // std::cout << "\nTEST: Found new best value " << allAdults[j].getParameters(cConstants->missionObjectives[i]) << " of obj " << i << " at adult " << j << ".\n";
 
-                //Found a new best value, store it as a new normalization
-                refPoints.objBest[i] = allAdults[j].getParameters(cConstants->missionObjectives[i]);
+                //Found a new best value, store the adult
+                refPoints.objBest[i] = allAdults[j];
             }          
         }
+    }
+
+
+    //Holds the points for the objective intercepts
+    std::vector<double> intercepts (3, 1);
+
+    //Find intercepts if there are three objectives
+    if (cConstants->missionObjectives.size() == 3){
+        std::cout << "\nUsing plane intercepts:\n";
+
+        //First dimension is the individual (1,2,3)
+        //Second dimension is the coordinate (x,y,z)
+        std::vector<std::vector<double>> worstPoints;
+
+        for (int i = 0; i < cConstants->missionObjectives.size(); i++) {
+
+            //Push back a new set of worst points for this objective
+            worstPoints.push_back(std::vector<double>(0,0));
+
+            //For the objective's worst individual, store its objective-specific values
+            for (int j = 0; j < cConstants->missionObjectives.size(); j++){
+                if (cConstants->missionObjectives[j].goal < 0) {
+                    worstPoints[i].push_back(refPoints.objWorst[i].getParameters(cConstants->missionObjectives[j]));
+                } 
+                else {
+                    worstPoints[i].push_back(-refPoints.objWorst[i].getParameters(cConstants->missionObjectives[j]));
+                }
+
+            std::cout << "\tPoint " << i << " " << j << ": " << worstPoints[i][j] << "\n";
+            }
+        }
+
+        // Coefficients for the unit vector for each objective
+        double c1 = (((worstPoints[1][1]-worstPoints[0][1]) * (worstPoints[2][2]-worstPoints[0][2])) - ((worstPoints[2][1]-worstPoints[0][1]) * (worstPoints[1][2]-worstPoints[0][2]))); //scalar in i direction (y2-y1)(z3-z1) - (y3-y1)(z2-z1)
+        double c2 = (((worstPoints[2][0]-worstPoints[0][0]) * (worstPoints[1][2]-worstPoints[0][2])) - ((worstPoints[1][0]-worstPoints[0][0]) * (worstPoints[2][2]-worstPoints[0][2]))); //scalar in j direction (x3-x1)(z2-z1) - (x2-x1)(z3-z1)
+        double c3 = (((worstPoints[1][0]-worstPoints[0][0]) * (worstPoints[2][1]-worstPoints[0][1])) - ((worstPoints[2][0]-worstPoints[0][0]) * (worstPoints[1][1]-worstPoints[0][1]))); //scalar in k direction (x2-x1)(y3-y1) - (x3-x1)(y2-y1)
+
+        //Check to make sure that the scalars are not zero
+        // if (abs(c1) < cConstants->doublePrecThresh) {
+        //     c1 = cConstants->doublePrecThresh;
+        // }
+        // if (abs(c2) < cConstants->doublePrecThresh) {
+        //     c2 = cConstants->doublePrecThresh;
+        // }
+        // if (abs(c3) < cConstants->doublePrecThresh) {
+        //     c3 = cConstants->doublePrecThresh;
+        // }
+
+        std::cout << "\n\tScalar 1: " << c1 << "\n";
+        std::cout << "\tScalar 2: " << c2 << "\n";
+        std::cout << "\tScalar 3: " << c3 << "\n";
+
+        //Calculate the objective intercepts
+        intercepts[0] = (((c1*worstPoints[0][0]) + (c2*worstPoints[0][1]) + (c3*worstPoints[0][2]))/c1); //x intercept, (c1x1 + c2y1 + c3z1)/c1
+        std::cout << "\n\tIntercept 1: " << intercepts[0] << "\n";
+
+        intercepts[1] = (((c1*worstPoints[0][0]) + (c2*worstPoints[0][1]) + (c3*worstPoints[0][2]))/c2); //y intercept, (c1x1 + c2y1 + c3z1)/c2
+        std::cout << "\tIntercept 2: " << intercepts[1] << "\n";
+
+        intercepts[2] = (((c1*worstPoints[0][0]) + (c2*worstPoints[0][1]) + (c3*worstPoints[0][2]))/c3); //z intercept, (c1x1 + c2y1 + c3z1)/c3
+        std::cout << "\tIntercept 3: " << intercepts[2] << "\n\n";
     }
 
     //The normalization values have been found, go through the adults and calculate the objective costs
@@ -113,44 +173,36 @@ void calculateRelCost (const cudaConstants *cConstants, ReferencePoints & refPoi
 
         //Calculate the cost for each objective
         for (int j = 0; j < cConstants->missionObjectives.size(); j++){
-            // double objCost = 0;
+            //Establish numerator and denominator for the normalization calculation
+            //The numerator is the individual's objective value minus the best found objective value
+            double num = allAdults[i].getParameters(cConstants->missionObjectives[j]) - refPoints.objBest[j].getParameters(cConstants->missionObjectives[j]);
+            //The denominator is dependent on the configuration
+            double denom;
 
-            double num = allAdults[i].getParameters(cConstants->missionObjectives[j]) - refPoints.objBest[j];
-            double denom = refPoints.objWorst[j] - refPoints.objBest[j];
-
-            if (abs(denom) < 1e-14 && cConstants->missionObjectives[j].goal < 0) {
-                denom = 1e-14;
+            //If the normalization is based on objective intercepts (happens if there is three objectives), denominator is objective intercept - best found objective value
+            if (cConstants->missionObjectives.size() == 3){
+                denom = intercepts[j] - refPoints.objBest[j].getParameters(cConstants->missionObjectives[j]);
             }
-            else if (abs(denom) < 1e-14 && cConstants->missionObjectives[j].goal > 0) {
-                denom = -1e-14;
+            //If the normalization is not based on objective intercepts, the denominator is the worst objective value - the best objective value
+            else {
+                denom = refPoints.objWorst[j].getParameters(cConstants->missionObjectives[j]) - refPoints.objBest[j].getParameters(cConstants->missionObjectives[j]);
             }
 
+            //Make sure there are no divide by 0 errors
+            if (abs(denom) < cConstants->doublePrecThresh) {
+                //minimization vs maximization handling
+                if (cConstants->missionObjectives[j].goal < 0) {
+                    denom = cConstants->doublePrecThresh;
+                }
+                else {
+                    denom = -cConstants->doublePrecThresh;
+                }
+            }
+
+            //Calculate the actual normailized objective
             allAdults[i].normalizedObj[j] = num/denom;
-
-            // if (cConstants->missionObjectives[j].goal < 0) {
-            //    //Store this objective's progress with the calculation (adult's objective value / normalization)
-            //    objCost = (allAdults[i].getParameters(cConstants->missionObjectives[j])/normalizations[j]); 
-            // }
-            // else {
-            //     objCost = 1-(allAdults[i].getParameters(cConstants->missionObjectives[j])/cConstants->missionObjectives[j].convergenceThreshold);
-
-            //     if (objCost < 0) {
-            //         objCost = 0;
-            //     }
-            // }
-            
-
-            // //If the objective is a maximization, the progress is not a 0 to 1 scale, so we need the inverse
-            // if (cConstants->missionObjectives[j].goal > 0) {
-            //     objCost = 1/objCost;
-            // }
-
-            //Calculate the cost as 1 - objCost
-            // allAdults[i].normalizedObj[j] = objCost;
         }
     }
-
-    // std::cout << "\nTEST: Finished calculating normalization\n";
 
     return;
 }

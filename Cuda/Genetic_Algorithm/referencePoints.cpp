@@ -64,12 +64,126 @@ void ReferencePoints::addPoint(const std::vector<double> values, const cudaConst
     return;
 }
 
+//Calculates & returns the normal vector for a plane used to calculate the normalization for any number of objectives greater than or equal to two
+std::vector<double> calcNormVector (std::vector<std::vector<double>> matrix, bool initialMatrix) {
+
+    //vector that will either hold the normal vector, or just the determinant value
+    //  if initialMatrix is true, this will hold the normal vector
+    //  if initialMatrix is fale, this will hold the determinant value
+    std::vector<double> norm;
+
+    //If the matrix size of 2, the recursion ends
+    //  The determinant of the matrix can be directly calculated
+    //  Or the mission has two objectives, so finding the normalized vector is trivial
+    if (matrix.size() == 2) { 
+
+        //Mission has two objectives, add the components of the normal vector
+        if (initialMatrix) { 
+            norm.push_back(matrix[1][1]); 
+            norm.push_back(-matrix[1][0]);
+        } 
+        //the matrix is 2x2, but this is a recursive call, calculate the determinant
+        else { 
+            norm.push_back(((matrix[0][0] * matrix[1][1]) - (matrix[1][0] * matrix[0][1]))); 
+        } 
+
+        //Return the normal or the determinant
+        return norm; 
+    } 
+
+    //Need to make a recursive call to find the full normal
+    else { 
+
+        //For each value across the top row of the matrix 
+        for (int i = 0; i < matrix.size(); i++) { 
+
+            //Reset the determinant to be a size n-1 square matrix
+            std::vector<std::vector<double>> det (matrix[0].size()-1, std::vector<double>(matrix.size()-1, 0)); 
+
+            //Initialize column and row trackers for the determinant
+            int col = 0, row = 0; 
+
+            //Add the value at column j (not including the top row)... 
+            for (int j = 0; j < matrix.size(); j++) { 
+
+                //only add if the column is not the same one as the top row value 
+                if (j != i) { 
+
+                    //...and row k... 
+                    for (int k = 1; k < matrix.size(); k++) { 
+
+                        //...into the determinant matrix
+                        det[col][row] = matrix[k][j]; 
+
+                        //Add the next value to the next column
+                        col++; 
+
+                    }
+
+                    //add the new values to the next row
+                    row ++; 
+                    //Reset the column counter to start at the beginning of the row 
+                    col = 0; 
+
+                } 
+
+            } 
+
+            //Calculate the determinant 
+            std::vector <double> calcDet = calcNormVector(det, false); 
+
+             
+            //If this isn't the first time calling the function, norm will store the determinant, not the normalized vector
+            if (!initialMatrix) { 
+                //Make sure there is a space to add the determinant
+                norm.resize(calcDet.size()); 
+            }
+
+            //Determine whether to add the positive or negative value of the determinant 
+            if (i % 2 == 0) { 
+                //Add the determinant
+
+                //If this is the initial call, the whole vector needs to be stored instead of calculating a determinant, so push the calculated determinant to the back of the norm vector
+                if (initialMatrix) { 
+                    norm.push_back(calcDet[0]); 
+                } 
+
+                //Not the first call, calculate this part of the determinant
+                else { 
+                    norm[0] += (matrix[0][i]*calcDet[0]); 
+                } 
+            } 
+
+            else { 
+                //Subtract the determinant
+
+                //If this is the initial call, the whole vector needs to be stored instead of calculating a determinant, so push the calculated determinant to the back of the norm vector
+                if (initialMatrix) { 
+                   norm.push_back(-(calcDet[0]));  
+                } 
+
+                //Not the first call, calculate this part of the determinant
+                else { 
+                    norm[0] += -(matrix[0][i]*calcDet[0]); 
+                } 
+            } 
+        } 
+    } 
+
+    //Return the normal vector or the determinant
+    return norm;
+}
+
 //Calculates the objective-by-objective relative cost for the adults passed into the function
 void calculateRelCost (const cudaConstants *cConstants, ReferencePoints & refPoints, std::vector<Adult> & allAdults) {
 
     //See if the adult vectors need to be filled in
     //  If the size of the best/worst value vectors is 0, it means this is the first generation and they need to be set to an arbitrary adult
     // if (refPoints.objBest.size() == 0) {
+        //Make sure the vectors are cleared
+        refPoints.objWorst.clear();
+        refPoints.objBest.clear();
+
         //Push back a random adult for each objective
         for (int i = 0; i < cConstants->missionObjectives.size(); i++) {
             refPoints.objWorst.push_back(allAdults[0]);
@@ -109,63 +223,118 @@ void calculateRelCost (const cudaConstants *cConstants, ReferencePoints & refPoi
 
 
     //Holds the points for the objective intercepts
-    std::vector<double> intercepts (3, 1);
+    std::vector<double> intercepts;
 
     //Find intercepts if there are three objectives
-    if (cConstants->missionObjectives.size() == 3){
-        std::cout << "\nUsing plane intercepts:\n";
+    if (cConstants->missionObjectives.size() >= 2){
+        // std::cout << "\nUsing plane intercepts:\n";
 
-        //First dimension is the individual (1,2,3)
-        //Second dimension is the coordinate (x,y,z)
-        std::vector<std::vector<double>> worstPoints;
+        // //First dimension is the individual (1,2,3)
+        // //Second dimension is the coordinate (x,y,z)
+        // std::vector<std::vector<double>> worstPoints;
 
+        // for (int i = 0; i < cConstants->missionObjectives.size(); i++) {
+
+        //     //Push back a new set of worst points for this objective
+        //     worstPoints.push_back(std::vector<double>(0,0));
+
+        //     //For the objective's worst individual, store its objective-specific values
+        //     for (int j = 0; j < cConstants->missionObjectives.size(); j++){
+        //         if (cConstants->missionObjectives[j].goal < 0) {
+        //             worstPoints[i].push_back(refPoints.objWorst[i].getParameters(cConstants->missionObjectives[j]));
+        //         } 
+        //         else {
+        //             worstPoints[i].push_back(-refPoints.objWorst[i].getParameters(cConstants->missionObjectives[j]));
+        //         }
+
+        //     std::cout << "\tPoint " << i << " " << j << ": " << worstPoints[i][j] << "\n";
+        //     }
+        // }
+
+        // // Coefficients for the unit vector for each objective
+        // double c1 = (((worstPoints[1][1]-worstPoints[0][1]) * (worstPoints[2][2]-worstPoints[0][2])) - ((worstPoints[2][1]-worstPoints[0][1]) * (worstPoints[1][2]-worstPoints[0][2]))); //scalar in i direction (y2-y1)(z3-z1) - (y3-y1)(z2-z1)
+        // double c2 = (((worstPoints[2][0]-worstPoints[0][0]) * (worstPoints[1][2]-worstPoints[0][2])) - ((worstPoints[1][0]-worstPoints[0][0]) * (worstPoints[2][2]-worstPoints[0][2]))); //scalar in j direction (x3-x1)(z2-z1) - (x2-x1)(z3-z1)
+        // double c3 = (((worstPoints[1][0]-worstPoints[0][0]) * (worstPoints[2][1]-worstPoints[0][1])) - ((worstPoints[2][0]-worstPoints[0][0]) * (worstPoints[1][1]-worstPoints[0][1]))); //scalar in k direction (x2-x1)(y3-y1) - (x3-x1)(y2-y1)
+
+        // //Check to make sure that the scalars are not zero
+        // // if (abs(c1) < cConstants->doublePrecThresh) {
+        // //     c1 = cConstants->doublePrecThresh;
+        // // }
+        // // if (abs(c2) < cConstants->doublePrecThresh) {
+        // //     c2 = cConstants->doublePrecThresh;
+        // // }
+        // // if (abs(c3) < cConstants->doublePrecThresh) {
+        // //     c3 = cConstants->doublePrecThresh;
+        // // }
+
+        // std::cout << "\n\tScalar 1: " << c1 << "\n";
+        // std::cout << "\tScalar 2: " << c2 << "\n";
+        // std::cout << "\tScalar 3: " << c3 << "\n";
+
+        // //Calculate the objective intercepts
+        // intercepts[0] = (((c1*worstPoints[0][0]) + (c2*worstPoints[0][1]) + (c3*worstPoints[0][2]))/c1); //x intercept, (c1x1 + c2y1 + c3z1)/c1
+        // std::cout << "\n\tIntercept 1: " << intercepts[0] << "\n";
+
+        // intercepts[1] = (((c1*worstPoints[0][0]) + (c2*worstPoints[0][1]) + (c3*worstPoints[0][2]))/c2); //y intercept, (c1x1 + c2y1 + c3z1)/c2
+        // std::cout << "\tIntercept 2: " << intercepts[1] << "\n";
+
+        // intercepts[2] = (((c1*worstPoints[0][0]) + (c2*worstPoints[0][1]) + (c3*worstPoints[0][2]))/c3); //z intercept, (c1x1 + c2y1 + c3z1)/c3
+        // std::cout << "\tIntercept 3: " << intercepts[2] << "\n\n";
+
+
+
+
+        //Get the on-plane vectors
+        //Create a matrix of n, n-sized vectors between the worst points
+        std::vector<std::vector<double>> matrix;
+
+        std::cout << "\n\nTEST - created matrix:";
+
+        //Calculate the on-plane vectors
         for (int i = 0; i < cConstants->missionObjectives.size(); i++) {
+            //Add a new empty vector to the matrix
+            matrix.push_back(std::vector<double>(0,0));
 
-            //Push back a new set of worst points for this objective
-            worstPoints.push_back(std::vector<double>(0,0));
+            std::cout << "\n";
 
-            //For the objective's worst individual, store its objective-specific values
-            for (int j = 0; j < cConstants->missionObjectives.size(); j++){
-                if (cConstants->missionObjectives[j].goal < 0) {
-                    worstPoints[i].push_back(refPoints.objWorst[i].getParameters(cConstants->missionObjectives[j]));
-                } 
-                else {
-                    worstPoints[i].push_back(-refPoints.objWorst[i].getParameters(cConstants->missionObjectives[j]));
-                }
+            for (int j = 0; j < cConstants->missionObjectives.size(); j++) {
+                //The vectors are all relative to the first objective's worst adult's points
+                //  so each component will be j adult's point minus the 0th adult's point
+                //  the top row of the matrix will be all zeroes, but it won't matter for the calculation of the normal vector
+                matrix[i].push_back(refPoints.objWorst[i].getParameters(cConstants->missionObjectives[j]) - refPoints.objWorst[0].getParameters(cConstants->missionObjectives[j]));
 
-            std::cout << "\tPoint " << i << " " << j << ": " << worstPoints[i][j] << "\n";
+                std::cout << "  " << matrix[i][j];
             }
         }
 
-        // Coefficients for the unit vector for each objective
-        double c1 = (((worstPoints[1][1]-worstPoints[0][1]) * (worstPoints[2][2]-worstPoints[0][2])) - ((worstPoints[2][1]-worstPoints[0][1]) * (worstPoints[1][2]-worstPoints[0][2]))); //scalar in i direction (y2-y1)(z3-z1) - (y3-y1)(z2-z1)
-        double c2 = (((worstPoints[2][0]-worstPoints[0][0]) * (worstPoints[1][2]-worstPoints[0][2])) - ((worstPoints[1][0]-worstPoints[0][0]) * (worstPoints[2][2]-worstPoints[0][2]))); //scalar in j direction (x3-x1)(z2-z1) - (x2-x1)(z3-z1)
-        double c3 = (((worstPoints[1][0]-worstPoints[0][0]) * (worstPoints[2][1]-worstPoints[0][1])) - ((worstPoints[2][0]-worstPoints[0][0]) * (worstPoints[1][1]-worstPoints[0][1]))); //scalar in k direction (x2-x1)(y3-y1) - (x3-x1)(y2-y1)
+        //The matrix is created, calculate the plane's normal vector
+        std::vector<double> normal = calcNormVector(matrix, true); 
 
-        //Check to make sure that the scalars are not zero
-        // if (abs(c1) < cConstants->doublePrecThresh) {
-        //     c1 = cConstants->doublePrecThresh;
-        // }
-        // if (abs(c2) < cConstants->doublePrecThresh) {
-        //     c2 = cConstants->doublePrecThresh;
-        // }
-        // if (abs(c3) < cConstants->doublePrecThresh) {
-        //     c3 = cConstants->doublePrecThresh;
-        // }
+        std::cout << "\n\nNormal vector: ";
 
-        std::cout << "\n\tScalar 1: " << c1 << "\n";
-        std::cout << "\tScalar 2: " << c2 << "\n";
-        std::cout << "\tScalar 3: " << c3 << "\n";
+        //Calculate the intercepts
+        // The formula for intercept x (where the 0th adult is a, the normal objective is n, and the objectives are 1,2,3...) is (a1n1 + a2n2 + ...)/nx
 
-        //Calculate the objective intercepts
-        intercepts[0] = (((c1*worstPoints[0][0]) + (c2*worstPoints[0][1]) + (c3*worstPoints[0][2]))/c1); //x intercept, (c1x1 + c2y1 + c3z1)/c1
-        std::cout << "\n\tIntercept 1: " << intercepts[0] << "\n";
+        //Value to store the numerator for the intercepts
+        double num = 0;
 
-        intercepts[1] = (((c1*worstPoints[0][0]) + (c2*worstPoints[0][1]) + (c3*worstPoints[0][2]))/c2); //y intercept, (c1x1 + c2y1 + c3z1)/c2
-        std::cout << "\tIntercept 2: " << intercepts[1] << "\n";
+        //The numerator is consistent, use a for loop to calculate it
+        for (int i = 0; i < cConstants->missionObjectives.size(); i++) {
+            std::cout << "\n  " << normal[i];
 
-        intercepts[2] = (((c1*worstPoints[0][0]) + (c2*worstPoints[0][1]) + (c3*worstPoints[0][2]))/c3); //z intercept, (c1x1 + c2y1 + c3z1)/c3
-        std::cout << "\tIntercept 3: " << intercepts[2] << "\n\n";
+            num += (refPoints.objWorst[0].getParameters(cConstants->missionObjectives[i]) * normal[i]);
+        }
+
+        std::cout << "\n\nIntercepts: ";
+
+        //Calculate the intercepts
+        for (int i = 0; i < cConstants->missionObjectives.size(); i++) {
+            intercepts.push_back(num / normal[i]);
+
+            std::cout << "\n  " << intercepts[i];
+        }
+
+        std::cout << "\n\n";
     }
 
     //The normalization values have been found, go through the adults and calculate the objective costs
@@ -179,8 +348,8 @@ void calculateRelCost (const cudaConstants *cConstants, ReferencePoints & refPoi
             //The denominator is dependent on the configuration
             double denom;
 
-            //If the normalization is based on objective intercepts (happens if there is three objectives), denominator is objective intercept - best found objective value
-            if (cConstants->missionObjectives.size() == 3){
+            //If the normalization is based on objective intercepts (happens if there are two or more objectives), denominator is objective intercept - best found objective value
+            if (cConstants->missionObjectives.size() >= 3){
                 denom = intercepts[j] - refPoints.objBest[j].getParameters(cConstants->missionObjectives[j]);
             }
             //If the normalization is not based on objective intercepts, the denominator is the worst objective value - the best objective value

@@ -35,6 +35,9 @@ class ReferencePoints {
     void addPoint(const std::vector<double> values, const cudaConstants* cConstants);
 };
 
+//Calculates & returns the normal vector for a plane used to calculate the normalization for any number of objectives greater than or equal to two
+std::vector<double> calcNormVector (std::vector<std::vector<double>> matrix, bool initialMatrix);
+
 //Calculates the objective-by-objective relative cost for the adults passed into the function
 void calculateRelCost (const cudaConstants *cConstants, ReferencePoints & refPoints, std::vector<Adult> & allAdults);
 

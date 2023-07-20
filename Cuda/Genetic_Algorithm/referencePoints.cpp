@@ -207,8 +207,11 @@ void calculateRelCost (const cudaConstants *cConstants, ReferencePoints & refPoi
 
                 // std::cout << "\nTEST: Found new worst value " << allAdults[j].getParameters(cConstants->missionObjectives[i]) << " of obj " << i << " at adult " << j << ".\n";
 
-                //Found a new worse value, store the adult
-                refPoints.objWorst[i] = allAdults[j];
+                //Make sure this is not the same adult as the reference for finding the intercepts
+                if (i != 0 && !duplicateCheck(allAdults[j], refPoints.objWorst[0], cConstants)) {
+                    //Found a new worse value, store the adult
+                    refPoints.objWorst[i] = allAdults[j];
+                }
             }
             //Check if the adult has the new best value for this objective
             else if (allAdults[j].getParameters(cConstants->missionObjectives[i]) < refPoints.objBest[i].getParameters(cConstants->missionObjectives[i])) {

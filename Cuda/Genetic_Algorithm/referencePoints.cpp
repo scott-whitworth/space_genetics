@@ -208,7 +208,7 @@ void calculateRelCost (const cudaConstants *cConstants, ReferencePoints & refPoi
                 // std::cout << "\nTEST: Found new worst value " << allAdults[j].getParameters(cConstants->missionObjectives[i]) << " of obj " << i << " at adult " << j << ".\n";
 
                 //Make sure this is not the same adult as the reference for finding the intercepts
-                if (i != 0 && !duplicateCheck(allAdults[j], refPoints.objWorst[0], cConstants)) {
+                if (!duplicateCheck(allAdults[j], refPoints.objWorst[0], cConstants)) {
                     //Found a new worse value, store the adult
                     refPoints.objWorst[i] = allAdults[j];
                 }
@@ -291,14 +291,14 @@ void calculateRelCost (const cudaConstants *cConstants, ReferencePoints & refPoi
         //Create a matrix of n, n-sized vectors between the worst points
         std::vector<std::vector<double>> matrix;
 
-        std::cout << "\n\nTEST - created matrix:";
+        //std::cout << "\n\nTEST - created matrix:";
 
         //Calculate the on-plane vectors
         for (int i = 0; i < cConstants->missionObjectives.size(); i++) {
             //Add a new empty vector to the matrix
             matrix.push_back(std::vector<double>(0,0));
 
-            std::cout << "\n";
+            //std::cout << "\n";
 
             for (int j = 0; j < cConstants->missionObjectives.size(); j++) {
                 //The vectors are all relative to the first objective's worst adult's points
@@ -306,14 +306,14 @@ void calculateRelCost (const cudaConstants *cConstants, ReferencePoints & refPoi
                 //  the top row of the matrix will be all zeroes, but it won't matter for the calculation of the normal vector
                 matrix[i].push_back(refPoints.objWorst[i].getParameters(cConstants->missionObjectives[j]) - refPoints.objWorst[0].getParameters(cConstants->missionObjectives[j]));
 
-                std::cout << "  " << matrix[i][j];
+                //std::cout << "  " << matrix[i][j];
             }
         }
 
         //The matrix is created, calculate the plane's normal vector
         std::vector<double> normal = calcNormVector(matrix, true); 
 
-        std::cout << "\n\nNormal vector: ";
+        //std::cout << "\n\nNormal vector: ";
 
         //Calculate the intercepts
         // The formula for intercept x (where the 0th adult is a, the normal objective is n, and the objectives are 1,2,3...) is (a1n1 + a2n2 + ...)/nx
@@ -323,21 +323,21 @@ void calculateRelCost (const cudaConstants *cConstants, ReferencePoints & refPoi
 
         //The numerator is consistent, use a for loop to calculate it
         for (int i = 0; i < cConstants->missionObjectives.size(); i++) {
-            std::cout << "\n  " << normal[i];
+            //std::cout << "\n  " << normal[i];
 
             num += (refPoints.objWorst[0].getParameters(cConstants->missionObjectives[i]) * normal[i]);
         }
 
-        std::cout << "\n\nIntercepts: ";
+        //std::cout << "\n\nIntercepts: ";
 
         //Calculate the intercepts
         for (int i = 0; i < cConstants->missionObjectives.size(); i++) {
             intercepts.push_back(num / normal[i]);
 
-            std::cout << "\n  " << intercepts[i];
+            //std::cout << "\n  " << intercepts[i];
         }
 
-        std::cout << "\n\n";
+        //std::cout << "\n\n";
     }
 
     //The normalization values have been found, go through the adults and calculate the objective costs

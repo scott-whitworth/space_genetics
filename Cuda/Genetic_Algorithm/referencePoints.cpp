@@ -252,8 +252,11 @@ void calculateRelCost (const cudaConstants *cConstants, ReferencePoints & refPoi
                 // std::cout << "\nTEST: Found new worst value " << allAdults[j].getParameters(cConstants->missionObjectives[i]) << " of obj " << i << " at adult " << j << ".\n";
 
                 //Make sure this is not the same adult as the reference for finding the intercepts
+<<<<<<< HEAD
                 // if ((i == 0) || !duplicateCheck(allAdults[j], refPoints.objWorst[0], cConstants)) {
                 // if ((i != 0) && (!duplicateCheck(allAdults[j], refPoints.objWorst[0], cConstants))) {
+=======
+>>>>>>> 3176b18e882440202d9ebbfb2655b943c6f99e61
                 if (!duplicateCheck(allAdults[j], refPoints.objWorst[0], cConstants)) {
                     //Found a new worse value, store the adult
                     refPoints.objWorst[i] = allAdults[j];
@@ -386,6 +389,7 @@ void calculateRelCost (const cudaConstants *cConstants, ReferencePoints & refPoi
         for (int i = 0; i < cConstants->missionObjectives.size(); i++) {
             intercepts.push_back(num / normal[i]);
 
+<<<<<<< HEAD
             if(intercepts[i] < refPoints.objWorst[i].getParameters(cConstants->missionObjectives[i])){
                 intercepts[i]=refPoints.objWorst[i].getParameters(cConstants->missionObjectives[i]);
             }
@@ -393,6 +397,9 @@ void calculateRelCost (const cudaConstants *cConstants, ReferencePoints & refPoi
             // if(intercepts[i]<0){
             //     std::cout << "\n  num=" << num<<"\t normal="<<normal[i]<<"\n";
             // }
+=======
+            //std::cout << "\n  " << intercepts[i];
+>>>>>>> 3176b18e882440202d9ebbfb2655b943c6f99e61
         }
 
         //std::cout << "\n\n";

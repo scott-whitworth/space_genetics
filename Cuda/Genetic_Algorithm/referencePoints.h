@@ -3,6 +3,7 @@
 
 #include "../Config_Constants/constants.h"
 #include "adult.h"
+#include "../Genetic_Algorithm/sort.h"
 
 
 ///////////////////////////////////////////////////////////////

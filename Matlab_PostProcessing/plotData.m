@@ -349,7 +349,7 @@ function [] = plotData(cR,y0T,y0M,y0E,sizeC,tripTime,coast,coast_threshold,gamma
     [y0Tx, y0Ty, y0Tz] = pol2cart(y0T(2), y0T(1), y0T(3));
 
     velDiff = au*sqrt((y0T(4) - cR(4,end))^2 + (y0T(5) - cR(5,end))^2 + (y0T(6) - cR(6,end))^2);
-    txt = join(['\t tripTime=',num2str(tripTime/(3600*24),'%5.2f\n'),' days\n\t |V|_{imp}=',num2str(velDiff,'%5.1f'),' m/s\n\t Vx=',num2str(au*velX(end),'%5.1f'),' m/s\n\t Vy=',num2str(au*velY(end),'%5.1f'),' m/s\n\t Vz=',num2str(au*velZ(end),'%5.1f'),' m/s']);
+    txt = join(['\t tripTime=',num2str(tripTime/(3600*24),'%5.2f\n'),' days\n\t |V|_{fin, rel}=',num2str(velDiff,'%5.1f'),' m/s\n\t Vx=',num2str(au*velX(end),'%5.1f'),' m/s\n\t Vy=',num2str(au*velY(end),'%5.1f'),' m/s\n\t Vz=',num2str(au*velZ(end),'%5.1f'),' m/s']);
     txt = compose(txt);
     %text(y0Tx, y0Ty, y0Tz, txt)
     dim = [.2 .5 .3 .3];

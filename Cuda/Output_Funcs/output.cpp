@@ -19,7 +19,7 @@ output::output(const cudaConstants* cConstants, const std::string& selectFolder)
   initializeGenPerformance(cConstants);
 
   //Start the simple genPreformance file
-  initializeSimpleGenPerformance(cConstants);
+  //initializeSimpleGenPerformance(cConstants);
 }
 
 //Call the functions which print during a run
@@ -39,7 +39,7 @@ void output::printGeneration(const cudaConstants * cConstants, const std::vector
       //Push info to the function which prints the full genPerformance file
       recordGenerationPerformance(cConstants, allAdults, objectiveAvgValues, generation, new_anneal, errorNum, duplicateNum, minSteps, avgSteps, maxSteps, minDist, avgDist, maxDist, avgAge, oldestAge, avgBirthday, oldestBirthday, avgGenTime);
       //Push info to the function which prints the simplified genPerformance file
-      recordGenSimple(cConstants, allAdults, objectiveAvgValues, generation);
+      //recordGenSimple(cConstants, allAdults, objectiveAvgValues, generation);
     }
 
     //Check which sees if the full adult list should be printed

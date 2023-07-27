@@ -48,7 +48,8 @@ void changeAnneal (const std::vector<Adult>& oldAdults, const cudaConstants* cCo
     //  So, if the simulation is stuck, this will hopefully change things enough to move the simulation along
     //  Sin function modifies the current anneal ranging from +/- 70% of the current anneal, with the the percentage being based on the generation
     //  This function has no mathematical significance other than it yeilds the best convergence rate
-    currentAnneal += currentAnneal * .7 * sin(generation * (M_PI/25));
+    // currentAnneal += currentAnneal * .7 * sin(generation * (M_PI/25));
+    currentAnneal += currentAnneal * .05 * sin(generation * (M_PI/25));
      
     //Check to make sure that the current anneal does not fall below the designated minimum amount
     if (currentAnneal < cConstants->anneal_final)

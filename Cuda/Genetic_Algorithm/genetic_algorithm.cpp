@@ -294,7 +294,7 @@ void firstGeneration(Child* initialChildren, std::vector<Adult>& oldAdults, cons
     calculateRelCost(cConstants, refPoints, oldAdults);
 
     //Find the closest reference points for the initial group of adults
-    findAssociatedPoints(cConstants, refPoints, oldAdults);
+    findAssociatedPoints(refPoints, oldAdults);
 }
 
 //fills oldAdults with the best adults from this generation and the previous generation so that the best parents can be selected
@@ -329,10 +329,10 @@ void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& 
     calculateRelCost(cConstants, refPoints, allAdults);
     
     //Find the closest reference points to each adult based on the new relative cost
-    findAssociatedPoints(cConstants, refPoints, allAdults);
+    findAssociatedPoints(refPoints, allAdults);
     
     //Calculate the rarity of all of the adults
-    calculateRarity(cConstants, refPoints, allAdults);
+    calculateRarity(refPoints, allAdults);
 
     //Calculate rank of each adult based on domination sort
     //* Ignore any nans at the end of allAdults

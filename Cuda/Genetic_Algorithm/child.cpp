@@ -9,8 +9,6 @@ Child::Child() {
     //posDiff = 1.0;
     //speedDiff = 0.0; //This is ok for impact, but an issue for soft landing
 
-    funcStatus = DEFAULT_CHILD;//not ready to be an adult
-
     errorStatus = NOT_RUN; //not run through callRk
 
     simStatus = INITIAL_SIM; //has not been simulated
@@ -35,7 +33,6 @@ Child::Child(rkParameters<double> & childParameters, const cudaConstants* cConst
         earth.vtheta+cos(startParams.zeta)*cos(startParams.beta)*cConstants->v_escape,
         earth.vz+sin(startParams.zeta)*cConstants->v_escape);
 
-    funcStatus = FUNCTIONAL_CHILD;//ready to be an adult
     errorStatus = NOT_RUN; //not run through callRK yet
     simStatus = INITIAL_SIM; //Has not been simulated yet
 
@@ -64,7 +61,6 @@ Child:: Child(const Child& other){
     fuelSpent = other.fuelSpent;
     orbitPosDiff = other.orbitPosDiff;
     orbitSpeedDiff = other.orbitSpeedDiff; 
-    funcStatus = other.funcStatus;
     errorStatus = other.errorStatus;
     simStatus = other.simStatus;
     birthday = other.birthday;

@@ -346,7 +346,6 @@ The Child class are the individuals generated through crossover that are put thr
   - avgParentProgress: The average of the individual's two parents' progress values
   - birthday: Keeps track of the generation this individual was created in 
   - stepCount: Counts steps in callRK, needed for orbital missions to keep track of steps
-  - funcStatus: Not currently in use, but was made to keep track of where in the individual was in the process of being created, given its posDiff and speedDiff, and being made into an Adult that could be sorted
   - errorStatus: Record of if child is computed correctly, should be set in callRK. If a Child has a NAN in any of its elements or if it gets too close to the Sun or Mars, it will be given an error status to prevent it from passing on its undesirable genes
 
 ### Constructors

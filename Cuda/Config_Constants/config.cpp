@@ -5,11 +5,15 @@
 #include <time.h> // for time(0)
 #include <math.h> // for sqrt() in constructor to derive v_escape from c3energy
 //#include <cctype> // for tolower(), needed for Tesla machine only
-#include "constants.h" // for AU
+//#include "constants.h" // for AU
 
 // Default constructor which assumes that genetic.config and mission.config are the files being pulled from
 // Asteroid file is determined within configFile
 cudaConstants::cudaConstants() {
+    //Set initial algorithm state to unspecified
+    //  If the user specifies an algorithm, it will be set from the genetic.config file read
+    algorithm = UNSPECIFIED;
+
     // Get values from the genetic config file
     FileRead("../Config_Constants/genetic.config");
     // Get values from the mission config file
@@ -17,6 +21,21 @@ cudaConstants::cudaConstants() {
 
     //get the destination
     FileRead("../Config_Constants/" + this->destination);
+
+    //Check if there was no algorithm specified
+    if (algorithm == UNSPECIFIED) {
+        //Set the algorithm based on the number of objectives
+        if (missionObjectives.size() > 2) {
+            //Rank rarity is best for missions with many objectives
+            std::cout << "\nAutomatically setting algorithm to rank-rarity.\n";
+            algorithm = RANK_RARITY;
+        }
+        else {
+            //Rank rarity is best for missions with few objectives
+            std::cout << "\nAutomatically setting algorithm to rank-distance.\n";
+            algorithm = RANK_DISTANCE;
+        }
+    }
 
     //If time mutation scale is not set, set it to the difference between triptime max and min
     if (this->triptime_mutate_scale < this->doublePrecThresh) {
@@ -83,10 +102,15 @@ void cudaConstants::FileRead(std::string fileName) {
                     // Assign variableValue to the appropriate variable based on variableName, with conversion to the right data type
                     // cudaConstant properties that are not expected in config are wet_mass, v_escape (those are to be derived in the constructor after this function is complete)
 
+                    //Convert the variable value to lower case for easier processing
+                    for (int i = 0; i < variableValue.size(); i++) {
+                        variableValue[i] = std::tolower(variableValue[i]); 
+                    }
+
 
 //////////////////////////////////////////////////////////////////// -- INITIALIZING & RANDOM -- /////////////////////////////////////////////////////////////////////////
                     if (variableName == "time_seed") { // If the conifguration sets time_seed to NONE then time_seed is set to time(0) 
-                        if (variableValue != "NONE") {
+                        if (variableValue != "none") {
                             // If variableValue is not NONE, assumption is that it is a valid double value that can be converted and used
                             this->time_seed = std::stod(variableValue);
                         }
@@ -181,6 +205,20 @@ void cudaConstants::FileRead(std::string fileName) {
 
 
 ////////////////////////////////////////////////////////////////////// -- GENETIC ALGORITHM -- ///////////////////////////////////////////////////////////////////////////
+                    else if (variableName == "algorithm_type") {
+                        //Assign the algorithm type based on the user input
+                        if (variableValue == "rank-rarity") {
+                            this->algorithm = RANK_RARITY;
+                            std::cout << "\nRank-Rarity algorithm specified\n";
+                        }
+                        else if (variableValue == "rank-distance") {
+                            this->algorithm = RANK_DISTANCE;
+                            std::cout << "\nRank-Distance algorithm specified\n";
+                        }
+                        else {
+                            std::cout << "\nAlgorithm selection unidentified\n";
+                        }
+                    }
                     else if (variableName == "alpha_random_start_range") {
                         this->alpha_random_start_range = std::stod(variableValue);
                     }

@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "objective.h" // for storing objectives
+#include "constants.h" // for the algorithm enum
 
 // Structure that holds constant values related/used for the genetic algorithm that can be configured within a file 
 // (as of August 5th 2020, that file address is hardcoded in main to be "../Config_Constants/genetic.config")
@@ -17,6 +18,9 @@ struct cudaConstants {
     int run_count;       // How many runs of the optimization algorithm to perform using incremental seeds to not just repeat the same value (the actual change in the seed occurs in main)
     int carryover_individuals; //How many individuals from the previous run to use as basis for starting parameters for this run
     bool record_mode;    // If set to true, functions that record information onto files such as genPerformance.csv.  The code still records a valid solution regardless of this setting
+
+    //Determines the genetic algorithm used
+    GENETIC_ALGORITHM algorithm;
 
     int divisions;       // The number of divisions for each objective when calculating reference points
 

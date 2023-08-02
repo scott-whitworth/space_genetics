@@ -52,25 +52,13 @@
 #define MISSION_OBJECTIVE_OFFSET 1 //Where in the array that the objective is stored
 #define MISSION_GOAL_OFFSET 2      //Where in the array the target value is stored
 
-//Enumerations for storing mission objectives within cConstants
-//First enumeration is for identifying parameters
-//  Will be used to grab the correct parameter from individuals
-//TODO: as of August 2022, this is never used, recommend deleting this
-enum MISSION_PARAMETERS {
-    POS_DIFF = 0,       //The posDiff of an individual
-    SPEED_DIFF = 1,     //The speedDiff of an individual
-    FUEL_BURNED = 2,    //The amount of fuel burned by an individual
-    TRIP_TIME = 3,      //The time an individual takes to complete its mission
-};
-
-//This is used in both Child and Adult
-//enumeration to make error status easier to keep track of, as opposed to using hard-coded numbers 
-//could be removed in the future, included for now to check if the default constructor is being used
-//TODO: as of August 2022, this is currently not used outside of constructors, recommend deleting this
-enum STATUS {
-    DEFAULT_CHILD = 0, //child that is created through the default constructor, not ready to be made an adult
-    FUNCTIONAL_CHILD = 1, //child that is created in main constructor and given startParams
-    FUNCTIONAL_ADULT = 2, //once the child has gone through callRK and become an adult, we can change its status to FUNCTIONAL_ADULT
+//Enumeration used to determine genetic algorithm method
+//  Rank-distance is better for missions with <= 2 objectives and rank-rarity is better for all other missions
+//  This enumeration will determine which genetic algorithm functions arr called
+enum GENETIC_ALGORITHM {
+    UNSPECIFIED = 0,
+    RANK_DISTANCE = 1,
+    RANK_RARITY = 2,
 };
 
 //status values used for child and adult that tell us if it is a nan and what kind of nan error it is

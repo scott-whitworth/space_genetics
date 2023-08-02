@@ -51,8 +51,9 @@ void fillParents(std::vector<Adult> & oldAdults, std::vector<Adult> & parents, c
         }   
     }else{
 
-        //sort all the oldAdults by rankRarity, so the best will be chosen as survivors/parents
-        std::sort(oldAdults.begin(), oldAdults.end(), rankRaritySort);
+        //sort all the oldAdults from best to worst, so the best will be chosen as survivors/parents
+        // std::sort(oldAdults.begin(), oldAdults.end(), rankRaritySort);
+        mainSort(oldAdults, cConstants, oldAdults.size());
         
         //Iterate through the best of oldAdults and sort the individuals into parents
         for (int i = 0; i < cConstants->survivor_count; i++)
@@ -283,18 +284,21 @@ void firstGeneration(Child* initialChildren, std::vector<Adult>& oldAdults, cons
     // Each child represents an individual set of starting parameters
     // GPU based runge kutta process determines final position and velocity based on parameters
     //Will fill in the final variables (final position & speed, posDiff, speedDiff) for each child
-    callRK(calcPerS, initialChildren, cConstants, gpuValues, timeIntial); 
-
+    callRK(calcPerS, initialChildren, cConstants, gpuValues, timeIntial);
+    
     //Now that the children have been simulated, convert the children into adults
     //This will calc the objective outputs for each child
     //It will also put the converted children into the newAdults vector
     convertToAdults(oldAdults, initialChildren, cConstants); 
 
-    //Calculate the relative cost for the initial group of adults
-    calculateRelCost(cConstants, refPoints, oldAdults);
+    //Only find associated points if the rank-rarity algorithm is used
+    if (cConstants->algorithm == RANK_RARITY) {
+        //Calculate the relative cost for the initial group of adults
+        calculateRelCost(cConstants, refPoints, oldAdults);
 
-    //Find the closest reference points for the initial group of adults
-    findAssociatedPoints(refPoints, oldAdults);
+        //Find the closest reference points for the initial group of adults
+        findAssociatedPoints(refPoints, oldAdults);
+    }  
 }
 
 //fills oldAdults with the best adults from this generation and the previous generation so that the best parents can be selected
@@ -325,24 +329,34 @@ void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& 
         std::cout << "ERROR: The size of allAdults is smaller than survivor count!" << std::endl;
     }
 
-    //Calculate the relative cost for the combined adult pool
-    calculateRelCost(cConstants, refPoints, allAdults);
-    
-    //Find the closest reference points to each adult based on the new relative cost
-    findAssociatedPoints(refPoints, allAdults);
-    
-    //Calculate the rarity of all of the adults
-    calculateRarity(refPoints, allAdults);
-
     //Calculate rank of each adult based on domination sort
     //* Ignore any nans at the end of allAdults
     //must be called after checking for nans and before giveDistance
     //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE GIVE RANK-_-_-_-_-_-_-_-_-_\n\n";
     giveRank(allAdults, cConstants); //gives a rank to each adult
-    //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE GIVE DISTANCE-_-_-_-_-_-_-_-_-_\n\n";
-    //giveDistance(allAdults, cConstants); //gives a distance to each adult
-    //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE GIVE SORT-_-_-_-_-_-_-_-_-_\n\n";
-    std::sort(allAdults.begin(), allAdults.end(), rankRaritySort); //sorts allAdults using rankRarity sort
+
+    //Check to see which algorithm to use
+    if (cConstants->algorithm == RANK_RARITY) {
+        //The user wants to use the rank-rarity method, call the necessary functions for it
+
+        //Calculate the relative cost for the combined adult pool
+        calculateRelCost(cConstants, refPoints, allAdults);
+    
+        //Find the closest reference points to each adult based on the new relative cost
+        findAssociatedPoints(refPoints, allAdults);
+    
+        //Calculate the rarity of all of the adults
+        calculateRarity(refPoints, allAdults);
+    }
+    else {
+        //The user wants the rank-distance method or the algorithm is unspecified (use rank-distance by default)
+
+        //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE GIVE DISTANCE-_-_-_-_-_-_-_-_-_\n\n";
+        giveDistance(allAdults, cConstants); //gives a distance to each adult
+    }
+
+    // std::sort(allAdults.begin(), allAdults.end(), rankRaritySort); //sorts allAdults using rankRarity sort
+    mainSort(allAdults, cConstants, allAdults.size());
 
     oldAdults.clear(); //empties oldAdults so new values can be put in it
     int counter = 0; //a variable that ensures we put the correct number of adults in oldAdults

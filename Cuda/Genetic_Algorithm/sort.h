@@ -35,6 +35,9 @@ void giveRank(std::vector<Adult> & allAdults, const cudaConstants* cConstants);
 void giveDistance(std::vector<Adult> & allAdults, const cudaConstants* cConstants);
 
 //----------------------------------------------------------------------------------------------------------------------------
+//Assist function to determine the sort based on the selected algorithm
+void mainSort(std::vector<Adult> & adults, const cudaConstants* cConstants, const int & sortSize);
+
 // Assist function for objectives that sorts an adult vector based on the goal 
 //  This will specifically look at the objective's goal and choose a non-rank/rankDistance sort based on it 
 //  designed to be used by giveDistance

@@ -172,7 +172,7 @@ void printBestAdults(const cudaConstants* cConstants, std::vector<Adult> adults,
 // input:  Individual to be displayed (assumed to be the best individual of the pool) 
 //         objectives - the program's current list of objectives
 // output: display each objective's parameters for the passed in individual
-void terminalDisplay(const Adult& individual, const std::vector<objective> objectives);
+void terminalDisplay(const Adult& individual, const std::vector<objective> objectives, const cudaConstants* cConstants);
 
 #include "output.cpp"
 

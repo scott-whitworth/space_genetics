@@ -209,6 +209,28 @@ void giveDistance(std::vector<Adult> & allAdults, const cudaConstants* cConstant
     }
 }
 
+//Assist function to determine the sort based on the selected algorithm
+void mainSort(std::vector<Adult> & adults, const cudaConstants* cConstants, const int & sortSize) {
+    //Switch statement determines the sort type based on the specified algorithm
+    switch (static_cast<int>(cConstants->algorithm)) {
+        //User wants a rank-rarity sort
+        case RANK_RARITY:
+            //sort by rank-rarity
+            std::sort(adults.begin(), adults.begin()+sortSize, rankRaritySort);
+            break;
+        
+        //Checking for unspecified as it will default to rank-distance
+        case UNSPECIFIED:
+            std::cout << "\nNo algorithm identified, defaulting to rank-distance!\n";
+
+        //User wants rank-distance sorting
+        case RANK_DISTANCE:
+            //sort by rank distance
+            std::sort(adults.begin(), adults.begin()+sortSize, rankDistanceSort);
+            break;
+    };   
+}
+
 // Assist function for objectives that sorts an adult vector based on the goal 
 void parameterSort(std::vector<Adult> & adults, const objective& sortObjective, const int & sortSize) {
     //Switch statement determines the type of sort needed to be done for the objective

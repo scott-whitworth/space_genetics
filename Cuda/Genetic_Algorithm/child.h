@@ -7,9 +7,6 @@
 
 //TODO: Big step: think about where in the code we rely on numeric data to determine errors (like checking for NAN)
 
-//TODO: Is STATUS necessary? We have statuses for it, but they aren't used... we only use ERROR_STATUS as of 6/28/22
-
-
 ///////////////////////////////////////////////////////////////
 // Child Class & Functions                                   //
 ///////////////////////////////////////////////////////////////
@@ -49,9 +46,7 @@ struct Child {
     
     //All statuses are defined in constants.h
     SIM_STATUS simStatus; //Record the state of the child's simulation, will be set and used in callRK
-
-    //STATUS should be removed in the future
-    STATUS funcStatus;//flag that keeps track of the status of the child (and eventually adult)
+    
     
     ERROR_STATUS errorStatus; //record of if child is computed correctly, should be set in callRK
 

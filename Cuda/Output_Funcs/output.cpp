@@ -89,15 +89,15 @@ void output::initializeGenPerformance(const cudaConstants * cConstants) {
 
   //Names for each objective
   for (int i = 0; i < cConstants->missionObjectives.size(); i++) {
-    excelFile << "rankRarity" << cConstants->missionObjectives[i].name << ",";
-    excelFile << "rankRarity" << cConstants->missionObjectives[i].name << "Normalization,";
+    excelFile << "algorithmBest" << cConstants->missionObjectives[i].name << ",";
+    excelFile << "algorithmBest" << cConstants->missionObjectives[i].name << "Normalization,";
   }
   for (int i = 0; i < cConstants->missionObjectives.size(); i++) {
     excelFile << "best" << cConstants->missionObjectives[i].name << ",";
     excelFile << "avg" << cConstants->missionObjectives[i].name << ",";
   }
 
-  excelFile << "alpha,beta,zeta,tripTime,";
+  excelFile << "anneal,avgGenTime,minDistance,avgDistance,maxDistance,minSteps,avgSteps,maxSteps,avgAge,oldestAge,bestAdultAge,avgBirthday,oldestBirthday,bestAdultBirthday,errorNum,duplicateNum,avgParentProgress,progress,parentChildProgressRatio,alpha,beta,zeta,tripTime,";
   
   for (int i = 0; i < GAMMA_ARRAY_SIZE; i++) {
     excelFile << "gamma"; 
@@ -136,7 +136,8 @@ void output::initializeGenPerformance(const cudaConstants * cConstants) {
     }
   }
 
-  excelFile << "anneal,avgGenTime,minDistance,avgDistance,maxDistance,minSteps,avgSteps,maxSteps,avgAge,oldestAge,bestAdultAge,avgBirthday,oldestBirthday,bestAdultBirthday,errorNum,duplicateNum,avgParentProgress,progress,parentChildProgressRatio\n";
+  excelFile << "\n";
+
   excelFile.close();
 }
 
@@ -374,6 +375,13 @@ void output::recordAllIndividuals(std::string name, const cudaConstants * cConst
   // Setup the header row
   outputFile << "position,";
 
+  for (int i = 0; i < cConstants->missionObjectives.size(); i++) {
+    outputFile << cConstants->missionObjectives[i].name << ",";
+    outputFile << cConstants->missionObjectives[i].name << "Normalization,";
+  }
+  
+  outputFile << "rank,rarity,distance,numSteps,age,birthday,avgParentProgress,progress,parentChildProgressRatio,";
+
   for (int i = 0; i < GAMMA_ARRAY_SIZE; i++) {
     outputFile << "gamma" << i << ",";
   }
@@ -384,12 +392,7 @@ void output::recordAllIndividuals(std::string name, const cudaConstants * cConst
   for (int i = 0; i < COAST_ARRAY_SIZE; i++) {
     outputFile << "coast" << i << ",";
   }
-  for (int i = 0; i < cConstants->missionObjectives.size(); i++) {
-    outputFile << cConstants->missionObjectives[i].name << ",";
-    outputFile << cConstants->missionObjectives[i].name << "Normalization,";
-  }
-  
-  outputFile << "age,birthday,rank,rarity,numSteps,avgParentProgress,progress,parentChildProgressRatio";
+
   outputFile << '\n';
 
   outputFile << std::setprecision(20);
@@ -413,7 +416,7 @@ void output::recordAllIndividuals(std::string name, const cudaConstants * cConst
     outputFile << adults[i].birthday << ",";
     outputFile << adults[i].avgParentProgress << ",";
     outputFile << adults[i].progress << ",";
-    outputFile << adults[i].avgParentProgress/adults[i].progress << ",";
+    outputFile << adults[i].progress/adults[i].avgParentProgress << ",";
 
     for (int j = 0; j < GAMMA_ARRAY_SIZE; j++) {
       outputFile << adults[i].startParams.coeff.gamma[j] << ",";

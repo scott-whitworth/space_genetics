@@ -166,7 +166,7 @@ struct output
 //         numDuplicates - the number of duplicates found in this generation
 //         oldestBirthday - the oldest borthday from this generation
 // Output: the top individual for rank distance and for each objective will have their stats printed to the terminal
-void printBestAdults(const cudaConstants* cConstants, std::vector<Adult> adults, const int& generation, int& numErrors, const int& numDuplicates, const int& oldestBirthday); 
+void printBestAdults(const cudaConstants* cConstants, std::vector<Adult> adults, const int& generation, int& numErrors, const int& numDuplicates, const int& oldestBirthdayconst); 
 
 // Utility function to display the currently best individual onto the terminal while the algorithm is still running
 // input:  Individual to be displayed (assumed to be the best individual of the pool) 

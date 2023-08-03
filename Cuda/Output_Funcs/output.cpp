@@ -97,7 +97,7 @@ void output::initializeGenPerformance(const cudaConstants * cConstants) {
     excelFile << "avg" << cConstants->missionObjectives[i].name << ",";
   }
 
-  excelFile << "anneal,avgGenTime,minDistance,avgDistance,maxDistance,minSteps,avgSteps,maxSteps,avgAge,oldestAge,bestAdultAge,avgBirthday,oldestBirthday,bestAdultBirthday,errorNum,duplicateNum,avgParentProgress,progress,parentChildProgressRatio,alpha,beta,zeta,tripTime,";
+  excelFile << "anneal,avgGenTime,minDistance,avgDistance,maxDistance,minSteps,avgSteps,maxSteps,totalRanks,avgAge,oldestAge,bestAdultAge,avgBirthday,oldestBirthday,bestAdultBirthday,errorNum,duplicateNum,avgParentProgress,progress,parentChildProgressRatio,alpha,beta,zeta,tripTime,";
   
   for (int i = 0; i < GAMMA_ARRAY_SIZE; i++) {
     excelFile << "gamma"; 
@@ -297,6 +297,8 @@ void output::recordGenerationPerformance(const cudaConstants * cConstants, std::
   excelFile << minSteps << ",";
   excelFile << avgSteps << ",";
   excelFile << maxSteps << ",";
+  //Rank value
+  excelFile << adults[adults.size()-1].rank;
   //Age values
   excelFile << avgAge << ",";
   excelFile << oldestAge << ",";
@@ -837,11 +839,14 @@ void printBestAdults(const cudaConstants* cConstants, std::vector<Adult> adults,
   terminalDisplay(adults[0], cConstants->missionObjectives, cConstants);
 
   //Display number of errors
-  std::cout << "\n# of errors this generation: " << numErrors << "\n";
+  std::cout << "\n# of errors this generation: " << numErrors;
 
   //Display number of duplicates
   std::cout << "\n# of duplicates this generation: " << numDuplicates << "\n";
   
+  //Display the number of the max rank
+  std::cout << "\nMax rank this generation: " << adults[adults.size()-1].rank;
+
   //display the oldest individual
   std::cout << "\nOldest age adult: " << generation - oldestBirthday << "\n";
 

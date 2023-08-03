@@ -272,12 +272,12 @@ void createFirstGeneration(std::vector<Adult>& oldAdults, const cudaConstants* c
             }    
         }
     }
-    firstGeneration(initialChildren, oldAdults, cConstants, gpuValues, refPoints);
+    firstGeneration(initialChildren, oldAdults, cConstants, rng, gpuValues, refPoints);
     delete[] initialChildren;
 }
 
 //Will create the first generation of adults from random parameters so that future generations have a pre-existing base of adults
-void firstGeneration(Child* initialChildren, std::vector<Adult>& oldAdults, const cudaConstants* cConstants, GPUMem & gpuValues, ReferencePoints & refPoints){
+void firstGeneration(Child* initialChildren, std::vector<Adult>& oldAdults, const cudaConstants* cConstants, std::mt19937_64 rng, GPUMem & gpuValues, ReferencePoints & refPoints){
     double timeIntial = 0;
     double calcPerS  = 0;
 
@@ -294,7 +294,7 @@ void firstGeneration(Child* initialChildren, std::vector<Adult>& oldAdults, cons
     //Only find associated points if the rank-rarity algorithm is used
     if (cConstants->algorithm == RANK_RARITY) {
         //Calculate the relative cost for the initial group of adults
-        calculateRelCost(cConstants, refPoints, oldAdults);
+        calculateRelCost(cConstants, rng, refPoints, oldAdults);
 
         //Find the closest reference points for the initial group of adults
         findAssociatedPoints(refPoints, oldAdults);
@@ -302,7 +302,7 @@ void firstGeneration(Child* initialChildren, std::vector<Adult>& oldAdults, cons
 }
 
 //fills oldAdults with the best adults from this generation and the previous generation so that the best parents can be selected
-void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& newAdults, std::vector<Adult>& oldAdults, int& numErrors, int& duplicateNum, const cudaConstants* cConstants, ReferencePoints & refPoints, const int & generation, const double& currentAnneal, int & marsErrors){
+void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& newAdults, std::vector<Adult>& oldAdults, int& numErrors, int& duplicateNum, const cudaConstants* cConstants, std::mt19937_64 rng, ReferencePoints & refPoints, const int & generation, const double& currentAnneal, int & marsErrors){
     std::vector<Adult>().swap(allAdults); //ensures this vector is empty and ready for new inputs
     //Reset duplicate and error count variables
     numErrors = 0;
@@ -340,7 +340,7 @@ void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& 
         //The user wants to use the rank-rarity method, call the necessary functions for it
 
         //Calculate the relative cost for the combined adult pool
-        calculateRelCost(cConstants, refPoints, allAdults);
+        calculateRelCost(cConstants, rng, refPoints, allAdults);
     
         //Find the closest reference points to each adult based on the new relative cost
         findAssociatedPoints(refPoints, allAdults);

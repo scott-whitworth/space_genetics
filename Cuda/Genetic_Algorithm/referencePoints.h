@@ -65,7 +65,7 @@ std::vector<double> calcNormVector (std::vector<std::vector<double>> matrix, boo
 //          refPoints - the algorithm's reference points
 //          allAdults - the vector of adults which will have relative costs calculated for them
 // Output: Each adult will have relative costs for each objective calculated and assigned to them   
-void calculateRelCost (const cudaConstants *cConstants, ReferencePoints & refPoints, std::vector<Adult> & allAdults);
+void calculateRelCost (const cudaConstants *cConstants, std::mt19937_64 rng, ReferencePoints & refPoints, std::vector<Adult> & allAdults);
 
 //!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Functions involved with calculating the rarity for each adult

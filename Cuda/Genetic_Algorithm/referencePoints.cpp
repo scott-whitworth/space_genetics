@@ -159,7 +159,7 @@ std::vector<double> calcNormVector (std::vector<std::vector<double>> matrix, boo
 }
 
 //Calculates the objective-by-objective relative cost for the adults passed into the function
-void calculateRelCost (const cudaConstants *cConstants, ReferencePoints & refPoints, std::vector<Adult> & allAdults) {
+void calculateRelCost (const cudaConstants *cConstants, std::mt19937_64 rng, ReferencePoints & refPoints, std::vector<Adult> & allAdults) {
 
     //Make sure the vectors are cleared
     refPoints.objWorst.clear();
@@ -167,8 +167,8 @@ void calculateRelCost (const cudaConstants *cConstants, ReferencePoints & refPoi
 
     //Push back a random adult for each objective
     for (int obj = 0; obj < cConstants->missionObjectives.size(); obj++) {
-        refPoints.objWorst.push_back(allAdults[0]);
-        refPoints.objBest.push_back(allAdults[0]);
+        refPoints.objWorst.push_back(allAdults[(rng() % allAdults.size())]);
+        refPoints.objBest.push_back(allAdults[(rng() % allAdults.size())]);
     }
 
     //Find the normalizations for each objective

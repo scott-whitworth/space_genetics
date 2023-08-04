@@ -298,7 +298,7 @@ void output::recordGenerationPerformance(const cudaConstants * cConstants, std::
   excelFile << avgSteps << ",";
   excelFile << maxSteps << ",";
   //Rank value
-  excelFile << adults[adults.size()-1].rank;
+  excelFile << adults[adults.size()-1].rank << ",";
   //Age values
   excelFile << avgAge << ",";
   excelFile << oldestAge << ",";

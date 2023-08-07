@@ -135,7 +135,7 @@ void output::initializeGenPerformance(const cudaConstants * cConstants) {
     }
   }
 
-  excelFile << "anneal,avgGenTime,minDistance,avgDistance,maxDistance,minSteps,avgSteps,maxSteps,avgAge,oldestAge,bestAdultAge,avgBirthday,oldestBirthday,bestAdultBirthday,errorNum,duplicateNum,avgParentProgress,progress,parentChildProgressRatio\n";
+  excelFile << "largestRank,anneal,avgGenTime,minDistance,avgDistance,maxDistance,minSteps,avgSteps,maxSteps,avgAge,oldestAge,bestAdultAge,avgBirthday,oldestBirthday,bestAdultBirthday,errorNum,duplicateNum,avgParentProgress,progress,parentChildProgressRatio\n";
   excelFile.close();
 }
 
@@ -280,6 +280,12 @@ void output::recordGenerationPerformance(const cudaConstants * cConstants, std::
     excelFile << adults[0].startParams.coeff.coast[i-COAST_OFFSET] << ","; 
   }
 
+  //Reset the sort to rankDistance
+  std::sort(adults.begin(), adults.end(), rankDistanceSort);
+
+  //Output largest/total ranks
+  excelFile << adults[adults.size()-1].rank << ",";
+
   //New anneal every gen
   excelFile << new_anneal << ",";
 
@@ -336,6 +342,9 @@ void output::recordGenSimple (const cudaConstants* cConstants, std::vector<Adult
     //Output the average value for this parameter
     excelFile << objectiveAvgValues[i] << ",";
   }
+
+  //Reset the sort to rankDistance
+  std::sort(adults.begin(), adults.end(), rankDistanceSort);
 
   //End the line for this generation and close the file
   excelFile << "\n"; 
@@ -774,11 +783,14 @@ void printBestAdults(const cudaConstants* cConstants, std::vector<Adult> adults,
   terminalDisplay(adults[0], cConstants->missionObjectives);
 
   //Display number of errors
-  std::cout << "\n# of errors this generation: " << numErrors << "\n";
+  std::cout << "\n# of errors this generation: " << numErrors;
 
   //Display number of duplicates
   std::cout << "\n# of duplicates this generation: " << numDuplicates << "\n";
   
+  //Display the number of the max rank
+  std::cout << "\nMax rank this generation: " << adults[adults.size()-1].rank;
+
   //display the oldest individual
   std::cout << "\nOldest age adult: " << generation - oldestBirthday << "\n";
 
@@ -786,7 +798,7 @@ void printBestAdults(const cudaConstants* cConstants, std::vector<Adult> adults,
   std::cout << "\nBest step count: " << adults[0].stepCount << "\n";
 
   //Display the progress of the best rank distance individual 
-  std::cout << "\nBest rank-distance adult progress: " << adults[0].progress << "\n\n";
+  std::cout << "\nBest rank-rarity adult progress: " << adults[0].progress << "\n\n";
 }
 
 // Utility function to display the currently best individual onto the terminal while the algorithm is still running

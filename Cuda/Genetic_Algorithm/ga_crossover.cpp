@@ -397,6 +397,7 @@ void generateChildrenFromCrossover(std::vector<Adult> &parents, Child *newChildr
     //Sort the parents by rank order to make sure only the best adults pass on genes
     //  NOTE: commented because the parents vector is filled in rank-rarity order
     //std::sort(parents.begin(), parents.end(), rankRaritySort);
+    mainSort(parents, cConstants, parents.size());
 
     // Vector that determines which parents will be paired up to generate children
     // it will contain indexes of adults that are deemed to be parents

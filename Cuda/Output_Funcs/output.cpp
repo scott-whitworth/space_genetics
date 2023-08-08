@@ -19,7 +19,7 @@ output::output(const cudaConstants* cConstants, const std::string& selectFolder)
   initializeGenPerformance(cConstants);
 
   //Start the simple genPreformance file
-  initializeSimpleGenPerformance(cConstants);
+  //initializeSimpleGenPerformance(cConstants);
 }
 
 //Call the functions which print during a run
@@ -39,7 +39,7 @@ void output::printGeneration(const cudaConstants * cConstants, const std::vector
       //Push info to the function which prints the full genPerformance file
       recordGenerationPerformance(cConstants, allAdults, objectiveAvgValues, generation, new_anneal, errorNum, duplicateNum, minSteps, avgSteps, maxSteps, minDist, avgDist, maxDist, avgAge, oldestAge, avgBirthday, oldestBirthday, avgGenTime);
       //Push info to the function which prints the simplified genPerformance file
-      recordGenSimple(cConstants, allAdults, objectiveAvgValues, generation);
+      //recordGenSimple(cConstants, allAdults, objectiveAvgValues, generation);
     }
 
     //Check which sees if the full adult list should be printed
@@ -263,6 +263,8 @@ void output::recordGenerationPerformance(const cudaConstants * cConstants, std::
     excelFile << objectiveAvgValues[i] << ",";
   }
 
+  //Reset the sort to rankDistance
+  std::sort(adults.begin(), adults.end(), rankDistanceSort);
 
   // Record best individual's parameters
   excelFile << adults[0].startParams.alpha << ",";
@@ -279,9 +281,6 @@ void output::recordGenerationPerformance(const cudaConstants * cConstants, std::
   for (int i = COAST_OFFSET; i < COAST_ARRAY_SIZE + COAST_OFFSET; i++) {
     excelFile << adults[0].startParams.coeff.coast[i-COAST_OFFSET] << ","; 
   }
-
-  //Reset the sort to rankDistance
-  std::sort(adults.begin(), adults.end(), rankDistanceSort);
 
   //Output largest/total ranks
   excelFile << adults[adults.size()-1].rank << ",";

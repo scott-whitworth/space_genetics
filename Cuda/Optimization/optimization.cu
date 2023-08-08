@@ -121,6 +121,7 @@ int main () {
 bool checkTolerance(std::vector<Adult>& oldAdults, const cudaConstants* cConstants) {
     //Sort the vector by rank distance to make sure the program checks the correct adult
     //std::sort(oldAdults.begin(), oldAdults.end(), rankRaritySort); 
+    std::sort(oldAdults.begin(), oldAdults.end(), bestProgress);
 
     //The function needs to check if the best adult meets the convergence tolerance for each objective
     //Iterate through the objectives
@@ -338,7 +339,8 @@ double optimize(const cudaConstants* cConstants, GPUMem & gpuValues, ReferencePo
         //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE CONVERGENCE CHECK-_-_-_-_-_-_-_-_-_\n\n";
         convergence = checkTolerance(oldAdults, cConstants);
 
-        //std::sort(allAdults.begin(), allAdults.end(), rankRaritySort);        
+        //std::sort(allAdults.begin(), allAdults.end(), rankRaritySort);
+        mainSort(oldAdults, cConstants, oldAdults.size());        
         
         //Increment the generation counter
         ++generation;

@@ -120,22 +120,18 @@ std::vector<double> calcNormVector (std::vector<std::vector<double>> matrix, boo
 
                         //Add the next value to the next column
                         col++; 
-
                     }
 
                     //add the new values to the next row
                     row ++; 
                     //Reset the column counter to start at the beginning of the row 
                     col = 0; 
-
                 } 
-
             } 
 
             //Calculate the determinant 
             std::vector <double> calcDet = calcNormVector(det, false); 
 
-             
             //If this isn't the first time calling the function, norm will store the determinant, not the normalized vector
             if (!initialMatrix) { 
                 //Make sure there is a space to add the determinant
@@ -192,13 +188,9 @@ void calculateRelCost (const cudaConstants *cConstants, std::mt19937_64 rng, Ref
 
                 //Found a new best value, store the adult
                 refPoints.objBest[obj] = allAdults[indiv];
-
-                // std::cout<<"\n For obj "<<obj<<", new best by adult "<<indiv<<" of "<<allAdults[indiv].getParameters(cConstants->missionObjectives[obj])<<"\n";
             }          
         }
-        // std::cout<<"\n For obj "<<obj<<", best adult has "<<refPoints.objBest[obj].getParameters(cConstants->missionObjectives[obj])<<"\n";
     }
-
 
     //Holds the points for the objective intercepts
     std::vector<double> intercepts;
@@ -244,7 +236,8 @@ void calculateRelCost (const cudaConstants *cConstants, std::mt19937_64 rng, Ref
             //Divide the numerator by the intercept found for the objective
             intercepts.push_back(num / normal[obj]);
 
-            //
+            //If the intercepts are worse than the worst found value, set it to the worst value
+            //  TODO: is this something we want to do?
             if(intercepts[obj] < refPoints.objWorst[obj].getParameters(cConstants->missionObjectives[obj])){
                 intercepts[obj]=refPoints.objWorst[obj].getParameters(cConstants->missionObjectives[obj]);
             }
@@ -260,11 +253,14 @@ void calculateRelCost (const cudaConstants *cConstants, std::mt19937_64 rng, Ref
             //The numerator is the individual's objective value minus the best found objective value
             double translatedObj;
 
-            // if((allAdults[indiv].getParameters(cConstants->missionObjectives[obj]) - refPoints.objBest[obj].getParameters(cConstants->missionObjectives[obj])) > cConstants->missionObjectives[obj].equateTolerance){
+            //Check to see if an individual is worse than the domination threshold
             if(allAdults[indiv].getParameters(cConstants->missionObjectives[obj]) > cConstants->missionObjectives[obj].dominationThreshold){
+                //If so set the translated objective to the adult's objective value minus the best overall value
                 translatedObj = allAdults[indiv].getParameters(cConstants->missionObjectives[obj]) - refPoints.objBest[obj].getParameters(cConstants->missionObjectives[obj]);
             }
-            else{//If an individual's objective is lower than the domination threshold, then this is set to 0
+            else{
+                //If an individual's objective is lower than the domination threshold, then the translated objective is set to 0
+                //  This signifies that the adult has solved the objective
                 translatedObj = 0;
             }
 
@@ -299,7 +295,6 @@ void calculateRelCost (const cudaConstants *cConstants, std::mt19937_64 rng, Ref
             allAdults[indiv].normalizedObj[obj] = translatedObj/denom;
         }
     }
-
     return;
 }
 
@@ -329,7 +324,7 @@ double findPointDist (const std::vector<double> & point, const Adult & adult) {
     double distance = 0;
 
     //The norm is the square of each of the components squared
-    //Calculate the sum of each compenent squared]
+    //Calculate the sum of each compenent squared
     for (int i = 0; i < point.size(); i++) {
         distance += pow(adult.normalizedObj[i] - (t * point[i]), 2);
     }

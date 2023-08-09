@@ -5,7 +5,6 @@
 #include <time.h> // for time(0)
 #include <math.h> // for sqrt() in constructor to derive v_escape from c3energy
 //#include <cctype> // for tolower(), needed for Tesla machine only
-//#include "constants.h" // for AU
 
 // Default constructor which assumes that genetic.config and mission.config are the files being pulled from
 // Asteroid file is determined within configFile
@@ -97,7 +96,7 @@ void cudaConstants::FileRead(std::string fileName) {
                     int end_point = line.find_first_of(" ");
 
                     // With the two positions acquired, capture the varable's name and the value it is being assigned
-                    std::string variableName = line.substr(0, equals_pivot   );
+                    std::string variableName = line.substr(0, equals_pivot);
                     std::string variableValue = line.substr( equals_pivot + 1, end_point - equals_pivot - 1);
                     // Assign variableValue to the appropriate variable based on variableName, with conversion to the right data type
                     // cudaConstant properties that are not expected in config are wet_mass, v_escape (those are to be derived in the constructor after this function is complete)
@@ -531,13 +530,13 @@ std::ostream& operator<<(std::ostream& os, const cudaConstants& object) {
     os << std::setprecision(12);
     os << "\n==========CONFIG=DATA===============================================================================\n";
     os << "Genetic Algorithm Related Values:\n";
-    os << "\ttime_seed: "      << object.time_seed      << "\n";
-    os << "\tanneal_initial: " << object.anneal_initial << "\tnum_individuals: " << object.num_individuals << "\tthread_block_size: "   << object.thread_block_size          << "\n";
-    os << "\tsurvivor_count: " << object.survivor_count << "\tbest_count: "      << object.best_count      << "\tmax_generations: "     << object.max_generations            << "\trun_count: " << object.run_count << "\n\n";
+    os << "\ttime_seed: "       << object.time_seed       << "\tnum_divisions: "    << object.divisions         << "\talgorithm: "          << object.algorithm         << "\n";
+    os << "\tnum_individuals: " << object.num_individuals << "\tsurvivor_count: "   << object.survivor_count    << "\tthread_block_size: "  << object.thread_block_size << "\n";
+    os << "\tbest_count: "      << object.best_count      << "\tmax_generations: "  << object.max_generations   << "\trun_count: "          << object.run_count         << "\n\n";
 
     os << "Runge-Kutta Related Values:\n";
-    os << "\trk_tol: "       << object.rk_tol       << "\tdoublePrecThresh: " << object.doublePrecThresh << "\ttimeRes: "      << object.timeRes       << "\tsun_r_min: " << object.sun_r_min << "\n";
-    os << "\tmax_numsteps: " << object.max_numsteps << "\tmin_numsteps: "     << object.min_numsteps     << "\n\n";
+    os << "\trk_tol: "       << object.rk_tol       << "\tdoublePrecThresh: " << object.doublePrecThresh << "\ttimeRes: "   << object.timeRes    << "\n";
+    os << "\tmax_numsteps: " << object.max_numsteps << "\tmin_numsteps: "     << object.min_numsteps     << "\tsun_r_min: " << object.sun_r_min  << "\n\n";
 
     os << "Output Variables:\n";
     os << "\trecord_mode: " << object.record_mode << "\twrite_freq: " << object.write_freq << "\tdisp_freq: " << object.disp_freq << "\n\n";
@@ -548,15 +547,16 @@ std::ostream& operator<<(std::ostream& os, const cudaConstants& object) {
     os << "\ttriptime min: " << object.triptime_min             << "\tmax: "  << object.triptime_max            << "\n\n";
     
     os << "Mutation & Scales:\n";
-    os << "\tmutation_amplitude: " << object.mutation_amplitude << "\n";
-    os << "\tgamma_scale: "        << object.gamma_mutate_scale << "\ttau_m_scale: "  << object.tau_mutate_scale  << "\tcoast_m_scale: " << object.coast_mutate_scale << "\n";
-    os << "\talpha_m_scale: "      << object.alpha_mutate_scale << "\tbeta_m_scale: " << object.beta_mutate_scale << "\tzeta_m_scale: "  << object.zeta_mutate_scale  << "\ttriptime_m_scale: " << object.triptime_mutate_scale << "\n\n";
+    os << "\tmutation_amplitude: " << object.mutation_amplitude     << "\tanneal_initial: " << object.anneal_initial    << "\n";
+    os << "\tgamma_scale: "        << object.gamma_mutate_scale     << "\ttau_m_scale: "    << object.tau_mutate_scale  << "\tcoast_m_scale: " << object.coast_mutate_scale << "\n";
+    os << "\talpha_m_scale: "      << object.alpha_mutate_scale     << "\tbeta_m_scale: "   << object.beta_mutate_scale << "\tzeta_m_scale: "  << object.zeta_mutate_scale  << "\n";
+    os << "\ttriptime_m_scale: "   << object.triptime_mutate_scale  << "\n\n";
 
     os << "Spacecraft Info:\n";
-    os << "\tthruster_type: "   << object.thruster_type   << "\tdry_mass: " << object.dry_mass << "\t\tfuel_mass: " << object.fuel_mass << "\t\twet_mass: " << object.wet_mass << "\n";
+    os << "\tdry_mass: " << object.dry_mass << "\t\tfuel_mass: " << object.fuel_mass << "\t\twet_mass: " << object.wet_mass << "\n";
     // Display the c3energy assignment, showing c3scale to help clarify that it is not directly from config
     os << "\tc3energy ("        << (object.c3scale * 100) << "%): "         << object.c3energy << "\tv_escape: "    << object.v_escape  << "\n";
-    os << "\tcoast_threshold: " << object.coast_threshold << "\tMSOI_scale: " << object.MSOI_scale << "\n\n";
+    os << "\tthruster_type: "   << object.thruster_type   << "\tcoast_threshold: " << object.coast_threshold << "\n\n";
 
     os << "Target Info:\n";
     os << "\t R: " << object.r_fin_target  << "\t 0: " << object.theta_fin_target  << "\t Z: " << object.z_fin_target  << "\n";
@@ -567,8 +567,9 @@ std::ostream& operator<<(std::ostream& os, const cudaConstants& object) {
     os << "\tvR: " << object.vr_fin_earth << "\tv0: " << object.vtheta_fin_earth << "\tvZ: " << object.vz_fin_earth << "\n\n";
 
     os << "Mars Info:\n";
-    os << "\t R: " << object.r_fin_mars  << "\t 0: " << object.theta_fin_mars  << "\t Z: " << object.z_fin_mars  << "\n";
-    os << "\tvR: " << object.vr_fin_mars << "\tv0: " << object.vtheta_fin_mars << "\tvZ: " << object.vz_fin_mars << "\n\n";
+    os << "\t R: "         << object.r_fin_mars  << "\t 0: " << object.theta_fin_mars  << "\t Z: " << object.z_fin_mars  << "\n";
+    os << "\tvR: "         << object.vr_fin_mars << "\tv0: " << object.vtheta_fin_mars << "\tvZ: " << object.vz_fin_mars << "\n";
+    os << "\tMSOI_scale: " << object.MSOI_scale  << "\n\n";
 
     os << "Mission Goals: ";
     for (int i = 0; i < object.missionObjectives.size(); i++) {

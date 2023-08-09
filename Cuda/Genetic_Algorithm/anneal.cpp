@@ -14,10 +14,10 @@ void changeAnneal (const std::vector<Adult>& oldAdults, const cudaConstants* cCo
         currentAnneal = cConstants->anneal_initial; 
     } 
     else if(curProgress >= 1e-10 && curProgress < 1e-9){ 
-        currentAnneal = cConstants->anneal_initial*.8; 
+        currentAnneal = cConstants->anneal_initial*.7; 
     } 
     else if(curProgress >= 1e-9 && curProgress < 1e-8){ 
-        currentAnneal = cConstants->anneal_initial*.7; 
+        currentAnneal = cConstants->anneal_initial*.5; 
     } 
     else if(curProgress >= 1e-8 && curProgress < 1e-7){ 
         currentAnneal = cConstants->anneal_initial*.3; 
@@ -26,13 +26,13 @@ void changeAnneal (const std::vector<Adult>& oldAdults, const cudaConstants* cCo
         currentAnneal = cConstants->anneal_initial*.2; 
     } 
     else if(curProgress >= 1e-6 && curProgress < 1e-5){ 
-        currentAnneal = cConstants->anneal_initial*.1; 
+        currentAnneal = cConstants->anneal_initial*.08; 
     } 
     else if(curProgress >= 1e-5 && curProgress < 1e-4){ 
-        currentAnneal = cConstants->anneal_initial*.04; 
+        currentAnneal = cConstants->anneal_initial*.03; 
     } 
     else if(curProgress >= 1e-4 && curProgress < 1e-3){ 
-        currentAnneal = cConstants->anneal_initial*.01; 
+        currentAnneal = cConstants->anneal_initial*.005; 
     }
     else{
         //This function is here because it has the needed shape through the range 1e-3 - 1.0 

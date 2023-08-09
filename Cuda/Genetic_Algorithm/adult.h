@@ -85,11 +85,6 @@ bool LowerPosDiff(Adult& personA, Adult& personB);
 
 // Compare two adults by their velocity difference values
 // input: two adults
-// output: returns true if personB has a higher velocity difference than personA
-// bool HigherSpeedDiff(const Adult& personA, const Adult& personB);
-
-// Compare two adults by their velocity difference values
-// input: two adults
 // output: returns true if personB has a lower velocity difference than personA
 bool LowerSpeedDiff(const Adult& personA, const Adult& personB);
 

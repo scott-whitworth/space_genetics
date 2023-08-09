@@ -88,6 +88,7 @@ enum SIM_STATUS{
     COMPLETED_SIM = 3,
 };
 
+//Enum used to set start and end times when calculating the planet info
 enum PLANET{
     EARTH = 0,
     MARS = 1,

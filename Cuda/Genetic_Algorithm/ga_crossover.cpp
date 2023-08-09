@@ -175,10 +175,6 @@ rkParameters<double> mutate(const rkParameters<double> & p1, std::mt19937_64 & r
 
     // Determine which parameters will be mutated with the mutate mask
     mutateMask(rng, mutation_mask, mutation_chance);
-    
-
-    // Declare a record that is to describe what genes are being changed and by how much to record into mutateFile
-    // double recordLog[OPTIM_VARS];
 
     // Iterate through the mutation_mask, mutating the corresponding gene if set to true
     for (int index = 0; index < OPTIM_VARS; index++) {
@@ -238,9 +234,6 @@ rkParameters<double> mutate(const rkParameters<double> & p1, std::mt19937_64 & r
                 // recordLog[index] = randVar;
             }
         }
-        // else { // Record if the gene is not being mutated
-        //     recordLog[index] = 0;
-        // }
     }
 
     //Delete the mask and set of parameters to free memory
@@ -368,6 +361,7 @@ void generateChildrenPair (const Adult & parent1, const Adult & parent2, Child *
     if(numNewChildren >= childrenToGenerate){
         return;
     }
+
     //Flip the mask to generate a mirrored individual
     flipMask(mask); 
 
@@ -382,8 +376,6 @@ void generateChildrenPair (const Adult & parent1, const Adult & parent2, Child *
 // Generate children from parents using crossover methods
 void generateChildrenFromCrossover(std::vector<Adult> &parents, Child *newChildren, const int &childrenToGenerate, std::mt19937_64 &rng, const double &currentAnneal, const int &generation, const cudaConstants *cConstants)
 {
-    //std::cout << "\n_-_-_-_-_-_-_-_-_-Start of generate children from crossover_-_-_-_-_-_-_-_-_-\n";
-    //std::cout << "\n_-_-_-_-_-_-_-_-_-Size of parents: " << parents.size() << ", number of children to generate: " << childrenToGenerate << "_-_-_-_-_-_-_-_-_-\n";
     // Create a mask to determine which of the child's parameters will be inherited from which parents
     std::vector<int> mask;
 
@@ -394,9 +386,7 @@ void generateChildrenFromCrossover(std::vector<Adult> &parents, Child *newChildr
         mask.push_back(AVG);
     }
 
-    //Sort the parents by rank order to make sure only the best adults pass on genes
-    //  NOTE: commented because the parents vector is filled in rank-rarity order
-    //std::sort(parents.begin(), parents.end(), rankRaritySort);
+    //Sort the parents so the parents with the best genes create children first (and thus are more likely to create more children)
     mainSort(parents, cConstants, parents.size());
 
     // Vector that determines which parents will be paired up to generate children
@@ -497,7 +487,4 @@ void generateChildrenFromCrossover(std::vector<Adult> &parents, Child *newChildr
         }
         //A new pair was computed or we reset parentOffset
     }   //Repeat loop
-    //std::cout << "\n_-_-_-_-_-_-_-_-_-Number of children generatated: " << numNewChildren << "_-_-_-_-_-_-_-_-_-\n";
 }
-
-

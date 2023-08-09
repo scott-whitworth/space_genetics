@@ -29,24 +29,6 @@ bool LowerPosDiff(Adult& personA, Adult& personB) {
 
 }
 
-// Compare two individuals by their velocity difference values, used in standard sort to have array contain highest speedDiff individual at start
-// input: two individuals
-// output: returns true if personB has a lower velocity difference than personA
-// bool HigherSpeedDiff(const Adult& personA, const Adult& personB) {
-//     if(personA.errorStatus !=  VALID && personA.errorStatus != DUPLICATE){
-//         return false;
-//     }
-//     else if(personB.errorStatus !=  VALID && personB.errorStatus != DUPLICATE){
-//         return true;
-//     }
-//     else if (personA.speedDiff > personB.speedDiff) {
-//         return true;
-//     }
-//     else {
-//         return false;
-//     }
-// }
-
 // Compare two individuals by their velocity difference values, used in standard sort to have array contain lowest speedDiff individual at start
 // input: two individuals
 // output: returns true if personA has a lower velocity difference than personB
@@ -238,34 +220,7 @@ bool dominationCheck(Adult& personA, Adult& personB, const cudaConstants* cConst
                 //Now, the program will continue on to the next objective (if there are any)
             }
             // else: both parameters are past the dominationThreshold
-            //       this means: we are ignoring that parameter for domination check
-            
-        // }
-        //The maximization objectives operate very similarly to minimization, except that the signs are flipped
-        // else if (cConstants->missionObjectives[i].goal > 0) {
-        //     //Check to see if see if the parameters are both above/better than the tolerence, which means that no comparison will be necessary
-        //     if ( !(aParam > cConstants->missionObjectives[i].dominationThreshold
-        //         && bParam > cConstants->missionObjectives[i].dominationThreshold) ) {
-                
-        //         //Means they haven't met the parameter's tolerance
-        //         //First check to see if A's parameter is greater than B's parameter (within a tolerance)
-        //         if (aParam > (bParam + cConstants->missionObjectives[i].equateTolerance)) {
-        //             //Since A is better in at least one parameter, set the aParamBetter flag to true
-        //             aParamBetter = true;
-        //         }
-        //         //If here, it means that the adults haven't met the threshold and that A's parameter is not better than B's
-        //         //Now there is a check for if A's parameters are worse/smaller than B's (within a tolerance)
-        //         else if (aParam < (bParam - cConstants->missionObjectives[i].equateTolerance)) {
-        //             //Since a parameter for A is worse than B, A doesn't dominate B, so return false
-        //             return false; 
-        //         }
-        //         //If here (without triggering the first if statement), it must mean that A's and B's params are the same (within a tolerance)
-        //         //Now, the program will continue on to the next objective (if there are any)
-        //     }
-        // }
-        // else {
-        //     std::cout << "\n_-_-_-_-_-_-_-_-_-Error Identifying Parameter Goal_-_-_-_-_-_-_-_-_-\n";
-        // }
+            //       this means: we are ignoring that parameter for domination check 
     }
     //The program have compared the parameters for the adults
     //  Now, if the program is here it means that A is at least as good as B (for all parameters)

@@ -854,7 +854,7 @@ void printBestAdults(const cudaConstants* cConstants, std::vector<Adult> adults,
   std::cout << "\nBest step count: " << adults[0].stepCount << "\n";
 
   //Display the progress of the best rank distance individual 
-  std::cout << "\nBest rank-rarity adult progress: " << adults[0].progress << "\n\n";
+  std::cout << "\nBest adult progress: " << adults[0].progress << "\n\n";
 }
 
 // Utility function to display the currently best individual onto the terminal while the algorithm is still running

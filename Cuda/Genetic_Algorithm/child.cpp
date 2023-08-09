@@ -6,9 +6,6 @@
 //this is never called, and if it is we will know because of the func status
 Child::Child() {
 
-    //posDiff = 1.0;
-    //speedDiff = 0.0; //This is ok for impact, but an issue for soft landing
-
     errorStatus = NOT_RUN; //not run through callRk
 
     simStatus = INITIAL_SIM; //has not been simulated
@@ -49,7 +46,7 @@ Child::Child(rkParameters<double> & childParameters, const cudaConstants* cConst
     orbithChange = 1e-14; //No assist initially, so no angular momentum change initally
 }
 
-// Copy constructor
+// Copy constructor (Needed for sorts, so make sure this is up to date with the child's variables!)
 // Sets this child's parameters, elements, posDiff, and speedDiff to another child's values for these quantities
 // Input: Another child
 // Output: this child is a copy of the other child that was passed in
@@ -210,32 +207,13 @@ __host__ void Child::getProgress(const cudaConstants* cConstants){
                         calcProgress += (cConstants->missionObjectives[i].convergenceThreshold/getParameters(cConstants->missionObjectives[i])); 
                     }
                 }
-                
-            // }
-            // //Maximization is very similar minimization, but the signs are flipped and an inverse fraction is used
-            // else if (cConstants->missionObjectives[i].goal > 0) {//Maximization
-                
-            //     //See if the child has met the the convergence threshold for this parameter
-            //     if (getParameters(cConstants->missionObjectives[i]) > cConstants->missionObjectives[i].convergenceThreshold) {
-            //         //Add one to the progress to signify that the parameter has met the goal
-            //         calcProgress += 1; 
-            //     }
-            //     //The child hasn't met the parameter goal
-            //     else {
-            //         //Add the progress for this parameter to the goal
-            //         //For maximization, the progress is the threshold divided by the parameter
-            //         calcProgress += (cConstants->missionObjectives[i].convergenceThreshold/getParameters(cConstants->missionObjectives[i])); 
-            //     }
-            // }
-            // //No mission type was identified 
-            // else {
-            //     std::cout << "\n_-_-_-_-_-_-_-_-_-Error Identifying Parameter Goal_-_-_-_-_-_-_-_-_-\n";
-            // }
         }
 
         //The total cost has been calculated
         //It needs to be divided by the number of objectives to find the weighted average progress for each objective
         calcProgress = cConstants->missionObjectives.size()/calcProgress;
+
+        //TODO: the below commented code calculates a progress measure that is easier to understand at a glance, but doesn't work well with our current annealing system. Consider changing progress and annealing in the future
 
         //Holds the progress of a single objective before it is added to the combined calcProgress variable
         // double objProgress;

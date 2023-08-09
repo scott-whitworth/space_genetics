@@ -40,6 +40,7 @@ void newGeneration (std::vector<Adult> & oldAdults, std::vector<Adult> & newAdul
 void fillParents(std::vector<Adult> & oldAdults, std::vector<Adult> & parents, const int & generation, const cudaConstants* cConstants){
     //Clearing parents before separating the parents from a vector ensures parents
     parents.clear();
+
     //If statement will check if the generation is 0 
     //      If so, it will assign all the surviving adults to parents
     //      If not, it will decide which vector based on progress
@@ -303,7 +304,9 @@ void firstGeneration(Child* initialChildren, std::vector<Adult>& oldAdults, cons
 
 //fills oldAdults with the best adults from this generation and the previous generation so that the best parents can be selected
 void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& newAdults, std::vector<Adult>& oldAdults, int& numErrors, int& duplicateNum, const cudaConstants* cConstants, std::mt19937_64 rng, ReferencePoints & refPoints, const int & generation, const double& currentAnneal, int & marsErrors){
-    std::vector<Adult>().swap(allAdults); //ensures this vector is empty and ready for new inputs
+    //ensures this vector is empty and ready for new inputs
+    std::vector<Adult>().swap(allAdults); 
+
     //Reset duplicate and error count variables
     numErrors = 0;
     marsErrors = 0;
@@ -332,7 +335,6 @@ void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& 
     //Calculate rank of each adult based on domination sort
     //* Ignore any nans at the end of allAdults
     //must be called after checking for nans and before giveDistance
-    //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE GIVE RANK-_-_-_-_-_-_-_-_-_\n\n";
     giveRank(allAdults, cConstants); //gives a rank to each adult
 
     //Check to see which algorithm to use
@@ -350,18 +352,16 @@ void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& 
     }
     else {
         //The user wants the rank-distance method or the algorithm is unspecified (use rank-distance by default)
-
-        //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE GIVE DISTANCE-_-_-_-_-_-_-_-_-_\n\n";
         giveDistance(allAdults, cConstants); //gives a distance to each adult
     }
 
-    // std::sort(allAdults.begin(), allAdults.end(), rankRaritySort); //sorts allAdults using rankRarity sort
+    //sorts allAdults using preferred sort
     mainSort(allAdults, cConstants, allAdults.size());
 
     oldAdults.clear(); //empties oldAdults so new values can be put in it
     int counter = 0; //a variable that ensures we put the correct number of adults in oldAdults
-    //copies the best adults from allAdults into oldAdults (should be half of allAdults that are copied over)
 
+    //copies the best adults from allAdults into oldAdults (should be half of allAdults that are copied over)
     while (counter < cConstants->num_individuals && counter < allAdults.size()){
         oldAdults.push_back(allAdults[counter]);
         counter++;

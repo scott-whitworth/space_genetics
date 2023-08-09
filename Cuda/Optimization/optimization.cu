@@ -119,8 +119,8 @@ int main () {
 
 //Returns true if top best_count adults within the oldAdults vector are within the tolerance
 bool checkTolerance(std::vector<Adult>& oldAdults, const cudaConstants* cConstants) {
-    //Sort the vector by rank distance to make sure the program checks the correct adult
-    //std::sort(oldAdults.begin(), oldAdults.end(), rankRaritySort); 
+    //Sort the vector by progress to make sure the program checks the correct adult
+    std::sort(oldAdults.begin(), oldAdults.end(), bestProgress); 
 
     //The function needs to check if the best adult meets the convergence tolerance for each objective
     //Iterate through the objectives
@@ -146,7 +146,7 @@ bool checkTolerance(std::vector<Adult>& oldAdults, const cudaConstants* cConstan
 //Function that will calculate distance and birthday values for a generation
 void calculateGenerationValues (const std::vector<Adult> & allAdults, const std::vector<objective> & objectives, std::vector<double> & objectiveAvgValues, int & duplicateNum, double & minDist, double & avgDist, double & maxDist, int & minSteps, int & avgSteps, int & maxSteps, const int & generation, double & avgAge, double & avgBirthday, int & oldestBirthday){
     //Reset the dist values
-    minDist = 2; //Set the min dist to the maximum possible value, so that it will be changed
+    minDist = static_cast<int>(objectives.size() * MAX_DISTANCE); //Set the min dist to the maximum possible value, so that it will be changed
     avgDist = 0; 
     maxDist = 0; //Set the max dist to the min possible value, so that it is garunteed to be changed
 
@@ -282,8 +282,6 @@ double optimize(const cudaConstants* cConstants, GPUMem & gpuValues, ReferencePo
     std::chrono::time_point<std::chrono::system_clock> runStartTime = std::chrono::system_clock::now();
     std::chrono::duration<float> totRunTime;
 
-    //double worstOPD = 0;
-
     //Vector used to report the average parameter value for each objective
     std::vector<double> objectiveAvgValues; 
 
@@ -338,7 +336,8 @@ double optimize(const cudaConstants* cConstants, GPUMem & gpuValues, ReferencePo
         //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE CONVERGENCE CHECK-_-_-_-_-_-_-_-_-_\n\n";
         convergence = checkTolerance(oldAdults, cConstants);
 
-        //std::sort(allAdults.begin(), allAdults.end(), rankRaritySort);        
+        //Reset the progress sort from checkTolerance
+        mainSort(oldAdults, cConstants, oldAdults.size());      
         
         //Increment the generation counter
         ++generation;

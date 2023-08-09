@@ -119,8 +119,14 @@ int main () {
 
 //Returns true if top best_count adults within the oldAdults vector are within the tolerance
 bool checkTolerance(std::vector<Adult>& oldAdults, const cudaConstants* cConstants) {
+<<<<<<< HEAD
     //Sort the vector by progress to make sure the program checks the correct adult
     std::sort(oldAdults.begin(), oldAdults.end(), bestProgress); 
+=======
+    //Sort the vector by rank distance to make sure the program checks the correct adult
+    //std::sort(oldAdults.begin(), oldAdults.end(), rankRaritySort); 
+    std::sort(oldAdults.begin(), oldAdults.end(), bestProgress);
+>>>>>>> 3702560d488d5b23271004c0a4fd2d4a3a834e93
 
     //The function needs to check if the best adult meets the convergence tolerance for each objective
     //Iterate through the objectives

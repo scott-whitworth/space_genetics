@@ -20,13 +20,13 @@ void changeAnneal (const std::vector<Adult>& oldAdults, const cudaConstants* cCo
         currentAnneal = cConstants->anneal_initial*.5; 
     } 
     else if(curProgress >= 1e-8 && curProgress < 1e-7){ 
-        currentAnneal = cConstants->anneal_initial*.3; 
+        currentAnneal = cConstants->anneal_initial*.35; 
     } 
     else if(curProgress >= 1e-7 && curProgress < 1e-6){ 
-        currentAnneal = cConstants->anneal_initial*.2; 
+        currentAnneal = cConstants->anneal_initial*.25; 
     } 
     else if(curProgress >= 1e-6 && curProgress < 1e-5){ 
-        currentAnneal = cConstants->anneal_initial*.08; 
+        currentAnneal = cConstants->anneal_initial*.12; 
     } 
     else if(curProgress >= 1e-5 && curProgress < 1e-4){ 
         currentAnneal = cConstants->anneal_initial*.03; 

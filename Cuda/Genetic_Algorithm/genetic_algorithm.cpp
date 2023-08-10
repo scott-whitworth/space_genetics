@@ -303,7 +303,7 @@ void firstGeneration(Child* initialChildren, std::vector<Adult>& oldAdults, cons
 }
 
 //fills oldAdults with the best adults from this generation and the previous generation so that the best parents can be selected
-void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& newAdults, std::vector<Adult>& oldAdults, int& numErrors, int& duplicateNum, const cudaConstants* cConstants, std::mt19937_64 rng, ReferencePoints & refPoints, const int & generation, const double& currentAnneal, int & marsErrors){
+void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& newAdults, std::vector<Adult>& oldAdults, int& numErrors, int& duplicateNum, const cudaConstants* cConstants, std::mt19937_64 rng, ReferencePoints & refPoints, int& totAssoc, const int & generation, const double& currentAnneal, int & marsErrors){
     //ensures this vector is empty and ready for new inputs
     std::vector<Adult>().swap(allAdults); 
 
@@ -348,7 +348,8 @@ void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& 
         findAssociatedPoints(refPoints, allAdults);
     
         //Calculate the rarity of all of the adults
-        calculateRarity(refPoints, allAdults);
+        //  The number of reference points used is returned
+        totAssoc = calculateRarity(refPoints, allAdults);
     }
     else {
         //The user wants the rank-distance method or the algorithm is unspecified (use rank-distance by default)

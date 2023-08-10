@@ -155,10 +155,10 @@ bool LowerOrbitHChange(const Adult& personA, const Adult& personB){
     }
 }
 
-//compares two individuals and sorts based on which individual is closer to 1
-//WARNING: this may be implemented in output.cpp in printFinalGen() when it may not need to be (use for test reasons)
+//Sorts adults based on who has the best progress
+//  Used when checking for convergence to check the best adults (as the algorithm doesn't necessarily put the best adults in the first few positions)
 //input: two individuals
-//output: returns true if personA is closer to 1 than personB
+//output: returns true if personA is closer to 1 (in progress) than personB
 bool bestProgress(const Adult& personA, const Adult& personB) {
     if(personA.errorStatus !=  VALID && personA.errorStatus != DUPLICATE){
         return false;
@@ -173,6 +173,25 @@ bool bestProgress(const Adult& personA, const Adult& personB) {
         return false;
     }
 
+}
+
+//Sorts adults based on who has the worst progress
+//  This is used when assigning rarity so the best individuals are assigned better rarities first
+//input: two individuals
+//output: returns true if personA is further to 1 (in progress) than personB
+bool worstProgress(const Adult& personA, const Adult& personB) {
+    if(personA.errorStatus !=  VALID && personA.errorStatus != DUPLICATE){
+        return false;
+    }
+    if(personB.errorStatus !=  VALID && personB.errorStatus != DUPLICATE){
+        return true;
+    }
+    if (personA.progress < personB.progress) {
+        return true;
+    }
+    else {
+        return false;
+    }
 }
 
 //!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

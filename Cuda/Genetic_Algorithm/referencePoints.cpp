@@ -383,7 +383,7 @@ void findAssociatedPoints (const ReferencePoints & refPoints, std::vector<Adult>
 }
 
 //Function which will handle finding and assigning the rarity of each adult
-void calculateRarity (const ReferencePoints & refPoints, std::vector<Adult> & allAdults) {
+int calculateRarity (const ReferencePoints & refPoints, std::vector<Adult> & allAdults) {
     //2D vector which will keep track of which adults are closest to which reference point
     //  The first dimension corresponds to the indexes of the reference points
     //  The second dimension is a list of the indexes of all adults who have the reference point as closest to them
@@ -400,6 +400,17 @@ void calculateRarity (const ReferencePoints & refPoints, std::vector<Adult> & al
 
         //Add one to the point's number of associated adults
         refPointAssocNum[allAdults[i].associatedRefPoint]++;
+    }
+
+    //Tracks how many reference points have associated adults
+    //  Will be returned so it can eventually be outputted
+    int totAssoc = 0;
+
+    //Go thorugh each reference points and count the number of reference points whose associations are above 0
+    for (int i = 0; i < refPointAssocNum.size(); i++) {
+        if (refPointAssocNum[i] > 0) {
+            totAssoc++;
+        }
     }
 
     //Rarity counter will both be used to assign rarity scores and determine when all rarity scores have been assigned
@@ -457,5 +468,95 @@ void calculateRarity (const ReferencePoints & refPoints, std::vector<Adult> & al
         minAssocIndex = 0;
     }
 
-    return;
+    /* New rarity method where the best progress individuals are assigned best rarity scores first
+
+    //2D vector which will keep track of which adults are closest to which reference point
+    //  The first dimension corresponds to the indexes of the reference points
+    //  The second dimension is a list of adults who have the reference point as closest to them
+    std::vector<std::vector<Adult>> refPointAssociations (refPoints.points.size(), std::vector<Adult>(0));
+
+    //Vector which will keep track of how many adults are associated with each reference point
+    //  The indexes of this vector correspond to the indexes of the reference points
+    std::vector<int> refPointAssocNum (refPoints.points.size(), 0);
+
+    //Go through all adults to generated the association lists
+    for (int i = 0; i < allAdults.size(); i++) {
+        //Add the adult to the list of their closest reference point
+        refPointAssociations[allAdults[i].associatedRefPoint].push_back(allAdults[i]);
+
+        //Add one to the point's number of associated adults
+        refPointAssocNum[allAdults[i].associatedRefPoint]++;
+    }
+
+    //Store the size of allAdults before clearing it so we know how many times to assign rarity scores
+    int numAdults = allAdults.size();
+
+    //Clear the allAdults vector so the adults can be inserted back into it later with rarity scores
+    allAdults.clear();
+
+    //For each reference points sort the adults associated with them in reverse progress order
+    for (int i = 0; i < refPointAssociations.size(); i++) {
+        std::sort(refPointAssociations[i].begin(), refPointAssociations[i].end(), worstProgress);
+    }
+
+    //Rarity counter will both be used to assign rarity scores and determine when all rarity scores have been assigned
+    int rarityCount = 0;
+
+    //Trackers for assigning rarity
+    int minAssocNum = allAdults.size() + 1; //Tracks the minimum number of found associations
+    int minAssocIndex = 0;                  //Tracks the index where the minimum number of associations was found
+
+    //Loop while there are adults with unassigned rarity values
+    while (rarityCount < numAdults) {
+        //Go through all points and find which one has the fewest associations
+        for (int i = 0; i < refPointAssocNum.size(); i++) {
+
+            //Check to see if the current reference point has a new minimum amount of associations
+            if (refPointAssocNum[i] < minAssocNum) {
+                //Save the info of the new minimum
+                minAssocNum = refPointAssocNum[i];
+                minAssocIndex = i;
+            }
+        }
+
+        //Assign the next rarity index
+        //First check to see if the reference point with the fewest associations has no associations
+        if (refPointAssocNum[minAssocIndex] == 0) {
+            //Set the reference points association number very high so it is not considered anymore
+            refPointAssocNum[minAssocIndex] = INT_MAX;
+
+        }        
+        else {
+            //Pick an adult from the points associated adults and assign the current rarity value
+            //  Pick the final adult so it is easy to remove from the vector
+            // allAdults[refPointAssociations[minAssocIndex][refPointAssociations[minAssocIndex].size()-1]].rarity = rarityCount;
+            refPointAssociations[minAssocIndex][refPointAssociations[minAssocIndex].size()-1].rarity = rarityCount;
+
+            //Move the adult from the point's associations to allAdults so it isn't assigned a new rarity
+            allAdults.push_back(refPointAssociations[minAssocIndex][refPointAssociations[minAssocIndex].size()-1]);
+            refPointAssociations[minAssocIndex].pop_back();
+
+            //Check to see if this was the last adult from this reference point
+            if (refPointAssociations[minAssocIndex].size() == 0) {
+                //No other adults are associated with the point, remove it from consideration
+                refPointAssocNum[minAssocIndex] = INT_MAX;
+            }
+            else {
+                //There are still adults so this point needs to be returned to
+                //Add one to the points association count so other points can be considered
+                refPointAssocNum[minAssocIndex]++; 
+            }
+
+            //Add one to the rarity counter for the next adult
+            rarityCount++;
+        }
+
+        //Reset the trackers
+        minAssocNum = allAdults.size() + 1;
+        minAssocIndex = 0;
+    }
+
+    */
+
+    return totAssoc;
 }

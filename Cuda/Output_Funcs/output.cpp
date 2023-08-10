@@ -23,7 +23,7 @@ output::output(const cudaConstants* cConstants, const std::string& selectFolder)
 }
 
 //Call the functions which print during a run
-void output::printGeneration(const cudaConstants * cConstants, const std::vector<Adult>& allAdults, const std::vector<double>& objectiveAvgValues, const int& generation, const double& new_anneal, int& errorNum, const int& duplicateNum, const int & minSteps, const int & avgSteps, const int & maxSteps, const double& minDist, const double& avgDist, const double& maxDist, const double& avgAge, const int& oldestAge, const double& avgBirthday, const int& oldestBirthday, const float& avgGenTime) {
+void output::printGeneration(const cudaConstants * cConstants, const std::vector<Adult>& allAdults, const std::vector<double>& objectiveAvgValues, const int& generation, const double& new_anneal, int& errorNum, const int& duplicateNum, const int& totAssoc, const int & minSteps, const int & avgSteps, const int & maxSteps, const double& minDist, const double& avgDist, const double& maxDist, const double& avgAge, const int& oldestAge, const double& avgBirthday, const int& oldestBirthday, const float& avgGenTime) {
   
   //Check to see if the best adults should be printed to the terminal on this generation
   if (generation % cConstants->disp_freq == 0) {
@@ -37,7 +37,7 @@ void output::printGeneration(const cudaConstants * cConstants, const std::vector
     if (generation % cConstants->write_freq == 0) {
 
       //Push info to the function which prints the full genPerformance file
-      recordGenerationPerformance(cConstants, allAdults, objectiveAvgValues, generation, new_anneal, errorNum, duplicateNum, minSteps, avgSteps, maxSteps, minDist, avgDist, maxDist, avgAge, oldestAge, avgBirthday, oldestBirthday, avgGenTime);
+      recordGenerationPerformance(cConstants, allAdults, objectiveAvgValues, generation, new_anneal, errorNum, duplicateNum, totAssoc, minSteps, avgSteps, maxSteps, minDist, avgDist, maxDist, avgAge, oldestAge, avgBirthday, oldestBirthday, avgGenTime);
       //Push info to the function which prints the simplified genPerformance file
       //recordGenSimple(cConstants, allAdults, objectiveAvgValues, generation);
     }
@@ -97,7 +97,7 @@ void output::initializeGenPerformance(const cudaConstants * cConstants) {
     excelFile << "avg" << cConstants->missionObjectives[i].name << ",";
   }
 
-  excelFile << "anneal,avgGenTime,minDistance,avgDistance,maxDistance,minSteps,avgSteps,maxSteps,totalRanks,avgAge,oldestAge,bestAdultAge,avgBirthday,oldestBirthday,bestAdultBirthday,errorNum,duplicateNum,avgParentProgress,progress,parentChildProgressRatio,alpha,beta,zeta,tripTime,";
+  excelFile << "totalRanks,refPointsUsed,anneal,avgParentProgress,progress,parentChildProgressRatio,minDistance,avgDistance,maxDistance,avgGenTime,minSteps,avgSteps,maxSteps,errorNum,duplicateNum,avgAge,oldestAge,bestAdultAge,avgBirthday,oldestBirthday,bestAdultBirthday,alpha,beta,zeta,tripTime,";
   
   for (int i = 0; i < GAMMA_ARRAY_SIZE; i++) {
     excelFile << "gamma"; 
@@ -240,7 +240,7 @@ void output::copyFile (const std::string& source, const std::string& destination
 
 //!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Take in the current state of the generation and appends to excel file, assumes initializeRecord() had already been called before (no need to output a header row)
-void output::recordGenerationPerformance(const cudaConstants * cConstants, std::vector<Adult> adults, const std::vector<double>& objectiveAvgValues, const int& generation, const double& new_anneal, const int& errorNum, const int& duplicateNum, const int & minSteps, const int & avgSteps, const int & maxSteps, const double& minDist, const double& avgDist, const double& maxDist, const double& avgAge, const int& oldestAge, const double& avgBirthday, const int& oldestBirthday, const float& avgGenTime) {
+void output::recordGenerationPerformance(const cudaConstants * cConstants, std::vector<Adult> adults, const std::vector<double>& objectiveAvgValues, const int& generation, const double& new_anneal, const int& errorNum, const int& duplicateNum, const int& totAssoc, const int & minSteps, const int & avgSteps, const int & maxSteps, const double& minDist, const double& avgDist, const double& maxDist, const double& avgAge, const int& oldestAge, const double& avgBirthday, const int& oldestBirthday, const float& avgGenTime) {
   std::ofstream excelFile;
   int seed = cConstants->time_seed;
   std::string fileId = std::to_string(seed);
@@ -283,22 +283,37 @@ void output::recordGenerationPerformance(const cudaConstants * cConstants, std::
   // std::sort(adults.begin(), adults.end(), rankRaritySort);
   mainSort(adults, cConstants, adults.size());
 
+  //Rank value
+  excelFile << adults[adults.size()-1].rank << ",";
+  
+  //Reference point associations
+  excelFile << totAssoc << ",";
+
   //New anneal every gen
   excelFile << new_anneal << ",";
 
-  //Avg generation time
-  excelFile << avgGenTime << ",";
+  //Progress values
+  excelFile << adults[0].avgParentProgress << ",";
+  excelFile << adults[0].progress << ",";
+  excelFile << adults[0].avgParentProgress/adults[0].progress << ",";
 
   //Distance values
   excelFile << minDist << ",";
   excelFile << avgDist << ",";
   excelFile << maxDist << ",";
+
+  //Avg generation time
+  excelFile << avgGenTime << ",";
+
   //Step values
   excelFile << minSteps << ",";
   excelFile << avgSteps << ",";
   excelFile << maxSteps << ",";
-  //Rank value
-  excelFile << adults[adults.size()-1].rank << ",";
+
+  //Status Counts
+  excelFile << errorNum << ",";
+  excelFile << duplicateNum << ",";
+
   //Age values
   excelFile << avgAge << ",";
   excelFile << oldestAge << ",";
@@ -306,13 +321,6 @@ void output::recordGenerationPerformance(const cudaConstants * cConstants, std::
   excelFile << avgBirthday << ",";
   excelFile << oldestBirthday << ",";
   excelFile << adults[0].birthday << ",";
-  //Status Counts
-  excelFile << errorNum << ",";
-  excelFile << duplicateNum << ",";
-  //Progress values
-  excelFile << adults[0].avgParentProgress << ",";
-  excelFile << adults[0].progress << ",";
-  excelFile << adults[0].avgParentProgress/adults[0].progress << ",";
 
   // Record best individual's parameters
   excelFile << adults[0].startParams.alpha << ",";
@@ -382,7 +390,7 @@ void output::recordAllIndividuals(std::string name, const cudaConstants * cConst
     outputFile << cConstants->missionObjectives[i].name << "Normalization,";
   }
   
-  outputFile << "rank,rarity,distance,numSteps,age,birthday,avgParentProgress,progress,parentChildProgressRatio,";
+  outputFile << "rank,rarity,avgParentProgress,progress,parentChildProgressRatio,distance,assocRefPoint,numSteps,age,birthday,";
 
   for (int i = 0; i < GAMMA_ARRAY_SIZE; i++) {
     outputFile << "gamma" << i << ",";
@@ -412,13 +420,14 @@ void output::recordAllIndividuals(std::string name, const cudaConstants * cConst
     
     outputFile << adults[i].rank << ",";
     outputFile << adults[i].rarity << ",";
-    outputFile << adults[i].distance << ",";
-    outputFile << adults[i].stepCount << ",";
-    outputFile << generation-adults[i].birthday << ",";
-    outputFile << adults[i].birthday << ",";
     outputFile << adults[i].avgParentProgress << ",";
     outputFile << adults[i].progress << ",";
     outputFile << adults[i].progress/adults[i].avgParentProgress << ",";
+    outputFile << adults[i].distance << ",";
+    outputFile << adults[i].associatedRefPoint << ",";
+    outputFile << adults[i].stepCount << ",";
+    outputFile << generation-adults[i].birthday << ",";
+    outputFile << adults[i].birthday << ",";
 
     for (int j = 0; j < GAMMA_ARRAY_SIZE; j++) {
       outputFile << adults[i].startParams.coeff.gamma[j] << ",";

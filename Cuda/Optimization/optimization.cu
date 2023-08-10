@@ -273,6 +273,9 @@ double optimize(const cudaConstants* cConstants, GPUMem & gpuValues, ReferencePo
     int numErrors = 0;
     int marsErrors = 0;
 
+    //Number of different reference points that have adults associated with them every generation
+    int totAssoc = 0;
+
     //Initialize variables needed for distance, number of duplicate adults, and birthday reporting
     int duplicateNum = 0;
     double maxDistance, minDistance, avgDistance, avgAge, avgBirthday;
@@ -311,7 +314,7 @@ double optimize(const cudaConstants* cConstants, GPUMem & gpuValues, ReferencePo
         //      by the end of the function, it is cleared
         //oldAdults goes in with the pool of potential parents that may have generated the newAdults
         //      by the end of the function, it is filled with the best num_individuals adults from allAdults (sorted by rankDistanceSort) 
-        preparePotentialParents(allAdults, newAdults, oldAdults, numErrors, duplicateNum, cConstants, rng, refPoints, generation, currentAnneal, marsErrors);
+        preparePotentialParents(allAdults, newAdults, oldAdults, numErrors, duplicateNum, cConstants, rng, refPoints, totAssoc, generation, currentAnneal, marsErrors);
 
         // Display a '.' to the terminal to show that a generation has been performed
         // This also serves to visually seperate the terminalDisplay() calls across generations 
@@ -329,7 +332,7 @@ double optimize(const cudaConstants* cConstants, GPUMem & gpuValues, ReferencePo
 
         //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE RECORD-_-_-_-_-_-_-_-_-_\n\n";
         //Print out necessary info for this generation
-        genOutputs.printGeneration(cConstants, allAdults, objectiveAvgValues, generation, currentAnneal, numErrors, duplicateNum, minSteps, avgSteps, maxSteps, minDistance, avgDistance, maxDistance, avgAge, generation-oldestBirthday, avgBirthday, oldestBirthday, (totRunTime.count()/(generation+1)));
+        genOutputs.printGeneration(cConstants, allAdults, objectiveAvgValues, generation, currentAnneal, numErrors, duplicateNum, totAssoc, minSteps, avgSteps, maxSteps, minDistance, avgDistance, maxDistance, avgAge, generation-oldestBirthday, avgBirthday, oldestBirthday, (totRunTime.count()/(generation+1)));
 
         // Before replacing new adults, determine whether all are within tolerance
         // Determines when loop is finished

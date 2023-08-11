@@ -3,7 +3,7 @@
 #include <iostream>
 #include <fstream>
 #include <direct.h>
-//#include <algorithm> // for std::sort() (needed for Tesla machine only)
+#include <algorithm> // for std::sort() (needed for Tesla machine only)
 #include "math.h"
 #include "..\Genetic_Algorithm\sort.h"
 
@@ -68,6 +68,9 @@ void output::printFinalGen(const cudaConstants * cConstants, std::vector<Adult>&
 
   //Check to see if there is a convergence before printing the trajectory
   //if (converged) {
+      //Sort the adults by progress so the bin file is made for the confirmed converged adult
+      std::sort(allAdults.begin(), allAdults.end(), bestProgress); 
+
       // Evaluate and print this solution's information to binary files
       trajectoryPrint(generation, cConstants, allAdults[0], gpuValues);
   //}

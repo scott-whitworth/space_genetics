@@ -182,12 +182,36 @@ void createFirstGeneration(std::vector<Adult>& oldAdults, const cudaConstants* c
 
         //String that will store the string of the line
         std::string adultInfo;
+        
+        //Create pivots to parse through line info from allAdults
+        int startPivot, endPivot;
 
         //Initial getline to clear the header row
         std::getline(prevIndividuals, adultInfo);
 
-        //Create pivots to parse through line info from allAdults
-        int startPivot, endPivot;
+        //Tracker will count how many columns need to be skipped before encounering the input variables
+        int parseCount = 0;
+
+        //Set the initial start pivot to the initial character
+        startPivot = 0;
+        //Set the intial end pivot to be the first comma after the start pivot
+        endPivot = adultInfo.find(",", startPivot);
+
+        //To move through the columns to find where the input variables start
+        //  First check to see if the substring between the pivots is 'gamma0' (the first input variable printed)
+        while ((adultInfo.substr(startPivot, endPivot-startPivot)) != "gamma0") {
+            //the column is not the start of the input vars, select the next pivot points
+            //Set the start pivot as the next character after the end pivot
+            startPivot = endPivot + 1;
+            //Set the next end pivot as the next comma
+            endPivot = adultInfo.find(",", startPivot);
+
+            //Add one to parse count to signify a column being skipped
+            parseCount++;
+        }
+
+        //subtract one from parse count to account for 0 indexing
+        parseCount--;
 
         //for loop will continue until the number of parameter sets wanted have been pulled from prevIndividuals
         for (int i = 0; i < cConstants->carryover_individuals; i++) {
@@ -203,17 +227,24 @@ void createFirstGeneration(std::vector<Adult>& oldAdults, const cudaConstants* c
                 startPivot = adultInfo.find(",") + 1;
 
                 //For loop will get all of the paramters for the line
-                for (int j = 0; j < OPTIM_VARS; j++) {
+                //Only need to pase for the number of skips plus the number of input parameters that need to be pulled
+                for (int j = 0; j < (OPTIM_VARS + parseCount); j++) {
+                    
                     //Get the next end pivot
                     //it is the first comma after the start pivot
                     endPivot = adultInfo.find(",", startPivot);
 
-                    //The next param is the substring between the two pivots 
-                    startParamVal = adultInfo.substr(startPivot, endPivot-startPivot);
+                    //Check to see if this is a start parameter
+                    //  Checked by seeing if the current column is past the ones that need to be skipped
+                    //  The check uses j+1 to account for 0 index
+                    if (j >= parseCount) {
+                        //The input param is the substring between the two pivots 
+                        startParamVal = adultInfo.substr(startPivot, endPivot-startPivot);
 
-                    //Push the value to the arrayCPU array
-                    //The order of the params in the csv file is the same order as the OPTIM_VARS array, so no need to parse
-                    baseParams[j][i] = std::stod(startParamVal);
+                        //Push the value to the arrayCPU array
+                        //The order of the params in the csv file is the same order as the OPTIM_VARS array, so no need to parse
+                        baseParams[j-parseCount][i] = std::stod(startParamVal);
+                    }
 
                     //Resetting the start pivot so the next parameter can be pulled
                     startPivot = endPivot + 1;

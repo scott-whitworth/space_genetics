@@ -51,6 +51,8 @@ class ReferencePoints {
     void addPoint(const std::vector<double> values, const cudaConstants* cConstants);
 };
 
+int giveRarity (const cudaConstants *cConstants, std::mt19937_64 rng, ReferencePoints & refPoints, std::vector<Adult> & allAdults);
+
 //!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Functions involved with normalizing the adult's objective values
 

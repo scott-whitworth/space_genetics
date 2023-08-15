@@ -372,15 +372,52 @@ void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& 
     if (cConstants->algorithm == RANK_RARITY) {
         //The user wants to use the rank-rarity method, call the necessary functions for it
 
-        //Calculate the relative cost for the combined adult pool
-        calculateRelCost(cConstants, rng, refPoints, allAdults);
+        //Sort the adults by rank
+        std::sort(allAdults.begin(), allAdults.end(), rankSort);
+
+        //Assign rarity for each rank
+        //Create a vector which stores the adults in a specific rank
+        std::vector<Adult> rankAdults(0);
+
+        //ints to track the indexes of the first and last adults in a rank
+        int start = 0, end = 0;
+
+        //Calculate rarity for each rank
+        //  Calculate rarity for the total number of ranks, which is easily found by getting the rank of the last inidividual
+        while (end < allAdults.size()) {
+            //Interate the end index tracker until the next rank is reached or it reaches the end
+            while (allAdults[end].rank == allAdults[start].rank && end < allAdults.size()) {
+                //Add the rank adult to the rankAdults vector
+                rankAdults.push_back(allAdults[end]);
+
+                //Move to the next adult
+                end++;
+            }
+            
+            //Calculate the rarity for the rank
+            totAssoc += giveRarity(cConstants, rng, refPoints, rankAdults);
+
+            //Put the ranked adults back into allAdults
+            for (int k = 0; k < rankAdults.size(); k++) {
+                allAdults[start + k] = rankAdults[k];
+            }
+
+            //Set the start to be the new end
+            start = end;
+
+            //clear the rankAdults vector for the next rank
+            rankAdults.clear();
+        }
+
+        // //Calculate the relative cost for the combined adult pool
+        // calculateRelCost(cConstants, rng, refPoints, allAdults);
     
-        //Find the closest reference points to each adult based on the new relative cost
-        findAssociatedPoints(refPoints, allAdults);
+        // //Find the closest reference points to each adult based on the new relative cost
+        // findAssociatedPoints(refPoints, allAdults);
     
-        //Calculate the rarity of all of the adults
-        //  The number of reference points used is returned
-        totAssoc = calculateRarity(refPoints, allAdults);
+        // //Calculate the rarity of all of the adults
+        // //  The number of reference points used is returned
+        // totAssoc = calculateRarity(refPoints, allAdults);
     }
     else {
         //The user wants the rank-distance method or the algorithm is unspecified (use rank-distance by default)
@@ -421,7 +458,7 @@ void addToAllAdults(std::vector<Adult> & adultPool, std::vector<Adult> & allAdul
 
     }else if(adultPool[index].errorStatus == DUPLICATE){
         duplicateNum++;
-        allAdults.push_back(adultPool[index]);//remove this if we want to remove duplicates
+        // allAdults.push_back(adultPool[index]);//remove this if we want to remove duplicates
     }
     else{
         allAdults.push_back(adultPool[index]);

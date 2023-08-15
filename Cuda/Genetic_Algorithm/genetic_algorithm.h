@@ -12,7 +12,7 @@
 #include "..\Genetic_Algorithm\child.h"
 #include "..\Genetic_Algorithm\ga_crossover.h"
 #include "..\Genetic_Algorithm\sort.h"
-#include "..\Genetic_Algorithm/referencePoints.h"
+#include "../Genetic_Algorithm/referencePoints.h"
 
 ///////////////////////////////////////////////////////////////
 // Genetic Algorithim Functions                              //

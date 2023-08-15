@@ -46,7 +46,7 @@ bool checkTolerance(std::vector<Adult> & oldAdults, const cudaConstants* cConsta
 //          avgBirthday - average birth generation for the adults
 //          oldestBirthday - the oldest adult's birth generation
 // Outputs: The arguments will be filled in with the up-to-date values for this generation
-void calculateGenerationValues (const std::vector<Adult> & allAdults, const std::vector<objective> & objectives, std::vector<double> & objectiveAvgValues, int & duplicateNum, double & minDist, double & avgDist, double & maxDist, int & minSteps, int & avgSteps, int & maxSteps, const int & generation, double & avgAge, double & avgBirthday, int & oldestBirthday);
+void calculateGenerationValues (std::vector<Adult> & allAdults, const std::vector<objective> & objectives, std::vector<double> & objectiveAvgValues, int & totAssoc, int & duplicateNum, double & minDist, double & avgDist, double & maxDist, int & minSteps, int & avgSteps, int & maxSteps, const int & generation, double & avgAge, double & avgBirthday, int & oldestBirthday);
 
 //----------------------------------------------------------------------------------------------------------------------------
 // Main processing function for Genetic Algorithm
@@ -144,7 +144,7 @@ bool checkTolerance(std::vector<Adult>& oldAdults, const cudaConstants* cConstan
 }
 
 //Function that will calculate distance and birthday values for a generation
-void calculateGenerationValues (const std::vector<Adult> & allAdults, const std::vector<objective> & objectives, std::vector<double> & objectiveAvgValues, int & duplicateNum, double & minDist, double & avgDist, double & maxDist, int & minSteps, int & avgSteps, int & maxSteps, const int & generation, double & avgAge, double & avgBirthday, int & oldestBirthday){
+void calculateGenerationValues (std::vector<Adult> & allAdults, const std::vector<objective> & objectives, std::vector<double> & objectiveAvgValues, int & totAssoc, int & duplicateNum, double & minDist, double & avgDist, double & maxDist, int & minSteps, int & avgSteps, int & maxSteps, const int & generation, double & avgAge, double & avgBirthday, int & oldestBirthday){
     //Reset the dist values
     minDist = static_cast<int>(objectives.size() * MAX_DISTANCE); //Set the min dist to the maximum possible value, so that it will be changed
     avgDist = 0; 
@@ -165,9 +165,27 @@ void calculateGenerationValues (const std::vector<Adult> & allAdults, const std:
     avgAge = 0;
     avgBirthday = 0; 
     oldestBirthday = generation; //Set to generation, since it is the "newest" possible oldest birthday
+
+    //Find the total number reference points used
+    //Reset the total points used
+    totAssoc = 1;
+    //trackers used to determine when a new ref point is used
+    int prevPoint = 0;
+
+    //Sort the adults by lowest ref point index to make it easy to find the number of reference points
+    std::sort(allAdults.begin(), allAdults.end(), lowAssocPoint);
     
     //For loop will iterate through the adult array to find the values needed
     for (int i = 0; i < allAdults.size(); i++) {
+        //Check to see if this adult is associated with a different reference point than before
+        if (allAdults[i].associatedRefPoint != allAdults[prevPoint].associatedRefPoint) {
+            //Add one to the number of used points
+            totAssoc++; 
+
+            //Set the new prevPoint as this index
+            prevPoint = i;
+        }
+
         //Check to see if this adult's distance is a new minimum
         if (allAdults[i].distance < minDist) {
             minDist = allAdults[i].distance; //Set the new min distance
@@ -314,7 +332,7 @@ double optimize(const cudaConstants* cConstants, GPUMem & gpuValues, ReferencePo
         //      by the end of the function, it is cleared
         //oldAdults goes in with the pool of potential parents that may have generated the newAdults
         //      by the end of the function, it is filled with the best num_individuals adults from allAdults (sorted by rankDistanceSort) 
-        preparePotentialParents(allAdults, newAdults, oldAdults, numErrors, duplicateNum, cConstants, rng, refPoints, totAssoc, generation, currentAnneal, marsErrors);
+        preparePotentialParents(allAdults, newAdults, oldAdults, numErrors, duplicateNum, cConstants, rng, refPoints, generation, currentAnneal, marsErrors);
 
         // Display a '.' to the terminal to show that a generation has been performed
         // This also serves to visually seperate the terminalDisplay() calls across generations 
@@ -322,7 +340,10 @@ double optimize(const cudaConstants* cConstants, GPUMem & gpuValues, ReferencePo
 
         //Perform utitlity tasks (adjusting anneal and reporting data)
         //Calculate variables for birthdays and distances
-        calculateGenerationValues(allAdults, cConstants->missionObjectives, objectiveAvgValues, duplicateNum, minDistance, avgDistance, maxDistance, minSteps, avgSteps, maxSteps, generation, avgAge, avgBirthday, oldestBirthday);
+        calculateGenerationValues(allAdults, cConstants->missionObjectives, objectiveAvgValues, totAssoc, duplicateNum, minDistance, avgDistance, maxDistance, minSteps, avgSteps, maxSteps, generation, avgAge, avgBirthday, oldestBirthday);
+
+        //reset sort from calculateGenerationValues function
+        mainSort(allAdults, cConstants, allAdults.size());
 
         //Assumes oldAdults is in rankDistance order
         changeAnneal (oldAdults, cConstants, currentAnneal, generation);

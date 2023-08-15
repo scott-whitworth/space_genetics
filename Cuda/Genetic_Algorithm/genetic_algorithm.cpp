@@ -334,7 +334,7 @@ void firstGeneration(Child* initialChildren, std::vector<Adult>& oldAdults, cons
 }
 
 //fills oldAdults with the best adults from this generation and the previous generation so that the best parents can be selected
-void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& newAdults, std::vector<Adult>& oldAdults, int& numErrors, int& duplicateNum, const cudaConstants* cConstants, std::mt19937_64 rng, ReferencePoints & refPoints, int& totAssoc, const int & generation, const double& currentAnneal, int & marsErrors){
+void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& newAdults, std::vector<Adult>& oldAdults, int& numErrors, int& duplicateNum, const cudaConstants* cConstants, std::mt19937_64 rng, ReferencePoints & refPoints, const int & generation, const double& currentAnneal, int & marsErrors){
     //ensures this vector is empty and ready for new inputs
     std::vector<Adult>().swap(allAdults); 
 
@@ -395,7 +395,7 @@ void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& 
             }
             
             //Calculate the rarity for the rank
-            totAssoc += giveRarity(cConstants, rng, refPoints, rankAdults);
+            giveRarity(cConstants, rng, refPoints, rankAdults);
 
             //Put the ranked adults back into allAdults
             for (int k = 0; k < rankAdults.size(); k++) {

@@ -194,6 +194,18 @@ bool worstProgress(const Adult& personA, const Adult& personB) {
     }
 }
 
+//Sorts adults by the index of their associated reference point, useful for finding the number of reference points used
+//input: two individuals
+//output: returns true if personA has a lower index of its associated reference point than personB
+bool lowAssocPoint(const Adult& personA, const Adult& personB) {
+    if (personA.associatedRefPoint < personB.associatedRefPoint) {
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
 //!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 //Compare two individuals to see if the first individual dominates the second individual
 //Returns true if personA dominates personB.

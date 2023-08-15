@@ -102,7 +102,7 @@ void firstGeneration(Child* initialChildren, std::vector<Adult>& oldAdults, cons
 //         allAdults is filled with 2N - number of duplicates + errors adults from the combination of the inputted old/newAdults vectors
 //              It is sorted by rankDistance
 //         newAdults remains the same (size of N and unsorted)
-void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& newAdults, std::vector<Adult>& oldAdults, int& numErrors, int& duplicateNum, const cudaConstants* cConstants, std::mt19937_64 rng, ReferencePoints & refPoints, int& totAssoc, const int & generation, const double& currentAnneal, int& marsErrors);
+void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& newAdults, std::vector<Adult>& oldAdults, int& numErrors, int& duplicateNum, const cudaConstants* cConstants, std::mt19937_64 rng, ReferencePoints & refPoints, const int & generation, const double& currentAnneal, int& marsErrors);
 
 //function that decides whether or not to add an adult to allAdults based on its errorStatus
 //Input: adultPool - This is either new or oldAdults and an adult from the vector will be checked for errorStatus and added to allAdults

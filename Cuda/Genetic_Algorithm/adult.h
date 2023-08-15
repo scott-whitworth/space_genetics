@@ -130,6 +130,11 @@ bool bestProgress(const Adult& personA, const Adult& personB);
 //output: returns true if personA is further to 1 (in progress) than personB
 bool worstProgress(const Adult& personA, const Adult& personB);
 
+//Sorts adults by the index of their associated reference point, useful for finding the number of reference points used
+//input: two individuals
+//output: returns true if personA has a lower index of its associated reference point than personB
+bool lowAssocPoint(const Adult& personA, const Adult& personB);
+
 //!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 //TODO: below here is probably the second most confusing part of the code. I would document this in a flowchart / readme.md to draw out the particulars of how this engages with rankDistanceSort and the genetic algorithm

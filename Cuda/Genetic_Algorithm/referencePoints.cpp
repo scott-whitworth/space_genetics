@@ -51,7 +51,7 @@ int giveRarity (const cudaConstants *cConstants, std::mt19937_64 rng, ReferenceP
     
     //Calculate the rarity of all of the adults
     //  The number of reference points used is returned
-    return calculateRarity(refPoints, allAdults);
+    return calculateRarity(refPoints, allAdults, rng);
 }
 
 void ReferencePoints::addPoint(const std::vector<double> values, const cudaConstants* cConstants){
@@ -401,7 +401,7 @@ void findAssociatedPoints (const ReferencePoints & refPoints, std::vector<Adult>
 }
 
 //Function which will handle finding and assigning the rarity of each adult
-int calculateRarity (const ReferencePoints & refPoints, std::vector<Adult> & allAdults) {
+int calculateRarity (const ReferencePoints & refPoints, std::vector<Adult> & allAdults, std::mt19937_64 rng) {
     //2D vector which will keep track of which adults are closest to which reference point
     //  The first dimension corresponds to the indexes of the reference points
     //  The second dimension is a list of adults who have the reference point as closest to them
@@ -433,6 +433,9 @@ int calculateRarity (const ReferencePoints & refPoints, std::vector<Adult> & all
             totAssoc++;
         }
     }
+
+    //Shuffle the reference points
+    std::shuffle(refPointAssociations.begin(), refPointAssociations.end(), rng);
 
     //Rarity counter will both be used to assign rarity scores and determine when all rarity scores have been assigned
     int rarityCount = 0;

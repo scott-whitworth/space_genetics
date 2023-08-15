@@ -88,7 +88,7 @@ void findAssociatedPoints (const ReferencePoints & refPoints, std::vector<Adult>
 // Input:   refPoints - the list of reference points 
 //          newAdults - which list of adults which will be compared to find relative rarity
 // Output: each adult will be assigned with a rarity score depending on which, also returns how many reference points have associated adults  
-int calculateRarity (const ReferencePoints & refPoints, std::vector<Adult> & allAdults);
+int calculateRarity (const ReferencePoints & refPoints, std::vector<Adult> & allAdults, std::mt19937_64 rng);
 
 #include "referencePoints.cpp"
 

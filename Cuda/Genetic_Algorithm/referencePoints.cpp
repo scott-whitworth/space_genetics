@@ -197,8 +197,7 @@ void calculateRelCost (const cudaConstants *cConstants, std::mt19937_64 rng, Ref
                 refPoints.objWorst[obj] = allAdults[indiv];
             }
             //Check if the adult has the new best value for this objective that is not better than the dominationThreshold
-            else if ((allAdults[indiv].getParameters(cConstants->missionObjectives[obj]) < refPoints.objBest[obj].getParameters(cConstants->missionObjectives[obj])) 
-                    && (allAdults[indiv].getParameters(cConstants->missionObjectives[obj]) > cConstants->missionObjectives[obj].dominationThreshold)) {
+            else if (allAdults[indiv].getParameters(cConstants->missionObjectives[obj]) < refPoints.objBest[obj].getParameters(cConstants->missionObjectives[obj])) {
 
                 //Found a new best value, store the adult
                 refPoints.objBest[obj] = allAdults[indiv];

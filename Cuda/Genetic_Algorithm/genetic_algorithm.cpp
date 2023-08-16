@@ -372,6 +372,10 @@ void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& 
     if (cConstants->algorithm == RANK_RARITY) {
         //The user wants to use the rank-rarity method, call the necessary functions for it
 
+        //Calculate the rarity for all Adults
+        giveRarity(cConstants, rng, refPoints, allAdults);
+
+        /* The code below is used for calculating the rarity within each rank
         //Sort the adults by rank
         std::sort(allAdults.begin(), allAdults.end(), rankSort);
 
@@ -408,16 +412,7 @@ void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& 
             //clear the rankAdults vector for the next rank
             rankAdults.clear();
         }
-
-        // //Calculate the relative cost for the combined adult pool
-        // calculateRelCost(cConstants, rng, refPoints, allAdults);
-    
-        // //Find the closest reference points to each adult based on the new relative cost
-        // findAssociatedPoints(refPoints, allAdults);
-    
-        // //Calculate the rarity of all of the adults
-        // //  The number of reference points used is returned
-        // totAssoc = calculateRarity(refPoints, allAdults);
+        */
     }
     else {
         //The user wants the rank-distance method or the algorithm is unspecified (use rank-distance by default)

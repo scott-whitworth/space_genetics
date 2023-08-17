@@ -259,7 +259,7 @@ void output::recordGenerationPerformance(const cudaConstants * cConstants, std::
       excelFile << adults[0].getParameters(cConstants->missionObjectives[i]) << ",";
     }
     else {
-      excelFile << -(adults[0].getParameters(cConstants->missionObjectives[i])) << ",";
+      excelFile << 1/(adults[0].getParameters(cConstants->missionObjectives[i])) << ",";
     }
     excelFile << adults[0].normalizedObj[i] << ",";
   }
@@ -274,7 +274,7 @@ void output::recordGenerationPerformance(const cudaConstants * cConstants, std::
       excelFile << adults[0].getParameters(cConstants->missionObjectives[i]) << ",";
     }
     else {
-      excelFile << -(adults[0].getParameters(cConstants->missionObjectives[i])) << ",";
+      excelFile << 1/(adults[0].getParameters(cConstants->missionObjectives[i])) << ",";
     }
     
     //Output the average value for this parameter
@@ -879,7 +879,7 @@ void terminalDisplay(const Adult& individual, const std::vector<objective> objec
       std::cout << "\n\t" << objectives[i].name << ": " << individual.getParameters(objectives[i]);
     }
     else {
-      std::cout << "\n\t" << objectives[i].name << ": " << -(individual.getParameters(objectives[i]));
+      std::cout << "\n\t" << objectives[i].name << ": " << 1/(individual.getParameters(objectives[i]));
     }
 
     //Print the normalization of the objective if the run is using rank-rarity

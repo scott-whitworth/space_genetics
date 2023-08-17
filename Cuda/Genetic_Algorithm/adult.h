@@ -88,6 +88,8 @@ bool LowerPosDiff(Adult& personA, Adult& personB);
 // output: returns true if personB has a lower velocity difference than personA
 bool LowerSpeedDiff(const Adult& personA, const Adult& personB);
 
+bool LowerMaxSpeedDiff(const Adult& personA, const Adult& personB);
+
 // Compare two adults by their orbit positional difference values
 // input: two adults
 // output: returns true if personB has a lower orbit pos difference than personA

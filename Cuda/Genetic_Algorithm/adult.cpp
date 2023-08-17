@@ -47,6 +47,24 @@ bool LowerSpeedDiff(const Adult& personA, const Adult& personB) {
     }
 }
 
+// Compare two individuals by their velocity difference values, used in standard sort to have array contain lowest speedDiff individual at start
+// input: two individuals
+// output: returns true if personA has a lower velocity difference than personB
+bool LowerMaxSpeedDiff(const Adult& personA, const Adult& personB) {
+    if(personA.errorStatus !=  VALID && personA.errorStatus != DUPLICATE){
+        return false;
+    }
+    else if(personB.errorStatus !=  VALID && personB.errorStatus != DUPLICATE){
+        return true;
+    }
+    else if (1/personA.speedDiff < 1/personB.speedDiff) {
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
 // Compare two adults by their orbit positional difference values
 // input: two adults
 // output: returns true if personB has a lower orbit pos difference than personA
@@ -147,7 +165,7 @@ bool LowerOrbitHChange(const Adult& personA, const Adult& personB){
     else if(personB.errorStatus !=  VALID && personB.errorStatus != DUPLICATE){
         return true;
     }
-    else if (personA.orbithChange < personB.orbithChange) {
+    else if (1/personA.orbithChange < 1/personB.orbithChange) {
         return true;
     }
     else {

@@ -10,48 +10,39 @@ ReferencePoints::ReferencePoints(const cudaConstants* cConstants) {
     int valTot = 0;      //Stores the total value inside the newValues vector so the total value doesn't go too high
     int indexTrack = newValues.size() - 1; //Index tracking cursor to move through the newValues vector when modifying its values
 
-    //Create new points while the first value in the new point is less than the number of divisions
-    while (newValues[0] < cConstants->divisions) {
+    //Only calculate new reference points if needed (not needed for 1 obj missions)
+    if(newValues.size() > 0) {
+        //Create new points while the first value in the new point is less than the number of divisions
+        while (newValues[0] < cConstants->divisions) {
 
-        //Create a new point based on the current values
-        addPoint(newValues, cConstants);
+            //Create a new point based on the current values
+            addPoint(newValues, cConstants);
 
-        //Add one to the last index in the new values array to start creating the next point
-        newValues[newValues.size()-1] += 1;
-        //Add one to the total value to reflect the addition to the last index
-        valTot += 1;
-
-        //While loop to make sure the total value of the vector doesn't exceed the maximum value (based on cConstant's divisions)
-        while (valTot > cConstants->divisions) {
-            //Reset the value of the tracked index and subtract the value from the total value
-            valTot -= newValues[indexTrack];
-            newValues[indexTrack] = 0;
-
-            //Go to the previous index and add one to its value
-            indexTrack--;
-            newValues[indexTrack] += 1;
-            //add one to the total value
+            //Add one to the last index in the new values array to start creating the next point
+            newValues[newValues.size()-1] += 1;
+            //Add one to the total value to reflect the addition to the last index
             valTot += 1;
-        }
 
-        //Reset the index cursor
-        indexTrack = newValues.size() - 1;
+            //While loop to make sure the total value of the vector doesn't exceed the maximum value (based on cConstant's divisions)
+            while (valTot > cConstants->divisions) {
+                //Reset the value of the tracked index and subtract the value from the total value
+                valTot -= newValues[indexTrack];
+                newValues[indexTrack] = 0;
+
+                //Go to the previous index and add one to its value
+                indexTrack--;
+                newValues[indexTrack] += 1;
+                //add one to the total value
+                valTot += 1;
+            }
+
+            //Reset the index cursor
+            indexTrack = newValues.size() - 1;
+        }
     }
 
     //Add the last point (where the first value is 1 and the rest are 0)
     addPoint(newValues, cConstants);
-}
-
-int giveRarity (const cudaConstants *cConstants, std::mt19937_64 rng, ReferencePoints & refPoints, std::vector<Adult> & allAdults){
-    //Calculate the relative cost for the combined adult pool
-    calculateRelCost(cConstants, rng, refPoints, allAdults);
-    
-    //Find the closest reference points to each adult based on the new relative cost
-    findAssociatedPoints(refPoints, allAdults);
-    
-    //Calculate the rarity of all of the adults
-    //  The number of reference points used is returned
-    return calculateRarity(refPoints, allAdults, rng);
 }
 
 void ReferencePoints::addPoint(const std::vector<double> values, const cudaConstants* cConstants){
@@ -78,6 +69,18 @@ void ReferencePoints::addPoint(const std::vector<double> values, const cudaConst
     points.push_back(newPoint);
 
     return;
+}
+
+int giveRarity (const cudaConstants *cConstants, std::mt19937_64 rng, ReferencePoints & refPoints, std::vector<Adult> & allAdults){
+    //Calculate the relative cost for the combined adult pool
+    calculateRelCost(cConstants, rng, refPoints, allAdults);
+    
+    //Find the closest reference points to each adult based on the new relative cost
+    findAssociatedPoints(refPoints, allAdults);
+    
+    //Calculate the rarity of all of the adults
+    //  The number of reference points used is returned
+    return calculateRarity(refPoints, allAdults, rng);
 }
 
 //Calculates & returns the normal vector for a plane used to calculate the normalization for any number of objectives greater than or equal to two
@@ -296,15 +299,17 @@ void calculateRelCost (const cudaConstants *cConstants, std::mt19937_64 rng, Ref
             if (abs(denom) < cConstants->doublePrecThresh) {
             //if (denom < cConstants->missionObjectives[j].convergenceThreshold) {
 
-                //minimization vs maximization handling
-                if (cConstants->missionObjectives[obj].goal < 0) {
-                    // denom = cConstants->missionObjectives[j].convergenceThreshold;
-                    denom = cConstants->doublePrecThresh;
-                }
-                else {
-                    // denom = -cConstants->missionObjectives[j].convergenceThreshold;
-                    denom = -cConstants->doublePrecThresh;
-                }
+                denom = cConstants->doublePrecThresh;
+
+                // //minimization vs maximization handling
+                // if (cConstants->missionObjectives[obj].goal < 0) {
+                //     // denom = cConstants->missionObjectives[j].convergenceThreshold;
+                //     denom = cConstants->doublePrecThresh;
+                // }
+                // else {
+                //     // denom = -cConstants->missionObjectives[j].convergenceThreshold;
+                //     denom = -cConstants->doublePrecThresh;
+                // }
             }
 
             //Calculate the actual normailized objective

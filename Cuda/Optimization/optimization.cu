@@ -223,7 +223,7 @@ void calculateGenerationValues (std::vector<Adult> & allAdults, const std::vecto
             }
             else {
                 //Maximization
-                objectiveAvgValues[j] -= allAdults[i].getParameters(objectives[j]);
+                objectiveAvgValues[j] += 1/allAdults[i].getParameters(objectives[j]);
             }
             
         }

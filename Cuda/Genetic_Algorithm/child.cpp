@@ -76,8 +76,11 @@ __host__ double Child::getParameters (const objective & requestObjective) const 
     if (requestObjective.goal == MIN_POS_DIFF) {
         return posDiff;
     }
-    else if (requestObjective.goal == MIN_SPEED_DIFF || requestObjective.goal == MAX_SPEED_DIFF) {
+    else if (requestObjective.goal == MIN_SPEED_DIFF) {
         return speedDiff;
+    }
+    else if (requestObjective.goal == MAX_SPEED_DIFF) {
+        return 1/speedDiff;
     }
     else if (requestObjective.goal == MIN_FUEL_SPENT) {
         return fuelSpent;
@@ -95,7 +98,7 @@ __host__ double Child::getParameters (const objective & requestObjective) const 
         return minMarsDist;
     }
     else if (requestObjective.goal == MAX_ORBIT_ASST){
-        return orbithChange;
+        return 1/orbithChange;
     }
     else {
         //Indicates error
@@ -198,14 +201,15 @@ __host__ void Child::getProgress(const cudaConstants* cConstants){
                 }
                 //The child hasn't met the parameter goal
                 else {
+                    calcProgress += (getParameters(cConstants->missionObjectives[i])/cConstants->missionObjectives[i].convergenceThreshold); 
                     //Add the progress for this parameter to the goal
-                    if (cConstants->missionObjectives[i].goal < 0) {
-                        //For minimization, the progress is the parameter divided by the threshold
-                        calcProgress += (getParameters(cConstants->missionObjectives[i])/cConstants->missionObjectives[i].convergenceThreshold); 
-                    }
-                    else {
-                        calcProgress += (cConstants->missionObjectives[i].convergenceThreshold/getParameters(cConstants->missionObjectives[i])); 
-                    }
+                    // if (cConstants->missionObjectives[i].goal < 0) {
+                    //     //For minimization, the progress is the parameter divided by the threshold
+                    //     calcProgress += (getParameters(cConstants->missionObjectives[i])/cConstants->missionObjectives[i].convergenceThreshold); 
+                    // }
+                    // else {
+                    //     calcProgress += (cConstants->missionObjectives[i].convergenceThreshold/getParameters(cConstants->missionObjectives[i])); 
+                    // }
                 }
         }
 

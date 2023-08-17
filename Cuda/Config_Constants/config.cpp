@@ -515,10 +515,10 @@ void cudaConstants::importObjective(std::string line) {
     }
 
     //See if the objective is a maximization
-    //If so, set the thresholds as a negative so the rest of the code can treat it as a minimization
+    //If so, set the thresholds as a 1/thresholds so the rest of the code can treat it as a minimization
     if (goal > 0) {
-        convergenceThreshold = -convergenceThreshold;
-        dominationThreshold = -dominationThreshold;
+        convergenceThreshold = 1/convergenceThreshold;
+        dominationThreshold = 1/dominationThreshold;
     }    
 
     //Add the objective to the mission objectives vector using the gathered information

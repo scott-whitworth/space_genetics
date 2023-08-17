@@ -240,7 +240,7 @@ void parameterSort(std::vector<Adult> & adults, const objective& sortObjective, 
 
         case MAX_SPEED_DIFF:
             //Sort by minimum speed diff
-            std::sort(adults.begin(), adults.begin()+sortSize, LowerSpeedDiff);
+            std::sort(adults.begin(), adults.begin()+sortSize, LowerMaxSpeedDiff);
             break;
 
         default:

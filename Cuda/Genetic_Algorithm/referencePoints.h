@@ -51,9 +51,16 @@ class ReferencePoints {
     void addPoint(const std::vector<double> values, const cudaConstants* cConstants);
 };
 
+//------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//Function which handles the rarity assignments, calling all of the necessary functions
+// Input:   cConstants - needed for the number of objective
+//          rng - needed to select random initial individuals as the best/worst individuals (see calculateRelCost)
+//          refPoints - needed for the reference point list
+//          allAdults - the list of adults that will be assigned rarity for
+// Output: all of the adults in the allAdults function will be assigned a rarity
 int giveRarity (const cudaConstants *cConstants, std::mt19937_64 rng, ReferencePoints & refPoints, std::vector<Adult> & allAdults);
 
-//!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+//!-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Functions involved with normalizing the adult's objective values
 
 //Calculates & returns the normal vector for a plane used to calculate the normalization for any number of objectives greater than or equal to two

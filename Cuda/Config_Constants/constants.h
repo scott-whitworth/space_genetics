@@ -30,7 +30,6 @@
 // Reason why these 3 values are not in config is due to need for static expected memory with the GPU,
 //        as well as current structural expectations for these values in compiling
 //       (coefficients struct for example)
-// WARNING: As of 7/6/2020, the file used in non-random start (optimizedVector.bin) is based on previous definition of values and so if these are changed from old sizes then it may cause issues for it
 #define GAMMA_ARRAY_SIZE 7  // Number of coefficients for gamma
 #define   TAU_ARRAY_SIZE 3  // Number of coefficients for tau
 #define COAST_ARRAY_SIZE 5  // Number of coefficients for coasting

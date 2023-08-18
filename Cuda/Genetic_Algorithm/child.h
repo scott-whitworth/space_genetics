@@ -28,11 +28,12 @@ struct Child {
     double minMarsDist; // The minimum distance the child is from Mars during the simulation
     double orbithChange; // The change in angular momentum from an orbital assist
 
-    double progress; //progress of the individual's combined outputs. 0 to 1 scale with 0 being poor and 1 meaning that the individual have completed all objectives
-    //Cost for each output/objective for the child. The size of the vector will be the same as the number of objectives
+    //Normalization for each output/objective for the child. The size of the vector will be the same as the number of objectives
+    //  The objecitves of the individual will be compared to those of the other individuals in the generation
     //  Cost is a 0 to 1 scale, with 0 being being best
-    //  Cost is simply a measure of 1-progress for each objective
     std::vector<double> normalizedObj; 
+
+    double progress; //progress of the individual's combined outputs. 0 to 1 scale with 0 being poor and 1 meaning that the individual have completed all objectives
     double avgParentProgress; //The average of the two parents progress
 
     int birthday; //keeps track of the generation this individual was created in 
@@ -43,10 +44,8 @@ struct Child {
     
     int simNum; //Keeps track of the number of simulation cycles this child needed
     
-    
     //All statuses are defined in constants.h
     SIM_STATUS simStatus; //Record the state of the child's simulation, will be set and used in callRK
-    
     
     ERROR_STATUS errorStatus; //record of if child is computed correctly, should be set in callRK
 

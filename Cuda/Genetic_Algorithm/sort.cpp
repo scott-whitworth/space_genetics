@@ -1,3 +1,5 @@
+#include "../Genetic_Algorithm/referencePoints.h" //allows us access to the reference point functions
+
 //gives each adult in the allAdults vector a rank
 void giveRank(std::vector<Adult> & allAdults, const cudaConstants* cConstants) {
     //non-denominated sorting method

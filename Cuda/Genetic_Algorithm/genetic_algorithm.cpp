@@ -308,16 +308,7 @@ void firstGeneration(Child* initialChildren, std::vector<Adult>& oldAdults, cons
     //Now that the children have been simulated, convert the children into adults
     //This will calc the objective outputs for each child
     //It will also put the converted children into the newAdults vector
-    convertToAdults(oldAdults, initialChildren, cConstants); 
-
-    //Only find associated points if the rank-rarity algorithm is used
-    if (cConstants->algorithm == RANK_RARITY) {
-        //Calculate the relative cost for the initial group of adults
-        calculateRelCost(cConstants, rng, refPoints, oldAdults);
-
-        //Find the closest reference points for the initial group of adults
-        findAssociatedPoints(refPoints, oldAdults);
-    }  
+    convertToAdults(oldAdults, initialChildren, cConstants);
 }
 
 //fills oldAdults with the best adults from this generation and the previous generation so that the best parents can be selected

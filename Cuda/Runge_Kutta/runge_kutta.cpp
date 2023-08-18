@@ -6,8 +6,7 @@
 #include <cmath> // used for sine, cosine, and pow functions
 #include "../Motion_Eqns/motion_equations.h"
 
-
-//OUTDATED AS OF SUMMER 2023
+/* The following is outdated as of summer 2023, see the RK4Sim in ruge_kuttaCUDA for the used simulation function
 template <class T> void rk4sys(const T & timeInitial, const T & timeFinal, T *times, const elements<T> & y0, T stepSize, elements<T> *y_new, 
                                const T & absTol, coefficients<T> coeff, T *gamma,  T *tau, int & lastStep, T *accel_output, T *fuelSpent, const T & wetMass, const cudaConstants* cConstant, elements<T> *marsIndex) {
 
@@ -224,6 +223,7 @@ template <class T> void rk4sys(const T & timeInitial, const T & timeFinal, T *ti
             // std::cout << "\nRK4SYS initial vz of craft: " << y0.vz;
     }   
 }
+*/
 
 template <class T> void rk4Reverse(const T & timeInitial, const T & timeFinal, const elements<T> & y0, 
                                    T stepSize, elements<T> & y_new, const T & absTol, const cudaConstants * cConstants) {

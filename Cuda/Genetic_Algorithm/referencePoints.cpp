@@ -71,7 +71,8 @@ void ReferencePoints::addPoint(const std::vector<double> values, const cudaConst
     return;
 }
 
-int giveRarity (const cudaConstants *cConstants, std::mt19937_64 rng, ReferencePoints & refPoints, std::vector<Adult> & allAdults){
+int giveRarity (const cudaConstants *cConstants, std::mt19937_64 rng, ReferencePoints & refPoints, std::vector<Adult> & allAdults) {
+    //Function which handles the rarity assignments, calling all of the necessary functions
     //Calculate the relative cost for the combined adult pool
     calculateRelCost(cConstants, rng, refPoints, allAdults);
     

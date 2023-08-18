@@ -90,7 +90,7 @@
 ## Optimization.cu
 ### main
   - Function which starts the algorithm
-  - Gathers CUDA device properties, reads the inputted config variables, calculates the possible positions for the Earth and Mars, and sets the run's base rng seed 
+  - Gathers CUDA device properties, reads the inputted config variables, calculates the possible positions for the Earth and Mars, calculates the reference points, and sets the run's base rng seed 
   - Runs a for loop which will call the optimize function for the number of runs specified in the config files
     - Recalculates the potential positions for planetary bodies each time through the loop
 
@@ -120,6 +120,8 @@
     - Average, minimum, and maximum distance values
     - Average and oldest ages and birthdays 
     - Average and best values for each objective
+    - Average, min, and max steps
+    - The number of reference points used
 
 <br>
 
@@ -257,7 +259,7 @@
 
 ### createFirstGeneration
   - This function creates a number of new children which are either randomly generated or pulled from a document and passes them to the firstGeneration function
-  - Note: as of writing, the functionality of pulling initial children from a document has not been tested since 2020 and may not work
+    - If carryover_individuals is not set to 0 in genetic.config and the program is able to open the allAdults file printed at the max generation from the file of the current time seed minus 100, the individual info will be taken from the opened allAdults file to make the initial children
 
 ### firstGeneration
   - Passes the children generated from createFirstGeneration to the simulation using callRK
@@ -311,9 +313,15 @@
   2. Adds the maximum distance for one objective to the extreme (first and last) adults
   3. Checks if the goal is a minimum or maximum
     - If it is a minimization, it sets a normalization value to the last individual's variable
-    - If it is a maximization, it sets the normalization value to the variable of the first individual who hasn't met the convergence tolerance
+    - If it is a maximization, it sets the normalization value to the first individual's variable
   4. It adds the maximum distance value to all adults meeting the convergence threshold for this objective
   5. For the rest of the adults not assigned the max distance, it adds the value of the difference between the adult's neighbors divided by the normalization value to the adult's distance
+
+### giveRarity
+  - Call the calculateRelCost, findAssociatedPoints, and calculateRarity functions needed to assign rarity to the inputted adults
+
+### mainSort
+  - Will sort the inputted adults by rank-distance or rank-rarity depending on which algorithm was specified by the user
 
 ### parameterSort
   - Employs a switch statement to read an inputted objective's goal and sort the inputted vector of Adults by the objective's corresponding sort function
@@ -337,15 +345,24 @@ The Child class are the individuals generated through crossover that are put thr
 ### Child_Members
   - startParams: Holds the information about the starting location of the spacecraft. These are the rkParameters that characterize the spacecraft's trip
   - finalPos: The final position and velocity of the spacecraft when at the end of its mission
-  - posDiff: The difference in position between spacecraft and center of target at end of run (in AU)
-  - speedDiff: The difference in speed between spacecraft and target at end of run (in AU/s)
-  - orbitPosDiff: The difference in position between the spacecraft and the orbital radius of the target at the end of the run (in AU)
-  - orbitSpeedDiff: The difference in velocity between the spacecraft and the orbit speed of the target at the end of the run (in AU/s)
-  - fuelSpent: The amount of fuel spent by the individual during its simulation (in kg)
+  - The following variables are used as outputs to optimize
+    - posDiff: The difference in position between spacecraft and center of target at end of run (in AU)
+    - speedDiff: The difference in speed between spacecraft and target at end of run (in AU/s)
+    - orbitPosDiff: The difference in position between the spacecraft and the orbital radius of the target at the end of the run (in AU)
+    - orbitSpeedDiff: The difference in velocity between the spacecraft and the orbit speed of the target at the end of the run (in AU/s)
+    - fuelSpent: The amount of fuel spent by the individual during its simulation (in kg)
+    - minMarsDist: the minimum distance the child gets from Mars during the simulation
+    - orbithChange: The change in angular momentum from an orbital assist
+  - normalizedObj: vector of output normalizations compared to other individuals in the generation
   - progress: How close the individual is to convergence. It is a 0 to 1 scale with 0 being poor and 1 meaning that the individual have completed all objectives
   - avgParentProgress: The average of the individual's two parents' progress values
   - birthday: Keeps track of the generation this individual was created in 
   - stepCount: Counts steps in callRK, needed for orbital missions to keep track of steps
+  - The following objectives are used for the child to do multiple simulation cycles (orbital assists)
+    - simStartTime: the time from which the simulation will start for the child
+    - simStartPos: the position and velocity of the child at the start of the simulation
+    - simNum: the number of simulation cycles the child has completed
+    - simStatus: the status of the child at the end of its simulation
   - errorStatus: Record of if child is computed correctly, should be set in callRK. If a Child has a NAN in any of its elements or if it gets too close to the Sun or Mars, it will be given an error status to prevent it from passing on its undesirable genes
 
 ### Constructors
@@ -377,6 +394,7 @@ The class Adult is built upon the Child class and extends it. Individuals that a
 ### Adult_Members
 - rank: rank is a metric that tells you how an individual compares to other individuals in terms of how well it meets the objectives. Individuals that have a lower rank are better than individuals with a higher rank. For more information about how rank is calculated, please refer to the section about [giveRank](#giverank). 
 - distance: distance is a metric that tells you how different from other individuals an Adult is. It is a measure of genetic diversity and higher distances (more unique individuals) are favored in sorting. For more information on how an Adult gets a distance, refer to the [giveDistance](#givedistance) section.
+- rarity: rarity is similar to distance in that is measured how unique it is compared to other individuals. Lower rarity scores mean the adult is considered more unique 
 ### dominationCheck
 - In essence, an individual "dominates" another individual if and only if it is better (or at least as good as) another individual for EVERY objective.
 - If two Adults have an objective within equate tolerance or below the domination threshold, this parameter will be ignored

@@ -1,4 +1,4 @@
-referencepoints = readtable('referencePoints-1689707216.csv');
+referencepoints = readtable('referencePoints-1692231162.csv');
     referencepointsx = referencepoints.Objective0;
     referencepointsy = referencepoints.Objective1;
     referencepointsz = referencepoints.Objective2;
@@ -8,10 +8,10 @@ plot3(referencepointsx,referencepointsy,referencepointsz,'o');
 
 hold on
 
-cost = readtable('1689722765-AllAdults-gen#150.csv');
-    cost0 = cost.orbitPosDiffNormalization;
-    cost1 = cost.orbitSpeedDiffNormalization;
-    cost2 = cost.minMarsDistNormalization;
+cost = readtable('1692231162-AllAdults-gen#200.csv');
+    cost0 = cost.posDiffNormalization;
+    cost1 = cost.speedDiffNormalization;
+    cost2 = cost.fuel_spentNormalization;
     %cost2 = cost.maxOrbitAssistNormalization;
     
     %objective0 = objective0/max(objective0);
@@ -20,6 +20,6 @@ cost = readtable('1689722765-AllAdults-gen#150.csv');
     
 plot3(cost0,cost1,cost2,'*');
 %plot(cost0,cost1,'*');
-xlabel('orbitPosDiffNormalization')
-ylabel('orbitSpeedDiffNormalization')
-zlabel('minMarsDistNormalization')
+xlabel('posDiffNormalization')
+ylabel('speedDiffNormalization')
+zlabel('fuel_spentNormalization')

@@ -1,10 +1,11 @@
 #ifndef SORT_H
 #define SORT_H
 
-#include "..\Config_Constants\constants.h" //so we can use cuda constants
-#include "..\Genetic_Algorithm\adult.h" //allows us to use adults
+#include "../Config_Constants/constants.h" //so we can use cuda constants
+#include "../Genetic_Algorithm/adult.h" //allows us to use adults
+#include "../Genetic_Algorithm/referencePoints.h" //allows us access to the reference point functions
 #include <vector>   // allows us to use vectors instead of just arrays
-//#include <algorithm> // for std::sort() in sort.cpp (needed for Tesla only)
+#include <algorithm> // for std::sort() in sort.cpp (needed for Tesla only)
 
 ///////////////////////////////////////////////////////////////
 // Sort Functions                                            //

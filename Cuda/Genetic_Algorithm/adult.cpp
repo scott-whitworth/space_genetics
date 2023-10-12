@@ -239,8 +239,10 @@ bool dominationCheck(Adult& personA, Adult& personB, const cudaConstants* cConst
     for (int i = 0; i < cConstants->missionObjectives.size(); i++) {
 
         //Create temp doubles to store the adults' parameters that will be compared
-        double aParam = personA.getParameters(cConstants->missionObjectives[i]);
-        double bParam = personB.getParameters(cConstants->missionObjectives[i]);
+        // double aParam = personA.getParameters(cConstants->missionObjectives[i]);
+        // double bParam = personB.getParameters(cConstants->missionObjectives[i]);
+        double aParam = personA.objTargetDiffs[i];
+        double bParam = personB.objTargetDiffs[i];
         
         //First check determines if the goal is to favor higher values or if it is to favor lower values
         //  This is done by looking at the value of the objective's goal
@@ -250,8 +252,10 @@ bool dominationCheck(Adult& personA, Adult& personB, const cudaConstants* cConst
         //This is needed because the signs of the comparisons need to be changed
         // if (cConstants->missionObjectives[i].goal < 0) {
             //While not converged ...
-            if ( !(aParam < cConstants->missionObjectives[i].dominationThreshold
-                && bParam < cConstants->missionObjectives[i].dominationThreshold) ) {
+            // if ( !(aParam < cConstants->missionObjectives[i].dominationThreshold
+            //     && bParam < cConstants->missionObjectives[i].dominationThreshold) ) {
+            if ( !(aParam < cConstants->missionObjectives[i].allowedDifference
+                && bParam < cConstants->missionObjectives[i].allowedDifference) ) {
                 
                 //Means they haven't met the parameters
                 //First check to see if A's parameter is less than B's parameter (within a tolerance)

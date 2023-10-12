@@ -406,7 +406,7 @@ void cudaConstants::importObjective(std::string line) {
     //temp storage variables that will be used to create the new objective object
     std::string name;
     parameterGoals goal; 
-    double convergenceThreshold, dominationThreshold, equateTolerance; 
+    double target, diff, equateTolerance; 
 
     //Temp string will assist with eliminating spaces from the line and identifying the goal
     std::string tempStr; 
@@ -449,6 +449,14 @@ void cudaConstants::importObjective(std::string line) {
         //optimize for the minimum speed difference
         goal = MIN_SPEED_DIFF; 
     }
+    else if (tempStr == "min_horz_velocity_diff") {
+        //optimize for a final horizontal velocity angle difference 
+        goal = MIN_HORZ_VEL_DIFF; 
+    }
+    else if (tempStr == "min_vert_velocity_diff") {
+        //optimize for a final vertical velocity angle difference 
+        goal = MIN_VERT_VEL_DIFF; 
+    }
     else if (tempStr == "min_fuel_spent") {
         //optimize for minimal fuel usage
         goal = MIN_FUEL_SPENT;
@@ -484,14 +492,14 @@ void cudaConstants::importObjective(std::string line) {
     endPivot = line.find(",", beginningPivot); 
 
     //Pull the convergence tolerance from the substring
-    convergenceThreshold = std::stod(line.substr(beginningPivot, endPivot - beginningPivot + 1));
+    target = std::stod(line.substr(beginningPivot, endPivot - beginningPivot + 1));
 
     //Find the next pivot point for the domination tolerance
     beginningPivot = endPivot+1;
     endPivot = line.find(",", beginningPivot);
     
     //Get the domination threshold from the last substring
-    dominationThreshold = std::stod(line.substr(beginningPivot, endPivot - beginningPivot + 1));
+    diff = std::stod(line.substr(beginningPivot, endPivot - beginningPivot + 1));
 
     //Find the last pivot points
     beginningPivot = endPivot+1; 
@@ -505,24 +513,24 @@ void cudaConstants::importObjective(std::string line) {
     if (goal == 0) {
         std::cout << "\n-----BAD OBJECTIVE GOAL PULLED; BAD OBJECTIVE: " << name << "-----\n";
     }
-    //Check to see if the goal is to minimize, but the domination threshold is set higher than the convergence threshold
-    else if (goal < 0 && dominationThreshold > convergenceThreshold) {
-        std::cout << "\n-----DOMINATION THRESHOLD SET TOO HIGH; BAD OBJECTIVE: " << name << "-----\n";
-    }
-    //Check to see if the goal is to maximize, but the domination threshold is set lower than the convergence threshold
-    else if (goal > 0 && dominationThreshold < convergenceThreshold) {
-        std::cout << "\n-----DOMINATION THRESHOLD SET TOO LOW; BAD OBJECTIVE: " << name << "-----\n";
-    }
+    // //Check to see if the goal is to minimize, but the domination threshold is set higher than the convergence threshold
+    // else if (goal < 0 && dominationThreshold > convergenceThreshold) {
+    //     std::cout << "\n-----DOMINATION THRESHOLD SET TOO HIGH; BAD OBJECTIVE: " << name << "-----\n";
+    // }
+    // //Check to see if the goal is to maximize, but the domination threshold is set lower than the convergence threshold
+    // else if (goal > 0 && dominationThreshold < convergenceThreshold) {
+    //     std::cout << "\n-----DOMINATION THRESHOLD SET TOO LOW; BAD OBJECTIVE: " << name << "-----\n";
+    // }
 
     //See if the objective is a maximization
     //If so, set the thresholds as a 1/thresholds so the rest of the code can treat it as a minimization
-    if (goal > 0) {
-        convergenceThreshold = 1/convergenceThreshold;
-        dominationThreshold = 1/dominationThreshold;
-    }    
+    // if (goal > 0) {
+    //     convergenceThreshold = 1/convergenceThreshold;
+    //     dominationThreshold = 1/dominationThreshold;
+    // }    
 
     //Add the objective to the mission objectives vector using the gathered information
-    missionObjectives.push_back(objective(name, goal, convergenceThreshold, dominationThreshold, equateTolerance)); 
+    missionObjectives.push_back(objective(name, goal, target, diff, equateTolerance)); 
 }
 
 // Output cudaConstant contents with formatting for better readibility when doing a run in main()
@@ -573,8 +581,8 @@ std::ostream& operator<<(std::ostream& os, const cudaConstants& object) {
 
     os << "Mission Goals: ";
     for (int i = 0; i < object.missionObjectives.size(); i++) {
-        os << "\n\tObjective: " << object.missionObjectives[i].name << "\tIdentified Goal: " << object.missionObjectives[i].goal << "\tConvergence Threshold: " << object.missionObjectives[i].convergenceThreshold 
-           << "\tDomination Threshold: " << object.missionObjectives[i].dominationThreshold << "\tEquate Tolerance: " << object.missionObjectives[i].equateTolerance; 
+        os << "\n\tObjective: " << object.missionObjectives[i].name << "\tIdentified Goal: " << object.missionObjectives[i].goal << "\tTarget: " << object.missionObjectives[i].target 
+           << "\tAllowed Difference: " << object.missionObjectives[i].allowedDifference << "\tEquate Tolerance: " << object.missionObjectives[i].equateTolerance; 
     }
     os << "\n";
     os << "====================================================================================================\n";

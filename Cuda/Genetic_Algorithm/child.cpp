@@ -37,6 +37,7 @@ Child::Child(rkParameters<double> & childParameters, const cudaConstants* cConst
 
     avgParentProgress = calcAvgParentProgress; //The avg progress of the creating parents, if any (0 for randomly generated children)
     normalizedObj = std::vector<double>(cConstants->missionObjectives.size(), 0); //Resize the objective progress vector to match the number of objectives and set the default progress to be 0 (bad value)
+    objTargetDiffs = std::vector<double>(cConstants->missionObjectives.size(), 0); //Resize the objective difference vector to match the number of objectives and set the default progress to be 0 (bad value)
 
     stepCount = 0; //no calculations done yet, default is zero
     simStartTime = 0; //Inititially start the simulation at the start of the trip time
@@ -64,6 +65,7 @@ Child:: Child(const Child& other){
     avgParentProgress = other.avgParentProgress;
     progress = other.progress;
     normalizedObj = other.normalizedObj;
+    objTargetDiffs = other.objTargetDiffs;
     stepCount = other.stepCount;
     minMarsDist = other.minMarsDist;
     orbithChange = other.orbithChange;
@@ -81,6 +83,12 @@ __host__ double Child::getParameters (const objective & requestObjective) const 
     }
     else if (requestObjective.goal == MAX_SPEED_DIFF) {
         return 1/speedDiff;
+    }
+    else if (requestObjective.goal == MIN_HORZ_VEL_DIFF) {
+        return horzVelDiff;
+    }
+    else if (requestObjective.goal == MIN_VERT_VEL_DIFF) {
+        return vertVelDiff;
     }
     else if (requestObjective.goal == MIN_FUEL_SPENT) {
         return fuelSpent;
@@ -127,6 +135,54 @@ __host__ __device__ double Child::getSpeedDiff(const cudaConstants* cConstants) 
     speedDiff = sqrt(pow(cConstants->vr_fin_target - finalPos.vr, 2) + pow(cConstants->vtheta_fin_target - finalPos.vtheta, 2) + pow(cConstants->vz_fin_target - finalPos.vz, 2)); 
 
     return speedDiff;
+}
+
+// Calculates a horizontal velocity angle difference
+// Input: cConstants in accessing properties for the final velocity of the target (such as vr_fin_target, vtheta_fin_target, and vz_fin_target)
+// Output: Assigns and returns the difference in horizontal velocity angle between the individual and the target
+__host__ __device__ double Child::getHorzVelDiff(const cudaConstants* cConstants) {
+    //Use A*B=|A||B|cos(theta) equation to get theta
+    //Initialize equation values
+    double indMag = 0, tarMag = 0, dot = 0;
+
+    //Calculate magnitudes
+    //Individual
+    indMag = sqrt(pow(finalPos.vr, 2) + pow(finalPos.vtheta, 2));
+    //Target
+    tarMag = sqrt(pow(cConstants->vr_fin_target, 2) + pow(cConstants->vtheta_fin_target, 2));
+
+    //Calculate dot product
+    dot = (finalPos.vr * cConstants->vr_fin_target) + (finalPos.vtheta * cConstants->vtheta_fin_target);
+
+    //Calculate angle difference
+    horzVelDiff = acos(dot/(indMag * tarMag));
+
+    //return the difference
+    return horzVelDiff;
+}
+
+// Calculates a vertical velocity angle difference
+// Input: cConstants in accessing properties for the final velocity of the target (such as vr_fin_target, vtheta_fin_target, and vz_fin_target)
+// Output: Assigns and returns the difference in vertical velocity angle between the individual and the target
+__host__ __device__ double Child::getVertVelDiff(const cudaConstants* cConstants) {
+    //Use A*B=|A||B|cos(theta) equation to get theta
+    //Initialize equation values
+    double indMag = 0, tarMag = 0, dot = 0;
+
+    //Calculate magnitudes
+    //Individual
+    indMag = sqrt(pow(finalPos.vz, 2) + pow(finalPos.vtheta, 2));
+    //Target
+    tarMag = sqrt(pow(cConstants->vz_fin_target, 2) + pow(cConstants->vtheta_fin_target, 2));
+
+    //Calculate dot product
+    dot = (finalPos.vz * cConstants->vz_fin_target) + (finalPos.vtheta * cConstants->vtheta_fin_target);
+
+    //Calculate angle difference
+    vertVelDiff = acos(dot/(indMag * tarMag));
+
+    //return the difference
+    return vertVelDiff;
 }
 
 // Calculates an orbit posDiff value
@@ -195,13 +251,15 @@ __host__ void Child::getProgress(const cudaConstants* cConstants){
             // if (cConstants->missionObjectives[i].goal < 0) {//Minimization
                 
                 //See if the child has met the the convergence threshold for this parameter
-                if (getParameters(cConstants->missionObjectives[i]) < cConstants->missionObjectives[i].convergenceThreshold) {
+                // if (getParameters(cConstants->missionObjectives[i]) < cConstants->missionObjectives[i].convergenceThreshold) {
+                if (objTargetDiffs[i] < cConstants->missionObjectives[i].allowedDifference) {
                     //Add one to the progress to signify that the parameter has met the goal
                     calcProgress += 1; 
                 }
                 //The child hasn't met the parameter goal
                 else {
-                    calcProgress += (getParameters(cConstants->missionObjectives[i])/cConstants->missionObjectives[i].convergenceThreshold); 
+                    // calcProgress += (getParameters(cConstants->missionObjectives[i])/cConstants->missionObjectives[i].convergenceThreshold); 
+                    calcProgress += (objTargetDiffs[i]/cConstants->missionObjectives[i].allowedDifference); 
                     //Add the progress for this parameter to the goal
                     // if (cConstants->missionObjectives[i].goal < 0) {
                     //     //For minimization, the progress is the parameter divided by the threshold

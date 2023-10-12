@@ -112,11 +112,18 @@ void convertToAdults(std::vector<Adult> & newAdults, Child* newChildren, const c
         //The two functions will look at the child's errorStatus and set the diffs based on that
         newChildren[i].getPosDiff(cConstants);
         newChildren[i].getSpeedDiff(cConstants);
+        newChildren[i].getHorzVelDiff(cConstants);
+        newChildren[i].getVertVelDiff(cConstants);
         newChildren[i].getOrbitPosDiff(cConstants);
         newChildren[i].getOrbitSpeedDiff(cConstants);
 
         //Get progress now that all of the outputs are ready
         newChildren[i].getProgress(cConstants);
+
+        for (int j = 0; j < cConstants->missionObjectives.size(); j++) {
+            newChildren[i].objTargetDiffs[j] = abs(newChildren[i].getParameters(cConstants->missionObjectives[j]) - cConstants->missionObjectives[j].target);
+        }
+        
     }
     
     //Iterate through the newChildren vector to add them to the newAdult vector
@@ -341,10 +348,14 @@ void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& 
         std::cout << "ERROR: The size of allAdults is smaller than survivor count!" << std::endl;
     }
 
+    std::cout << "\nMade it to give rank\n";
+
     //Calculate rank of each adult based on domination sort
     //* Ignore any nans at the end of allAdults
     //must be called after checking for nans and before giveDistance
     giveRank(allAdults, cConstants); //gives a rank to each adult
+
+    std::cout << "\nMade it thru give rank\n";
 
     //Check to see which algorithm to use
     if (cConstants->algorithm == RANK_RARITY) {

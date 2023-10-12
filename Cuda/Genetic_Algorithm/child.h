@@ -22,11 +22,20 @@ struct Child {
 
     double posDiff; // in AU, difference in position between spacecraft and center of target at end of run
     double speedDiff; // in AU/s, difference in velocity between spacecraft and target at end of run
+
+    double horzVelDiff; // in deg., horizontal plane angle difference between the final velocities of the spacecraft and the target
+    double vertVelDiff; // in deg., vertical plane angle difference between the final velocities of the spacecraft and the target
+
     double orbitPosDiff; // in AU, difference in position between the spacecraft and the orbital radius of the target at the end of the run
     double orbitSpeedDiff; // in AU/s, the difference in velocity between the spacecraft and the orbit speed of the target at the end of the run
+
     double fuelSpent; // in kg, the amount of fuel spent by the individual during its simulation
+
     double minMarsDist; // The minimum distance the child is from Mars during the simulation
     double orbithChange; // The change in angular momentum from an orbital assist
+
+    //Vector that will store the (absolute value) differences between the child's values and the target
+    std::vector<double> objTargetDiffs;
 
     //Normalization for each output/objective for the child. The size of the vector will be the same as the number of objectives
     //  The objecitves of the individual will be compared to those of the other individuals in the generation
@@ -119,6 +128,16 @@ struct Child {
     // Input: cConstants in accessing properties for the final velocity of the target (such as vr_fin_target, vtheta_fin_target, and vz_fin_target)
     // Output: Assigns and returns this individual's speedDiff value
     __host__ __device__ double getSpeedDiff(const cudaConstants* cConstants);
+
+    // Calculates a horizontal velocity angle difference
+    // Input: cConstants in accessing properties for the final velocity of the target (such as vr_fin_target, vtheta_fin_target, and vz_fin_target)
+    // Output: Assigns and returns the difference in horizontal velocity angle between the individual and the target
+    __host__ __device__ double getHorzVelDiff(const cudaConstants* cConstants);
+
+    // Calculates a vertical velocity angle difference
+    // Input: cConstants in accessing properties for the final velocity of the target (such as vr_fin_target, vtheta_fin_target, and vz_fin_target)
+    // Output: Assigns and returns the difference in vertical velocity angle between the individual and the target
+    __host__ __device__ double getVertVelDiff(const cudaConstants* cConstants);
 
     // Calculates an orbit posDiff value
     // Input: cConstants in accessing properties for the orbit radius of the target

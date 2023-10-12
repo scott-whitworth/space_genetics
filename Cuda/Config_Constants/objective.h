@@ -16,6 +16,8 @@ enum parameterGoals {
     MIN_ORBIT_POS_DIFF = -5,
     MIN_ORBIT_SPEED_DIFF = -6,
     MIN_MARS_DIST = -7, 
+    MIN_HORZ_VEL_DIFF = -8,
+    MIN_VERT_VEL_DIFF = -9,
 
     //Error value
     UNKNOWN = 0, 
@@ -47,12 +49,16 @@ struct objective {
     parameterGoals goal; 
 
     //The convergence threshold; this will be used to determine whether a parameter has been solved by the best individual
-    double convergenceThreshold; 
+    // double convergenceThreshold;
+    //The requested target
+    double target; 
 
     //The domination threshold determines when the program will/will not prioritize better values
     //      If two individuals compared in a domination check have parameter values better than the domination check,
     //          the parameter will not be considered for domination
-    double dominationThreshold; 
+    // double dominationThreshold; 
+    //The maximum allowed difference, smaller difference will be considered solved for the objective
+    double allowedDifference;
 
     //equateTolerance determines the differentiation needed for two parameters to be considered not equal
     //  this is primarily a floating point comparison issue
@@ -63,8 +69,8 @@ struct objective {
 
     //Constructor that accepts the information for an objective, should be the only constructor used
     //    Should only be called when the mission.config file is parsed/loaded
-    objective(std::string _name, parameterGoals _goal, double _convergenceThreshold, double _dominationThreshold, double _equateTolerance):
-        name(_name), goal(_goal), convergenceThreshold(_convergenceThreshold), dominationThreshold(_dominationThreshold), equateTolerance(_equateTolerance) {}
+    objective(std::string _name, parameterGoals _goal, double _target, double _allowedDiff, double _equateTolerance):
+        name(_name), goal(_goal), target(_target), allowedDifference(_allowedDiff), equateTolerance(_equateTolerance) {}
 };
 
 #endif

@@ -29,7 +29,7 @@ void giveRank(std::vector<Adult> & allAdults, const cudaConstants* cConstants) {
         //For each individual within allAdults, compare them to each other adult
         //    becasue of mirroring aA[5] => aA[7] is the same as aA[7] => aA[5], only the upper half need to be checked
         for(int j = i+1; j < allAdults.size(); j++){
-            //Check to see if i dominates j
+                        //Check to see if i dominates j
             if (dominationCheck(allAdults[i], allAdults[j], cConstants)){
                 //Put the jth index in the set of individuals dominated by i
                 domination[i].push_back(j);
@@ -142,24 +142,24 @@ void giveDistance(std::vector<Adult> & allAdults, const cudaConstants* cConstant
         //For minimizations, its the last value in the vector
         //For maximizations, its the first value
         if (cConstants->missionObjectives[i].goal < 0) {
-           normalizationValue = allAdults[validAdults-1].getParameters(cConstants->missionObjectives[i]); 
+           normalizationValue = allAdults[validAdults-1].objTargetDiffs[i]; 
         }
         else {
-            normalizationValue = allAdults[0].getParameters(cConstants->missionObjectives[i]);
+            normalizationValue = allAdults[0].objTargetDiffs[i];
         }
         
         //Add the distance to all non-converged individuals for this objective
         for(int j = metThreshold + 1; j < validAdults - 1; j++) {
             //Check to see if the adult has met the convergence threshold
             //Add the max distance to the adult if so
-            if (allAdults[j].getParameters(cConstants->missionObjectives[i]) < cConstants->missionObjectives[i].convergenceThreshold) {
+            if (allAdults[j].objTargetDiffs[i] < cConstants->missionObjectives[i].allowedDifference) {
                 allAdults[j].distance += MAX_DISTANCE;
             }
             //The adult has not met the convergence threshold for this objective, use the normal distance calculation
             else {
                 //Divide left and right individuals by the largest value individual to normalize
-                normalParamLeft = allAdults[j+1].getParameters(cConstants->missionObjectives[i]) / normalizationValue;
-                normalParamRight = allAdults[j-1].getParameters(cConstants->missionObjectives[i]) / normalizationValue;
+                normalParamLeft = allAdults[j+1].objTargetDiffs[i] / normalizationValue;
+                normalParamRight = allAdults[j-1].objTargetDiffs[i] / normalizationValue;
 
                 //distance += abs((i+1) - (i-1))
                 allAdults[j].distance += abs((normalParamLeft - normalParamRight));

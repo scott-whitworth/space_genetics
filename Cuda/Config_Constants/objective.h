@@ -9,22 +9,19 @@
 //      positive values indicate a favor for large values
 enum parameterGoals {
     //Minimization goals
-    MIN_POS_DIFF = -1, 
-    MIN_SPEED_DIFF = -2,
-    MIN_FUEL_SPENT = -3,
-    MIN_TRIP_TIME = -4,
-    MIN_ORBIT_POS_DIFF = -5,
-    MIN_ORBIT_SPEED_DIFF = -6,
-    MIN_MARS_DIST = -7, 
-    MIN_HORZ_VEL_DIFF = -8,
-    MIN_VERT_VEL_DIFF = -9,
+    POS_DIFF = 1, 
+    SPEED_DIFF = 2,
+    FUEL_SPENT = 3,
+    TRIP_TIME = 4,
+    ORBIT_POS_DIFF = 5,
+    ORBIT_SPEED_DIFF = 6,
+    MARS_DIST = 7, 
+    HORZ_VEL_DIFF = 8,
+    VERT_VEL_DIFF = 9,
+    ORBIT_ASST = 10,
 
     //Error value
-    UNKNOWN = 0, 
-
-    //Maximization goals
-    MAX_ORBIT_ASST = 1,
-    MAX_SPEED_DIFF = 2, 
+    UNKNOWN = 0,
 };
 
 //See mission_config_readme.md for more details

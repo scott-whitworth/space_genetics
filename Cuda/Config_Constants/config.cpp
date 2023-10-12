@@ -441,46 +441,42 @@ void cudaConstants::importObjective(std::string line) {
     tempStr = line.substr(beginningPivot, endPivot - beginningPivot); 
 
     //Determine the parameter goal based on the next segment of the imported line
-    if (tempStr == "min_pos_diff") {
+    if (tempStr == "pos_diff") {
         //Will optimize for minimum position difference
-        goal = MIN_POS_DIFF;
+        goal = POS_DIFF;
     }
-    else if (tempStr == "min_speed_diff") {
+    else if (tempStr == "speed_diff") {
         //optimize for the minimum speed difference
-        goal = MIN_SPEED_DIFF; 
+        goal = SPEED_DIFF; 
     }
-    else if (tempStr == "min_horz_velocity_diff") {
+    else if (tempStr == "horz_velocity_diff") {
         //optimize for a final horizontal velocity angle difference 
-        goal = MIN_HORZ_VEL_DIFF; 
+        goal = HORZ_VEL_DIFF; 
     }
-    else if (tempStr == "min_vert_velocity_diff") {
+    else if (tempStr == "vert_velocity_diff") {
         //optimize for a final vertical velocity angle difference 
-        goal = MIN_VERT_VEL_DIFF; 
+        goal = VERT_VEL_DIFF; 
     }
-    else if (tempStr == "min_fuel_spent") {
+    else if (tempStr == "fuel_spent") {
         //optimize for minimal fuel usage
-        goal = MIN_FUEL_SPENT;
+        goal = FUEL_SPENT;
     }
-    else if (tempStr == "min_trip_time") {
+    else if (tempStr == "trip_time") {
         //Optimize for minimal trip time
-        goal = MIN_TRIP_TIME;
+        goal = TRIP_TIME;
     }
-    else if (tempStr == "min_orbit_pos_diff") {
-        goal = MIN_ORBIT_POS_DIFF;
+    else if (tempStr == "orbit_pos_diff") {
+        goal = ORBIT_POS_DIFF;
     }
-    else if (tempStr == "min_orbit_speed_diff") {
-        goal = MIN_ORBIT_SPEED_DIFF;
+    else if (tempStr == "orbit_speed_diff") {
+        goal = ORBIT_SPEED_DIFF;
     }
-    else if (tempStr == "min_mars_dist") {
-        goal = MIN_MARS_DIST;
+    else if (tempStr == "mars_dist") {
+        goal = MARS_DIST;
     }
-    else if (tempStr == "max_speed_diff") {
-        //Optimize for highest speed
-        goal = MAX_SPEED_DIFF; 
-    }
-    else if (tempStr == "max_orbit_asst"){
+    else if (tempStr == "orbit_asst"){
         //Optimize for the highest change in angular momentum during an assist
-        goal = MAX_ORBIT_ASST;
+        goal = ORBIT_ASST;
     }
     else {
         //No parameter goal identified
@@ -512,22 +508,7 @@ void cudaConstants::importObjective(std::string line) {
     //See if the goal is set correctly
     if (goal == 0) {
         std::cout << "\n-----BAD OBJECTIVE GOAL PULLED; BAD OBJECTIVE: " << name << "-----\n";
-    }
-    // //Check to see if the goal is to minimize, but the domination threshold is set higher than the convergence threshold
-    // else if (goal < 0 && dominationThreshold > convergenceThreshold) {
-    //     std::cout << "\n-----DOMINATION THRESHOLD SET TOO HIGH; BAD OBJECTIVE: " << name << "-----\n";
-    // }
-    // //Check to see if the goal is to maximize, but the domination threshold is set lower than the convergence threshold
-    // else if (goal > 0 && dominationThreshold < convergenceThreshold) {
-    //     std::cout << "\n-----DOMINATION THRESHOLD SET TOO LOW; BAD OBJECTIVE: " << name << "-----\n";
-    // }
-
-    //See if the objective is a maximization
-    //If so, set the thresholds as a 1/thresholds so the rest of the code can treat it as a minimization
-    // if (goal > 0) {
-    //     convergenceThreshold = 1/convergenceThreshold;
-    //     dominationThreshold = 1/dominationThreshold;
-    // }    
+    } 
 
     //Add the objective to the mission objectives vector using the gathered information
     missionObjectives.push_back(objective(name, goal, target, diff, equateTolerance)); 

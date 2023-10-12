@@ -119,8 +119,8 @@ void giveDistance(std::vector<Adult> & allAdults, const cudaConstants* cConstant
     //Iterate through the objectives
     for (int i = 0; i < cConstants->missionObjectives.size(); i++) {
         
-        //Sort allAdults based on the objective's goal
-        parameterSort(allAdults, cConstants->missionObjectives[i], validAdults); 
+        //Sort allAdults based on the objective's target differences
+        std::sort (allAdults.begin(), allAdults.begin()+validAdults, [i] (Adult a, Adult b) {return a.objTargetDiffs[i] < b.objTargetDiffs[i];});
 
         //Correct sort has been applied, apply the max distance to the extreme valid adults
         allAdults[0].distance += MAX_DISTANCE; 
@@ -135,18 +135,10 @@ void giveDistance(std::vector<Adult> & allAdults, const cudaConstants* cConstant
         int metThreshold = 0;
 
         //Stores the value of the parameter which will be used to normalize the distances of the non-converged individuals
-        //Value should be set to the largest valid value for the objective, which will be located at different points depending on the objective
-        double normalizationValue = 0;
+        //Value should be set to the largest valid value for the objective
+        double normalizationValue = allAdults[validAdults-1].objTargetDiffs[i];
 
-        //Get the largest value for the normalization
-        //For minimizations, its the last value in the vector
-        //For maximizations, its the first value
-        if (cConstants->missionObjectives[i].goal < 0) {
-           normalizationValue = allAdults[validAdults-1].objTargetDiffs[i]; 
-        }
-        else {
-            normalizationValue = allAdults[0].objTargetDiffs[i];
-        }
+        // std::cout << "\nNormalization value: " << normalizationValue << "\n";
         
         //Add the distance to all non-converged individuals for this objective
         for(int j = metThreshold + 1; j < validAdults - 1; j++) {
@@ -160,6 +152,8 @@ void giveDistance(std::vector<Adult> & allAdults, const cudaConstants* cConstant
                 //Divide left and right individuals by the largest value individual to normalize
                 normalParamLeft = allAdults[j+1].objTargetDiffs[i] / normalizationValue;
                 normalParamRight = allAdults[j-1].objTargetDiffs[i] / normalizationValue;
+
+                // std::cout << "\tLeft: " << normalParamLeft << "\n\tRight: " << normalParamRight << "\n";
 
                 //distance += abs((i+1) - (i-1))
                 allAdults[j].distance += abs((normalParamLeft - normalParamRight));
@@ -200,49 +194,44 @@ void parameterSort(std::vector<Adult> & adults, const objective& sortObjective, 
         //  MIN_ORBITAL_POS_DIFF is trying to make the difference position difference between the spacecraft and its target equal to the orbital radius
         //  A similar thing is true with MIN_SPEED_DIFF & MIN_ORBITAL_SPEED_DIFF (going to 0 vs going to orbital speed)
         //  Because maximizations and minimizations are handled the same way, even maximizations need to be sorted by the lowest value
-        case MIN_POS_DIFF:
+        case POS_DIFF:
             //Sort by lowest pos diff
             std::sort(adults.begin(), adults.begin()+sortSize, LowerPosDiff);
             break;
 
-        case MIN_SPEED_DIFF:
+        case SPEED_DIFF:
             //Sort by lowest speed diff
             std::sort(adults.begin(), adults.begin()+sortSize, LowerSpeedDiff);
             break;
 
-        case MIN_ORBIT_POS_DIFF:
+        case ORBIT_POS_DIFF:
             //Sort by lowest orbit pos diff
             std::sort(adults.begin(), adults.begin()+sortSize, LowerOrbitPosDiff);
             break;
 
-        case MIN_ORBIT_SPEED_DIFF:
+        case ORBIT_SPEED_DIFF:
             //Sort by lowest orbit speed diff
             std::sort(adults.begin(), adults.begin()+sortSize, LowerOrbitSpeedDiff);
             break;
 
-        case MIN_FUEL_SPENT:
+        case FUEL_SPENT:
             //Sort by the lowest fuel spent
             std::sort(adults.begin(), adults.begin()+sortSize, LowerFuelSpent);
             break;
 
-        case MIN_TRIP_TIME:
+        case TRIP_TIME:
             //sort by the lowest trip time
             std::sort(adults.begin(), adults.begin()+sortSize, LowerTripTime);
             break;
 
-        case MIN_MARS_DIST:
+        case MARS_DIST:
             //Sort by lowest mars distance
             std::sort(adults.begin(), adults.begin()+sortSize, LowerMarsDist);
             break;
 
-        case MAX_ORBIT_ASST:
+        case ORBIT_ASST:
             //Sort by lowest orbithChange
             std::sort(adults.begin(), adults.begin()+sortSize, LowerOrbitHChange);
-            break;
-
-        case MAX_SPEED_DIFF:
-            //Sort by minimum speed diff
-            std::sort(adults.begin(), adults.begin()+sortSize, LowerMaxSpeedDiff);
             break;
 
         default:

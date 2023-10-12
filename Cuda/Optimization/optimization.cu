@@ -215,17 +215,7 @@ void calculateGenerationValues (std::vector<Adult> & allAdults, const std::vecto
 
         //Add the adult's parameter values to the necessary spot in the objective average value vector
         for (int j = 0; j < objectives.size(); j++) {
-            //See if it is a minimization or maximization objective
-            //If it is a maximization the individual's total needs to be subtracted from the avg value as the value is stored as a negative in the individual
-            if (objectives[j].goal < 0) {
-                //Minimization
-                objectiveAvgValues[j] += allAdults[i].getParameters(objectives[j]);
-            }
-            else {
-                //Maximization
-                objectiveAvgValues[j] += 1/allAdults[i].getParameters(objectives[j]);
-            }
-            
+            objectiveAvgValues[j] += allAdults[i].getParameters(objectives[j]);
         }
         
         //Add to the avg age values

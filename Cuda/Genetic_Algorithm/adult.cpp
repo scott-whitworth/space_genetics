@@ -239,41 +239,30 @@ bool dominationCheck(Adult& personA, Adult& personB, const cudaConstants* cConst
     for (int i = 0; i < cConstants->missionObjectives.size(); i++) {
 
         //Create temp doubles to store the adults' parameters that will be compared
-        // double aParam = personA.getParameters(cConstants->missionObjectives[i]);
-        // double bParam = personB.getParameters(cConstants->missionObjectives[i]);
         double aParam = personA.objTargetDiffs[i];
         double bParam = personB.objTargetDiffs[i];
         
-        //First check determines if the goal is to favor higher values or if it is to favor lower values
-        //  This is done by looking at the value of the objective's goal
-        //  If it is below 0, it means that the program seeks to minimize
-        //  Otherwise, if it is above 0, the program seeks to maximize
-        //  A value of 0 means there is an error with the goal
-        //This is needed because the signs of the comparisons need to be changed
-        // if (cConstants->missionObjectives[i].goal < 0) {
-            //While not converged ...
-            // if ( !(aParam < cConstants->missionObjectives[i].dominationThreshold
-            //     && bParam < cConstants->missionObjectives[i].dominationThreshold) ) {
-            if ( !(aParam < cConstants->missionObjectives[i].allowedDifference
-                && bParam < cConstants->missionObjectives[i].allowedDifference) ) {
-                
-                //Means they haven't met the parameters
-                //First check to see if A's parameter is less than B's parameter (within a tolerance)
-                if (aParam < (bParam - cConstants->missionObjectives[i].equateTolerance)) {
-                    //Since A is better in at least one parameter, set the aParamBetter flag to true
-                    aParamBetter = true;
-                }
-                //If here, it means that the adults haven't met the threshold and that A's parameter is not better than B's
-                //Now there is a check for if A's parameters are worse/larger than B's (within a tolerance)
-                else if (aParam > (bParam + cConstants->missionObjectives[i].equateTolerance)) {
-                    //Since a parameter for A is worse than B, A doesn't dominate B, so return false
-                    return false; 
-                }
-                //If here (without triggering the first if statement), it must mean that A's and B's params are the same (within a tolerance)
-                //Now, the program will continue on to the next objective (if there are any)
+        //if not converged ...
+        if ( !(aParam < cConstants->missionObjectives[i].allowedDifference
+            && bParam < cConstants->missionObjectives[i].allowedDifference) ) {
+            
+            //Means they haven't met the parameters
+            //First check to see if A's parameter is less than B's parameter (within a tolerance)
+            if (aParam < (bParam - cConstants->missionObjectives[i].equateTolerance)) {
+                //Since A is better in at least one parameter, set the aParamBetter flag to true
+                aParamBetter = true;
             }
-            // else: both parameters are past the dominationThreshold
-            //       this means: we are ignoring that parameter for domination check 
+            //If here, it means that the adults haven't met the threshold and that A's parameter is not better than B's
+            //Now there is a check for if A's parameters are worse/larger than B's (within a tolerance)
+            else if (aParam > (bParam + cConstants->missionObjectives[i].equateTolerance)) {
+                //Since a parameter for A is worse than B, A doesn't dominate B, so return false
+                return false; 
+            }
+            //If here (without triggering the first if statement), it must mean that A's and B's params are the same (within a tolerance)
+            //Now, the program will continue on to the next objective (if there are any)
+        }
+        // else: both parameters are past the dominationThreshold
+        //       this means: we are ignoring that parameter for domination check 
     }
     //The program have compared the parameters for the adults
     //  Now, if the program is here it means that A is at least as good as B (for all parameters)

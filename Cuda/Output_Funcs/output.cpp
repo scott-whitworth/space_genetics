@@ -93,6 +93,11 @@ void output::initializeGenPerformance(const cudaConstants * cConstants) {
   //Names for each objective
   for (int i = 0; i < cConstants->missionObjectives.size(); i++) {
     excelFile << "algorithmBest" << cConstants->missionObjectives[i].name << ",";
+  }
+  for (int i = 0; i < cConstants->missionObjectives.size(); i++) {
+    excelFile << "algorithmBest" << cConstants->missionObjectives[i].name << "Difference,";
+  }
+  for (int i = 0; i < cConstants->missionObjectives.size(); i++) {
     excelFile << "algorithmBest" << cConstants->missionObjectives[i].name << "Normalization,";
   }
   for (int i = 0; i < cConstants->missionObjectives.size(); i++) {
@@ -255,27 +260,24 @@ void output::recordGenerationPerformance(const cudaConstants * cConstants, std::
 
   //Output the best rank distance adult's parameters
   for (int i = 0; i < cConstants->missionObjectives.size(); i++) {
-    if (cConstants->missionObjectives[i].goal < 0) {
-      excelFile << adults[0].getParameters(cConstants->missionObjectives[i]) << ",";
-    }
-    else {
-      excelFile << 1/(adults[0].getParameters(cConstants->missionObjectives[i])) << ",";
-    }
+    excelFile << adults[0].getParameters(cConstants->missionObjectives[i]) << ",";
+  }
+  //Output the best rank distance adult's differences
+  for (int i = 0; i < cConstants->missionObjectives.size(); i++) {
+    excelFile << adults[0].objTargetDiffs[i] << ",";
+  }
+  //Output the best rank distance adult's normalizations
+  for (int i = 0; i < cConstants->missionObjectives.size(); i++) {
     excelFile << adults[0].normalizedObj[i] << ",";
   }
+  
   //Output the objective parameter for the best adult and the average for each objective
   for (int i = 0; i < cConstants->missionObjectives.size(); i++) {
-    //Sort the Adults vector by the parameter
-    parameterSort(adults, cConstants->missionObjectives[i], adults.size()); 
+    //Sort the Adults vector by the parameter diff
+    std::sort (adults.begin(), adults.end(), [i] (Adult a, Adult b) {return a.objTargetDiffs[i] < b.objTargetDiffs[i];});
     
     //Output the 1st adult's value for that parameter, which will be the best of that value in the Adults vector
-    //Output the negative if it is a maximization
-    if (cConstants->missionObjectives[i].goal < 0) {
-      excelFile << adults[0].getParameters(cConstants->missionObjectives[i]) << ",";
-    }
-    else {
-      excelFile << 1/(adults[0].getParameters(cConstants->missionObjectives[i])) << ",";
-    }
+    excelFile << adults[0].getParameters(cConstants->missionObjectives[i]) << ",";
     
     //Output the average value for this parameter
     //The 
@@ -361,8 +363,8 @@ void output::recordGenSimple (const cudaConstants* cConstants, std::vector<Adult
   }
   //Output the objective parameter for the best adult and the average for each objective
   for (int i = 0; i < cConstants->missionObjectives.size(); i++) {
-    //Sort the Adults vector by the parameter
-    parameterSort(adults, cConstants->missionObjectives[i], adults.size()); 
+    //Sort the Adults vector by the parameter diff
+    std::sort (adults.begin(), adults.end(), [i] (Adult a, Adult b) {return a.objTargetDiffs[i] < b.objTargetDiffs[i];});
     
     //Output the 1st adult's value for that parameter, which will be the best of that value in the Adults vector
     excelFile << adults[0].getParameters(cConstants->missionObjectives[i]) << ",";
@@ -390,6 +392,11 @@ void output::recordAllIndividuals(std::string name, const cudaConstants * cConst
 
   for (int i = 0; i < cConstants->missionObjectives.size(); i++) {
     outputFile << cConstants->missionObjectives[i].name << ",";
+  }
+  for (int i = 0; i < cConstants->missionObjectives.size(); i++) {
+    outputFile << cConstants->missionObjectives[i].name << "Difference,";
+  }
+  for (int i = 0; i < cConstants->missionObjectives.size(); i++) {
     outputFile << cConstants->missionObjectives[i].name << "Normalization,";
   }
   
@@ -415,9 +422,13 @@ void output::recordAllIndividuals(std::string name, const cudaConstants * cConst
   for (int i = 0; i < adults.size(); i++) {
     outputFile << i << ",";
 
-    for (int j = 0; j < cConstants->missionObjectives.size(); j++)
-    {
+    for (int j = 0; j < cConstants->missionObjectives.size(); j++) {
       outputFile << adults[i].getParameters(cConstants->missionObjectives[j]) << ",";
+    }
+    for (int j = 0; j < cConstants->missionObjectives.size(); j++) {
+      outputFile << adults[i].objTargetDiffs[j] << ",";
+    }
+    for (int j = 0; j < cConstants->missionObjectives.size(); j++) {
       outputFile << adults[i].normalizedObj[j] << ",";
     }
     
@@ -834,7 +845,7 @@ void printBestAdults(const cudaConstants* cConstants, std::vector<Adult> adults,
   //Print the best adult for each objective
   for (int i = 0; i < cConstants->missionObjectives.size(); i++) {
       //Sort the adults array by the correct parameter & order
-      parameterSort(adults, cConstants->missionObjectives[i], adults.size());
+      std::sort (adults.begin(), adults.end(), [i] (Adult a, Adult b) {return a.objTargetDiffs[i] < b.objTargetDiffs[i];});
 
       //Print the name of the objective
       std::cout << "\nBest " << cConstants->missionObjectives[i].name << " Individual:";
@@ -875,16 +886,14 @@ void terminalDisplay(const Adult& individual, const std::vector<objective> objec
   //Print the parameters for each of the objectives for the passed in individual
   for (int i = 0; i < objectives.size(); i++) {
     //Print the name and value of the data of the objective
-    if (objectives[i].goal < 0){
-      std::cout << "\n\t" << objectives[i].name << ": " << individual.getParameters(objectives[i]);
-    }
-    else {
-      std::cout << "\n\t" << objectives[i].name << ": " << 1/(individual.getParameters(objectives[i]));
-    }
+    std::cout << "\n\t" << objectives[i].name << ": " << individual.getParameters(objectives[i]);
+
+    //Print the difference
+    std::cout << "\n\t\t" << "Diff. from target: " << individual.objTargetDiffs[i];
 
     //Print the normalization of the objective if the run is using rank-rarity
     if (cConstants->algorithm == RANK_RARITY) {
-      std::cout << "\n\t" << objectives[i].name << " normalization: " << individual.normalizedObj[i];
+      std::cout << "\n\t\t" << objectives[i].name << " normalization: " << individual.normalizedObj[i];
     }
     
   }

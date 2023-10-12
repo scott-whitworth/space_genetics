@@ -75,38 +75,35 @@ Child:: Child(const Child& other){
 //Getter for a parameter dependent on the objective that is passed in
 __host__ double Child::getParameters (const objective & requestObjective) const {
     //if/esle tree will go find the parameter goal of the request objective and return the associated value
-    if (requestObjective.goal == MIN_POS_DIFF) {
+    if (requestObjective.goal == POS_DIFF) {
         return posDiff;
     }
-    else if (requestObjective.goal == MIN_SPEED_DIFF) {
+    else if (requestObjective.goal == SPEED_DIFF) {
         return speedDiff;
     }
-    else if (requestObjective.goal == MAX_SPEED_DIFF) {
-        return 1/speedDiff;
-    }
-    else if (requestObjective.goal == MIN_HORZ_VEL_DIFF) {
+    else if (requestObjective.goal == HORZ_VEL_DIFF) {
         return horzVelDiff;
     }
-    else if (requestObjective.goal == MIN_VERT_VEL_DIFF) {
+    else if (requestObjective.goal == VERT_VEL_DIFF) {
         return vertVelDiff;
     }
-    else if (requestObjective.goal == MIN_FUEL_SPENT) {
+    else if (requestObjective.goal == FUEL_SPENT) {
         return fuelSpent;
     }
-    else if (requestObjective.goal == MIN_TRIP_TIME) {
+    else if (requestObjective.goal == TRIP_TIME) {
         return startParams.tripTime; 
     }
-    else if (requestObjective.goal == MIN_ORBIT_POS_DIFF){
+    else if (requestObjective.goal == ORBIT_POS_DIFF){
         return orbitPosDiff;
     }
-    else if (requestObjective.goal == MIN_ORBIT_SPEED_DIFF){
+    else if (requestObjective.goal == ORBIT_SPEED_DIFF){
         return orbitSpeedDiff;
     }
-    else if (requestObjective.goal == MIN_MARS_DIST){
+    else if (requestObjective.goal == MARS_DIST){
         return minMarsDist;
     }
-    else if (requestObjective.goal == MAX_ORBIT_ASST){
-        return 1/orbithChange;
+    else if (requestObjective.goal == ORBIT_ASST){
+        return orbithChange;
     }
     else {
         //Indicates error
@@ -245,30 +242,18 @@ __host__ void Child::getProgress(const cudaConstants* cConstants){
 
         //Iterate through the objectives
         for (int i = 0; i < cConstants->missionObjectives.size(); i++) {
-            //Check to see if the goal for this objective is to minimize or maximize the parameter 
-            //  Necessary because the progress values are calculated differently depending on the direction 
-            //  See the objective header for details on how objective direction is determined
-            // if (cConstants->missionObjectives[i].goal < 0) {//Minimization
                 
-                //See if the child has met the the convergence threshold for this parameter
-                // if (getParameters(cConstants->missionObjectives[i]) < cConstants->missionObjectives[i].convergenceThreshold) {
-                if (objTargetDiffs[i] < cConstants->missionObjectives[i].allowedDifference) {
-                    //Add one to the progress to signify that the parameter has met the goal
-                    calcProgress += 1; 
-                }
-                //The child hasn't met the parameter goal
-                else {
-                    // calcProgress += (getParameters(cConstants->missionObjectives[i])/cConstants->missionObjectives[i].convergenceThreshold); 
-                    calcProgress += (objTargetDiffs[i]/cConstants->missionObjectives[i].allowedDifference); 
-                    //Add the progress for this parameter to the goal
-                    // if (cConstants->missionObjectives[i].goal < 0) {
-                    //     //For minimization, the progress is the parameter divided by the threshold
-                    //     calcProgress += (getParameters(cConstants->missionObjectives[i])/cConstants->missionObjectives[i].convergenceThreshold); 
-                    // }
-                    // else {
-                    //     calcProgress += (cConstants->missionObjectives[i].convergenceThreshold/getParameters(cConstants->missionObjectives[i])); 
-                    // }
-                }
+            //See if the child has met the the convergence threshold for this parameter
+            // if (getParameters(cConstants->missionObjectives[i]) < cConstants->missionObjectives[i].convergenceThreshold) {
+            if (objTargetDiffs[i] < cConstants->missionObjectives[i].allowedDifference) {
+                //Add one to the progress to signify that the parameter has met the goal
+                calcProgress += 1; 
+            }
+            //The child hasn't met the parameter goal
+            else { 
+                //Add the progress for this parameter to the goal
+                calcProgress += (objTargetDiffs[i]/cConstants->missionObjectives[i].allowedDifference); 
+            }
         }
 
         //The total cost has been calculated

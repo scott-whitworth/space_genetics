@@ -129,8 +129,8 @@ bool checkTolerance(std::vector<Adult>& oldAdults, const cudaConstants* cConstan
         //Check to see if the top best_count adults have met convergence for this parameter
         for (int j = 0; j < cConstants->best_count; j++) {
 
-            //Check to see if the adult's parameter is larger than the convergence 
-            if (oldAdults[j].objTargetDiffs[i] > cConstants->missionObjectives[i].allowedDifference) {
+            //Check to see if the adult's parameter is larger than the convergence (plus equate tolerance)
+            if (oldAdults[j].objTargetDiffs[i] > (cConstants->missionObjectives[i].allowedDifference + cConstants->missionObjectives[i].equateTolerance)) {
                 //Return false as a parameter that needs to be minimized is larger than the convergence threshold
                 return false;
             }

@@ -242,9 +242,9 @@ bool dominationCheck(Adult& personA, Adult& personB, const cudaConstants* cConst
         double aParam = personA.objTargetDiffs[i];
         double bParam = personB.objTargetDiffs[i];
         
-        //if not converged ...
-        if ( !(aParam < cConstants->missionObjectives[i].allowedDifference
-            && bParam < cConstants->missionObjectives[i].allowedDifference) ) {
+        //if they haven't both reached the goal difference ...
+        if ( !(aParam < cConstants->missionObjectives[i].goalDifference
+            && bParam < cConstants->missionObjectives[i].goalDifference)) {
             
             //Means they haven't met the parameters
             //First check to see if A's parameter is less than B's parameter (within a tolerance)

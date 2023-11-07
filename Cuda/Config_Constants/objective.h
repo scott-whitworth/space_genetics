@@ -33,7 +33,6 @@ enum parameterGoals {
 //  1) Make sure the parameter is accessible from within the child class
 //  2) Add the goal to the parameterGoals enum, making sure that if its a minimization objective, the set number is negative and vice versa
 //  3) Add the new objective goal to the importObjective function within config.cpp
-//  4) If the objective is a maximization, make sure it is set as a negative value in convertToAdults()
 //  5) Add to child's getParameter function so that it returns the correct parameter
 //  6) Add a new sort function to the adult.cpp to allow the program to sort by the objective's parameter in the desired order
 //  7) Add to the parameterSort() function in sort.cpp so that the program uses the new sort when the function is called with the new goal
@@ -50,12 +49,13 @@ struct objective {
     //The requested target
     double target; 
 
-    //The domination threshold determines when the program will/will not prioritize better values
-    //      If two individuals compared in a domination check have parameter values better than the domination check,
-    //          the parameter will not be considered for domination
-    // double dominationThreshold; 
     //The maximum allowed difference, smaller difference will be considered solved for the objective
     double allowedDifference;
+    //The difference that will be optimized for, the algorithm will not try and optimize past this value for the mission
+    //  This determines when the program will/will not prioritize better values
+    //      If two individuals compared in a domination check have parameter values better than the goal difference,
+    //          the parameter will not be considered for domination
+    double goalDifference; 
 
     //equateTolerance determines the differentiation needed for two parameters to be considered not equal
     //  this is primarily a floating point comparison issue
@@ -66,8 +66,8 @@ struct objective {
 
     //Constructor that accepts the information for an objective, should be the only constructor used
     //    Should only be called when the mission.config file is parsed/loaded
-    objective(std::string _name, parameterGoals _goal, double _target, double _allowedDiff, double _equateTolerance):
-        name(_name), goal(_goal), target(_target), allowedDifference(_allowedDiff), equateTolerance(_equateTolerance) {}
+    objective(std::string _name, parameterGoals _goal, double _target, double _allowedDiff, double _goalDiff, double _equateTolerance):
+        name(_name), goal(_goal), target(_target), allowedDifference(_allowedDiff), goalDifference(_goalDiff), equateTolerance(_equateTolerance) {}
 };
 
 #endif

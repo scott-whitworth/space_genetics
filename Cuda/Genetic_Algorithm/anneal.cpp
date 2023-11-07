@@ -39,7 +39,7 @@ void changeAnneal (const std::vector<Adult>& oldAdults, const cudaConstants* cCo
         currentAnneal = (cConstants->anneal_initial * pow((1 - pow((curProgress), 0.07)) ,5)); 
         //Do not want the anneal to go backwards at this point, make sure it only decreases
         if(currentAnneal > previousAnneal){ 
-            currentAnneal = previousAnneal; 
+        currentAnneal = previousAnneal; 
         } 
     }
 

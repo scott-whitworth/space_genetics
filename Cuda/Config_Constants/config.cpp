@@ -406,11 +406,10 @@ void cudaConstants::importObjective(std::string line) {
     //temp storage variables that will be used to create the new objective object
     std::string name;
     parameterGoals goal; 
-    double target, diff, equateTolerance; 
+    double target, allowedDiff, goalDiff, equateTolerance; 
 
     //Temp string will assist with eliminating spaces from the line and identifying the goal
     std::string tempStr; 
-
 
     //Remove any spaces from the line using the temp string
     for (int i = 0; i < line.size(); i++) {
@@ -421,66 +420,70 @@ void cudaConstants::importObjective(std::string line) {
     //temp string now equals line without the spaces, make equate line to temp string
     line = tempStr;
 
-    //Find the first end pivot to get the name
-    endPivot = line.find(",");
-
-    //Pull the name from the substring of the line
-    name = line.substr(0, endPivot);
-
     //Convert the string to lower case for easier decernment of parameter goals
     //Name has already been taken, so no issue if it is changed in the line
     for (int i = 0; i < line.size(); i++) {
         line[i] = std::tolower(line[i]); 
     }
-
-    //Get the next pivot points
-    beginningPivot = endPivot+1;
-    endPivot = line.find(",", beginningPivot);
+    
+    //Find the first end pivot to get the name
+    endPivot = line.find(",");
 
     //temp string used for the parameter goal
-    tempStr = line.substr(beginningPivot, endPivot - beginningPivot); 
+    tempStr = line.substr(0, endPivot); 
 
-    //Determine the parameter goal based on the next segment of the imported line
+    //Determine the parameter goal and name based on the next segment of the imported line
     if (tempStr == "pos_diff") {
         //Will optimize for minimum position difference
         goal = POS_DIFF;
+        name = "PositionDiff";
     }
     else if (tempStr == "speed_diff") {
         //optimize for the minimum speed difference
         goal = SPEED_DIFF; 
+        name = "SpeedDiff";
     }
     else if (tempStr == "horz_velocity_diff") {
         //optimize for a final horizontal velocity angle difference 
-        goal = HORZ_VEL_DIFF; 
+        goal = HORZ_VEL_DIFF;
+        name = "HorizontalVelocityDiff";
     }
     else if (tempStr == "vert_velocity_diff") {
         //optimize for a final vertical velocity angle difference 
         goal = VERT_VEL_DIFF; 
+        name = "VerticalVelocityDiff";
     }
     else if (tempStr == "fuel_spent") {
         //optimize for minimal fuel usage
         goal = FUEL_SPENT;
+        name = "FuelSpent";
     }
     else if (tempStr == "trip_time") {
         //Optimize for minimal trip time
         goal = TRIP_TIME;
+        name = "TripTime";
     }
     else if (tempStr == "orbit_pos_diff") {
         goal = ORBIT_POS_DIFF;
+        name = "OrbitPostionDiff";
     }
     else if (tempStr == "orbit_speed_diff") {
         goal = ORBIT_SPEED_DIFF;
+        name = "OrbitSpeedDiff";
     }
     else if (tempStr == "mars_dist") {
         goal = MARS_DIST;
+        name = "MarsAssistDist";
     }
     else if (tempStr == "orbit_asst"){
         //Optimize for the highest change in angular momentum during an assist
         goal = ORBIT_ASST;
+        name = "OrbitAssist";
     }
     else {
         //No parameter goal identified
         goal = UNKNOWN; 
+        name = tempStr;
     }
 
     //Find the next pivot point for the convergence tolerance
@@ -495,7 +498,14 @@ void cudaConstants::importObjective(std::string line) {
     endPivot = line.find(",", beginningPivot);
     
     //Get the domination threshold from the last substring
-    diff = std::stod(line.substr(beginningPivot, endPivot - beginningPivot + 1));
+    allowedDiff = std::stod(line.substr(beginningPivot, endPivot - beginningPivot + 1));
+
+    //Find the next pivot point for the domination tolerance
+    beginningPivot = endPivot+1;
+    endPivot = line.find(",", beginningPivot);
+    
+    //Get the domination threshold from the last substring
+    goalDiff = std::stod(line.substr(beginningPivot, endPivot - beginningPivot + 1));
 
     //Find the last pivot points
     beginningPivot = endPivot+1; 
@@ -504,14 +514,28 @@ void cudaConstants::importObjective(std::string line) {
     //Pull the equateTolerance
     equateTolerance = std::stod(line.substr(beginningPivot, endPivot - beginningPivot + 1));
 
-    //Checks for the user to make sure they entered the goal, the convergence threshold, and the domination threshold correctly
-    //See if the goal is set correctly
+    //Checks for the user to make sure the goal and differences are set correctly
+    // Too small of a allowed difference
+    if (allowedDiff < equateTolerance) {
+        //Set reasonable allowed difference
+        allowedDiff = target + equateTolerance;
+        //Error message
+        std::cout << "\n-----BAD ALLOWED DIFFERENCE SET, SETTING NEW ALLOWED DIFF; OBJECTIVE: " << name << "-----\n";
+    }
+    //  A larger goal difference than allowed difference
+    if (goalDiff > allowedDiff) {
+        //Set a reasonable goal diff
+        goalDiff = allowedDiff*0.8;
+        //Error message
+        std::cout << "\n-----BAD GOAL DIFFERENCE SET, SETTING NEW GOAL DIFF; OBJECTIVE: " << name << "-----\n";
+    }
+    //  See if the goal is set correctly
     if (goal == 0) {
         std::cout << "\n-----BAD OBJECTIVE GOAL PULLED; BAD OBJECTIVE: " << name << "-----\n";
     } 
 
     //Add the objective to the mission objectives vector using the gathered information
-    missionObjectives.push_back(objective(name, goal, target, diff, equateTolerance)); 
+    missionObjectives.push_back(objective(name, goal, target, allowedDiff, goalDiff, equateTolerance)); 
 }
 
 // Output cudaConstant contents with formatting for better readibility when doing a run in main()
@@ -563,7 +587,7 @@ std::ostream& operator<<(std::ostream& os, const cudaConstants& object) {
     os << "Mission Goals: ";
     for (int i = 0; i < object.missionObjectives.size(); i++) {
         os << "\n\tObjective: " << object.missionObjectives[i].name << "\tIdentified Goal: " << object.missionObjectives[i].goal << "\tTarget: " << object.missionObjectives[i].target 
-           << "\tAllowed Difference: " << object.missionObjectives[i].allowedDifference << "\tEquate Tolerance: " << object.missionObjectives[i].equateTolerance; 
+           << "\tAllowed Difference: " << object.missionObjectives[i].allowedDifference << "\tGoal Difference: " << object.missionObjectives[i].goalDifference << "\tEquate Tolerance: " << object.missionObjectives[i].equateTolerance; 
     }
     os << "\n";
     os << "====================================================================================================\n";

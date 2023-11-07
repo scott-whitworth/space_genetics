@@ -56,6 +56,8 @@ Child:: Child(const Child& other){
     finalPos = other.finalPos;
     posDiff = other.posDiff; 
     speedDiff = other.speedDiff;
+    horzVelDiff = other.horzVelDiff;
+    vertVelDiff = other.vertVelDiff;
     fuelSpent = other.fuelSpent;
     orbitPosDiff = other.orbitPosDiff;
     orbitSpeedDiff = other.orbitSpeedDiff; 
@@ -154,6 +156,9 @@ __host__ __device__ double Child::getHorzVelDiff(const cudaConstants* cConstants
     //Calculate angle difference
     horzVelDiff = acos(dot/(indMag * tarMag));
 
+    //Convert to degrees
+    horzVelDiff *= (180/M_PI);
+
     //return the difference
     return horzVelDiff;
 }
@@ -162,23 +167,29 @@ __host__ __device__ double Child::getHorzVelDiff(const cudaConstants* cConstants
 // Input: cConstants in accessing properties for the final velocity of the target (such as vr_fin_target, vtheta_fin_target, and vz_fin_target)
 // Output: Assigns and returns the difference in vertical velocity angle between the individual and the target
 __host__ __device__ double Child::getVertVelDiff(const cudaConstants* cConstants) {
-    //Use A*B=|A||B|cos(theta) equation to get theta
+    //Phi1 = arctan(Vz1/|V1|)
+    //Phi2 = arctan(Vz2/|V2|)
+    //Vert angle difference = Phi1 - Phi2
+
     //Initialize equation values
-    double indMag = 0, tarMag = 0, dot = 0;
+    double indMag = 0, tarMag = 0, indPhi = 0, tarPhi = 0;
 
     //Calculate magnitudes
     //Individual
-    indMag = sqrt(pow(finalPos.vz, 2) + pow(finalPos.vtheta, 2));
+    indMag = sqrt(pow(finalPos.vr, 2) + pow(finalPos.vtheta, 2) + pow(finalPos.vz, 2));
     //Target
-    tarMag = sqrt(pow(cConstants->vz_fin_target, 2) + pow(cConstants->vtheta_fin_target, 2));
+    tarMag = sqrt(pow(cConstants->vr_fin_target, 2) + pow(cConstants->vtheta_fin_target, 2) + pow(cConstants->vz_fin_target, 2));
 
-    //Calculate dot product
-    dot = (finalPos.vz * cConstants->vz_fin_target) + (finalPos.vtheta * cConstants->vtheta_fin_target);
+    //Calculate z angles (in radians)
+    indPhi = (finalPos.vz/indMag);
+    tarPhi = (cConstants->vz_fin_target/tarMag);
 
-    //Calculate angle difference
-    vertVelDiff = acos(dot/(indMag * tarMag));
+    //Calculate difference
+    vertVelDiff = (indPhi - tarPhi);
 
-    //return the difference
+    //Convert to degrees
+    vertVelDiff *= (180/M_PI);
+
     return vertVelDiff;
 }
 

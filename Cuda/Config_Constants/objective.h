@@ -16,8 +16,8 @@ enum parameterGoals {
     ORBIT_POS_DIFF = 5,
     ORBIT_SPEED_DIFF = 6,
     MARS_DIST = 7, 
-    HORZ_VEL_DIFF = 8,
-    VERT_VEL_DIFF = 9,
+    HORZ_ANGLE_DIFF = 8,
+    VERT_ANGLE_DIFF = 9,
     ORBIT_ASST = 10,
 
     //Error value

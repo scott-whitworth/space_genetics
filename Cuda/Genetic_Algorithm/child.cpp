@@ -83,10 +83,10 @@ __host__ double Child::getParameters (const objective & requestObjective) const 
     else if (requestObjective.goal == SPEED_DIFF) {
         return speedDiff;
     }
-    else if (requestObjective.goal == HORZ_VEL_DIFF) {
+    else if (requestObjective.goal == HORZ_ANGLE_DIFF) {
         return horzVelDiff;
     }
-    else if (requestObjective.goal == VERT_VEL_DIFF) {
+    else if (requestObjective.goal == VERT_ANGLE_DIFF) {
         return vertVelDiff;
     }
     else if (requestObjective.goal == FUEL_SPENT) {
@@ -159,6 +159,13 @@ __host__ __device__ double Child::getHorzVelDiff(const cudaConstants* cConstants
     //Convert to degrees
     horzVelDiff *= (180/M_PI);
 
+    //Differentiate between angle difference towards and away from the sun
+    //  If the individual has a lower r-velcocity, horzVelDiff will be be assigned as a negative
+    //  Allows for targeting difference in velocity vector in a specific direction
+    if (finalPos.vr < cConstants->vr_fin_target) {
+        horzVelDiff = -horzVelDiff;
+    }
+
     //return the difference
     return horzVelDiff;
 }
@@ -181,8 +188,8 @@ __host__ __device__ double Child::getVertVelDiff(const cudaConstants* cConstants
     tarMag = sqrt(pow(cConstants->vr_fin_target, 2) + pow(cConstants->vtheta_fin_target, 2) + pow(cConstants->vz_fin_target, 2));
 
     //Calculate z angles (in radians)
-    indPhi = (finalPos.vz/indMag);
-    tarPhi = (cConstants->vz_fin_target/tarMag);
+    indPhi = atan(finalPos.vz/indMag);
+    tarPhi = atan(cConstants->vz_fin_target/tarMag);
 
     //Calculate difference
     vertVelDiff = (indPhi - tarPhi);

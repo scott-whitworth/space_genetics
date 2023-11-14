@@ -443,15 +443,15 @@ void cudaConstants::importObjective(std::string line) {
         goal = SPEED_DIFF; 
         name = "SpeedDiff";
     }
-    else if (tempStr == "horz_velocity_diff") {
+    else if (tempStr == "horz_angle_diff") {
         //optimize for a final horizontal velocity angle difference 
-        goal = HORZ_VEL_DIFF;
-        name = "HorizontalVelocityDiff";
+        goal = HORZ_ANGLE_DIFF;
+        name = "HorizontalAngleDiff";
     }
-    else if (tempStr == "vert_velocity_diff") {
+    else if (tempStr == "vert_angle_diff") {
         //optimize for a final vertical velocity angle difference 
-        goal = VERT_VEL_DIFF; 
-        name = "VerticalVelocityDiff";
+        goal = VERT_ANGLE_DIFF; 
+        name = "VerticalAngleDiff";
     }
     else if (tempStr == "fuel_spent") {
         //optimize for minimal fuel usage

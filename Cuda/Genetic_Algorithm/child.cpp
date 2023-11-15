@@ -174,8 +174,8 @@ __host__ __device__ double Child::getHorzVelDiff(const cudaConstants* cConstants
 // Input: cConstants in accessing properties for the final velocity of the target (such as vr_fin_target, vtheta_fin_target, and vz_fin_target)
 // Output: Assigns and returns the difference in vertical velocity angle between the individual and the target
 __host__ __device__ double Child::getVertVelDiff(const cudaConstants* cConstants) {
-    //Phi1 = arctan(Vz1/|V1|)
-    //Phi2 = arctan(Vz2/|V2|)
+    //Phi1 = arcsin(Vz1/|V1|)
+    //Phi2 = arcsin(Vz2/|V2|)
     //Vert angle difference = Phi1 - Phi2
 
     //Initialize equation values
@@ -188,8 +188,8 @@ __host__ __device__ double Child::getVertVelDiff(const cudaConstants* cConstants
     tarMag = sqrt(pow(cConstants->vr_fin_target, 2) + pow(cConstants->vtheta_fin_target, 2) + pow(cConstants->vz_fin_target, 2));
 
     //Calculate z angles (in radians)
-    indPhi = atan(finalPos.vz/indMag);
-    tarPhi = atan(cConstants->vz_fin_target/tarMag);
+    indPhi = asin(finalPos.vz/indMag);
+    tarPhi = asin(cConstants->vz_fin_target/tarMag);
 
     //Calculate difference
     vertVelDiff = (indPhi - tarPhi);

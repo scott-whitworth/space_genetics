@@ -271,15 +271,16 @@ void calculateRelCost (const cudaConstants *cConstants, std::mt19937_64 rng, Ref
             double translatedObj = allAdults[indiv].objTargetDiffs[obj] - refPoints.objBest[obj].objTargetDiffs[obj];
 
             //Check to see if an individual is worse than the domination threshold
-            // if(allAdults[indiv].getParameters(cConstants->missionObjectives[obj]) > cConstants->missionObjectives[obj].dominationThreshold){
-            //     //If so set the translated objective to the adult's objective value minus the best overall value
-            //     translatedObj = allAdults[indiv].getParameters(cConstants->missionObjectives[obj]) - refPoints.objBest[obj].getParameters(cConstants->missionObjectives[obj]);
-            // }
-            // else{
-            //     //If an individual's objective is lower than the domination threshold, then the translated objective is set to 0
-            //     //  This signifies that the adult has solved the objective
-            //     translatedObj = 0;
-            // }
+            if(allAdults[indiv].objTargetDiffs[obj] > cConstants->missionObjectives[obj].goalDifference){
+                //If so set the translated objective to the adult's objective value minus the best overall value
+                //translatedObj = allAdults[indiv].getParameters(cConstants->missionObjectives[obj]) - refPoints.objBest[obj].getParameters(cConstants->missionObjectives[obj]);
+                translatedObj = allAdults[indiv].objTargetDiffs[obj] - refPoints.objBest[obj].objTargetDiffs[obj];
+            }
+            else{
+                //If an individual's objective is lower than the domination threshold, then the translated objective is set to 0
+                //  This signifies that the adult has solved the objective
+                translatedObj = 0;
+            }
 
             //The denominator should never be 0
             double denom=1;

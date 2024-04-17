@@ -308,6 +308,9 @@ void cudaConstants::FileRead(std::string fileName) {
                     else if (variableName == "divisions") {
                         this->divisions = std::stoi(variableValue);
                     }
+                    else if (variableName == "reservedRarity") {
+                        this->reservedRarity = std::stoi(variableValue);
+                    }
 
 
 /////////////////////////////////////////////////////////////////////////// -- TARGET -- //////////////////////////////////////////////////////////////////////////////////

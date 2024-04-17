@@ -97,6 +97,12 @@ void findAssociatedPoints (const ReferencePoints & refPoints, std::vector<Adult>
 // Output: each adult will be assigned with a rarity score depending on which, also returns how many reference points have associated adults  
 int calculateRarity (const ReferencePoints & refPoints, std::vector<Adult> & allAdults, std::mt19937_64 rng);
 
+//Function which will handle assigning the reserved rarity scores (assumes base rarity scores have already been assigned)
+// Input:   cConstants - needed to get the number of reserved rarity scores
+//          adults - The adults which will have new rarity scores assigned
+// Output:  The reserved rarity scores will be assigned to the best adults and the rest of the adults' scores will be adjusted
+void assignReservedRarity (const cudaConstants *cConstants, std::vector<Adult> & adults);
+
 #include "referencePoints.cpp"
 
 #endif

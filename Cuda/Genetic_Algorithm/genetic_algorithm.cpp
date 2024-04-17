@@ -360,6 +360,9 @@ void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& 
         //Calculate the rarity for all Adults
         giveRarity(cConstants, rng, refPoints, allAdults);
 
+        //Adjust the rarities to assigned the reserved scores to the best individuals
+        assignReservedRarity(cConstants, allAdults);
+
         /* The code below is used for calculating the rarity within each rank
         //Sort the adults by rank
         std::sort(allAdults.begin(), allAdults.end(), rankSort);

@@ -437,7 +437,7 @@ int calculateRarity (const ReferencePoints & refPoints, std::vector<Adult> & all
 
     //Trackers for assigning rarity
     int minAssocNum = numAdults + 1; //Tracks the minimum number of found associations
-    int minAssocIndex = 0;                  //Tracks the index where the minimum number of associations was found
+    int minAssocIndex = 0;           //Tracks the index where the minimum number of associations was found
 
     //Loop while there are adults with unassigned rarity values
     while (rarityCount < numAdults) {
@@ -483,4 +483,27 @@ int calculateRarity (const ReferencePoints & refPoints, std::vector<Adult> & all
     }
 
     return totAssoc;
+}
+
+//Function which will handle assigning the reserved rarity scores (assumes base rarity scores have already been assigned)
+void assignReservedRarity (const cudaConstants *cConstants, std::vector<Adult> & adults) {
+
+    //Sort the adults by their progress scores
+    std::sort(adults.begin(), adults.end(), bestProgress);
+
+    //For loop will adjust the adults' rarities
+    for (int i = 0; i < cConstants->reservedRarity; i++) {
+        // This is one of the top individuals, give it a reserved rank
+        if (i < cConstants->reservedRarity) {
+            adults[i].rarity = i;
+        }
+        // If this is not a top individual, adjust their rarity to account for the reserved ranks being assigned
+        else {
+            //Add the number of reserved scores to the adult's rarity so that there is no rarity score duplicates
+            adults[i].rarity += cConstants->reservedRarity;
+        }
+    }
+
+    return;
+    
 }

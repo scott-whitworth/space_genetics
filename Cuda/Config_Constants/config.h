@@ -22,7 +22,8 @@ struct cudaConstants {
     //Determines the genetic algorithm used
     GENETIC_ALGORITHM algorithm;
 
-    int divisions;       // The number of divisions for each objective when calculating reference points
+    int divisions;          // The number of divisions for each objective when calculating reference points
+    int reservedRarity = 0; // The number of top rarity scores to reserve for the best individuals
 
     //Variables used in orbit missions to determine the desired final orbital radius and speed
     //They are initially set to -1 to allow the program to quickly determine if the goal is an orbit vs an impact/rendezvous

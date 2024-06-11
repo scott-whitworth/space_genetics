@@ -4,13 +4,13 @@ Based on previous work 2019 - 2021 Sankaran / Griffith summer research
 2020: Matthew, Noah, Andrew, Jeremy  
 2021: Cassie, Trevor  
 2022: Caleb, Connor, Meg
-
 2023: Caleb, Sierra
+2024: Josh
 
-Pulled from: https://github.com/scott-whitworth/Didymos-optimization on 6/7/2021  
+Pulled from: https://github.com/scott-whitworth/space_genetics
 
 <h1>Multi-Objective Optimization Project</h1>
-<i>Last updated: August, 2022</i>
+<i>Last updated: June, 2024</i>
 
 <h2>Project Background & Current Objective</h2>
 

@@ -15,7 +15,7 @@ void callRK(double & calcPerS, Child *generation, const cudaConstants* cConstant
 
     //Counters for the number of children who are finished being simulated and how many simulations the code has ran for this generation
     int completedNum;
-    int simulationNum = 0;
+    int simulationNum = 0; //not really in use... should we remove?
 
     const int numThreads = gpuValues.numThreads;
     const int blockThreads = cConstant->thread_block_size;

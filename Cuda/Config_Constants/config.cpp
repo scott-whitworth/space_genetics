@@ -30,7 +30,7 @@ cudaConstants::cudaConstants() {
             algorithm = RANK_RARITY;
         }
         else {
-            //Rank rarity is best for missions with few objectives
+            //Rank distance is best for missions with few objectives
             std::cout << "\nAutomatically setting algorithm to rank-distance.\n";
             algorithm = RANK_DISTANCE;
         }
@@ -147,10 +147,21 @@ void cudaConstants::FileRead(std::string fileName) {
 //////////////////////////////////////////////////////////////////// -- POOL & THREAD BLOCK -- /////////////////////////////////////////////////////////////////////////
                     else if (variableName == "num_individuals") {
                         this->num_individuals = std::stoi(variableValue);
+
+                        //check if num_individuals is not evenly divided by 4 (since the survivor count must be 1/4 of num_individuals)
+
+                        if(this->num_individuals%4!=0){
+                            this->num_individuals -= this->num_individuals%4; //make num_individuals divisible by 4
+                            std::cout<< "Number of individuals is not a multiple of 4, so it is reset to "<< this->num_individuals << std::endl;
+                            }
+
+                        //Survivor count should be num_individuals/4.
+                        this->survivor_count = this->num_individuals/4;
+                        std::cout << "Survivor count: " << this->survivor_count << std::endl;
                     }
-                    else if (variableName == "survivor_count") {
-                        this->survivor_count = std::stoi(variableValue);
-                    }
+                    // else if (variableName == "survivor_count") {    ** Survivor count should always be num_individuals/4, so remove this option from config **
+                    //     this->survivor_count = std::stoi(variableValue);
+                    // }
                     else if (variableName == "thread_block_size") {
                         this->thread_block_size = std::stoi(variableValue);
                     }

@@ -44,7 +44,7 @@ Child::Child(rkParameters<double> & childParameters, const cudaConstants* cConst
     simNum = 0; //Has not been simulated yet
 
     minMarsDist = 100; //Arbitrarily high initial min mars distance
-    orbithChange = 1e-14; //No assist initially, so no angular momentum change initally
+    orbithChange = cConstants->doublePrecThresh; //No assist initially, so no angular momentum change initally
 }
 
 // Copy constructor (Needed for sorts, so make sure this is up to date with the child's variables!)
@@ -260,19 +260,35 @@ __host__ void Child::getProgress(const cudaConstants* cConstants){
 
         //Iterate through the objectives
         for (int i = 0; i < cConstants->missionObjectives.size(); i++) {
+//newChildren[i].getParameters(cConstants->missionObjectives[j])
+            double objValue = this->getParameters(cConstants->missionObjectives[i]);
+            double lowerBound = cConstants->missionObjectives[i].target-cConstants->missionObjectives[i].allowedDifference;
+            double upperBound = cConstants->missionObjectives[i].target+cConstants->missionObjectives[i].allowedDifference;
+            double closestBound = 0;
+
+            if(abs(upperBound)<1e-14){//equate tolerance = 1e-14
+                upperBound = 1e-14;
+            }
+            if(abs(lowerBound)<1e-14){
+                lowerBound = 1e-14;
+            }
+
+            if(objValue>upperBound){
+                closestBound = upperBound;
+            }
+            else if(objValue<lowerBound){
+                closestBound = lowerBound;
+            }
+
+//            if(closestBound==0){
+            if((objValue > lowerBound) && (objValue < upperBound)){//converged
+                calcProgress+=1;
+            }
+            else{//not converged
+                calcProgress+= 1 + abs((closestBound-objValue)/closestBound);
+            }
                 
-            //See if the child has met the the convergence threshold for this parameter
-            // if (getParameters(cConstants->missionObjectives[i]) < cConstants->missionObjectives[i].convergenceThreshold) {
-            if (objTargetDiffs[i] < cConstants->missionObjectives[i].allowedDifference) {
-                //Add one to the progress to signify that the parameter has met the goal
-                calcProgress += 1; 
-            }
-            //The child hasn't met the parameter goal
-            else { 
-                //Add the progress for this parameter to the goal
-                calcProgress += (objTargetDiffs[i]/cConstants->missionObjectives[i].allowedDifference); 
-            }
-        }
+        }//end of all objectives
 
         //The total cost has been calculated
         //It needs to be divided by the number of objectives to find the weighted average progress for each objective

@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <iostream>
+#include "anneal.h"
 
 // Global enumeration for the different mask values instead of 1,2,3 for better readibility and clarity of value meaning
 enum maskValue {
@@ -349,8 +350,10 @@ void generateChildrenPair (const Adult & parent1, const Adult & parent2, Child *
         return;
     }
 
+    double individualAnneal = changeIndividualAnneal((parent1.progress + parent2.progress)/2, cConstants, generation);
+
     //Generate a new individual based on the two parents
-    newChildren[numNewChildren] = Child(generateNewChild(parent1.startParams, parent2.startParams, mask, cConstants, annealing, rng), cConstants, generation, (parent1.progress + parent2.progress)/2);
+    newChildren[numNewChildren] = Child(generateNewChild(parent1.startParams, parent2.startParams, mask, cConstants, individualAnneal, rng), cConstants, generation, (parent1.progress + parent2.progress)/2);
 
     //Add one to numNewChildren to signify that a new child has been added to the newChildren vector
     //Will also ensure that no children are overwritten

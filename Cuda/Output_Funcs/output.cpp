@@ -6,6 +6,7 @@
 #include <algorithm> // for std::sort() (needed for Tesla machine only)
 #include "math.h"
 #include "..\Genetic_Algorithm\sort.h"
+#include "..\Genetic_Algorithm\anneal.h"
 
 //Constructor for the output struct
 output::output(const cudaConstants* cConstants, const std::string& selectFolder) {
@@ -295,7 +296,7 @@ void output::recordGenerationPerformance(const cudaConstants * cConstants, std::
   excelFile << totAssoc << ",";
 
   //New anneal every gen
-  excelFile << new_anneal << ",";
+  excelFile << changeIndividualAnneal(adults[0].avgParentProgress, cConstants, generation) << ",";
 
   //Progress values
   excelFile << adults[0].avgParentProgress << ",";
@@ -400,7 +401,7 @@ void output::recordAllIndividuals(std::string name, const cudaConstants * cConst
     outputFile << cConstants->missionObjectives[i].name << "Normalization,";
   }
   
-  outputFile << "rank,rarity,avgParentProgress,progress,parentChildProgressRatio,distance,assocRefPoint,numSteps,age,birthday,";
+  outputFile << "rank,rarity,anneal,avgParentProgress,progress,parentChildProgressRatio,distance,assocRefPoint,numSteps,age,birthday,";
 
   for (int i = 0; i < GAMMA_ARRAY_SIZE; i++) {
     outputFile << "gamma" << i << ",";
@@ -434,6 +435,7 @@ void output::recordAllIndividuals(std::string name, const cudaConstants * cConst
     
     outputFile << adults[i].rank << ",";
     outputFile << adults[i].rarity << ",";
+    outputFile << changeIndividualAnneal(adults[i].avgParentProgress, cConstants, generation) << ",";
     outputFile << adults[i].avgParentProgress << ",";
     outputFile << adults[i].progress << ",";
     outputFile << adults[i].progress/adults[i].avgParentProgress << ",";

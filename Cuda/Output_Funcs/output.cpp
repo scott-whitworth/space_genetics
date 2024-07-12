@@ -93,13 +93,13 @@ void output::initializeGenPerformance(const cudaConstants * cConstants) {
 
   //Names for each objective
   for (int i = 0; i < cConstants->missionObjectives.size(); i++) {
-    excelFile << "algorithmBest" << cConstants->missionObjectives[i].name << ",";
+    excelFile << cConstants->missionObjectives[i].name << ",";
   }
   for (int i = 0; i < cConstants->missionObjectives.size(); i++) {
-    excelFile << "algorithmBest" << cConstants->missionObjectives[i].name << "Difference,";
+    excelFile << cConstants->missionObjectives[i].name << "Difference,";
   }
   for (int i = 0; i < cConstants->missionObjectives.size(); i++) {
-    excelFile << "algorithmBest" << cConstants->missionObjectives[i].name << "Normalization,";
+    excelFile << cConstants->missionObjectives[i].name << "Normalization,";
   }
   for (int i = 0; i < cConstants->missionObjectives.size(); i++) {
     excelFile << "best" << cConstants->missionObjectives[i].name << ",";

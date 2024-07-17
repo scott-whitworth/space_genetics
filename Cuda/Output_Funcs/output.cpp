@@ -24,7 +24,7 @@ output::output(const cudaConstants* cConstants, const std::string& selectFolder)
 }
 
 //Call the functions which print during a run
-void output::printGeneration(const cudaConstants * cConstants, const std::vector<Adult>& allAdults, const std::vector<double>& objectiveAvgValues, const int& generation, const double& new_anneal, int& errorNum, const int& duplicateNum, const int& totAssoc, const int & minSteps, const int & avgSteps, const int & maxSteps, const double& minDist, const double& avgDist, const double& maxDist, const double& avgAge, const int& oldestAge, const double& avgBirthday, const int& oldestBirthday, const float& avgGenTime) {
+void output::printGeneration(const cudaConstants * cConstants, const std::vector<Adult>& allAdults, const std::vector<double>& objectiveAvgValues, const int& generation, int& errorNum, const int& duplicateNum, const int& totAssoc, const int & minSteps, const int & avgSteps, const int & maxSteps, const double& minDist, const double& avgDist, const double& maxDist, const double& avgAge, const int& oldestAge, const double& avgBirthday, const int& oldestBirthday, const float& avgGenTime) {
   
   //Check to see if the best adults should be printed to the terminal on this generation
   if (generation % cConstants->disp_freq == 0) {
@@ -38,7 +38,7 @@ void output::printGeneration(const cudaConstants * cConstants, const std::vector
     if (generation % cConstants->write_freq == 0) {
 
       //Push info to the function which prints the full genPerformance file
-      recordGenerationPerformance(cConstants, allAdults, objectiveAvgValues, generation, new_anneal, errorNum, duplicateNum, totAssoc, minSteps, avgSteps, maxSteps, minDist, avgDist, maxDist, avgAge, oldestAge, avgBirthday, oldestBirthday, avgGenTime);
+      recordGenerationPerformance(cConstants, allAdults, objectiveAvgValues, generation, errorNum, duplicateNum, totAssoc, minSteps, avgSteps, maxSteps, minDist, avgDist, maxDist, avgAge, oldestAge, avgBirthday, oldestBirthday, avgGenTime);
       //Push info to the function which prints the simplified genPerformance file
       //recordGenSimple(cConstants, allAdults, objectiveAvgValues, generation);
     }
@@ -249,7 +249,7 @@ void output::copyFile (const std::string& source, const std::string& destination
 
 //!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Take in the current state of the generation and appends to excel file, assumes initializeRecord() had already been called before (no need to output a header row)
-void output::recordGenerationPerformance(const cudaConstants * cConstants, std::vector<Adult> adults, const std::vector<double>& objectiveAvgValues, const int& generation, const double& new_anneal, const int& errorNum, const int& duplicateNum, const int& totAssoc, const int & minSteps, const int & avgSteps, const int & maxSteps, const double& minDist, const double& avgDist, const double& maxDist, const double& avgAge, const int& oldestAge, const double& avgBirthday, const int& oldestBirthday, const float& avgGenTime) {
+void output::recordGenerationPerformance(const cudaConstants * cConstants, std::vector<Adult> adults, const std::vector<double>& objectiveAvgValues, const int& generation, const int& errorNum, const int& duplicateNum, const int& totAssoc, const int & minSteps, const int & avgSteps, const int & maxSteps, const double& minDist, const double& avgDist, const double& maxDist, const double& avgAge, const int& oldestAge, const double& avgBirthday, const int& oldestBirthday, const float& avgGenTime) {
   std::ofstream excelFile;
   int seed = cConstants->time_seed;
   std::string fileId = std::to_string(seed);

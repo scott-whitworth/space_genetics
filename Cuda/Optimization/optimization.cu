@@ -249,8 +249,6 @@ double optimize(const cudaConstants* cConstants, GPUMem & gpuValues, ReferencePo
     //Initialize the output object with the base folder location (..\Output_Files\)
     output genOutputs(cConstants);
 
-    // Initial genetic anneal scalar
-    double currentAnneal = cConstants->anneal_initial;
     
     // Main set of parameters for Genetic Algorithm
     // contains all thread unique input parameters
@@ -312,7 +310,7 @@ double optimize(const cudaConstants* cConstants, GPUMem & gpuValues, ReferencePo
         //      after the run, oldAdults should remain the same
         //newAdults is empty and will be filled with the "grown" children generated in this method
         //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE NEW GEN-_-_-_-_-_-_-_-_-_\n\n";
-        newGeneration(oldAdults, newAdults, currentAnneal, generation, rng, cConstants, gpuValues);
+        newGeneration(oldAdults, newAdults, generation, rng, cConstants, gpuValues);
 
         //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE PREP PARENTS-_-_-_-_-_-_-_-_-_\n\n";
         //fill oldAdults with the best adults from this generation and the previous generation so that the best parents can be selected (numErrors is for all adults in the generation - the oldAdults and the newAdults)
@@ -322,7 +320,7 @@ double optimize(const cudaConstants* cConstants, GPUMem & gpuValues, ReferencePo
         //      by the end of the function, it is cleared
         //oldAdults goes in with the pool of potential parents that may have generated the newAdults
         //      by the end of the function, it is filled with the best num_individuals adults from allAdults (sorted by rankDistanceSort) 
-        preparePotentialParents(allAdults, newAdults, oldAdults, numErrors, duplicateNum, cConstants, rng, refPoints, generation, currentAnneal, marsErrors);
+        preparePotentialParents(allAdults, newAdults, oldAdults, numErrors, duplicateNum, cConstants, rng, refPoints, generation, marsErrors);
 
         // Display a '.' to the terminal to show that a generation has been performed
         // This also serves to visually seperate the terminalDisplay() calls across generations 
@@ -335,15 +333,13 @@ double optimize(const cudaConstants* cConstants, GPUMem & gpuValues, ReferencePo
         //reset sort from calculateGenerationValues function
         mainSort(allAdults, cConstants, allAdults.size());
 
-        //Assumes oldAdults is in rankDistance order
-        changeAnneal (oldAdults, cConstants, currentAnneal, generation);
 
         //Get the run's total time
         totRunTime = (std::chrono::system_clock::now() - runStartTime);
 
         //std::cout << "\n\n_-_-_-_-_-_-_-_-_-TEST: PRE RECORD-_-_-_-_-_-_-_-_-_\n\n";
         //Print out necessary info for this generation
-        genOutputs.printGeneration(cConstants, allAdults, objectiveAvgValues, generation, currentAnneal, numErrors, duplicateNum, totAssoc, minSteps, avgSteps, maxSteps, minDistance, avgDistance, maxDistance, avgAge, generation-oldestBirthday, avgBirthday, oldestBirthday, (totRunTime.count()/(generation+1)));
+        genOutputs.printGeneration(cConstants, allAdults, objectiveAvgValues, generation, numErrors, duplicateNum, totAssoc, minSteps, avgSteps, maxSteps, minDistance, avgDistance, maxDistance, avgAge, generation-oldestBirthday, avgBirthday, oldestBirthday, (totRunTime.count()/(generation+1)));
 
         // Before replacing new adults, determine whether all are within tolerance
         // Determines when loop is finished

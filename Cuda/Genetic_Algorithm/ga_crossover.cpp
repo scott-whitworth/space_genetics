@@ -342,7 +342,7 @@ rkParameters<double> generateNewChild(const rkParameters<double> & p1, const rkP
 }
 
 // Method that creates a pair of new Individuals from a pair of other individuals and a mask
-void generateChildrenPair (const Adult & parent1, const Adult & parent2, Child * newChildren, const int & childrenToGenerate, std::vector<int> & mask, const double & annealing, std::mt19937_64 & rng, int & numNewChildren, const int & generation, const cudaConstants* cConstants) {
+void generateChildrenPair (const Adult & parent1, const Adult & parent2, Child * newChildren, const int & childrenToGenerate, std::vector<int> & mask, std::mt19937_64 & rng, int & numNewChildren, const int & generation, const cudaConstants* cConstants) {
     
     //checks to make sure that more children are needed in the newChildren array before generating new children
     //if there are already enough children, it just returns and exits this function
@@ -369,7 +369,7 @@ void generateChildrenPair (const Adult & parent1, const Adult & parent2, Child *
     flipMask(mask); 
 
     //Generate a mirrored child
-    newChildren[numNewChildren] = Child(generateNewChild(parent1.startParams, parent2.startParams, mask, cConstants, annealing, rng), cConstants, generation, (parent1.progress + parent2.progress)/2); 
+    newChildren[numNewChildren] = Child(generateNewChild(parent1.startParams, parent2.startParams, mask, cConstants, individualAnneal, rng), cConstants, generation, (parent1.progress + parent2.progress)/2); 
 
     //Add one to numNewChildren since a new child was generated
     numNewChildren++;
@@ -377,7 +377,7 @@ void generateChildrenPair (const Adult & parent1, const Adult & parent2, Child *
 
 //!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // Generate children from parents using crossover methods
-void generateChildrenFromCrossover(std::vector<Adult> &parents, Child *newChildren, const int &childrenToGenerate, std::mt19937_64 &rng, const double &currentAnneal, const int &generation, const cudaConstants *cConstants)
+void generateChildrenFromCrossover(std::vector<Adult> &parents, Child *newChildren, const int &childrenToGenerate, std::mt19937_64 &rng, const int &generation, const cudaConstants *cConstants)
 {
     // Create a mask to determine which of the child's parameters will be inherited from which parents
     std::vector<int> mask;
@@ -444,7 +444,7 @@ void generateChildrenFromCrossover(std::vector<Adult> &parents, Child *newChildr
             crossOver_wholeRandom(mask, rng);
 
             // Generate a pair of children based on the mask
-            generateChildrenPair(parents[parentPool[parentIndex]], parents[parentPool[parentIndex + 1]], newChildren, childrenToGenerate, mask, currentAnneal, rng, numNewChildren, generation, cConstants);
+            generateChildrenPair(parents[parentPool[parentIndex]], parents[parentPool[parentIndex + 1]], newChildren, childrenToGenerate, mask, rng, numNewChildren, generation, cConstants);
 
             // Generate a pair of children from a pair of parents based on the average mask method
             // This mask method will generate a set of parameters based on the average of parameters from each parent
@@ -455,7 +455,7 @@ void generateChildrenFromCrossover(std::vector<Adult> &parents, Child *newChildr
             //Currently does 1 full average and 1 averageRatio (flipping crossOver_average mask turns it to an averageRatio mask)
             crossOver_average(mask);
             // Generate a pair of children based on the mask
-            generateChildrenPair(parents[parentPool[parentIndex]], parents[parentPool[parentIndex + 1]], newChildren, childrenToGenerate, mask, currentAnneal, rng, numNewChildren, generation, cConstants);
+            generateChildrenPair(parents[parentPool[parentIndex]], parents[parentPool[parentIndex + 1]], newChildren, childrenToGenerate, mask, rng, numNewChildren, generation, cConstants);
 
             // Generate a pair of children from a pair of parents based on the bundled random mask method
             // This mask method will generate parameters with variables pulled from random parents
@@ -464,7 +464,7 @@ void generateChildrenFromCrossover(std::vector<Adult> &parents, Child *newChildr
             // Generate the base mask, each variable (or set of variables) is set to a random parent
             crossOver_bundleVars(mask, rng);
             // Generate a pair of children based on the mask
-            generateChildrenPair(parents[parentPool[parentIndex]], parents[parentPool[parentIndex + 1]], newChildren, childrenToGenerate, mask, currentAnneal, rng, numNewChildren, generation, cConstants);
+            generateChildrenPair(parents[parentPool[parentIndex]], parents[parentPool[parentIndex + 1]], newChildren, childrenToGenerate, mask, rng, numNewChildren, generation, cConstants);
 
             // Add two to parentIndex to account for the variable tracking pairs of parents, not just one parent's index
             parentIndex += 2;

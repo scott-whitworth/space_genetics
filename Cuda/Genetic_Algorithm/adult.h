@@ -184,7 +184,7 @@ bool duplicateCheck(const Adult& personA, const Adult& personB, const cudaConsta
 //NOTE: Ideally, this function should be used after combining old/newAdults into allAdults
 //      This means the function will find duplicates within the same generation but also beween generations
 //NOTE: This function does not assume the adults have been sorted
-void findDuplicates (std::vector<Adult>& adults, const cudaConstants* cConstants, const double& currentAnneal);
+void findDuplicates (std::vector<Adult>& newAdults, std::vector<Adult>& oldAdults, const cudaConstants* cConstants);
 
 //!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 //test version of duplicateCheck that does not use cConstants

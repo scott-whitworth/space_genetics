@@ -133,7 +133,7 @@ rkParameters<double> generateNewChild(const rkParameters<double> & p1, const rkP
 //         mask is flipped in polarity (refer to flipMask method) 
 //         numNewChildren is incremented by +2
 // Called by newGeneration() each time a new mask is generated 
-void generateChildrenPair(const Adult & parent1, const Adult & parent2, Child * newChildren, const int & childrenToGenerate, std::vector<int> & mask, const double & annealing, std::mt19937_64 & rng, int & numNewChildren, const int & generation, const cudaConstants* cConstants);
+void generateChildrenPair(const Adult & parent1, const Adult & parent2, Child * newChildren, const int & childrenToGenerate, std::vector<int> & mask, std::mt19937_64 & rng, int & numNewChildren, const int & generation, const cudaConstants* cConstants);
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -147,7 +147,7 @@ void generateChildrenPair(const Adult & parent1, const Adult & parent2, Child * 
 //          generation - this is the current generation, passed into child
 //          cConstants - the cuda constants
 // Outputs: This function will fill the newChildren array up to childrenToGenerate with generated children, ready to be simulated
-void generateChildrenFromCrossover(std::vector<Adult> & parents, Child* newChildren, const int & childrenToGenerate, std::mt19937_64 & rng, const double & currentAnneal, const int & generation, const cudaConstants* cConstants);
+void generateChildrenFromCrossover(std::vector<Adult> & parents, Child* newChildren, const int & childrenToGenerate, std::mt19937_64 & rng, const int & generation, const cudaConstants* cConstants);
 
 
 #include "ga_crossover.cpp"

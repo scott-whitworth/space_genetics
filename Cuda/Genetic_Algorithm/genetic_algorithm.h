@@ -36,7 +36,7 @@
 //          gpuValues - allows callRK to access the the GPU memory that has been allocated and the set values for Mars and the cConstants
 // Outputs: newAdults will be filled with newly generated adults; it will be ready to be sorted and compared to other generations
 // NOTE: This function is called at the beginning of each generation within optimize() 
-void newGeneration(std::vector<Adult> & oldAdults, std::vector<Adult> & newAdults, const double & annealing, const int & generation, std::mt19937_64 & rng, const cudaConstants* cConstants, GPUMem & gpuValues);
+void newGeneration(std::vector<Adult> & oldAdults, std::vector<Adult> & newAdults, const int & generation, std::mt19937_64 & rng, const cudaConstants* cConstants, GPUMem & gpuValues);
 
 // Copies unique values from oldAdults into parents (size N/4) and any adults with the same a non-duplicate error status are included
 // Input: oldAdults - the potential parents from which we are selecting the best survivor_count parents
@@ -54,7 +54,7 @@ void fillParents(std::vector<Adult> & oldAdults, std::vector<Adult> & parents, c
 //        rng - a random number generator that is both passed on to other functions and used to pull random parents
 //        cConstants - the config constants; it is passed on to other functions and is used for constructing children and mutating their parameters
 // Output: newChildren is filled with 
-void makeChildren(std::vector<Adult> & parents, Child * newChildren, const double & annealing, const int & generation, std::mt19937_64 & rng, const cudaConstants* cConstants);
+void makeChildren(std::vector<Adult> & parents, Child * newChildren, const int & generation, std::mt19937_64 & rng, const cudaConstants* cConstants);
 
 // Converts children previously simulated by callRK into adults
 //        It calculates the pos and speed diffs of the children and inserts the new children into the submitted adult vector
@@ -102,7 +102,7 @@ void firstGeneration(Child* initialChildren, std::vector<Adult>& oldAdults, cons
 //         allAdults is filled with 2N - number of duplicates + errors adults from the combination of the inputted old/newAdults vectors
 //              It is sorted by rankDistance
 //         newAdults remains the same (size of N and unsorted)
-void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& newAdults, std::vector<Adult>& oldAdults, int& numErrors, int& duplicateNum, const cudaConstants* cConstants, std::mt19937_64 rng, ReferencePoints & refPoints, const int & generation, const double& currentAnneal, int& marsErrors);
+void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& newAdults, std::vector<Adult>& oldAdults, int& numErrors, int& duplicateNum, const cudaConstants* cConstants, std::mt19937_64 rng, ReferencePoints & refPoints, const int & generation, int& marsErrors);
 
 //function that decides whether or not to add an adult to allAdults based on its errorStatus
 //Input: adultPool - This is either new or oldAdults and an adult from the vector will be checked for errorStatus and added to allAdults

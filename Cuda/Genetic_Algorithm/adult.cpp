@@ -366,7 +366,7 @@ bool duplicateCheck(const Adult& personA, const Adult& personB, const cudaConsta
 }
 
 //Find the duplicates within the imported vector
-void findDuplicates (std::vector<Adult>& newAdults, std::vector<Adult>& oldAdults, const cudaConstants* cConstants, const double& currentAnneal) {
+void findDuplicates (std::vector<Adult>& newAdults, std::vector<Adult>& oldAdults, const cudaConstants* cConstants) {
     //reset the status of all the duplicates
     //This makes sure that previous duplicates get another look if their copies have been changed
     std::vector<Adult> tempAllAdults;

@@ -29,7 +29,6 @@
 //        currentAnneal - the generation's anneal value, which will be modified by the function
 //        generation - the current generation
 // Output: an update of the anneal based on the best current progress
-void changeAnneal (const std::vector<Adult>& oldAdults, const cudaConstants* cConstants, double & currentAnneal, const int & generation);
 double changeIndividualAnneal (double curProgress, const cudaConstants* cConstants, const int & generation);
 #include "anneal.cpp"
 

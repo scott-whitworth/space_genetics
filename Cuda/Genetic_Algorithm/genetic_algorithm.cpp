@@ -1,5 +1,5 @@
 // Creates the next pool to be used in the optimize function in opimization.cu
-void newGeneration (std::vector<Adult> & oldAdults, std::vector<Adult> & newAdults, const double & annealing, const int & generation, std::mt19937_64 & rng, const cudaConstants* cConstants, GPUMem & gpuValues) {
+void newGeneration (std::vector<Adult> & oldAdults, std::vector<Adult> & newAdults, const int & generation, std::mt19937_64 & rng, const cudaConstants* cConstants, GPUMem & gpuValues) {
 
     //Vector that will hold the adults who are potential parents
     //The criteria for being a parent is being in the top survivor_count number of adults in the oldAdult pool
@@ -15,7 +15,7 @@ void newGeneration (std::vector<Adult> & oldAdults, std::vector<Adult> & newAdul
     Child* newChildren = new Child[cConstants->num_individuals]; 
 
     //uses parents to make children for the next generation
-    makeChildren(parents, newChildren, annealing, generation, rng, cConstants);
+    makeChildren(parents, newChildren, generation, rng, cConstants);
     
     //Initialize variables needed for callRK
     double timeInitial = 0;
@@ -76,14 +76,14 @@ void fillParents(std::vector<Adult> & oldAdults, std::vector<Adult> & parents, c
 }
 
 //
-void makeChildren(std::vector<Adult> & parents, Child * newChildren, const double & annealing, const int & generation, std::mt19937_64 & rng, const cudaConstants* cConstants){
+void makeChildren(std::vector<Adult> & parents, Child * newChildren, const int & generation, std::mt19937_64 & rng, const cudaConstants* cConstants){
 
     //Variable that tracks the number of children that needs to be generated via the crossover method
     //Set to the number of children that needs to be generated (num_individuals)
     int childrenFromCrossover = cConstants->num_individuals;
 
     //Generate children with crossovers using parents
-    generateChildrenFromCrossover(parents, newChildren, childrenFromCrossover, rng, annealing, generation, cConstants);
+    generateChildrenFromCrossover(parents, newChildren, childrenFromCrossover, rng, generation, cConstants);
     
 
 }
@@ -319,7 +319,7 @@ void firstGeneration(Child* initialChildren, std::vector<Adult>& oldAdults, cons
 }
 
 //fills oldAdults with the best adults from this generation and the previous generation so that the best parents can be selected
-void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& newAdults, std::vector<Adult>& oldAdults, int& numErrors, int& duplicateNum, const cudaConstants* cConstants, std::mt19937_64 rng, ReferencePoints & refPoints, const int & generation, const double& currentAnneal, int & marsErrors){
+void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& newAdults, std::vector<Adult>& oldAdults, int& numErrors, int& duplicateNum, const cudaConstants* cConstants, std::mt19937_64 rng, ReferencePoints & refPoints, const int & generation, int & marsErrors){
     //ensures this vector is empty and ready for new inputs
     std::vector<Adult>().swap(allAdults); 
 
@@ -329,7 +329,7 @@ void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& 
     duplicateNum = 0;
 
     //Iterate through allAdults and find any duplicate adults
-    findDuplicates(newAdults, oldAdults, cConstants, currentAnneal);
+    findDuplicates(newAdults, oldAdults, cConstants);
 
     //get rid of any invalid or old adults, as well as adults with bad posDiffs or speedDiffs that are too small
     //check the errorStatus of all the newAdults and add them to allAdults

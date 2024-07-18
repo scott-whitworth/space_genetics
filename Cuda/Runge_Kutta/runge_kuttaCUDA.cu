@@ -270,8 +270,8 @@ __global__ void rk4CUDASim(Child *children, double *absTolInput, int n, const cu
                         return;
                     }
 
-                    //Check if child has exited MSOI after being inside it
-                    if (marsCraftDist > MSOI*cConstant->MSOI_scale && children[threadId].simStatus == INSIDE_SOI) {
+                    //Check if child has exited MSOI after previously being inside it
+                    if ((marsCraftDist > MSOI*cConstant->MSOI_scale) && (children[threadId].simStatus == INSIDE_SOI) ) {
                         //Set the final time and position for this portion of the child's simulation
                         children[threadId].simStartTime = curTime;
                         children[threadId].simStartPos = curPos;
@@ -283,8 +283,8 @@ __global__ void rk4CUDASim(Child *children, double *absTolInput, int n, const cu
                         children[threadId].orbithChange = (curPos.r * curPos.vtheta) - soiEntryh;
 
                         //Check to make sure the orbithChange isn't less than 0, if the value is less than 0 the intercept calculations will mess up
-                        if (children[threadId].orbithChange < 1e-14) {
-                            children[threadId].orbithChange = 5e-15;
+                        if (children[threadId].orbithChange < cConstant->doublePrecThresh) {
+                            children[threadId].orbithChange = cConstant->doublePrecThresh;
                         }
 
                         //Check to see if this was a bad assist

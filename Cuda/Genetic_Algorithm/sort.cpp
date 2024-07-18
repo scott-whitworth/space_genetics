@@ -144,7 +144,7 @@ void giveDistance(std::vector<Adult> & allAdults, const cudaConstants* cConstant
         for(int j = metThreshold + 1; j < validAdults - 1; j++) {
             //Check to see if the adult has met the convergence threshold
             //Add the max distance to the adult if so
-            if (allAdults[j].objTargetDiffs[i] < cConstants->missionObjectives[i].allowedDifference) {
+            if (allAdults[j].objTargetDiffs[i] < (cConstants->missionObjectives[i].allowedDifference + cConstants->missionObjectives[i].equateTolerance)) {
                 allAdults[j].distance += MAX_DISTANCE;
             }
             //The adult has not met the convergence threshold for this objective, use the normal distance calculation

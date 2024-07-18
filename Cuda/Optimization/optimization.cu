@@ -360,7 +360,7 @@ double optimize(const cudaConstants* cConstants, GPUMem & gpuValues, ReferencePo
     } while ( !convergence && generation < cConstants->max_generations);
 
     //Handle the final printing
-    genOutputs.printFinalGen(cConstants, allAdults, gpuValues, convergence, generation, numErrors, duplicateNum, oldestBirthday, (totRunTime.count()/(generation+1))); 
+    genOutputs.printFinalGen(cConstants, allAdults, gpuValues, convergence, generation-1, numErrors, duplicateNum, oldestBirthday, (totRunTime.count()/(generation+1))); 
 
     return calcPerS;
 }

@@ -9,9 +9,35 @@ double changeIndividualAnneal (double curProgress, const cudaConstants* cConstan
     //This method currently has the fastest and most consistent convergence rate
     //Once it reaches 1e-3, the anneal will be function based on a power curve
     
-    //This function is here because it has the needed shape through the range 1e-3 - 1.0 
-    currentAnneal = (cConstants->anneal_initial * pow((1 - pow((curProgress), 0.08)) ,5)); 
-    //Do not want the anneal to go backwards at this point, make sure it only decreases
+    if(curProgress < 1e-10){ 
+    currentAnneal = cConstants->anneal_initial; 
+    } 
+    else if(curProgress >= 1e-10 && curProgress < 1e-9){ 
+        currentAnneal = cConstants->anneal_initial*.7; 
+    } 
+    else if(curProgress >= 1e-9 && curProgress < 1e-8){ 
+        currentAnneal = cConstants->anneal_initial*.45; 
+    } 
+    else if(curProgress >= 1e-8 && curProgress < 1e-7){ 
+        currentAnneal = cConstants->anneal_initial*.28; 
+    } 
+    else if(curProgress >= 1e-7 && curProgress < 1e-6){ 
+        currentAnneal = cConstants->anneal_initial*.16; 
+    } 
+    else if(curProgress >= 1e-6 && curProgress < 1e-5){ 
+        currentAnneal = cConstants->anneal_initial*.12; 
+    } 
+    else if(curProgress >= 1e-5 && curProgress < 1e-4){ 
+        currentAnneal = cConstants->anneal_initial*.06; 
+    } 
+    else if(curProgress >= 1e-4 && curProgress < 1e-3){ 
+        currentAnneal = cConstants->anneal_initial*.012; 
+    }
+    else{
+        //This function is here because it has the needed shape through the range 1e-3 - 1.0 
+        currentAnneal = (cConstants->anneal_initial * pow((1 - pow((curProgress), 0.07)) ,5)); 
+        //Do not want the anneal to go backwards at this point, make sure it only decreases
+    }
 
 
     //Modify the current anneal by a sinusoidal multiplier

@@ -140,21 +140,26 @@ __host__ __device__ double Child::getSpeedDiff(const cudaConstants* cConstants) 
 // Input: cConstants in accessing properties for the final velocity of the target (such as vr_fin_target, vtheta_fin_target, and vz_fin_target)
 // Output: Assigns and returns the difference in horizontal velocity angle between the individual and the target
 __host__ __device__ double Child::getHorzVelDiff(const cudaConstants* cConstants) {
-    //Use A*B=|A||B|cos(theta) equation to get theta
-    //Initialize equation values
-    double indMag = 0, tarMag = 0, dot = 0;
+ 
+    // //Use A*B=|A||B|cos(theta) equation to get theta
+    // //Initialize equation values
+    // double indMag = 0, tarMag = 0, dot = 0;
 
-    //Calculate magnitudes
-    //Individual
-    indMag = sqrt(pow(finalPos.vr, 2) + pow(finalPos.vtheta, 2));
-    //Target
-    tarMag = sqrt(pow(cConstants->vr_fin_target, 2) + pow(cConstants->vtheta_fin_target, 2));
+    // //Calculate magnitudes
+    // //Individual
+    // indMag = sqrt(pow(finalPos.vr, 2) + pow(finalPos.vtheta, 2));
+    // //Target
+    // tarMag = sqrt(pow(cConstants->vr_fin_target, 2) + pow(cConstants->vtheta_fin_target, 2));
 
-    //Calculate dot product
-    dot = (finalPos.vr * cConstants->vr_fin_target) + (finalPos.vtheta * cConstants->vtheta_fin_target);
+    // //Calculate dot product
+    // dot = (finalPos.vr * cConstants->vr_fin_target) + (finalPos.vtheta * cConstants->vtheta_fin_target);
 
-    //Calculate angle difference
-    horzVelDiff = acos(dot/(indMag * tarMag));
+    // //Calculate angle difference
+    // horzVelDiff = acos(dot/(indMag * tarMag));
+
+    //Horizontal angle difference = arctan(delta(Vtheta)/delta(Vr))
+    horzVelDiff = atan((finalPos.vtheta-cConstants->vtheta_fin_target)/(finalPos.vr-cConstants->vr_fin_target));
+
 
     //Convert to degrees
     horzVelDiff *= (180/M_PI);
@@ -179,20 +184,26 @@ __host__ __device__ double Child::getVertVelDiff(const cudaConstants* cConstants
     //Vert angle difference = Phi1 - Phi2
 
     //Initialize equation values
-    double indMag = 0, tarMag = 0, indPhi = 0, tarPhi = 0;
+//     double indMag = 0, tarMag = 0, indPhi = 0, tarPhi = 0;
 
-    //Calculate magnitudes
-    //Individual
-    indMag = sqrt(pow(finalPos.vr, 2) + pow(finalPos.vtheta, 2) + pow(finalPos.vz, 2));
-    //Target
-    tarMag = sqrt(pow(cConstants->vr_fin_target, 2) + pow(cConstants->vtheta_fin_target, 2) + pow(cConstants->vz_fin_target, 2));
+//     //Calculate magnitudes
+//     //Individual
+//     indMag = sqrt(pow(finalPos.vr, 2) + pow(finalPos.vtheta, 2) + pow(finalPos.vz, 2));
+//     //Target
+//     tarMag = sqrt(pow(cConstants->vr_fin_target, 2) + pow(cConstants->vtheta_fin_target, 2) + pow(cConstants->vz_fin_target, 2));
 
-    //Calculate z angles (in radians)
-    indPhi = asin(finalPos.vz/indMag);
-    tarPhi = asin(cConstants->vz_fin_target/tarMag);
+//     //Calculate z angles (in radians)
+//     indPhi = asin(finalPos.vz/indMag);
+//     tarPhi = asin(cConstants->vz_fin_target/tarMag);
 
-    //Calculate difference
-    vertVelDiff = (indPhi - tarPhi);
+//     //Calculate difference
+// //    vertVelDiff = (indPhi - tarPhi);
+//     vertVelDiff = asin((finalPos.vz/indMag) - (cConstants->vz_fin_target/tarMag));
+
+
+    //Vert angle difference = arcsin(delta(Vz)/mag(delta(V)))
+    double speedDiffTemp = sqrt(pow(cConstants->vr_fin_target - finalPos.vr, 2) + pow(cConstants->vtheta_fin_target - finalPos.vtheta, 2) + pow(cConstants->vz_fin_target - finalPos.vz, 2)); 
+    vertVelDiff = asin((finalPos.vz-cConstants->vz_fin_target)/speedDiffTemp);
 
     //Convert to degrees
     vertVelDiff *= (180/M_PI);

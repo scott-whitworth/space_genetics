@@ -535,7 +535,7 @@ void output::trajectoryPrint(int generation, const cudaConstants* cConstants, co
                                                  earth.vtheta + cos(best.startParams.zeta)*cos(best.startParams.beta)*cConstants->v_escape,
                                                  earth.vz + sin(best.startParams.zeta)*cConstants->v_escape);
 
-  //Calculate the maximum possible number of steps taken to make enough memory is allocated
+  //Calculate the maximum possible number of steps taken to make sure enough memory is allocated
   int numSteps = (cConstants->maxSimNum * (cConstants->max_numsteps + 1))+1;
 
   // Assigning wetMass

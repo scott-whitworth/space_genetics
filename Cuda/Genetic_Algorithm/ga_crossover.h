@@ -88,7 +88,7 @@ void copyMask(int * maskIn, int * maskOut);
 //                      - called iteratively to mutate more genes
 // output: mutateMask contains false for genes that are not mutating, true for genes that are to be mutated
 // Called by mutate()
-void mutateMask(std::mt19937_64 & rng, bool * mutateMask, double mutation_rate);
+void mutateMask(std::mt19937_64 & rng, bool * mutateMask, double mutation_chance);
 
 // Handles potential mutation of individual 
 // Calls mutateMask, then applied mutations as necessary

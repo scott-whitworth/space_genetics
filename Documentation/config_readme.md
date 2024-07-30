@@ -21,24 +21,24 @@
 
 <h2>File and variable format for config file</h2>  
 
-- The config file allows empty rows and comments ("//" at start of comment line) for formatting the presentation of the contents, also allows in-line comments with only requirement being a space from the value assignment
-- The parsing process currently does not attempt any verification of assigning values to variables (lack of assignment nor duplications).  When reading values, it takes the assignment and uses the standard string to int/double for appriopriate variable types and does not currently handle arithmetic
-- When reading the file, the assumption is made that the config file contains valid simple values for all variables.  Also that there are no spaces until after the variable value assignment
+- The config file allows empty rows and comments ("//" at start of comment line) for formatting the presentation of the contents. The file also allows in-line comments with the only requirement being a space after the value assignment
+- The parsing process currently does not attempt any verification when assigning values to variables (lack of assignment nor duplications).  When reading values, it takes the variable assignment and (for appropriate variable types) uses the standard string to int/double function. Variable assignment does not currently handle arithmetic operations
+- When reading the file, assumptions are made that the config file contains valid simple values for all variables and that there are no spaces until after the variable value assignment
 
 <h2>Config file structure</h2>  
 
 - Whenever the code runs, three config files are used to gather info 
 - First, genetic.config is read. This file holds info on the details of how the genetic algorithim should run, such as how strong mutations are. 
-- Second, mission.config is considered. It holds the goals (minimize relative speed) and retraints (triptime min/max) of the genetic algorithim. It also hold the file address for the target body.
-- Finally, the file containing info on the target body for the run. The information should include final position and velocities for the origin, target, and any graviational assist body. It should also include info on the setup of the spacecraft for the mission.
+- Second, mission.config is opened. It holds the goals (Ex: relative speed)  of the genetic algorithim and the file name for the mission target file (Ex: psyche).
+- Finally, the file containing info on the target body for the run is read. The information should include final position and velocities for the origin, target, and any graviational assist body. It should also include info on the setup of the spacecraft for the mission (like dry and fuel mass).
 
 <h2>The cudaConstants struct</h2>
 
 - In the code, the structure that uses the config file is called <b>cudaConstants</b> and is only accessed when being constructed (therefore changing the config file during a run would have no impact).
-- An overloaded << operator for cudaConstants that outputs the object's contents with labelling/formatting for better readibility to output onto terminal screen in the main function.
-- For changing what config file is used, the file address can be changed where cudaConstants is declared within the main function in optimization.cu. Requires re-compiling the code.
-- Default address is "genetic.config" in same folder as the .exe file, optimization.cu has address set as "../Config_Constants/genetic.config".
-- If config file address is invalid, will output to terminal that is the case.  
+- Contains an overloaded << operator for cudaConstants that outputs the object's contents with labelling/formatting for better readibility to print onto the terminal screen in the main() function.
+- For changing what config files are used, the file addresses can be changed in the cudaConstants constructor found in config.cpp. Requires re-compiling of the code.
+- The default addresses are relative, based off of the .exe file created in the Optimization folder (Ex: "../Config_Constants/<name\>.config").
+- If the config file address is invalid, the program will output to terminal that this is the case.  
 <br>
 
 # Values from genetic config
@@ -48,46 +48,49 @@
 | time_seed                  	| int/string 	| None  	| Sets the seed used in random generation initialization and labeling file outputs, either specify a seed to use or place "NONE" for the seed to be time(0)                         |   	|
 | max_generations               | int           | None      | Determines how many generations the genetic algorithim will run before "giving up" and trying again on a new run   |       |
 | run_count                     | int           | None      | The number of runs that will be completed before ending the program   |       |
+| carryover_individuals         | int           | None      | The number of individuals from the previous run to use as a basis for the starting parameters of the initial children of the current run   |       |
+| algorithm_type                     | string           | None      | What genetic diversity algorithm will be used. Either "rank-rarity" or "rank-distance"   |       |
 
 ## GPU/Algorithim Variables
 | Variable Name              	| Data Type  	| Units 	| Usage                                                                                                                                                      	                    |   	|
 |----------------------------	|------------	|-------	|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---	|
 | rk_tol                 	    | double     	| None  	| The relative/absolute (not sure which one it is) tolerance for the runge kutta algorithm |   	|
-| doublePrecThresh              | double     	| None  	| The smallest error difference in runge kutta algorithm allowed, having the value set too small would result in differences between GPU and CPU runge-kutta due to the data types limits of precision |   	|
-| max_numsteps                 	| int        	| None  	| Maximum number of steps in the runge kutta used in the GPU and in EarthInfo's reverse runge kutta method, note that changing the numsteps but keeping same time_seed value can lead to different results due to slight variance in the results that changes the aglorithm's path to finding a solution    |   	|
-| min_numsteps                 	| int        	| None  	| Minimum number of steps in the runge kutta used in the GPU and in EarthInfo's reverse runge kutta method, note that changing the numsteps but keeping same time_seed value can lead to different results due to slight variance in the results that changes the aglorithm's path to finding a solution    |   	|
-| num_individuals           	| int        	| None  	| Sets the size of the population pool and number of threads used as an individual is given a thread, recommended to not change |   	|
-| survivor_count               	| int        	| None  	| Number of individuals selected as "survivors" to produce new individuals in the next generation in the genetic algorithm, every pair produces 8 new individuals, value must be even   |   	|
-| thread_block_size           	| int        	| None  	| Number of threads per block on the GPU being used, recommended to not change  |   	|
-| coast_threshold             	| double     	| None  	| In a range from 0 to 1, 1 sets the spacecraft to coast at all times while 0 sets the spacecraft to always have thruster on    |   	|
+| doublePrecThresh              | double     	| None  	| The smallest error difference in the runge kutta algorithm allowed. Setting the value too small would result in differences between GPU and CPU runge-kutta due to the data types limits of precision |   	|
+| max_numsteps                 	| int        	| None  	| The maximum number of steps in the runge kutta used in the GPU and in EarthInfo's reverse runge kutta method. Note that changing numsteps but keeping the same time_seed value can lead to different results due to slight variance in the results that changes the algorithm's path to finding a solution    |   	|
+| min_numsteps                 	| int        	| None  	| The minimum number of steps in the runge kutta used in the GPU and in EarthInfo's reverse runge kutta method. Note that changing numsteps but keeping the same time_seed value can lead to different results due to slight variance in the results that changes the algorithm's path to finding a solution    |   	|
+| coast_threshold             	| double     	| None  	| In a range from 0 to 1. 1 sets the spacecraft to coast at all times while 0 sets the spacecraft to always have thruster on    |   	|
 | timeRes                    	| int        	| seconds   | The "gap" between each calculation for Earth's backward runge-kutta, for example 3600 sets every calculation to be 1 hour apart   |   	|
+| maxSimNum                    	| int        	| None   | Determines the maximum number of times to simulate each child before stopping the simulation and returning an error   |   	|
+| num_individuals           	| int        	| None  	| Sets the size of the population pool and the number of threads used (each individual is given a separate thread). Recommended not to change |   	|
+| survivor_count *depreciated*               	| int        	| None  	| Number of individuals selected as "survivors" to produce new individuals in the next generation of the genetic algorithm. Every pair produces 6 new individuals, value must be even. Right now, it's automatically set to 1/4 of num_individuals   |   	|
+| thread_block_size           	| int        	| None  	| Number of threads per block on the GPU being used. Recommended to not change  |   	|
 
 ## Display Variables
 | Variable Name              	| Data Type  	| Units 	| Usage                                                                                                                                                      	                    |   	|
 |----------------------------	|------------	|-------	|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---	|
-| record_mode                 	| boolean       | None  	| If "true", sets program to output various files that describe the performance, meant to be used in helping verify/debug behavior. |   	|
-| write_freq                 	| int        	| None  	| Sets number of generations to process before writing information onto files, 1 is to write every generation   |   	|
-| all_write_freq                | int           | None      | Sets the number of generations to process before writing information on all individuals in a generation onto files, 200 creates a new file every 200 generations  |   |
-| disp_freq                  	| int        	| None  	| Sets number of gnerations to process before outputting to console terminal, 1 is to display output every generation   |   	|
+| record_mode                 	| boolean       | None  	| If "true", sets program to output various files that describe the performance. Meant to be used in helping to verify/debug behavior |   	|
+| write_freq                 	| int        	| None  	| Sets number of generations to process before writing the current generation's information onto the genPerformance file. 1 is to write every generation   |   	|
+| all_write_freq                | int           | None      | Sets the number of generations to process before writing information on all individuals in a generation onto files, (Ex:200 creates a new file every 200 generations)  |   |
+| disp_freq                  	| int        	| None  	| Sets number of generations to process before outputting generation information to the console terminal. 1 is to display output every generation   |   	|
 
 ## Input Parameter Range and Mutation Variables
 | Variable Name              	| Data Type  	| Units 	| Usage                                                                                                                                                      	                    |   	|
 |----------------------------	|------------	|-------	|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---	|
-| gamma_random_start_range      | double     	| None      | The magnitude of the +/- value range for gamma coefficient random initial values  |   	|
+| gamma_random_start_range      | double     	| None      | The magnitude of the value range (+/- the start range) for each child's random gamma coefficient initial value    |   	|
 | tau_random_start_range        | double     	| None      | The magnitude of the +/- value range for tau coefficient random initial values    |   	|
 | coast_random_start_range      | double     	| None      | The magnitude of the +/- value range for coast coefficient random initial values  |   	|
 | alpha_random_start_range      | double     	| Radians   | The magnitude of the +/- value range for alpha random initial values  |   	|
 | beta_random_start_range       | double     	| Radians   | The magnitude of the positive only value range for beta random initial values |   	|
 | zeta_random_start_range       | double     	| Radians   | The magnitude of the +/- value range for zeta random initial values   |   	|
-| mutation_amplitude            | double        | None      | A blanket scaling factor for mutations. This scalar is applied to any mutated value. A value of 1 means there this value does not modify mutations  |   |
-| default_mutation_chance       | double    	| None  	| The probability of a mutations occurring when generating a new individual, checks the mutation_rate before setting a random gene to be mutated and continues checking to mutate more unique genes until the check fails |   	|
-| gamma_mutate_scale           	| double     	| None  	| Affects the maximum mutation range for gamma values (maximum mutation for the corresponding parameter is annealing * [this scale])    |   	|
-| tau_mutate_scale           	| double     	| None  	| Affects the maximum mutation range for tau values (maximum mutation for the corresponding parameter is annealing * [this scale]) 	                                                |   	|
-| coast_mutate_scale           	| double     	| None  	| Affects the maximum mutation range for coast values (maximum mutation for the corresponding parameter is annealing * [this scale]) 	                                            |   	|
-| triptime_mutate_scale 	    | double     	| Years  	| Affects the maximum mutation range for triptime values (maximum mutation for the corresponding parameter is annealing * [this scale] * SECONDS_IN_A_YEAR) 	                    |   	|
-| zeta_mutate_scale          	| double     	| Radians  	| Affects the maximum mutation range for zeta values (maximum mutation for the corresponding parameter is annealing * [this scale]) |   	|
-| beta_mutate_scale           	| double     	| Radians  	| Affects the maximum mutation range for beta values (maximum mutation for the corresponding parameter is annealing * [this scale]) |   	|
-| alpha_mutate_scale           	| double     	| Radians  	| Affects the maximum mutation range for alpha values (maximum mutation for the corresponding parameter is annealing * [this scale])    |   	|
+| mutation_amplitude            | double        | None      | A blanket scaling factor for the max range of mutations. This scalar is applied to any mutated value. A value of 1 means that this value does not modify mutations  |   |
+| default_mutation_chance       | double    	| None  	| The probability of a mutations occurring when generating a new individual. Checks the mutation_chance before setting a random gene to be mutated and continues checking to mutate other genes until the check fails |   	|
+| gamma_mutate_scale           	| double     	| None  	| Affects the maximum mutation range for gamma values (maximum mutation for the corresponding parameter is [this scale] * annealing * mutationScale)    |   	|
+| tau_mutate_scale           	| double     	| None  	| Affects the maximum mutation range for tau values (maximum mutation for the corresponding parameter is [this scale] * annealing * mutationScale) 	                                                |   	|
+| coast_mutate_scale           	| double     	| None  	| Affects the maximum mutation range for coast values (maximum mutation for the corresponding parameter is [this scale] * annealing * mutationScale) 	                                            |   	|
+| triptime_mutate_scale 	    | double     	| Years  	| Affects the maximum mutation range for triptime values (maximum mutation for the corresponding parameter is [this scale] * annealing * mutationScale). When commented out, this value is set to the difference between triptime_min and triptime_max 	                    |   	|
+| zeta_mutate_scale          	| double     	| Radians  	| Affects the maximum mutation range for zeta values (maximum mutation for the corresponding parameter is [this scale] * annealing * mutationScale) |   	|
+| beta_mutate_scale           	| double     	| Radians  	| Affects the maximum mutation range for beta values (maximum mutation for the corresponding parameter is [this scale] * annealing * mutationScale) |   	|
+| alpha_mutate_scale           	| double     	| Radians  	| Affects the maximum mutation range for alpha values (maximum mutation for the corresponding parameter is [this scale] * annealing * mutationScale)    |   	|
 
 ## Other Variables
 | Variable Name              	| Data Type  	| Units 	| Usage                                                                                                                                                      	                    |   	|

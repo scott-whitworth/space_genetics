@@ -249,6 +249,10 @@ void calculateRelCost (const cudaConstants *cConstants, std::mt19937_64 rng, Ref
 
         //Calculate the intercepts
         for (int obj = 0; obj < cConstants->missionObjectives.size(); obj++) {
+            //Prevent divide by 0 errors
+            if(abs(normal[obj]) < cConstants->doublePrecThresh){
+                normal[obj] = cConstants->doublePrecThresh;
+            }
             //Divide the numerator by the intercept found for the objective
             intercepts.push_back(num / normal[obj]);
 

@@ -494,7 +494,7 @@ void output::reportRun(const cudaConstants* cConstants, const std::vector<Adult>
   //End line to move on to reporting adults
   output << "\n";
 
-  //Report the top 3 rank-distance adults
+  //Report the top 3 ranking adults
   for (int i = 0; i < 3; i++){
     //Report their position, progress, and age
     output << i << "," << adults[i].progress << "," << generation - adults[i].birthday; 

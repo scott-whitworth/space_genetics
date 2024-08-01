@@ -80,11 +80,11 @@ void copyMask(int * maskIn, int * maskOut);
 // Utility function, generates a boolean mask for which paramters to mutate (1: mutate, 0: not mutated)
 // Number of genes mutated is a compound probability of n-1 genes before it
 // First gene chance is base mutation rate, second chance is after first is mutated
-// chance of mutating n genes = mutation_rate^n
+// chance of mutating n genes = mutation_chance^n
 // input: rng - random number generating object, defined in optimize()
 //        mutateMask - pointer to a boolean array, length of OPTIM_VARS
 //                   - sets genes being mutated to true and others to false
-//        mutation_rate - a double value less than 1 that is the chance a gene will be mutated
+//        mutation_chance - a double value less than 1 that is the chance a gene will be mutated
 //                      - called iteratively to mutate more genes
 // output: mutateMask contains false for genes that are not mutating, true for genes that are to be mutated
 // Called by mutate()

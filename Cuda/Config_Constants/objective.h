@@ -8,7 +8,7 @@
 //      Negative values indicate that the program will try to minimize a value and
 //      positive values indicate a favor for large values
 enum parameterGoals {
-    //Minimization goals
+    //Goals
     POS_DIFF = 1, 
     SPEED_DIFF = 2,
     FUEL_SPENT = 3,

@@ -84,30 +84,36 @@
 | zeta_random_start_range       | double     	| Radians   | The magnitude of the +/- value range for zeta random initial values   |   	|
 | mutation_amplitude            | double        | None      | A blanket scaling factor for the max range of mutations. This scalar is applied to any mutated value. A value of 1 means that this value does not modify mutations  |   |
 | default_mutation_chance       | double    	| None  	| The probability of a mutations occurring when generating a new individual. Checks the mutation_chance before setting a random gene to be mutated and continues checking to mutate other genes until the check fails |   	|
-| gamma_mutate_scale           	| double     	| None  	| Affects the maximum mutation range for gamma values (maximum mutation for the corresponding parameter is [this scale] * annealing * mutationScale)    |   	|
-| tau_mutate_scale           	| double     	| None  	| Affects the maximum mutation range for tau values (maximum mutation for the corresponding parameter is [this scale] * annealing * mutationScale) 	                                                |   	|
-| coast_mutate_scale           	| double     	| None  	| Affects the maximum mutation range for coast values (maximum mutation for the corresponding parameter is [this scale] * annealing * mutationScale) 	                                            |   	|
-| triptime_mutate_scale 	    | double     	| Years  	| Affects the maximum mutation range for triptime values (maximum mutation for the corresponding parameter is [this scale] * annealing * mutationScale). When commented out, this value is set to the difference between triptime_min and triptime_max 	                    |   	|
-| zeta_mutate_scale          	| double     	| Radians  	| Affects the maximum mutation range for zeta values (maximum mutation for the corresponding parameter is [this scale] * annealing * mutationScale) |   	|
-| beta_mutate_scale           	| double     	| Radians  	| Affects the maximum mutation range for beta values (maximum mutation for the corresponding parameter is [this scale] * annealing * mutationScale) |   	|
-| alpha_mutate_scale           	| double     	| Radians  	| Affects the maximum mutation range for alpha values (maximum mutation for the corresponding parameter is [this scale] * annealing * mutationScale)    |   	|
+| gamma_mutate_scale           	| double     	| None  	| Affects the maximum mutation range for gamma values (maximum mutation for the corresponding parameter is [this scale] * annealing * mutationAmplitude)    |   	|
+| tau_mutate_scale           	| double     	| None  	| Affects the maximum mutation range for tau values (maximum mutation for the corresponding parameter is [this scale] * annealing * mutationAmplitude) 	                                                |   	|
+| coast_mutate_scale           	| double     	| None  	| Affects the maximum mutation range for coast values (maximum mutation for the corresponding parameter is [this scale] * annealing * mutationAmplitude) 	                                            |   	|
+| triptime_mutate_scale 	    | double     	| Years  	| Affects the maximum mutation range for triptime values (maximum mutation for the corresponding parameter is [this scale] * annealing * mutationAmplitude). When commented out, this value is set to the difference between triptime_min and triptime_max 	                    |   	|
+| zeta_mutate_scale          	| double     	| Radians  	| Affects the maximum mutation range for zeta values (maximum mutation for the corresponding parameter is [this scale] * annealing * mutationAmplitude) |   	|
+| beta_mutate_scale           	| double     	| Radians  	| Affects the maximum mutation range for beta values (maximum mutation for the corresponding parameter is [this scale] * annealing * mutationAmplitude) |   	|
+| alpha_mutate_scale           	| double     	| Radians  	| Affects the maximum mutation range for alpha values (maximum mutation for the corresponding parameter is [this scale] * annealing * mutationAmplitude)    |   	|
 
 ## Other Variables
 | Variable Name              	| Data Type  	| Units 	| Usage                                                                                                                                                      	                    |   	|
 |----------------------------	|------------	|-------	|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---	|
-| anneal_initial             	| double     	| None  	| The initial anneal value used. Anneal impacts the maximum possible mutation value when generating a new individual (does not impact probability)  |   	|
-| anneal_final             	  | double     	| None  	| The lowest that the anneal can reduce to. |  	 |
-| best_count                 	| int        	| None  	| How many individuals must have obtained a solution before ending the algorithm, also outputs the top number of individuals up to best_count   |   	|
+| anneal_initial             	| double     	| None  	| The initial and maximum anneal value used. Anneal impacts the maximum possible mutation value when generating a new individual (does not impact probability)  |   	|
+| anneal_final             	  | double     	| None  	| The lowest that the anneal can reduce to |  	 |
+| divisions             	  | int     	| None  	| Specifies the number of divisions wanted in the direction of each objective when creating reference points for the rank-rarity algorithm |  	 |
+| reservedRarity             	  | int     	| None  	| Defines the number of top rarity spots reserved for the top progress individuals. |  	 |
+| best_count                 	| int        	| None  	| Determines how many individuals must have converged before ending the algorithm.   |   	|
 <br>
 
 # Mission config Values
+*See [mission_config_readme.md](mission_config_readme.md) to find more information on the mission.config file*
 | Variable Name              	| Data Type  	| Units 	| Usage |   	|
 |----------------------------	|------------	|-------	|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---	|
-| Planetary_Objectives    | String        | N/A           | See [mission_config_readme.md](mission_config_readme.md) to find a detailed explanation on how to set this variable. This variable spot contains the requested objectives for the genetic algorithim. |   |
-| Destination           | String       	| None  	| File file location for the requested mission or target. The linked file should have final position and velocity values for the origin and target body as well as information about the spacecraft |     |
-| sun_r_min                 	| double       	| AU      	| Determines how close the spacecraft can get to the sun before being rejected.   |      |
-| triptime_max                  | double     	| Years   | The maximum triptime, not only impacts the random starting guesses but also in deriving the time range calculation on PlanetInfo and also assumed to be larger than triptime_min |   	|
-| triptime_min                  | double     	| Years   | The minimum triptime, not only impacts the random starting guesses but also in deriving the time range calculation on PlanetInfo and also assumes that it is less than triptime_max |   	|
+| Pos_Diff    | double        | AU           |  Target final position difference between the target and the craft |   |
+| Speed_Diff           | double       	| AU/s  	| Target final speed difference between the target and the craft  |     |
+| Orbit_Pos_Diff                 	| double       	| AU      	| Target final difference between the orbital distance from the target and the craft   |      |
+| Orbit_Speed_Diff                  | double     	| AU/s   | Target final difference between the desired orbital velocity around the target and the craft's velocity |   	|
+| Horz_Angle_Diff                  | double     	| Degrees   | Target final horizontal plane velocity angle difference between the target and the craft |   	|
+| Vert_Angle_Diff                  | double     	| Degrees   | Target final vertical plane velocity angle difference between the target and the craft |   	|
+| Fuel_Spent                  | double     	| Kg   | Target fuel used by the spacecraft during the simulation |   	|
+| Trip_Time                  | double     	| Seconds   | Target trip time of the simulations |   	|
 <br>
 
 # Target config Values
@@ -118,9 +124,9 @@
 | orbitalRadius                 | double        | AU        | The desired orbital radius for the spacecraft around the target. <b>Note: Include this variable in the target config file when only intending to do orbital missions!</b>    |   |
 | orbitalSpeed                  | double        | AU        | The desired orbital speed for the spacecraft around the target. <b>Note: Include this variable in the target config file when only intending to do orbital missions!</b>    |   |
 | thruster_type                	| int        	| None  	| Determine what thruster is used, 0 for none and 1 for NEXT ion thruster   |   	|
-| dry_mass                     	| double        | kg      	| Set the mass of the spacecraft without fuel, also used in determining wet_mass    |   	|
-| fuel_mass                     | double        | kg      	| Sets the initial mass of fuel in the spacecraft, used in determining wet_mass |   	|
-| wet_mass                     	| double        | kg      	| The total mass of the spacecraft with fuel, value is derived after reading the config file when dry_mass and fuel_mass have had their values read |   	|
+| dry_mass                     	| double        | Kg      	| Set the mass of the spacecraft without fuel, also used in determining wet_mass    |   	|
+| fuel_mass                     | double        | Kg      	| Sets the initial mass of fuel in the spacecraft, used in determining wet_mass |   	|
+| wet_mass                     	| double        | Kg      	| The total mass of the spacecraft with fuel, value is derived after reading the config file when dry_mass and fuel_mass have had their values read |   	|
 | c3scale                     	| double     	| None 	    | The scalar multiplier used to adjust c3energy by percentages for test runs, current implementation assumes that c3scale is assigned a value before c3energy (in config file c3scale is set before c3energy) 	|   	|
 | c3energy                     	| double     	| m<sup>2</sup>/s<sup>2</sup>  	| The specific energy of the spacecraft when leaving the sphere of influence of the earth-moon center of mass, determines the magnitude of the escape velocity that is stored in v_escape 	|   	|
 | v_escape                     	| double     	| AU/s  	| The magnitude of the initial velocity of the spacecraft when leaving the sphere of influence of the earth-moon center of mass, not in config file but rather derived from c3energy    |   	|
@@ -130,24 +136,40 @@
 # Impact Position and Velocity Values
 | Variable Name              	| Data Type  	| Units 	| Usage                                                                                                                                                      	                    |   	|
 |----------------------------	|------------	|-------	|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---	|
-| r_fin_target           	        | double     	| AU      	| The radius position of the target at impact date, relative to the Sun bodycenter  |   	|
-| theta_fin_target        	        | double     	| Radians  	| The theta angle position of the target at impact date, relative to the Sun bodycenter |   	|
-| z_fin_target           	        | double     	| AU      	| The z (off-plane offset) position of the target at impact date, relative to the Sun bodycenter    |   	|
-| vr_fin_target           	        | double     	| AU/s  	| The velocity of the radius component of the target at impact date, relative to Sun bodycenter |   	|
-| vtheta_fin_target      	        | double     	| AU/s  	| The tangental velocity of the target at impact date   |   	|
-| vz_fin_target           	        | double     	| AU/s  	| The velocity of the z component of the target at impact date, relative to the Sun bodycenter  |   	|
-| r_fin_earth           	    | double     	| AU     	| The radius position of the earth-moon center of mass at impact date, relative to the Sun bodycenter   |   	|
-| theta_fin_earth          	    | double     	| Radians  	| The theta angle position of the earth-moon center of mass at impact date, relative to the Sun bodycenter  |   	|
-| z_fin_earth           	    | double     	| AU      	| The z (off-plane offset) position of the earth-moon center of mass at impact date, relative to the Sun and used to plot it's path backwards in time for launch positions of the spacecraft    |   	|
+| r_fin_target           	        | double     	| AU      	| The radius position of the target at impact date. Relative to the Sun bodycenter  |   	|
+| theta_fin_target        	        | double     	| Radians  	| The theta angle position of the target at impact date. Relative to the Sun bodycenter |   	|
+| z_fin_target           	        | double     	| AU      	| The z (off-plane offset) position of the target at impact date. Relative to the Sun bodycenter    |   	|
+| vr_fin_target           	        | double     	| AU/s  	| The velocity of the radius component of the target at impact date. Relative to Sun bodycenter |   	|
+| vtheta_fin_target      	        | double     	| AU/s  	| The tangential velocity of the target at impact date   |   	|
+| vz_fin_target           	        | double     	| AU/s  	| The velocity of the z component of the target at impact date. Relative to the Sun bodycenter  |   	|
+| r_fin_earth           	    | double     	| AU     	| The radius position of the earth-moon center of mass at impact date. Relative to the Sun bodycenter   |   	|
+| theta_fin_earth          	    | double     	| Radians  	| The theta angle position of the earth-moon center of mass at impact date. Relative to the Sun bodycenter  |   	|
+| z_fin_earth           	    | double     	| AU      	| The z (off-plane offset) position of the earth-moon center of mass at impact date. Relative to the Sun and used to plot earth's path backwards in time for launch positions of the spacecraft    |   	|
 | vr_fin_earth           	    | double     	| AU/s  	| The velocity of the radius component of the earth at impact date  |   	|
 | vtheta_fin_earth         	    | double     	| AU/s  	| The tangental velocity of the earth-moon center of mass at impact date    |   	|
-| vz_fin_earth           	    | double     	| AU/s  	| The velocity of the z component of the earth-moon center of mass at impact date, relative to Sun bodycenter and used to plot it's path backwards in time for launch positions of the spacecraft|   	|
-| r_fin_mars             	    | double     	| AU     	| The radius position of the mars center of mass at impact date, relative to the Sun bodycenter |   	|
-| theta_fin_mars          	    | double     	| Radians  	| The theta angle position of Mars' center of mass at impact date, relative to the Sun bodycenter   |   	|
-| z_fin_mars               	    | double     	| AU      	| The z (off-plane offset) position of Mars' center of mass at impact date, relative to the Sun and used to plot it's path backwards in time for launch positions of the spacecraft |   	|
+| vz_fin_earth           	    | double     	| AU/s  	| The velocity of the z component of the earth-moon center of mass at impact date. Relative to Sun bodycenter and used to plot earth's path backwards in time for launch positions of the spacecraft|   	|
+| r_fin_mars             	    | double     	| AU     	| The radius position of the mars center of mass at impact date. Relative to the Sun bodycenter |   	|
+| theta_fin_mars          	    | double     	| Radians  	| The theta angle position of Mars' center of mass at impact date. Relative to the Sun bodycenter   |   	|
+| z_fin_mars               	    | double     	| AU      	| The z (off-plane offset) position of Mars' center of mass at impact date. Relative to the Sun and used to plot mars's path backwards in time for launch positions of the spacecraft |   	|
 | vr_fin_mars              	    | double     	| AU/s  	| The velocity of the radius component of Mars at impact date   |   	|
 | vtheta_fin_mars         	    | double     	| AU/s  	| The tangental velocity of Mars' center of mass at impact date |   	|
-| vz_fin_mars           	    | double     	| AU/s  	| The velocity of the z component of Mars' center of mass at impact date, relative to Sun bodycenter and used to plot it's path backwards in time for launch positions of the spacecraft    |   	|
+| vz_fin_mars           	    | double     	| AU/s  	| The velocity of the z component of Mars' center of mass at impact date. Relative to Sun bodycenter and used to plot mars's path backwards in time for launch positions of the spacecraft    |   	|
+| orbitalPeriod           	    | double     	| Seconds  	|     |   	|
+| orbitalRadius           	    | double     	| AU  	|     |   	|
+| orbitalSpeed           	    | double     	| AU/s  	|     |   	|
+| orbitalPeriod           	    | double     	| Seconds  	|     |   	|
+| gravAssistDist           	    | double     	| AU  	|     |   	|
+| gravAssistTime           	    | double     	| AU  	|     |   	|
+| gravAssistTimeFrac           	    | double     	| None  	|     |   	|
+| thruster_type           	    | int     	| None  	| The type of thruster to use on the spacecraft. (0 is none, 1 is NEXT ion thruster, 2 is SPT-140 Hall thruster, and 3 is AEPS ion thruster)    |   	|
+| dry_mass           	    | double     	| Kg  	| The mass of the spacecraft without fuel    |   	|
+| fuel_mass           	    | double     	| Kg  	| The mass of the fuel that the spacecraft will have    |   	|
+| c3scale           	    | double     	| UNSURE  	|     |   	|
+| c3energy           	    | double     	| (m/s)<sup>2</sup>  	|     |   	|
+| triptime_min           	    | double     	| Years  	| The minimum allowed trip time    |   	|
+| triptime_max           	    | double     	| Years  	| The maximum allowed trip time    |   	|
+| sun_r_min           	    | double     	| AU  	| The closest the spacecraft can get to the sun without an error    |   	|
+| MSOI_scale           	    | double     	| UNSURE PROBABLY NONE  	| The spacial scale to multiply the actual MSOI by to the make it larger or smaller    |   	|
 <br>
 
 # Recommended Config Values
@@ -155,18 +177,18 @@ A table to elaborate on why some variables are assigned certain values
 
 | Variable Name              	| Recommended Value  	| Reasoning 	|   |
 |-----------------------------	|-------	| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------	|---    |
-| [base bennu.config](\Base_Target_Configs\base_bennu.config)    | N/A   | The base config file used for missions where bennu is the target  |   |
-| [base didymos.config](\Base_Target_Configs\base_didymos.config)    | N/A   | The base config file used for missions where didymos is the target  |   |
-| [base marsOdyssey.config](\Base_Target_Configs\base_marsOdyssey.config)    | N/A   | The base config file used for missions where mars (oddesy mission) is the target  |   |
-| [base marsOrbit.config](\Base_Target_Configs\base_marsOrbit.config)    | N/A   | The base config file used for missions where mars (orbital mission) is the target  |   |
-| [base psyche.config](\Base_Target_Configs\base_psyche.config)    | N/A   | The base config file used for missions where psyche is the target  |   |
+| [base bennu.config](../Cuda/Config_Constants/Base_Target_Configs/base_bennu.config)    | N/A   | The base config file used for missions where bennu is the target  |   |
+| [base didymos.config](../Cuda/Config_Constants/Base_Target_Configs/base_didymos.config)    | N/A   | The base config file used for missions where didymos is the target  |   |
+| [base marsOdyssey.config](../Cuda/Config_Constants/Base_Target_Configs/base_marsOdyssey.config)    | N/A   | The base config file used for missions where mars (oddesy mission) is the target  |   |
+| [base marsOrbit.config](../Cuda/Config_Constants/Base_Target_Configs/base_marsOrbit.config)    | N/A   | The base config file used for missions where mars (orbital mission) is the target  |   |
+| [base psyche.config](../Cuda/Config_Constants/Base_Target_Configs/base_psyche.config)    | N/A   | The base config file used for missions where psyche is the target  |   |
 | mutation_rate                 | 0.5-0.75       | From test runs involving different mutation rates for the impact mission, 0.5 showed to be most effective at converging on a solution.  This was for singlue mutations, while mutation rates for more genes occurring after only showing no serious change. Rendezvous missions seem to need more mutations, so current rate 0.75.                         |       |
 | triptime_min                  | 0.0-3.5         | These values are going to be mission dependent. For example, the bennu mission is best done as a redezvous mission with a triptime_min of 1.0. The didymos mission is similar. The psyche mission should have a min of 3.5, and the mars orbital should start at 0.5.   |       |
 | triptime_max                  | 1.5-6.0       | As stated for the min, the max is also mission dependent. The bennu mission should end at 2.0. The didymos should end at 1.5. Psyche is a bit different as some of their missions plan to take 6 years while some end at 5 years. The mars orbital should be 1.5.  |       |
 | timeRes                       | 3600      | Equivalent to 1 hour, this resolution for deriving earth location elements to store is considered sufficient.  For triptimes that fall between two indexes, the position/velocity is interpolated by a weighted average. This may need to be lower for mission that actaully use Mars' gravity as it is a very precise calculation.   |       |
 | max_generations               | 5001-10001     | With current status of convergence rates for the algorithm in finding a valid solution being in the low thousands range, 10001 generations is considered plenty of time for the algorithm to find a solution and if it does reach this point then it won't find a solution as the annealing would become too small to lead to notable change that leads to a solution. Most missions should converge within 5000 generations. |       |
 | num_individuals               | 2880      | Population size is based on the number of available threads in the Tesla GPU, optimizing the rate a pool can be calculated.   |       |
-| survivor_count                | 720       | The genetic algorithim is able to dynamically create children as needed. However, through testing we have found 720 individuals to be a goood middle-ground value.    |       |
+| survivor_count *depreciated*               | 720       | The genetic algorithim is able to dynamically create children as needed. However, through testing we have found 720 individuals to be a goood middle-ground value.    |       |
 | thread_block_size             | 32        | Based on the Tesla GPU.   |       |
 | best_count                    | 1         | It was found that in a given run, the best individuals when convergence occurs are very similar to each other, so setting more than 1 does not lead to more different solutions in a single run.  |       |
 | doublePrecThresh              | 1e-12     | The double data type experiences loss in precision for differences in two elements within runge-kutta that as a result could lead to differences between the CPU and GPU computations of runge-kutta.  This value is a starting point in finding the smallest threshold for that difference. |     |

@@ -229,7 +229,7 @@ rkParameters<double> mutate(const rkParameters<double> & p1, std::mt19937_64 & r
                 }
             }
             else if (index == ALPHA_OFFSET) { // Alpha
-                double randVar = getRand(cConstants->alpha_mutate_scale * annealing * mutationScale, rng);
+                double randVar = getRand(cConstants->alpha_mutate_scale * annealing * mutationAmplitude, rng);
                 childParameters.alpha += randVar;                
                 // recordLog[index] = randVar;
             }

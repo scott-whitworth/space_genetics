@@ -75,7 +75,7 @@ Child:: Child(const Child& other){
 }
 
 //Getter for a parameter dependent on the objective that is passed in
-__host__ double Child::getParameters (const objective & requestObjective) const {
+__host__ double Child::getParameters(const objective & requestObjective) const {
     //if/esle tree will go find the parameter goal of the request objective and return the associated value
     if (requestObjective.goal == POS_DIFF) {
         return posDiff;

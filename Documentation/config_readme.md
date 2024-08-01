@@ -1,5 +1,5 @@
 <h1> Config File Specifications/Information </h1>
-<i>Last Updated: August 2022</i>
+<i>Last Updated: August 2024</i>
 
 <h1>Document Links</h1>  
 
@@ -27,7 +27,7 @@
 
 <h2>Config file structure</h2>  
 
-- Whenever the code runs, three config files are used to gather info 
+- Whenever the code runs, three config files are used to gather info.
 - First, genetic.config is read. This file holds info on the details of how the genetic algorithim should run, such as how strong mutations are. 
 - Second, mission.config is opened. It holds the goals (Ex: relative speed)  of the genetic algorithim and the file name for the mission target file (Ex: psyche).
 - Finally, the file containing info on the target body for the run is read. The information should include final position and velocities for the origin, target, and any graviational assist body. It should also include info on the setup of the spacecraft for the mission (like dry and fuel mass).

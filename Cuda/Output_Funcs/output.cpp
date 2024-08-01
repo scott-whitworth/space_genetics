@@ -23,7 +23,7 @@ output::output(const cudaConstants* cConstants, const std::string& selectFolder)
 }
 
 //Call the functions which print during a run
-void output::printGeneration(const cudaConstants * cConstants, const std::vector<Adult>& allAdults, const std::vector<double>& objectiveAvgValues, const int& generation, const double& new_anneal, int& errorNum, const int& duplicateNum, const int& totAssoc, const int & minSteps, const int & avgSteps, const int & maxSteps, const double& minDist, const double& avgDist, const double& maxDist, const double& avgAge, const int& oldestAge, const double& avgBirthday, const int& oldestBirthday, const float& avgGenTime) {
+void output::const cudaConstants * cConstants, const std::vector<Adult>& allAdults, const std::vector<double>& objectiveAvgValues, const int& generation, const double& new_anneal, int& errorNum, const int& duplicateNum, const int& totAssoc, const int & minSteps, const int & avgSteps, const int & maxSteps, const double& minDist, const double& avgDist, const double& maxDist, const double& avgAge, const int& oldestAge, const double& avgBirthday, const int& oldestBirthday, const float& avgGenTime) {
   
   //Check to see if the best adults should be printed to the terminal on this generation
   if (generation % cConstants->disp_freq == 0) {

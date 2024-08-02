@@ -107,7 +107,7 @@ void convertToAdults(std::vector<Adult> & newAdults, Child* newChildren, const c
             //Mark the child with the nan variables with the nan_error flag
             newChildren[i].errorStatus = NAN_ERROR;
         }//if it is not a nan, the status has already been made valid or sun_error in rk4CUDASim
-
+        //ELSE? change in COde overview if so!!!
         //Now that the status has been determined, there is enough information to set pos and speed diffs
         //The two functions will look at the child's errorStatus and set the diffs based on that
         newChildren[i].getPosDiff(cConstants);

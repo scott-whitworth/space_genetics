@@ -55,8 +55,7 @@ template <class T> elements<T> elements<T>::operator/(const T & i) const {
 
 // Comparison method to compare this elements to another, returning true (equivalent) within a threshold
 // input: other - another elements object to compare to
-//        comp_Thresh - a threshold for comparison, so when elements are considered equivalent it is a not necessarrily 100% (when not equal to 0)
-// output: returns true if for all properties (pos & vel) the difference between them is less than or equal to comp_Thresh
+// output: returns the percentage on how different the two elements are
 template <class T> double elements<T>::compare(const elements<T> & other) {
     //Check values
     double percentDiff = 0;

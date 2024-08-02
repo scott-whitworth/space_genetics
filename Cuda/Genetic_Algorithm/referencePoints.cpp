@@ -170,7 +170,7 @@ std::vector<double> calcNormVector (std::vector<std::vector<double>> matrix, boo
     return norm;
 }
 
-//Calculates the objective-by-objective relative cost for the adults passed into the function
+//Calculates the objective-by-objective relative normalization for the adults passed into the function
 void calculateRelCost (const cudaConstants *cConstants, std::mt19937_64 rng, ReferencePoints & refPoints, std::vector<Adult> & allAdults) {
 
     //Make sure the vectors are cleared
@@ -260,7 +260,7 @@ void calculateRelCost (const cudaConstants *cConstants, std::mt19937_64 rng, Ref
         }
     }
 
-    //The normalization values have been found, go through the adults and calculate the objective costs
+    //The normalization values have been found, go through the adults and calculate the objective normalizations/cost
     for (int indiv = 0; indiv < allAdults.size(); indiv++) {
 
         //Calculate the cost for each objective
@@ -495,11 +495,11 @@ void assignReservedRarity (const cudaConstants *cConstants, std::vector<Adult> &
     if(cConstants->reservedRarity!=0){
         //For loop will adjust the adults' rarities
         for (int i = 0; i < adults.size(); i++) {
-            // This is one of the top individuals, give it a reserved rank
+            // This is one of the top individuals, give it a reserved rarity
             if (i < cConstants->reservedRarity) {
                 adults[i].rarity = i;
             }
-            // If this is not a top individual, adjust their rarity to account for the reserved ranks being assigned
+            // If this is not a top individual, adjust their rarity to account for the reserved rarity being assigned
             else {
                 //Add the number of reserved scores to the adult's rarity so that there is no rarity score duplicates
                 adults[i].rarity += cConstants->reservedRarity;

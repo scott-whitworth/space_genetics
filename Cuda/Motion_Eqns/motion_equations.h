@@ -52,11 +52,11 @@ template <class T> __host__ __device__ T calcRate_z(const elements<T> & y);
 template <class T> __host__ __device__ T calcRate_vr(const elements<T> & y, coefficients<T> & coeff, const T & accel, const T & curTime, const T & timeFinal, const elements<T> & mars, const T & marsCraftDist);
 
 // Based on: -vr*vtheta / r + accel*cos(tau)*cos(gamma)
-// Output: vrDot
+// Output: vthetaDot
 template <class T> __host__ __device__ T calcRate_vtheta(const elements<T> & y, coefficients<T> & coeff, const T & accel, const T & curTime, const T & timeFinal, const elements<T> & mars, const T & marsCraftDist);
 
 // Based on: (-g * M_sun * r)  / (r^2 + z^2) ^ 3/2 + + accel*sin(tau)
-// Output: vrDot
+// Output: vzDot
 template <class T> __host__ __device__ T calcRate_vz(const elements<T> & y, coefficients<T> & coeff, const T & accel, const T & curTime, const T & timeFinal, const elements<T> & mars, const T & marsCraftDist);
 
 template <class T> __host__ __device__ T calcRate_vrPlanet(const elements<T> & y);

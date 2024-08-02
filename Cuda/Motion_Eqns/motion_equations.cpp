@@ -1,4 +1,3 @@
-//Didymos-Optimization_Project:
 //Last Edit: August 2022
 //Tasks Completed: 
 	//Added gravitational assist from Mars

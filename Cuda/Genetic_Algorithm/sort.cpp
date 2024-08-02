@@ -184,6 +184,7 @@ void mainSort(std::vector<Adult> & adults, const cudaConstants* cConstants, cons
     };   
 }
 
+//Not In Use
 // Assist function for objectives that sorts an adult vector based on the goal 
 void parameterSort(std::vector<Adult> & adults, const objective& sortObjective, const int & sortSize) {
     //Switch statement determines the type of sort needed to be done for the objective

@@ -17,6 +17,9 @@ struct cudaConstants {
     int max_generations; // Maximum number of generations to evaluate in the genetic algorithm if not reaching a solution
     int run_count;       // How many runs of the optimization algorithm to perform using incremental seeds to not just repeat the same value (the actual change in the seed occurs in main)
     int carryover_individuals; //How many individuals from the previous run to use as basis for starting parameters for this run
+    int max_age; // The maximum age an individual can be before being removed from the algorithm
+    double random_parents; // When selecting parents, this number determines what percentage
+    int crossover_method; //Determines what crossover method(s) to use
     bool record_mode;    // If set to true, functions that record information onto files such as genPerformance.csv.  The code still records a valid solution regardless of this setting
 
     //Determines the genetic algorithm used

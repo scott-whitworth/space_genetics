@@ -49,6 +49,9 @@
 | max_generations               | int           | None      | Determines how many generations the genetic algorithim will run before "giving up" and trying again on a new run   |       |
 | run_count                     | int           | None      | The number of runs that will be completed before ending the program   |       |
 | carryover_individuals         | int           | None      | The number of individuals from the previous run to use as a basis for the starting parameters of the initial children of the current run   |       |
+| max_age         | int           | None      | The maximum age an individual can be before being removed from the algorithm. Must be defined after max_generations   |       |
+| random_parents         | double           | None      | Determines what percentage of survivor_count to be filled with random parents   |       |
+| crossover_method         | int           | None      | Determines what crossover method(s) to use. 0 for wholeRandom, 1 for bundleVars, 2 for average, and 3 for all methods   |       |
 | algorithm_type                     | string           | None      | What genetic diversity algorithm will be used. Either "rank-rarity" or "rank-distance"   |       |
 
 ## GPU/Algorithim Variables

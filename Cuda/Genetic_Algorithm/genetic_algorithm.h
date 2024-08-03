@@ -42,9 +42,10 @@ void newGeneration(std::vector<Adult> & oldAdults, std::vector<Adult> & newAdult
 // Input: oldAdults - the potential parents from which we are selecting the best survivor_count parents
 //        parents - the best individuals
 //        generation - if it is the first generation, everything is a parent
-//        cConstants - so we can access survivor_count
+//        cConstants - so we can access survivor_count and random_parents
+//        rng - so we can choose random parents
 // Output: parents are filled with values copied over from oldAdults
-void fillParents(std::vector<Adult> & oldAdults, std::vector<Adult> & parents, const int & generation, const cudaConstants* cConstants);
+void fillParents(std::vector<Adult> & oldAdults, std::vector<Adult> & parents, const int & generation, const cudaConstants* cConstants, std::mt19937_64 & rng);
 
 // Takes parents and uses them to fill newChildren with the num_individuals children
 // Input: parents - the best N/4 individuals
@@ -110,9 +111,11 @@ void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& 
 //       index - index of the Adult being checked
 //       numErrors - this function tallies the nans (and other errors) that occur in this population of adults
 //       duplicateNum - counts the duplicates in both new and oldAdults
+//       generation - the current generation is passed in to see the age of each individual
+//       cConstants - Gives us the max_age for weeding individuals out
 //Output: allAdults is filled with the adults we want and counts are updated
 //this is called in preparePotentialParents()
-void addToAllAdults(std::vector<Adult> & adultPool, std::vector<Adult> & allAdults, const int & index, int& numErrors, int& duplicateNum, int& marsErrors);
+void addToAllAdults(std::vector<Adult> & adultPool, std::vector<Adult> & allAdults, const int & index, int& numErrors, int& duplicateNum, int& marsErrors, const int& generation, const cudaConstants* cConstants);
 
 #include "genetic_algorithm.cpp"
 

@@ -127,6 +127,20 @@ void cudaConstants::FileRead(std::string fileName) {
                     else if (variableName == "carryover_individuals") {
                         this->carryover_individuals = std::stoi(variableValue);
                     }
+                    else if (variableName == "max_age") {
+                        if(variableValue=="NONE"){
+                            this->max_age = max_generations+1; //set max age to be higher than the number of generations
+                        }
+                        else{
+                            this->max_age = std::stoi(variableValue);
+                        }
+                    }
+                    else if (variableName == "random_parents") {
+                        this->random_parents = std::stod(variableValue);
+                    }
+                    else if (variableName == "crossover_method") {
+                        this->crossover_method = std::stoi(variableValue);
+                    }
 
 
 //////////////////////////////////////////////////////////////////////// -- RUNGE KUTTA -- /////////////////////////////////////////////////////////////////////////////

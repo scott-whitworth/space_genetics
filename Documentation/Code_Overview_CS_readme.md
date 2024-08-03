@@ -337,7 +337,7 @@ Here is a basic summary of how the genetic algorithm operates:
     - The number of children generated comes from an inputted value 
   - Creates parent pairs by iterating through a shuffled list of the potential parents 
     - Note: The potential parents themselves are not shuffled, rather a vector with indexes corresponding to each future parent is shuffled
-  - As of writing, it generates 6 children from three crossover methods
+  - As of writing, it generates 6 children from 1-3 crossover methods (depending on the config defined [crossover_method](./config_readme.md/#basic-variables) variable)
     - The used methods are crossOver_wholeRandom, crossOver_average, and crossOver_bundleVars
     - The same two parents generate all 6 new children
     - The number of children a pair of parents generates is flexible
@@ -355,7 +355,7 @@ Here is a basic summary of how the genetic algorithm operates:
     4. [convertToAdults](#converttoadults)- this fills the newAdults vector with the simulated children
 
 ### fillParents
-  - Selects the top adults from the previous generations to be parents
+  - Selects the top (1-[random_parents](./config_readme.md/#basic-variables)) adults from the previous generations to be parents. The remaining parents are filled up with random adults
     - The number of parents considered comes from the survivor_count variables in genetic.config
   - If it is generation 0, parents are selected from the first adults who were randomly generated
   - Potential parents will only include adults with error statues of valid or duplicate
@@ -391,6 +391,7 @@ Here is a basic summary of how the genetic algorithm operates:
     - If an adult's error status is not valid or duplicate, an error tracking variable is incremented. These are used for reporting
     - If an adult's error status is duplicate, one is added to a duplicate tracker used for reporting
       - Note: if you want to keep duplicates when they are detected, uncomment the line where duplicate adults are pushed to allAdults
+    - If an adult's age is greater than the config defined [max_age](./config_readme.md/#basic-variables), don't add it to the allAdults vector
     - If an adult's error status is valid, it is pushed to the allAdults vector
 
 <br>

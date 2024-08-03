@@ -434,34 +434,73 @@ void generateChildrenFromCrossover(std::vector<Adult> &parents, Child *newChildr
             // if(parentIndex == 0 && parentOffset == 0){
             //     std::shuffle(parentPool.begin(), parentPool.end(), rng);
             // }
+                        switch(cConstants->crossover_method){ //determines what crossover method to use
+                            case 0: //only wholeRandom
+                                for(int i=0; i<6; i++){
+                                    // Generate a pair of children based on the random cross over mask method from a pair of parents
+                                    // This will generate a set of parameters with variables randomly selected from each parent
+                                    // Generate the base mask, with each variable being assigned to a random parent
+                                    crossOver_wholeRandom(mask, rng);
 
-            // Generate a pair of children based on the random cross over mask method from a pair of parents
-            // This will generate a set of parameters with variables randomly selected from each parent
-            // Generate the base mask, with each variable being assigned to a random parent
-                        crossOver_wholeRandom(mask, rng);
+                                    // Generate a pair of children based on the mask
+                                    generateChildrenPair(parents[parentPool[parentIndex]], parents[parentPool[parentIndex + 1]], newChildren, childrenToGenerate, mask, currentAnneal, rng, numNewChildren, generation, cConstants);
 
-                        // Generate a pair of children based on the mask
-                        generateChildrenPair(parents[parentPool[parentIndex]], parents[parentPool[parentIndex + 1]], newChildren, childrenToGenerate, mask, currentAnneal, rng, numNewChildren, generation, cConstants);
+                                }
+                                break;
+                            case 1: //only bundleVars
+                                for(int i=0; i<6; i++){
+                                    // Generate a pair of children from a pair of parents based on the bundled random mask method
+                                    // This mask method will generate parameters with variables pulled from random parents
+                                    // This is different from the wholeRandom method in that the thrust variables (gamma, tau, and coast) is taken from the same parent
 
-                        // Generate a pair of children from a pair of parents based on the average mask method
-                        // This mask method will generate a set of parameters based on the average of parameters from each parent
+                                    // Generate the base mask, each variable (or set of variables) is set to a random parent
+                                    crossOver_bundleVars(mask, rng);
+                                    // Generate a pair of children based on the mask
+                                    generateChildrenPair(parents[parentPool[parentIndex]], parents[parentPool[parentIndex + 1]], newChildren, childrenToGenerate, mask, currentAnneal, rng, numNewChildren, generation, cConstants);
 
-                        // Set the mask to be be average
-                        //TODO: I thought this was changed to be averageRatio long ago? Do we want to use averageRatio?
-                        //TODO: for future students on this: It should be examined if the averageRatio is better or not
-                        //Currently does 1 full average and 1 averageRatio (flipping crossOver_average mask turns it to an averageRatio mask)
-                        crossOver_average(mask);
-                        // Generate a pair of children based on the mask
-                        generateChildrenPair(parents[parentPool[parentIndex]], parents[parentPool[parentIndex + 1]], newChildren, childrenToGenerate, mask, currentAnneal, rng, numNewChildren, generation, cConstants);
+                                }
+                                break;
+                            case 2: //only average
+                                for(int i=0; i<6; i++){
+                                    // Set the mask to be be average
+                                    //TODO: I thought this was changed to be averageRatio long ago? Do we want to use averageRatio?
+                                    //TODO: for future students on this: It should be examined if the averageRatio is better or not
+                                    //Currently does 1 full average and 1 averageRatio (flipping crossOver_average mask turns it to an averageRatio mask)
+                                    crossOver_average(mask);
+                                    // Generate a pair of children based on the mask
+                                    generateChildrenPair(parents[parentPool[parentIndex]], parents[parentPool[parentIndex + 1]], newChildren, childrenToGenerate, mask, currentAnneal, rng, numNewChildren, generation, cConstants);
 
-                        // Generate a pair of children from a pair of parents based on the bundled random mask method
-                        // This mask method will generate parameters with variables pulled from random parents
-                        // This is different from the wholeRandom method in that the thrust variables (gamma, tau, and coast) is taken from the same parent
+                                }
+                                break;
+                            case 3: //all methods
+                                // Generate a pair of children based on the random cross over mask method from a pair of parents
+                                // This will generate a set of parameters with variables randomly selected from each parent
+                                // Generate the base mask, with each variable being assigned to a random parent
+                                crossOver_wholeRandom(mask, rng);
 
-                        // Generate the base mask, each variable (or set of variables) is set to a random parent
-                        crossOver_bundleVars(mask, rng);
-                        // Generate a pair of children based on the mask
-                        generateChildrenPair(parents[parentPool[parentIndex]], parents[parentPool[parentIndex + 1]], newChildren, childrenToGenerate, mask, currentAnneal, rng, numNewChildren, generation, cConstants);
+                                // Generate a pair of children based on the mask
+                                generateChildrenPair(parents[parentPool[parentIndex]], parents[parentPool[parentIndex + 1]], newChildren, childrenToGenerate, mask, currentAnneal, rng, numNewChildren, generation, cConstants);
+
+                                // Generate a pair of children from a pair of parents based on the average mask method
+                                // This mask method will generate a set of parameters based on the average of parameters from each parent
+
+                                // Set the mask to be be average
+                                //TODO: I thought this was changed to be averageRatio long ago? Do we want to use averageRatio?
+                                //TODO: for future students on this: It should be examined if the averageRatio is better or not
+                                //Currently does 1 full average and 1 averageRatio (flipping crossOver_average mask turns it to an averageRatio mask)
+                                crossOver_average(mask);
+                                // Generate a pair of children based on the mask
+                                generateChildrenPair(parents[parentPool[parentIndex]], parents[parentPool[parentIndex + 1]], newChildren, childrenToGenerate, mask, currentAnneal, rng, numNewChildren, generation, cConstants);
+
+                                // Generate a pair of children from a pair of parents based on the bundled random mask method
+                                // This mask method will generate parameters with variables pulled from random parents
+                                // This is different from the wholeRandom method in that the thrust variables (gamma, tau, and coast) is taken from the same parent
+
+                                // Generate the base mask, each variable (or set of variables) is set to a random parent
+                                crossOver_bundleVars(mask, rng);
+                                // Generate a pair of children based on the mask
+                                generateChildrenPair(parents[parentPool[parentIndex]], parents[parentPool[parentIndex + 1]], newChildren, childrenToGenerate, mask, currentAnneal, rng, numNewChildren, generation, cConstants);
+                        }
 
             // Add two to parentIndex to account for the variable tracking pairs of parents, not just one parent's index
             parentIndex += 2;

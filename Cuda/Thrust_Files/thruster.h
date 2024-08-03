@@ -17,10 +17,10 @@ template <class T> struct thruster {
     // //overload the stream output for elements used for writing to a file
     // template <class T> friend std::ostream & operator<<(std::ostream & Str, const thruster<T> & e); 
 
-    // Evaluates the spacecraft's effciency for a certian iteration based off of a best fit line from file above of eff vs. power in (W).
+    // Evaluates the spacecraft's efficiency for a certian iteration based off of a best fit line from file above of eff vs. power in (W).
     // Parameters:
     //         Pin: Given a certian value of power in to the spacecraft, a specific efficiency will be calculated for an iteration.
-    // output: spacecraft's effciency for a certian iteration
+    // output: spacecraft's efficiency for a certian iteration
    __host__ __device__ T calc_eff(const T & Pin);
 
     // Evaluates the spacecraft's fuel flow rate (mDot) for a certian iteration based off of "if statements".

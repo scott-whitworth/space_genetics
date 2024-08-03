@@ -8,7 +8,7 @@ void newGeneration (std::vector<Adult> & oldAdults, std::vector<Adult> & newAdul
     parents.clear();
 
     //separates oldAdults into parents (full of best N/4 individuals) 
-    fillParents(oldAdults, parents, generation, cConstants);
+    fillParents(oldAdults, parents, generation, cConstants, rng);
 
     //Import number of new individuals the GPU needs to fill its threads
     //Create a newChildren function to fill in with children generated from oldAdults
@@ -37,7 +37,7 @@ void newGeneration (std::vector<Adult> & oldAdults, std::vector<Adult> & newAdul
     delete[] newChildren; 
 }
 
-void fillParents(std::vector<Adult> & oldAdults, std::vector<Adult> & parents, const int & generation, const cudaConstants* cConstants){
+void fillParents(std::vector<Adult> & oldAdults, std::vector<Adult> & parents, const int & generation, const cudaConstants* cConstants, std::mt19937_64 & rng){
     //Clearing parents before separating the parents from a vector ensures parents
     parents.clear();
 
@@ -57,12 +57,28 @@ void fillParents(std::vector<Adult> & oldAdults, std::vector<Adult> & parents, c
         mainSort(oldAdults, cConstants, oldAdults.size());
         
         //Iterate through the best of oldAdults and sort the individuals into parents
-        for (int i = 0; i < cConstants->survivor_count; i++)
+        int individualsChosen = 0; //makes sure the algorithm doesn't choose too many individuals
+        double percentNormalParents = (1-cConstants->random_parents); //tells the program what percentage of normal parents to choose
+
+        //adds a percentage of survivor count number of normal parents
+        for (int i = 0; i < static_cast<int>(cConstants->survivor_count*percentNormalParents); i++)
         {
             if (oldAdults[i].errorStatus == VALID || oldAdults[i].errorStatus == DUPLICATE)
             {
                 parents.push_back(oldAdults[i]);
+                ++individualsChosen;
             }
+        }
+        //the remaining spots in survivor count are filled by randomly chosen individuals
+        std::shuffle(oldAdults.begin()+static_cast<int>(cConstants->survivor_count*percentNormalParents), oldAdults.end(), rng);
+        for (int i = static_cast<int>(cConstants->survivor_count*percentNormalParents); (i < (cConstants->num_individuals)) && (individualsChosen<cConstants->survivor_count); i++)
+        {
+            if (oldAdults[i].errorStatus == VALID || oldAdults[i].errorStatus == DUPLICATE)
+            {
+                parents.push_back(oldAdults[i]);
+                ++individualsChosen;
+            }
+            
         }
 
         //Check to see if the size of parents is less then survivor_count
@@ -335,11 +351,11 @@ void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& 
     //check the errorStatus of all the newAdults and add them to allAdults
     for (int i = 0; i < newAdults.size(); i++){ 
         //copies all the elements of newAdults into allAdults
-        addToAllAdults(newAdults, allAdults, i, numErrors, duplicateNum, marsErrors);
+        addToAllAdults(newAdults, allAdults, i, numErrors, duplicateNum, marsErrors, generation, cConstants);
     }
     //check the errorStatus of all the oldAdults and add them to allAdults
     for (int i = 0; i < oldAdults.size(); i++){ //copies over all the elements of oldAdults into allAdults
-        addToAllAdults(oldAdults, allAdults, i, numErrors, duplicateNum, marsErrors);
+        addToAllAdults(oldAdults, allAdults, i, numErrors, duplicateNum, marsErrors, generation, cConstants);
     }
 
     if(allAdults.size() < cConstants->num_individuals){
@@ -428,7 +444,7 @@ void preparePotentialParents(std::vector<Adult>& allAdults, std::vector<Adult>& 
     newAdults.clear(); 
 }
 
-void addToAllAdults(std::vector<Adult> & adultPool, std::vector<Adult> & allAdults, const int & index, int& numErrors, int& duplicateNum, int& marsErrors){
+void addToAllAdults(std::vector<Adult> & adultPool, std::vector<Adult> & allAdults, const int & index, int& numErrors, int& duplicateNum, int& marsErrors, const int& generation, const cudaConstants* cConstants){
     //if we ever want to eliminate duplicates again, this is the place to do it
     
     if(adultPool[index].errorStatus != VALID && adultPool[index].errorStatus != DUPLICATE) { 
@@ -442,6 +458,8 @@ void addToAllAdults(std::vector<Adult> & adultPool, std::vector<Adult> & allAdul
     }else if(adultPool[index].errorStatus == DUPLICATE){
         duplicateNum++;
         // allAdults.push_back(adultPool[index]);//remove this if we want to remove duplicates
+    }else if((generation-adultPool[index].birthday)>cConstants->max_age){
+        //if adult is too old, don't add it to allAdults
     }
     else{
         allAdults.push_back(adultPool[index]);

@@ -128,7 +128,7 @@ void cudaConstants::FileRead(std::string fileName) {
                         this->carryover_individuals = std::stoi(variableValue);
                     }
                     else if (variableName == "max_age") {
-                        if(variableValue=="NONE"){
+                        if(variableValue=="none"){
                             this->max_age = max_generations+1; //set max age to be higher than the number of generations
                         }
                         else{

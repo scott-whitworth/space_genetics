@@ -494,7 +494,7 @@ void output::reportRun(const cudaConstants* cConstants, const std::vector<Adult>
   //End line to move on to reporting adults
   output << "\n";
 
-  //Report the top 3 rank-distance adults
+  //Report the top 3 ranking adults
   for (int i = 0; i < 3; i++){
     //Report their position, progress, and age
     output << i << "," << adults[i].progress << "," << generation - adults[i].birthday; 
@@ -535,7 +535,7 @@ void output::trajectoryPrint(int generation, const cudaConstants* cConstants, co
                                                  earth.vtheta + cos(best.startParams.zeta)*cos(best.startParams.beta)*cConstants->v_escape,
                                                  earth.vz + sin(best.startParams.zeta)*cConstants->v_escape);
 
-  //Calculate the maximum possible number of steps taken to make enough memory is allocated
+  //Calculate the maximum possible number of steps taken to make sure enough memory is allocated
   int numSteps = (cConstants->maxSimNum * (cConstants->max_numsteps + 1))+1;
 
   // Assigning wetMass
@@ -835,7 +835,7 @@ void output::recordReferencePoints(const cudaConstants * cConstants, const Refer
 //!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 //General Functions
 
-//Function which will print the best rank-distance adult and the best adult for each objective to the terminal
+//Function which will print the best rank-distance/rarity adult and the best adult for each objective to the terminal
 void printBestAdults(const cudaConstants* cConstants, std::vector<Adult> adults, const int& generation, int& numErrors, const int& numDuplicates, const int& oldestBirthday) {
   // Prints the best individual's posDiff / speedDiff
 

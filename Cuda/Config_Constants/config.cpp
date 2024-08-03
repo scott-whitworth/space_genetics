@@ -431,11 +431,11 @@ void cudaConstants::importObjective(std::string line) {
             tempStr.push_back(line[i]);
         }
     }
-    //temp string now equals line without the spaces, make equate line to temp string
+    //temp string now equals line without the spaces. Equate line to temp string
     line = tempStr;
 
     //Convert the string to lower case for easier decernment of parameter goals
-    //Name has already been taken, so no issue if it is changed in the line
+    //Name has already been taken, so no issue if it is changed in the line ?
     for (int i = 0; i < line.size(); i++) {
         line[i] = std::tolower(line[i]); 
     }

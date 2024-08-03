@@ -158,7 +158,7 @@ struct output
 //Below are functions associated with outputs, but could be run individually/without the output class
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// Function which will print the best rank-distance adult and the best adult for each objective to the terminal
+// Function which will print the best rank-distance/rarity adult and the best adult for each objective to the terminal
 // Inputs: cConstants - the cudaConstants, used for getting objectives
 //         adults - the vector of adults which the best individuals will be pulled from; this function assumes no pre-done sort
 //         generation - the current generation

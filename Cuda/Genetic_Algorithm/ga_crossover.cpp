@@ -137,8 +137,8 @@ double getRand(double max, std::mt19937_64 & rng) {
 }
 
 //!--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-// Utility function to generate a boolean mask that determines which parameter value is mutating and how many based on mutation_rate iteratively
-void mutateMask(std::mt19937_64 & rng, bool * mutateMask, double mutation_rate) {
+// Utility function to generate a boolean mask that determines which parameter value is mutating and how many based on mutation_chance iteratively
+void mutateMask(std::mt19937_64 & rng, bool * mutateMask, double mutation_chance) {
     for (int i = 0; i < OPTIM_VARS; i++) {
         //Reset mask
         mutateMask[i] = false;
@@ -147,8 +147,8 @@ void mutateMask(std::mt19937_64 & rng, bool * mutateMask, double mutation_rate) 
     // counter to make sure in the unlikely event that all genes are being mutated the code doesn't
     // get stuck in infinite loop looking for a false spot in the array
     int geneCount = 0; //How many gene's have we changed
-    // Set a gene to mutate if a randomized values is less than mutation_rate, repeating everytime this is true
-    while ((static_cast<double>(rng()) / rng.max()) < mutation_rate && geneCount < OPTIM_VARS) {
+    // Set a gene to mutate if a randomized values is less than mutation_chance, repeating everytime this is true
+    while ((static_cast<double>(rng()) / rng.max()) < mutation_chance && geneCount < OPTIM_VARS) {
         bool geneSet = false; // boolean to flag if a gene was successfully selected to be set as true
         int index; // index value that will be assigned randomly to select a gene
         while (geneSet != true) {
@@ -166,7 +166,7 @@ void mutateMask(std::mt19937_64 & rng, bool * mutateMask, double mutation_rate) 
 
 
 // In a given Individual's parameters, generate a mutate mask using mutateMask() and then adjust parameters based on the mask, mutation of at least one gene is not guranteed
-rkParameters<double> mutate(const rkParameters<double> & p1, std::mt19937_64 & rng, const double & annealing, const cudaConstants* cConstants, const double & mutationScale, const double & mutation_chance) {    
+rkParameters<double> mutate(const rkParameters<double> & p1, std::mt19937_64 & rng, const double & annealing, const cudaConstants* cConstants, const double & mutationAmplitude, const double & mutation_chance) {    
     // initially set new individual to have all parameter values from parent 1
     rkParameters<double> childParameters = p1; 
 
@@ -181,22 +181,22 @@ rkParameters<double> mutate(const rkParameters<double> & p1, std::mt19937_64 & r
         if (mutation_mask[index] == true) {
             
             if ( (index >= GAMMA_OFFSET) && (index <= (GAMMA_OFFSET + GAMMA_ARRAY_SIZE-1)) ) { // Gamma value
-                double randVar = getRand(cConstants->gamma_mutate_scale * annealing * mutationScale, rng);
+                double randVar = getRand(cConstants->gamma_mutate_scale * annealing * mutationAmplitude, rng);
                 childParameters.coeff.gamma[index-GAMMA_OFFSET] += randVar;
                 // recordLog[index] = randVar;
             }
             else if ( (index >= TAU_OFFSET) && (index <= (TAU_OFFSET + TAU_ARRAY_SIZE-1))) { // Tau value 
-                double randVar = getRand(cConstants->tau_mutate_scale * annealing * mutationScale, rng);
+                double randVar = getRand(cConstants->tau_mutate_scale * annealing * mutationAmplitude, rng);
                 childParameters.coeff.tau[index-TAU_OFFSET] += randVar;
                 // recordLog[index] = randVar;
             }
             else if (index >= COAST_OFFSET && index <= (COAST_OFFSET + COAST_ARRAY_SIZE-1)) { // Coast value
-                double randVar = getRand(cConstants->coast_mutate_scale * annealing * mutationScale, rng);
+                double randVar = getRand(cConstants->coast_mutate_scale * annealing * mutationAmplitude, rng);
                 childParameters.coeff.coast[index-COAST_OFFSET] += randVar;
                 // recordLog[index] = randVar;
             }
             else if (index == TRIPTIME_OFFSET) { // Time final
-                double randVar = getRand(cConstants->triptime_mutate_scale * annealing * mutationScale, rng);
+                double randVar = getRand(cConstants->triptime_mutate_scale * annealing * mutationAmplitude, rng);
                 childParameters.tripTime += randVar;
                 // bound checking to make sure the tripTime is set within the valid range of trip times
                 if (childParameters.tripTime < cConstants->triptime_min + cConstants->timeRes) {
@@ -209,12 +209,12 @@ rkParameters<double> mutate(const rkParameters<double> & p1, std::mt19937_64 & r
                 // recordLog[index] = randVar;
             }
             else if (index == ZETA_OFFSET) { // Zeta
-                double randVar = getRand(cConstants->zeta_mutate_scale * annealing * mutationScale, rng);
+                double randVar = getRand(cConstants->zeta_mutate_scale * annealing * mutationAmplitude, rng);
                 childParameters.zeta += randVar;
                 // recordLog[index] = randVar;
             }
             else if (index == BETA_OFFSET) { // Beta
-                double randVar = getRand(cConstants->beta_mutate_scale * annealing * mutationScale, rng);
+                double randVar = getRand(cConstants->beta_mutate_scale * annealing * mutationAmplitude, rng);
                 childParameters.beta += randVar;
                 // recordLog[index] = randVar;
     
@@ -229,7 +229,7 @@ rkParameters<double> mutate(const rkParameters<double> & p1, std::mt19937_64 & r
                 }
             }
             else if (index == ALPHA_OFFSET) { // Alpha
-                double randVar = getRand(cConstants->alpha_mutate_scale * annealing * mutationScale, rng);
+                double randVar = getRand(cConstants->alpha_mutate_scale * annealing * mutationAmplitude, rng);
                 childParameters.alpha += randVar;                
                 // recordLog[index] = randVar;
             }
@@ -438,30 +438,30 @@ void generateChildrenFromCrossover(std::vector<Adult> &parents, Child *newChildr
             // Generate a pair of children based on the random cross over mask method from a pair of parents
             // This will generate a set of parameters with variables randomly selected from each parent
             // Generate the base mask, with each variable being assigned to a random parent
-            crossOver_wholeRandom(mask, rng);
+                        crossOver_wholeRandom(mask, rng);
 
-            // Generate a pair of children based on the mask
-            generateChildrenPair(parents[parentPool[parentIndex]], parents[parentPool[parentIndex + 1]], newChildren, childrenToGenerate, mask, currentAnneal, rng, numNewChildren, generation, cConstants);
+                        // Generate a pair of children based on the mask
+                        generateChildrenPair(parents[parentPool[parentIndex]], parents[parentPool[parentIndex + 1]], newChildren, childrenToGenerate, mask, currentAnneal, rng, numNewChildren, generation, cConstants);
 
-            // Generate a pair of children from a pair of parents based on the average mask method
-            // This mask method will generate a set of parameters based on the average of parameters from each parent
+                        // Generate a pair of children from a pair of parents based on the average mask method
+                        // This mask method will generate a set of parameters based on the average of parameters from each parent
 
-            // Set the mask to be be average
-            //TODO: I thought this was changed to be averageRatio long ago? Do we want to use averageRatio?
-            //TODO: for future students on this: It should be examined if the averageRatio is better or not
-            //Currently does 1 full average and 1 averageRatio (flipping crossOver_average mask turns it to an averageRatio mask)
-            crossOver_average(mask);
-            // Generate a pair of children based on the mask
-            generateChildrenPair(parents[parentPool[parentIndex]], parents[parentPool[parentIndex + 1]], newChildren, childrenToGenerate, mask, currentAnneal, rng, numNewChildren, generation, cConstants);
+                        // Set the mask to be be average
+                        //TODO: I thought this was changed to be averageRatio long ago? Do we want to use averageRatio?
+                        //TODO: for future students on this: It should be examined if the averageRatio is better or not
+                        //Currently does 1 full average and 1 averageRatio (flipping crossOver_average mask turns it to an averageRatio mask)
+                        crossOver_average(mask);
+                        // Generate a pair of children based on the mask
+                        generateChildrenPair(parents[parentPool[parentIndex]], parents[parentPool[parentIndex + 1]], newChildren, childrenToGenerate, mask, currentAnneal, rng, numNewChildren, generation, cConstants);
 
-            // Generate a pair of children from a pair of parents based on the bundled random mask method
-            // This mask method will generate parameters with variables pulled from random parents
-            // This is different from the wholeRandom method in that the thrust variables (gamma, tau, and coast) is taken from the same parent
+                        // Generate a pair of children from a pair of parents based on the bundled random mask method
+                        // This mask method will generate parameters with variables pulled from random parents
+                        // This is different from the wholeRandom method in that the thrust variables (gamma, tau, and coast) is taken from the same parent
 
-            // Generate the base mask, each variable (or set of variables) is set to a random parent
-            crossOver_bundleVars(mask, rng);
-            // Generate a pair of children based on the mask
-            generateChildrenPair(parents[parentPool[parentIndex]], parents[parentPool[parentIndex + 1]], newChildren, childrenToGenerate, mask, currentAnneal, rng, numNewChildren, generation, cConstants);
+                        // Generate the base mask, each variable (or set of variables) is set to a random parent
+                        crossOver_bundleVars(mask, rng);
+                        // Generate a pair of children based on the mask
+                        generateChildrenPair(parents[parentPool[parentIndex]], parents[parentPool[parentIndex + 1]], newChildren, childrenToGenerate, mask, currentAnneal, rng, numNewChildren, generation, cConstants);
 
             // Add two to parentIndex to account for the variable tracking pairs of parents, not just one parent's index
             parentIndex += 2;

@@ -495,16 +495,19 @@ void assignReservedRarity (const cudaConstants *cConstants, std::vector<Adult> &
     //Sort the adults by their progress scores
     std::sort(adults.begin(), adults.end(), bestProgress);
 
-    //For loop will adjust the adults' rarities
-    for (int i = 0; i < cConstants->reservedRarity; i++) {
-        // This is one of the top individuals, give it a reserved rank
-        if (i < cConstants->reservedRarity) {
-            adults[i].rarity = i;
-        }
-        // If this is not a top individual, adjust their rarity to account for the reserved ranks being assigned
-        else {
-            //Add the number of reserved scores to the adult's rarity so that there is no rarity score duplicates
-            adults[i].rarity += cConstants->reservedRarity;
+    //before looping through every adult, check to see if we need to reserve rarity
+    if(cConstants->reservedRarity!=0){
+        //For loop will adjust the adults' rarities
+        for (int i = 0; i < adults.size(); i++) {
+            // This is one of the top individuals, give it a reserved rarity
+            if (i < cConstants->reservedRarity) {
+                adults[i].rarity = i;
+            }
+            // If this is not a top individual, adjust their rarity to account for the reserved rarity being assigned
+            else {
+                //Add the number of reserved scores to the adult's rarity so that there is no rarity score duplicates
+                adults[i].rarity += cConstants->reservedRarity;
+            }
         }
     }
 

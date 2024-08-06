@@ -436,7 +436,7 @@ void generateChildrenFromCrossover(std::vector<Adult> &parents, Child *newChildr
             // }
                         switch(cConstants->crossover_method){ //determines what crossover method to use
                             case 0: //only wholeRandom
-                                for(int i=0; i<6; i++){
+                                for(int i=0; i<3; i++){
                                     // Generate a pair of children based on the random cross over mask method from a pair of parents
                                     // This will generate a set of parameters with variables randomly selected from each parent
                                     // Generate the base mask, with each variable being assigned to a random parent
@@ -448,7 +448,7 @@ void generateChildrenFromCrossover(std::vector<Adult> &parents, Child *newChildr
                                 }
                                 break;
                             case 1: //only bundleVars
-                                for(int i=0; i<6; i++){
+                                for(int i=0; i<3; i++){
                                     // Generate a pair of children from a pair of parents based on the bundled random mask method
                                     // This mask method will generate parameters with variables pulled from random parents
                                     // This is different from the wholeRandom method in that the thrust variables (gamma, tau, and coast) is taken from the same parent
@@ -461,7 +461,7 @@ void generateChildrenFromCrossover(std::vector<Adult> &parents, Child *newChildr
                                 }
                                 break;
                             case 2: //only average
-                                for(int i=0; i<6; i++){
+                                for(int i=0; i<3; i++){
                                     // Set the mask to be be average
                                     //TODO: I thought this was changed to be averageRatio long ago? Do we want to use averageRatio?
                                     //TODO: for future students on this: It should be examined if the averageRatio is better or not

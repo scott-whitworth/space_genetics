@@ -69,7 +69,7 @@ template <class T> T thruster<T>::calc_m_Dot(const T & Pin) {
         }
     }
     else if (type == THRUST_TYPE::AEPS) {
-        if (Pin < 3120) {
+        if (Pin < 1300) {
             return 0;
         }
         else if (Pin < 6700) {
